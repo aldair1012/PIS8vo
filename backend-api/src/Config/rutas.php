@@ -27,6 +27,9 @@ return [
     'api/simulaciones/ia-status'   => ['controlador' => \ZeaSys\Dominios\Simulaciones\Http\SimulacionController::class, 'accion' => 'iaStatus', 'publica' => true],
     'api/simulaciones/explain'     => ['controlador' => \ZeaSys\Dominios\Simulaciones\Http\SimulacionController::class, 'accion' => 'explain'],
 
+    // --- Chat (Subproyecto 2): chatbot con memoria de sesion ---
+    'api/chat/preguntar'           => ['controlador' => \ZeaSys\Dominios\Chat\Http\ChatController::class, 'accion' => 'preguntar', 'sesion' => true],
+
     // --- DSS Dashboards (F05: dominio ZeaSys\Dominios\Analitica) ---
     'api/scenarios'                => ['controlador' => \ZeaSys\Dominios\Analitica\Http\ScenarioController::class, 'accion' => 'index'],
     'api/climate'                  => ['controlador' => \ZeaSys\Dominios\Analitica\Http\ClimateController::class, 'accion' => 'index'],
