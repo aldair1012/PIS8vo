@@ -1,4 +1,5 @@
 <?php
+// src/Dominios/Autenticacion/Infraestructura/AlmacenAvatarArchivos.php — Guarda avatares en public/uploads/avatars.
 declare(strict_types=1);
 
 namespace ZeaSys\Dominios\Autenticacion\Infraestructura;

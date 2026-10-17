@@ -1,4 +1,5 @@
 <?php
+// src/Dominios/Autenticacion/Infraestructura/VerificadorTokenGoogle.php — Verifica id_token contra Google (tokeninfo).
 declare(strict_types=1);
 
 namespace ZeaSys\Dominios\Autenticacion\Infraestructura;

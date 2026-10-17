@@ -1,6 +1,7 @@
 <?php
 // src/Config/contenedor.php — Bindings del contenedor DI.
 // F01: controladores legacy. F02–F05 añaden los bindings de cada dominio nuevo.
+// Nota: el binding de UsuarioRepositoryMysql depende del global legado getConnection() — puente transitorio, fuera en F06.
 
 use ZeaSys\Kernel\Container;
 

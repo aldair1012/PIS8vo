@@ -1,4 +1,5 @@
 <?php
+// src/Dominios/Autenticacion/Infraestructura/GestorSesion.php — Sesión: claves de usuario, cierre y extensión de cookie.
 declare(strict_types=1);
 
 namespace ZeaSys\Dominios\Autenticacion\Infraestructura;
@@ -28,5 +29,23 @@ final class GestorSesion implements GestorSesionInterface
     public function actualizarNombre(string $nombre): void
     {
         $_SESSION['nombre'] = $nombre;
+    }
+
+    public function extenderCookie(bool $recordar): void
+    {
+        $sessionName = session_name();
+        $sessionId = session_id();
+        $params = session_get_cookie_params();
+        $lifetime = $recordar ? 2592000 : 0;
+
+        setcookie(
+            $sessionName,
+            $sessionId,
+            $lifetime > 0 ? time() + $lifetime : 0,
+            $params['path'],
+            $params['domain'],
+            $params['secure'],
+            $params['httponly']
+        );
     }
 }

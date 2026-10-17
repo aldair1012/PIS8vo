@@ -1,4 +1,5 @@
 <?php
+// src/Dominios/Autenticacion/Dominio/UsuarioRepositoryInterface.php — Contrato del repositorio de usuarios.
 declare(strict_types=1);
 
 namespace ZeaSys\Dominios\Autenticacion\Dominio;

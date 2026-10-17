@@ -35,13 +35,7 @@ final class AutenticacionService
             if ($userDb) {
                 return [
                     'authenticated' => true,
-                    'user' => [
-                        'id'          => $userDb['id'],
-                        'nombre'      => $userDb['nombre'],
-                        'correo'      => $userDb['correo'],
-                        'foto_perfil' => $userDb['foto_perfil'] ?? null,
-                        'es_google'   => (int) ($userDb['es_google'] ?? 0)
-                    ]
+                    'user' => $this->respuestaUsuario($userDb)
                 ];
             }
         }
@@ -70,32 +64,12 @@ final class AutenticacionService
 
         if ($usuario) {
             $this->sesion->iniciar($usuario);
-
-            $sessionName = session_name();
-            $sessionId = session_id();
-            $params = session_get_cookie_params();
-            $lifetime = $remember ? 2592000 : 0;
-
-            setcookie(
-                $sessionName,
-                $sessionId,
-                $lifetime > 0 ? time() + $lifetime : 0,
-                $params['path'],
-                $params['domain'],
-                $params['secure'],
-                $params['httponly']
-            );
+            $this->sesion->extenderCookie($remember);
 
             return [
                 'success' => true,
                 'message' => '¡Bienvenido, ' . $usuario['nombre'] . '!',
-                'user' => [
-                    'id'          => $usuario['id'],
-                    'nombre'      => $usuario['nombre'],
-                    'correo'      => $usuario['correo'],
-                    'foto_perfil' => $usuario['foto_perfil'] ?? null,
-                    'es_google'   => (int) ($usuario['es_google'] ?? 0)
-                ]
+                'user' => $this->respuestaUsuario($usuario)
             ];
         }
 
@@ -122,32 +96,12 @@ final class AutenticacionService
 
         if ($usuario) {
             $this->sesion->iniciar($usuario);
-
-            $sessionName = session_name();
-            $sessionId = session_id();
-            $params = session_get_cookie_params();
-            $lifetime = $remember ? 2592000 : 0;
-
-            setcookie(
-                $sessionName,
-                $sessionId,
-                $lifetime > 0 ? time() + $lifetime : 0,
-                $params['path'],
-                $params['domain'],
-                $params['secure'],
-                $params['httponly']
-            );
+            $this->sesion->extenderCookie($remember);
 
             return [
                 'success' => true,
                 'message' => '¡Bienvenido, ' . $usuario['nombre'] . '!',
-                'user' => [
-                    'id'          => $usuario['id'],
-                    'nombre'      => $usuario['nombre'],
-                    'correo'      => $usuario['correo'],
-                    'foto_perfil' => $usuario['foto_perfil'] ?? $picture,
-                    'es_google'   => 1
-                ]
+                'user' => $this->respuestaUsuario($usuario, $picture, 1)
             ];
         }
 
@@ -264,27 +218,23 @@ final class AutenticacionService
             return [
                 'success' => true,
                 'message' => '¡Nombre de perfil actualizado correctamente!',
-                'user' => [
-                    'id'          => $usuarioId,
-                    'nombre'      => $userDb['nombre'],
-                    'correo'      => $userDb['correo'],
-                    'foto_perfil' => $userDb['foto_perfil'] ?? null,
-                    'es_google'   => (int) ($userDb['es_google'] ?? 0)
-                ]
+                'user' => $this->respuestaUsuario($userDb)
             ];
         } catch (\Exception $e) {
             throw new ZeaSysException('Error al actualizar datos: ' . $e->getMessage(), 500);
         }
     }
 
-    public function uploadAvatar(): array
+    public function uploadAvatar(array $archivo): array
     {
         $usuarioId = $this->sesion->usuarioId();
         if ($usuarioId === null) {
             throw new NoAutorizadoException();
         }
 
-        $fotoUrl = $this->avatares->guardar($_FILES['foto'] ?? [], $usuarioId);
+        // La capa Http extrae $_FILES['foto']; la forma de $archivo la documenta
+        // AlmacenAvatarInterface::guardar() (no se duplica aquí).
+        $fotoUrl = $this->avatares->guardar($archivo, $usuarioId);
         $this->usuarios->actualizarFotoPerfil($usuarioId, $fotoUrl, 0);
 
         $userDb = $this->usuarios->obtenerPorId($usuarioId);
@@ -292,13 +242,7 @@ final class AutenticacionService
         return [
             'success' => true,
             'message' => '¡Foto de perfil actualizada correctamente!',
-            'user' => [
-                'id'          => $usuarioId,
-                'nombre'      => $userDb['nombre'],
-                'correo'      => $userDb['correo'],
-                'foto_perfil' => $fotoUrl,
-                'es_google'   => 0
-            ]
+            'user' => $this->respuestaUsuario($userDb, $fotoUrl, 0)
         ];
     }
 
@@ -317,13 +261,7 @@ final class AutenticacionService
         return [
             'success' => true,
             'message' => '¡Foto de perfil eliminada!',
-            'user' => [
-                'id'          => $usuarioId,
-                'nombre'      => $userDb['nombre'],
-                'correo'      => $userDb['correo'],
-                'foto_perfil' => null,
-                'es_google'   => 0
-            ]
+            'user' => $this->respuestaUsuario($userDb, null, 0)
         ];
     }
 
@@ -351,13 +289,7 @@ final class AutenticacionService
         return [
             'success' => true,
             'message' => '¡Foto de Google sincronizada correctamente!',
-            'user' => [
-                'id'          => $usuarioId,
-                'nombre'      => $userDb['nombre'],
-                'correo'      => $userDb['correo'],
-                'foto_perfil' => $fotoUrl,
-                'es_google'   => 1
-            ]
+            'user' => $this->respuestaUsuario($userDb, $fotoUrl, 1)
         ];
     }
 
@@ -378,5 +310,23 @@ final class AutenticacionService
         } catch (\Exception $e) {
             throw new ZeaSysException('Error al eliminar la cuenta: ' . $e->getMessage(), 500);
         }
+    }
+
+    /**
+     * Payload de usuario de respuesta — fuente única de los campos 'user'.
+     * @param array<string, mixed> $userDb      Fila con id, nombre, correo, foto_perfil, es_google (PDO: id/es_google nativos int).
+     * @param string|null          $fotoFallback Valor si foto_perfil es null (p. ej. picture de Google o la URL recién guardada).
+     * @param int|null             $esGoogle    Override explícito de es_google; null → (int) ($userDb['es_google'] ?? 0).
+     * @return array{id: int, nombre: string, correo: string, foto_perfil: string|null, es_google: int}
+     */
+    private function respuestaUsuario(array $userDb, ?string $fotoFallback = null, ?int $esGoogle = null): array
+    {
+        return [
+            'id'          => $userDb['id'],
+            'nombre'      => $userDb['nombre'],
+            'correo'      => $userDb['correo'],
+            'foto_perfil' => $userDb['foto_perfil'] ?? $fotoFallback,
+            'es_google'   => $esGoogle ?? (int) ($userDb['es_google'] ?? 0),
+        ];
     }
 }

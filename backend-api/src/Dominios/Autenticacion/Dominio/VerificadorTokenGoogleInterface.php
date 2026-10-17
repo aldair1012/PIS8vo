@@ -1,4 +1,5 @@
 <?php
+// src/Dominios/Autenticacion/Dominio/VerificadorTokenGoogleInterface.php — Contrato del verificador de id_token de Google.
 declare(strict_types=1);
 
 namespace ZeaSys\Dominios\Autenticacion\Dominio;

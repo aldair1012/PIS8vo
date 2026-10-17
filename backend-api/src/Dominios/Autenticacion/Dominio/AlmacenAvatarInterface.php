@@ -1,4 +1,5 @@
 <?php
+// src/Dominios/Autenticacion/Dominio/AlmacenAvatarInterface.php — Contrato del almacén de fotos de perfil.
 declare(strict_types=1);
 
 namespace ZeaSys\Dominios\Autenticacion\Dominio;

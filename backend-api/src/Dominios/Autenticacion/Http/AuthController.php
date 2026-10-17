@@ -1,4 +1,5 @@
 <?php
+// src/Dominios/Autenticacion/Http/AuthController.php — Controlador HTTP del dominio autenticación (capa delgada).
 declare(strict_types=1);
 
 namespace ZeaSys\Dominios\Autenticacion\Http;
@@ -19,7 +20,7 @@ final class AuthController
     public function registro(Peticion $peticion): void { RespuestaJson::enviar($this->servicio->registro($peticion)); }
     public function logout(Peticion $peticion): void { RespuestaJson::enviar($this->servicio->logout()); }
     public function update(Peticion $peticion): void { RespuestaJson::enviar($this->servicio->update($peticion)); }
-    public function uploadAvatar(Peticion $peticion): void { RespuestaJson::enviar($this->servicio->uploadAvatar()); }
+    public function uploadAvatar(Peticion $peticion): void { RespuestaJson::enviar($this->servicio->uploadAvatar($_FILES['foto'] ?? [])); }
     public function deleteAvatar(Peticion $peticion): void { RespuestaJson::enviar($this->servicio->deleteAvatar()); }
     public function syncGoogleAvatar(Peticion $peticion): void { RespuestaJson::enviar($this->servicio->syncGoogleAvatar($peticion)); }
     public function eliminar(Peticion $peticion): void { RespuestaJson::enviar($this->servicio->eliminar()); }
