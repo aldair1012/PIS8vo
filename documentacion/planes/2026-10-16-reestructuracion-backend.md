@@ -26,11 +26,11 @@
 - Create: `backend-api/tests/contrato/ejecutar.php`
 - Create: `backend-api/tests/contrato/README.md`
 
-- [ ] **Step 1: Crear `backend-api/tests/contrato/ejecutar.php` con este contenido completo**
+- [ ] **Step 1: Crear `backend-api/tests/contrato/ejecutar.php` (hecho en F00)**
 
-El script vive versionado en `backend-api/tests/contrato/ejecutar.php` (fuente única de verdad de la suite; se creó en esta fase y ha tenido ajustes post-implementación documentados abajo). No se pega aquí para evitar desfases: consultarlo/leerlo directamente del repo. Sus reglas de normalización/volatilidad están resumidas en `backend-api/tests/contrato/README.md`.
+El script vive versionado en `backend-api/tests/contrato/ejecutar.php` (fuente única de verdad de la suite). No se pega aquí para evitar desfases: consultarlo/leerlo directamente del repo. Sus reglas de normalización/volatilidad están resumidas en `backend-api/tests/contrato/README.md`.
 
-> Ajuste post-implementación (commit correctivo de F00): `normalizar()` además colapsa claves externas en vivo (`soilgrids`, `open_meteo` → `<externo>`) e items aleatorios de "fecha de siembra" (mt_rand de YieldController → `<volatil>`). El archivo `backend-api/tests/contrato/ejecutar.php` (versionado) es la fuente de verdad final de la suite. Además, las salidas derivadas del motor ML (rendimiento_estimado, produccion_total, rendimiento_promedio, blobs *_json) se colapsan a <externo:tipo>, y en modo tolerante los strings comparan esqueleto + números con ±25%: cubre la volatilidad de SoilGrids aguas abajo. Además, estructura() une integer/float en la familia "number" (json_encode emite 15.0 como 15).
+> Ajuste post-implementación (commits correctivos de F00): `normalizar()` colapsa claves externas en vivo (`soilgrids`, `open_meteo` → `<externo>`), neutraliza items aleatorios de "fecha de siembra" (mt_rand de YieldController → `<volatil>`) y salidas derivadas del motor ML (rendimiento_estimado, produccion_total, rendimiento_promedio, blobs `*_json` → `<externo:tipo>`). En modo tolerante los strings comparan esqueleto + números con ±25%; `estructura()` une integer/float en la familia "number" (json_encode emite 15.0 como 15). Endurecimiento final del gate: la volatilidad de la referencia manda y se diffea, captura validada (curl_error/5xx → exit 2), familias de tipo escalar comparadas, `--modo` obligatorio, huella corrupta → exit 2. El archivo versionado es la fuente de verdad final de la suite.
 
 - [ ] **Step 2: Crear `backend-api/tests/contrato/README.md`**
 
