@@ -1,0 +1,1807 @@
+{
+    "fecha_captura": "2026-10-17T05:47:23+02:00",
+    "base_url": "http://localhost/ZeaSys/backend-api/public/index.php",
+    "tolerancia": 25,
+    "pasos": [
+        {
+            "nombre": "ia-status publico",
+            "metodo": "GET",
+            "ruta": "/api/simulaciones/ia-status",
+            "volatilidad": "tolerante",
+            "http": 200,
+            "cuerpo": {
+                "running": true,
+                "started": false,
+                "url": "http://127.0.0.1:5000",
+                "health": {
+                    "modelos_cargados": [
+                        "random_forest",
+                        "xgboost",
+                        "random_forest_clf",
+                        "xgboost_clf"
+                    ],
+                    "status": "ok",
+                    "version": "2.1.0"
+                },
+                "message": "Motor de simulación activo"
+            }
+        },
+        {
+            "nombre": "registro",
+            "metodo": "POST",
+            "ruta": "/api/auth/register",
+            "volatilidad": "exacto",
+            "http": 200,
+            "cuerpo": {
+                "success": true,
+                "message": "¡Registro exitoso! Bienvenido a AgroPredict.",
+                "user": {
+                    "id": "<volatil>",
+                    "nombre": "Contrato Test",
+                    "correo": "contrato_<ts>@zeasys.local",
+                    "foto_perfil": null,
+                    "es_google": 0
+                }
+            }
+        },
+        {
+            "nombre": "me tras registro",
+            "metodo": "GET",
+            "ruta": "/api/auth/me",
+            "volatilidad": "exacto",
+            "http": 200,
+            "cuerpo": {
+                "authenticated": true,
+                "user": {
+                    "id": "<volatil>",
+                    "nombre": "Contrato Test",
+                    "correo": "contrato_<ts>@zeasys.local",
+                    "foto_perfil": null,
+                    "es_google": 0
+                }
+            }
+        },
+        {
+            "nombre": "login",
+            "metodo": "POST",
+            "ruta": "/api/auth/login",
+            "volatilidad": "exacto",
+            "http": 200,
+            "cuerpo": {
+                "success": true,
+                "message": "¡Bienvenido, Contrato Test!",
+                "user": {
+                    "id": "<volatil>",
+                    "nombre": "Contrato Test",
+                    "correo": "contrato_<ts>@zeasys.local",
+                    "foto_perfil": null,
+                    "es_google": 0
+                }
+            }
+        },
+        {
+            "nombre": "cultivos lista vacia",
+            "metodo": "GET",
+            "ruta": "/api/cultivos",
+            "volatilidad": "exacto",
+            "http": 200,
+            "cuerpo": []
+        },
+        {
+            "nombre": "crear cultivo",
+            "metodo": "POST",
+            "ruta": "/api/cultivos",
+            "volatilidad": "exacto",
+            "http": 200,
+            "cuerpo": {
+                "success": true,
+                "message": "Parcela registrada exitosamente.",
+                "cultivo": {
+                    "usuario_id": "<volatil>",
+                    "nombre_parcela": "Lote Contrato",
+                    "variedad_maiz": "Pioneer P4039",
+                    "tipo_maiz": "Duro Amarillo",
+                    "ubicacion": "Quito - Pichincha",
+                    "area": 2.5,
+                    "latitud": -0.1807,
+                    "longitud": -78.4678,
+                    "fecha_siembra": "<volatil>",
+                    "geojson": null,
+                    "altitud": 2850,
+                    "ph": 6.2,
+                    "fertilizacion_fecha": "<volatil>",
+                    "fertilizacion_dosis": null,
+                    "fertilizacion_tipo": null,
+                    "id": "<volatil>"
+                }
+            }
+        },
+        {
+            "nombre": "cultivos lista con 1",
+            "metodo": "GET",
+            "ruta": "/api/cultivos",
+            "volatilidad": "exacto",
+            "http": 200,
+            "cuerpo": [
+                {
+                    "id": "<volatil>",
+                    "usuario_id": "<volatil>",
+                    "nombre_parcela": "Lote Contrato",
+                    "variedad_maiz": "Pioneer P4039",
+                    "ubicacion": "Quito - Pichincha",
+                    "area": "2.50",
+                    "latitud": "-0.1807000",
+                    "longitud": "-78.4678000",
+                    "fecha_siembra": "<volatil>",
+                    "fecha_registro": "<volatil>",
+                    "activo": 1,
+                    "geojson": null,
+                    "altitud": "2850.0",
+                    "ph": "6.2",
+                    "tipo_maiz": "Duro Amarillo",
+                    "fertilizacion_fecha": "<volatil>",
+                    "fertilizacion_dosis": null,
+                    "fertilizacion_tipo": null
+                }
+            ]
+        },
+        {
+            "nombre": "cultivos mapa",
+            "metodo": "GET",
+            "ruta": "/api/cultivos/mapa",
+            "volatilidad": "exacto",
+            "http": 200,
+            "cuerpo": [
+                {
+                    "id": "<volatil>",
+                    "usuario_id": "<volatil>",
+                    "nombre_parcela": "Lote Contrato",
+                    "variedad_maiz": "Pioneer P4039",
+                    "ubicacion": "Quito - Pichincha",
+                    "area": "2.50",
+                    "latitud": "-0.1807000",
+                    "longitud": "-78.4678000",
+                    "fecha_siembra": "<volatil>",
+                    "fecha_registro": "<volatil>",
+                    "activo": 1,
+                    "geojson": null,
+                    "altitud": "2850.0",
+                    "ph": "6.2",
+                    "tipo_maiz": "Duro Amarillo",
+                    "fertilizacion_fecha": "<volatil>",
+                    "fertilizacion_dosis": null,
+                    "fertilizacion_tipo": null,
+                    "nombre_usuario": "Contrato Test"
+                },
+                {
+                    "id": "<volatil>",
+                    "usuario_id": "<volatil>",
+                    "nombre_parcela": "Parcela Recorrido",
+                    "variedad_maiz": "Híbrido convencional",
+                    "ubicacion": "Quito - Pichincha",
+                    "area": "2.50",
+                    "latitud": "-0.2210000",
+                    "longitud": "-78.5120000",
+                    "fecha_siembra": "<volatil>",
+                    "fecha_registro": "<volatil>",
+                    "activo": 1,
+                    "geojson": null,
+                    "altitud": "2850.0",
+                    "ph": "6.4",
+                    "tipo_maiz": "Duro Amarillo",
+                    "fertilizacion_fecha": "<volatil>",
+                    "fertilizacion_dosis": null,
+                    "fertilizacion_tipo": null,
+                    "nombre_usuario": "Test Browser2"
+                },
+                {
+                    "id": "<volatil>",
+                    "usuario_id": "<volatil>",
+                    "nombre_parcela": "prueba11",
+                    "variedad_maiz": "INIAP H-248 Soberano",
+                    "ubicacion": "Milagro - Milagro - Ecuador",
+                    "area": "0.71",
+                    "latitud": "-2.1353624",
+                    "longitud": "-79.5900620",
+                    "fecha_siembra": "<volatil>",
+                    "fecha_registro": "<volatil>",
+                    "activo": 1,
+                    "geojson": "{\"type\":\"Feature\",\"properties\":{},\"geometry\":{\"type\":\"Polygon\",\"coordinates\":[[[-79.589705,-2.134896],[-79.589791,-2.135871],[-79.59043,-2.135764],[-79.590322,-2.134918],[-79.589705,-2.134896]]]}}",
+                    "altitud": "14.0",
+                    "ph": "7.4",
+                    "tipo_maiz": "Duro Amarillo",
+                    "fertilizacion_fecha": "<volatil>",
+                    "fertilizacion_dosis": null,
+                    "fertilizacion_tipo": null,
+                    "nombre_usuario": "AUTORES"
+                },
+                {
+                    "id": "<volatil>",
+                    "usuario_id": "<volatil>",
+                    "nombre_parcela": "nijioiojiojm",
+                    "variedad_maiz": "Híbrido convencional",
+                    "ubicacion": "La Granja - Milagro - Ecuador",
+                    "area": "0.78",
+                    "latitud": "-2.1125014",
+                    "longitud": "-79.5860304",
+                    "fecha_siembra": "<volatil>",
+                    "fecha_registro": "<volatil>",
+                    "activo": 1,
+                    "geojson": "{\"type\":\"Feature\",\"properties\":{},\"geometry\":{\"type\":\"Polygon\",\"coordinates\":[[[-79.58654,-2.112493],[-79.586401,-2.112783],[-79.586207,-2.112606],[-79.586057,-2.112793],[-79.585204,-2.112467],[-79.585773,-2.111867],[-79.58654,-2.112493]]]}}",
+                    "altitud": "14.0",
+                    "ph": "5.7",
+                    "tipo_maiz": "Duro Amarillo",
+                    "fertilizacion_fecha": "<volatil>",
+                    "fertilizacion_dosis": null,
+                    "fertilizacion_tipo": null,
+                    "nombre_usuario": "AUTORES"
+                },
+                {
+                    "id": "<volatil>",
+                    "usuario_id": "<volatil>",
+                    "nombre_parcela": "PRUEBA",
+                    "variedad_maiz": "Híbrido convencional",
+                    "ubicacion": "El Carmen - El Carmen - Ecuador",
+                    "area": "0.57",
+                    "latitud": "-0.5419846",
+                    "longitud": "-79.5626488",
+                    "fecha_siembra": "<volatil>",
+                    "fecha_registro": "<volatil>",
+                    "activo": 1,
+                    "geojson": "{\"type\":\"Feature\",\"properties\":{},\"geometry\":{\"type\":\"Polygon\",\"coordinates\":[[[-79.56269,-0.541457],[-79.563216,-0.542251],[-79.562041,-0.542246],[-79.56269,-0.541457]]]}}",
+                    "altitud": "146.0",
+                    "ph": "5.7",
+                    "tipo_maiz": "Duro Amarillo",
+                    "fertilizacion_fecha": "<volatil>",
+                    "fertilizacion_dosis": null,
+                    "fertilizacion_tipo": null,
+                    "nombre_usuario": "AUTORES"
+                },
+                {
+                    "id": "<volatil>",
+                    "usuario_id": "<volatil>",
+                    "nombre_parcela": "PRUENA-10",
+                    "variedad_maiz": "INIAP 122 Chaucho",
+                    "ubicacion": "Rio Chico 4 - Guayas - Ecuador",
+                    "area": "0.10",
+                    "latitud": "-2.0150619",
+                    "longitud": "-79.3687131",
+                    "fecha_siembra": "<volatil>",
+                    "fecha_registro": "<volatil>",
+                    "activo": 1,
+                    "geojson": "{\"type\":\"Feature\",\"properties\":{},\"geometry\":{\"type\":\"Polygon\",\"coordinates\":[[[-79.368971,-2.015299],[-79.368488,-2.015128],[-79.368676,-2.015004],[-79.368718,-2.014817],[-79.368971,-2.015299]]]}}",
+                    "altitud": "38.0",
+                    "ph": "5.8",
+                    "tipo_maiz": "Suave Harinoso",
+                    "fertilizacion_fecha": "<volatil>",
+                    "fertilizacion_dosis": null,
+                    "fertilizacion_tipo": null,
+                    "nombre_usuario": "AUTORES"
+                },
+                {
+                    "id": "<volatil>",
+                    "usuario_id": "<volatil>",
+                    "nombre_parcela": "Autores , 2026",
+                    "variedad_maiz": "Híbrido convencional",
+                    "ubicacion": "Rocafuerte - Charapotó - Ecuador",
+                    "area": "0.96",
+                    "latitud": "-0.8441262",
+                    "longitud": "-80.4254236",
+                    "fecha_siembra": "<volatil>",
+                    "fecha_registro": "<volatil>",
+                    "activo": 1,
+                    "geojson": "{\"type\":\"Feature\",\"properties\":{},\"geometry\":{\"type\":\"Polygon\",\"coordinates\":[[[-80.425426,-0.843482],[-80.424852,-0.843665],[-80.42533,-0.84477],[-80.425995,-0.844588],[-80.425426,-0.843482]]]}}",
+                    "altitud": "302.0",
+                    "ph": "7.8",
+                    "tipo_maiz": "Duro Amarillo",
+                    "fertilizacion_fecha": "<volatil>",
+                    "fertilizacion_dosis": null,
+                    "fertilizacion_tipo": null,
+                    "nombre_usuario": "AUTORES"
+                },
+                {
+                    "id": "<volatil>",
+                    "usuario_id": "<volatil>",
+                    "nombre_parcela": "PRUEBA 09",
+                    "variedad_maiz": "INIAP H-551",
+                    "ubicacion": "Tabiazo - Esmeraldas - Ecuador",
+                    "area": "3.38",
+                    "latitud": "0.8177130",
+                    "longitud": "-79.7014756",
+                    "fecha_siembra": "<volatil>",
+                    "fecha_registro": "<volatil>",
+                    "activo": 1,
+                    "geojson": "{\"type\":\"Feature\",\"properties\":{},\"geometry\":{\"type\":\"Polygon\",\"coordinates\":[[[-79.700051,0.817909],[-79.700647,0.816884],[-79.701092,0.816959],[-79.701468,0.817039],[-79.70187,0.8172],[-79.702299,0.817361],[-79.702798,0.817614],[-79.7029,0.817726],[-79.702723,0.817914],[-79.70238,0.818166],[-79.701693,0.818542],[-79.70121,0.818354],[-79.700759,0.818172],[-79.700378,0.818011],[-79.700051,0.817909]]]}}",
+                    "altitud": "60.0",
+                    "ph": "6.4",
+                    "tipo_maiz": "Duro Amarillo",
+                    "fertilizacion_fecha": "<volatil>",
+                    "fertilizacion_dosis": null,
+                    "fertilizacion_tipo": null,
+                    "nombre_usuario": "AUTORES"
+                },
+                {
+                    "id": "<volatil>",
+                    "usuario_id": "<volatil>",
+                    "nombre_parcela": "LOTE12",
+                    "variedad_maiz": "Híbrido convencional",
+                    "ubicacion": "Archidona - Napo - Ecuador",
+                    "area": "15.00",
+                    "latitud": "-0.8577199",
+                    "longitud": "-77.6835433",
+                    "fecha_siembra": "<volatil>",
+                    "fecha_registro": "<volatil>",
+                    "activo": 1,
+                    "geojson": null,
+                    "altitud": "926.0",
+                    "ph": "7.0",
+                    "tipo_maiz": "Duro Amarillo",
+                    "fertilizacion_fecha": "<volatil>",
+                    "fertilizacion_dosis": null,
+                    "fertilizacion_tipo": null,
+                    "nombre_usuario": "AUTORES"
+                },
+                {
+                    "id": "<volatil>",
+                    "usuario_id": "<volatil>",
+                    "nombre_parcela": "PRUEBA 08",
+                    "variedad_maiz": "INIAP H-248 Soberano",
+                    "ubicacion": "Río Puca - Balzar - Ecuador",
+                    "area": "1.63",
+                    "latitud": "-1.3597011",
+                    "longitud": "-79.9186433",
+                    "fecha_siembra": "<volatil>",
+                    "fecha_registro": "<volatil>",
+                    "activo": 1,
+                    "geojson": "{\"type\":\"Feature\",\"properties\":{},\"geometry\":{\"type\":\"Polygon\",\"coordinates\":[[[-79.919486,-1.359524],[-79.919174,-1.360388],[-79.917801,-1.359814],[-79.918021,-1.359014],[-79.919486,-1.359524]]]}}",
+                    "altitud": "37.0",
+                    "ph": "7.6",
+                    "tipo_maiz": "Duro Amarillo",
+                    "fertilizacion_fecha": "<volatil>",
+                    "fertilizacion_dosis": null,
+                    "fertilizacion_tipo": null,
+                    "nombre_usuario": "AUTORES"
+                },
+                {
+                    "id": "<volatil>",
+                    "usuario_id": "<volatil>",
+                    "nombre_parcela": "PRUEBA 07",
+                    "variedad_maiz": "INIAP 180",
+                    "ubicacion": "Guaranda - Bolívar - Ecuador",
+                    "area": "1.68",
+                    "latitud": "-1.4539895",
+                    "longitud": "-78.9929355",
+                    "fecha_siembra": "<volatil>",
+                    "fecha_registro": "<volatil>",
+                    "activo": 1,
+                    "geojson": "{\"type\":\"Feature\",\"properties\":{},\"geometry\":{\"type\":\"Polygon\",\"coordinates\":[[[-78.992393,-1.454869],[-78.992227,-1.45474],[-78.992163,-1.454628],[-78.99212,-1.454483],[-78.992104,-1.454322],[-78.992104,-1.454263],[-78.992055,-1.454188],[-78.993241,-1.45311],[-78.993504,-1.4534],[-78.993531,-1.45348],[-78.993596,-1.453544],[-78.993816,-1.4537],[-78.992393,-1.454869]]]}}",
+                    "altitud": "3575.0",
+                    "ph": "5.7",
+                    "tipo_maiz": "Suave Harinoso",
+                    "fertilizacion_fecha": "<volatil>",
+                    "fertilizacion_dosis": null,
+                    "fertilizacion_tipo": null,
+                    "nombre_usuario": "AUTORES"
+                },
+                {
+                    "id": "<volatil>",
+                    "usuario_id": "<volatil>",
+                    "nombre_parcela": "CELULAR",
+                    "variedad_maiz": "Híbrido convencional",
+                    "ubicacion": "Caracol - Los Ríos - Ecuador",
+                    "area": "1.02",
+                    "latitud": "-1.7254275",
+                    "longitud": "-79.4872740",
+                    "fecha_siembra": "<volatil>",
+                    "fecha_registro": "<volatil>",
+                    "activo": 1,
+                    "geojson": "{\"type\":\"Feature\",\"properties\":{},\"geometry\":{\"type\":\"Polygon\",\"coordinates\":[[[-79.488392,-1.725183],[-79.487989,-1.725566],[-79.487684,-1.725559],[-79.487571,-1.725672],[-79.486156,-1.725647],[-79.486178,-1.725443],[-79.486237,-1.72533],[-79.48632,-1.725235],[-79.488392,-1.725183]]]}}",
+                    "altitud": "8.0",
+                    "ph": "6.8",
+                    "tipo_maiz": "Duro Amarillo",
+                    "fertilizacion_fecha": "<volatil>",
+                    "fertilizacion_dosis": null,
+                    "fertilizacion_tipo": null,
+                    "nombre_usuario": "AUTORES"
+                },
+                {
+                    "id": "<volatil>",
+                    "usuario_id": "<volatil>",
+                    "nombre_parcela": "PRUEBA 05",
+                    "variedad_maiz": "INIAP 102 Blanco Blandito",
+                    "ubicacion": "Poaló - Cotopaxi - Ecuador",
+                    "area": "2.88",
+                    "latitud": "-0.8763643",
+                    "longitud": "-78.6703297",
+                    "fecha_siembra": "<volatil>",
+                    "fecha_registro": "<volatil>",
+                    "activo": 1,
+                    "geojson": "{\"type\":\"Feature\",\"properties\":{},\"geometry\":{\"type\":\"Polygon\",\"coordinates\":[[[-78.669785,-0.875396],[-78.669576,-0.877177],[-78.670864,-0.877332],[-78.671084,-0.875546],[-78.669785,-0.875396]]]}}",
+                    "altitud": "2898.0",
+                    "ph": "7.1",
+                    "tipo_maiz": "Suave Harinoso",
+                    "fertilizacion_fecha": "<volatil>",
+                    "fertilizacion_dosis": null,
+                    "fertilizacion_tipo": null,
+                    "nombre_usuario": "AUTORES"
+                },
+                {
+                    "id": "<volatil>",
+                    "usuario_id": "<volatil>",
+                    "nombre_parcela": "ESMERALDAS",
+                    "variedad_maiz": "Híbrido convencional",
+                    "ubicacion": "San Gregorio - Esmeraldas - Ecuador",
+                    "area": "1.45",
+                    "latitud": "0.5532781",
+                    "longitud": "-79.9372952",
+                    "fecha_siembra": "<volatil>",
+                    "fecha_registro": "<volatil>",
+                    "activo": 1,
+                    "geojson": "{\"type\":\"Feature\",\"properties\":{},\"geometry\":{\"type\":\"Polygon\",\"coordinates\":[[[-79.937875,0.55415],[-79.937274,0.554064],[-79.937043,0.553345],[-79.936716,0.552739],[-79.937655,0.552406],[-79.937875,0.55415]]]}}",
+                    "altitud": "4.0",
+                    "ph": "6.1",
+                    "tipo_maiz": "Duro Amarillo",
+                    "fertilizacion_fecha": "<volatil>",
+                    "fertilizacion_dosis": null,
+                    "fertilizacion_tipo": null,
+                    "nombre_usuario": "AUTORES"
+                },
+                {
+                    "id": "<volatil>",
+                    "usuario_id": "<volatil>",
+                    "nombre_parcela": "UAE-MILAGRO",
+                    "variedad_maiz": "Híbrido convencional",
+                    "ubicacion": "La Granja - Milagro - Ecuador",
+                    "area": "0.89",
+                    "latitud": "-2.1289681",
+                    "longitud": "-79.5771064",
+                    "fecha_siembra": "<volatil>",
+                    "fecha_registro": "<volatil>",
+                    "activo": 1,
+                    "geojson": "{\"type\":\"Feature\",\"properties\":{},\"geometry\":{\"type\":\"Polygon\",\"coordinates\":[[[-79.577074,-2.128121],[-79.576763,-2.128968],[-79.576012,-2.128668],[-79.576318,-2.127842],[-79.577074,-2.128121]]]}}",
+                    "altitud": "12.0",
+                    "ph": "5.9",
+                    "tipo_maiz": "Duro Amarillo",
+                    "fertilizacion_fecha": "<volatil>",
+                    "fertilizacion_dosis": null,
+                    "fertilizacion_tipo": null,
+                    "nombre_usuario": "AUTORES"
+                },
+                {
+                    "id": "<volatil>",
+                    "usuario_id": "<volatil>",
+                    "nombre_parcela": "PRUEBA 04",
+                    "variedad_maiz": "Pioneer P4039",
+                    "ubicacion": "Facundo Vela - Bolívar - Ecuador",
+                    "area": "0.39",
+                    "latitud": "-1.2045645",
+                    "longitud": "-79.0627974",
+                    "fecha_siembra": "<volatil>",
+                    "fecha_registro": "<volatil>",
+                    "activo": 1,
+                    "geojson": "{\"type\":\"Feature\",\"properties\":{},\"geometry\":{\"type\":\"Polygon\",\"coordinates\":[[[-79.062972,-1.204101],[-79.063106,-1.204546],[-79.062757,-1.205002],[-79.06272,-1.205028],[-79.062677,-1.204809],[-79.062709,-1.204733],[-79.062628,-1.204594],[-79.062569,-1.204605],[-79.062489,-1.204444],[-79.062532,-1.204278],[-79.062591,-1.204213],[-79.062972,-1.204101]]]}}",
+                    "altitud": "1729.0",
+                    "ph": "7.1",
+                    "tipo_maiz": "Duro Amarillo",
+                    "fertilizacion_fecha": "<volatil>",
+                    "fertilizacion_dosis": null,
+                    "fertilizacion_tipo": null,
+                    "nombre_usuario": "AUTORES"
+                },
+                {
+                    "id": "<volatil>",
+                    "usuario_id": "<volatil>",
+                    "nombre_parcela": "Pedro Carbo EC",
+                    "variedad_maiz": "INIAP 198 Canguil",
+                    "ubicacion": "Pedro Carbo - Pedro Carbo - Ecuador",
+                    "area": "0.60",
+                    "latitud": "-1.8160688",
+                    "longitud": "-80.2328877",
+                    "fecha_siembra": "<volatil>",
+                    "fecha_registro": "<volatil>",
+                    "activo": 1,
+                    "geojson": "{\"type\":\"Feature\",\"properties\":{},\"geometry\":{\"type\":\"Polygon\",\"coordinates\":[[[-80.232939,-1.815543],[-80.233373,-1.815876],[-80.232815,-1.816594],[-80.232402,-1.816224],[-80.232939,-1.815543]]]}}",
+                    "altitud": "53.0",
+                    "ph": "7.4",
+                    "tipo_maiz": "Duro Amarillo / Blanco",
+                    "fertilizacion_fecha": "<volatil>",
+                    "fertilizacion_dosis": null,
+                    "fertilizacion_tipo": null,
+                    "nombre_usuario": "AUTORES"
+                },
+                {
+                    "id": "<volatil>",
+                    "usuario_id": "<volatil>",
+                    "nombre_parcela": "Prueba Frio/Templado",
+                    "variedad_maiz": "INIAP 101 Blanco Harinoso",
+                    "ubicacion": "Logroño - Logroño - Ecuador",
+                    "area": "0.36",
+                    "latitud": "-2.6220003",
+                    "longitud": "-78.2051861",
+                    "fecha_siembra": "<volatil>",
+                    "fecha_registro": "<volatil>",
+                    "activo": 1,
+                    "geojson": "{\"type\":\"Feature\",\"properties\":{},\"geometry\":{\"type\":\"Polygon\",\"coordinates\":[[[-78.205237,-2.621585],[-78.205436,-2.622378],[-78.205044,-2.622416],[-78.204937,-2.621949],[-78.204947,-2.621665],[-78.205237,-2.621585]]]}}",
+                    "altitud": "664.0",
+                    "ph": "6.3",
+                    "tipo_maiz": "Suave Harinoso",
+                    "fertilizacion_fecha": "<volatil>",
+                    "fertilizacion_dosis": null,
+                    "fertilizacion_tipo": null,
+                    "nombre_usuario": "AUTORES"
+                },
+                {
+                    "id": "<volatil>",
+                    "usuario_id": "<volatil>",
+                    "nombre_parcela": "MILAGRO",
+                    "variedad_maiz": "Híbrido convencional",
+                    "ubicacion": "La Granja - Milagro - Ecuador",
+                    "area": "5.78",
+                    "latitud": "-2.1208099",
+                    "longitud": "-79.6033812",
+                    "fecha_siembra": "<volatil>",
+                    "fecha_registro": "<volatil>",
+                    "activo": 1,
+                    "geojson": "{\"type\":\"Feature\",\"properties\":{},\"geometry\":{\"type\":\"Polygon\",\"coordinates\":[[[-79.605464,-2.120579],[-79.605303,-2.121716],[-79.601299,-2.121019],[-79.601438,-2.120183],[-79.602319,-2.119904],[-79.602823,-2.119925],[-79.603242,-2.120236],[-79.603735,-2.120258],[-79.605464,-2.120579]]]}}",
+                    "altitud": "12.0",
+                    "ph": "6.6",
+                    "tipo_maiz": "Duro Amarillo",
+                    "fertilizacion_fecha": "<volatil>",
+                    "fertilizacion_dosis": null,
+                    "fertilizacion_tipo": null,
+                    "nombre_usuario": "AUTORES"
+                },
+                {
+                    "id": "<volatil>",
+                    "usuario_id": "<volatil>",
+                    "nombre_parcela": "PRUEBA 03",
+                    "variedad_maiz": "INIAP H-248 Soberano",
+                    "ubicacion": "24 de Mayo - San Jacinto de Yaguachi - Ecuador",
+                    "area": "1.28",
+                    "latitud": "-1.9863430",
+                    "longitud": "-79.6207299",
+                    "fecha_siembra": "<volatil>",
+                    "fecha_registro": "<volatil>",
+                    "activo": 1,
+                    "geojson": "{\"type\":\"Feature\",\"properties\":{},\"geometry\":{\"type\":\"Polygon\",\"coordinates\":[[[-79.621449,-1.986957],[-79.62081,-1.985665],[-79.620011,-1.986791],[-79.620129,-1.986962],[-79.620258,-1.986989],[-79.621315,-1.987021],[-79.621449,-1.986957]]]}}",
+                    "altitud": "5.0",
+                    "ph": "6.5",
+                    "tipo_maiz": "Duro Amarillo",
+                    "fertilizacion_fecha": "<volatil>",
+                    "fertilizacion_dosis": null,
+                    "fertilizacion_tipo": null,
+                    "nombre_usuario": "AUTORES"
+                },
+                {
+                    "id": "<volatil>",
+                    "usuario_id": "<volatil>",
+                    "nombre_parcela": "PRUEBA 02",
+                    "variedad_maiz": "INIAP 101 Blanco Harinoso",
+                    "ubicacion": "Aloasí - Ecuador",
+                    "area": "10.26",
+                    "latitud": "-0.4986418",
+                    "longitud": "-78.6101739",
+                    "fecha_siembra": "<volatil>",
+                    "fecha_registro": "<volatil>",
+                    "activo": 1,
+                    "geojson": "{\"type\":\"Feature\",\"properties\":{},\"geometry\":{\"type\":\"Polygon\",\"coordinates\":[[[-78.611504,-0.50024],[-78.607793,-0.499103],[-78.607836,-0.498459],[-78.607921,-0.497773],[-78.608179,-0.497043],[-78.612555,-0.498717],[-78.612362,-0.498889],[-78.611504,-0.50024]]]}}",
+                    "altitud": "3191.0",
+                    "ph": "5.5",
+                    "tipo_maiz": "Suave Harinoso",
+                    "fertilizacion_fecha": "<volatil>",
+                    "fertilizacion_dosis": null,
+                    "fertilizacion_tipo": null,
+                    "nombre_usuario": "AUTORES"
+                },
+                {
+                    "id": "<volatil>",
+                    "usuario_id": "<volatil>",
+                    "nombre_parcela": "PRUEBA 01",
+                    "variedad_maiz": "INIAP H-603 Superior",
+                    "ubicacion": "Recinto Cuatro Mangas - Balzar - Ecuador",
+                    "area": "2.58",
+                    "latitud": "-1.3434505",
+                    "longitud": "-79.8275204",
+                    "fecha_siembra": "<volatil>",
+                    "fecha_registro": "<volatil>",
+                    "activo": 1,
+                    "geojson": "{\"type\":\"Feature\",\"properties\":{},\"geometry\":{\"type\":\"Polygon\",\"coordinates\":[[[-79.827814,-1.342614],[-79.828554,-1.342979],[-79.828468,-1.343601],[-79.828422,-1.343874],[-79.828331,-1.343906],[-79.828229,-1.344271],[-79.828111,-1.344238],[-79.82809,-1.344287],[-79.827929,-1.344244],[-79.827929,-1.344158],[-79.827865,-1.344153],[-79.827774,-1.344206],[-79.827709,-1.34419],[-79.82765,-1.344067],[-79.827597,-1.344083],[-79.827463,-1.344072],[-79.827398,-1.344094],[-79.827216,-1.344051],[-79.82721,-1.343943],[-79.827157,-1.343943],[-79.827109,-1.34397],[-79.82713,-1.344029],[-79.826889,-1.343981],[-79.82683,-1.343938],[-79.82676,-1.343954],[-79.826594,-1.343847],[-79.826535,-1.343847],[-79.826525,-1.343799],[-79.826589,-1.343777],[-79.826621,-1.343686],[-79.82654,-1.343643],[-79.826487,-1.343627],[-79.826519,-1.343573],[-79.827814,-1.342614]]]}}",
+                    "altitud": "35.0",
+                    "ph": "7.1",
+                    "tipo_maiz": "Duro Amarillo",
+                    "fertilizacion_fecha": "<volatil>",
+                    "fertilizacion_dosis": null,
+                    "fertilizacion_tipo": null,
+                    "nombre_usuario": "AUTORES"
+                }
+            ]
+        },
+        {
+            "nombre": "valores ubicacion (externo)",
+            "metodo": "GET",
+            "ruta": "/api/cultivos/valores-ubicacion?id=45",
+            "volatilidad": "estructural",
+            "http": 200,
+            "cuerpo": {
+                "success": true,
+                "source": "Open-Meteo Archive API (Promedio 30 dias)",
+                "temperatura": 13.1,
+                "humedad": 78.5,
+                "precipitacion": 2700,
+                "ph_suelo": 6.2,
+                "tipo_suelo": "franco",
+                "area_simulada": 2.5
+            }
+        },
+        {
+            "nombre": "simular",
+            "metodo": "POST",
+            "ruta": "/api/simulaciones/simular",
+            "volatilidad": "tolerante",
+            "http": 200,
+            "cuerpo": {
+                "success": true,
+                "message": "Simulación completada exitosamente.",
+                "resultado": {
+                    "area": 2.5,
+                    "categoria_cosecha": "Baja",
+                    "confianza": 67,
+                    "escenarios": {
+                        "lluvioso": {
+                            "produccion": 10.56,
+                            "rendimiento": 4.22
+                        },
+                        "sequia": {
+                            "produccion": 9.05,
+                            "rendimiento": 3.62
+                        },
+                        "verano": {
+                            "produccion": 10.35,
+                            "rendimiento": 4.14
+                        }
+                    },
+                    "metricas_modelo": {
+                        "mae": 0.7832886621418884,
+                        "r2": 0.6698154354455734,
+                        "rmse": 1.0098229766510727
+                    },
+                    "modelo": "xgboost",
+                    "precision_data": {
+                        "inamhi_historico": {
+                            "estacion": {
+                                "altitud": 2789,
+                                "distancia_km": 2.23,
+                                "id": "<volatil>",
+                                "lat": -0.1783,
+                                "lon": -78.4877,
+                                "nombre": "QUITO INAMHI-I¥AQUITO"
+                            },
+                            "estadisticas": {
+                                "mejor_anio_precip": 2017,
+                                "peor_anio_precip": 2019,
+                                "precipitacion_anual_promedio": 1038,
+                                "precipitacion_media_mensual": {
+                                    "abr": 179.84,
+                                    "ago": 18.14,
+                                    "dic": 98.23,
+                                    "ene": 92.64,
+                                    "feb": 115.7,
+                                    "jul": 22.93,
+                                    "jun": 33.18,
+                                    "mar": 149.65,
+                                    "may": 102.39,
+                                    "nov": 104.98,
+                                    "oct": 104.75,
+                                    "sep": 46.79
+                                },
+                                "precipitacion_std_mensual": {
+                                    "abr": 80.03,
+                                    "ago": 18.5,
+                                    "dic": 51.55,
+                                    "ene": 57.21,
+                                    "feb": 59.7,
+                                    "jul": 32.2,
+                                    "jun": 22.92,
+                                    "mar": 64.02,
+                                    "may": 62.59,
+                                    "nov": 53.27,
+                                    "oct": 57.3,
+                                    "sep": 32.44
+                                },
+                                "temperatura_anual_promedio": 15.35,
+                                "temperatura_media_mensual": {
+                                    "abr": 15.09,
+                                    "ago": 15.93,
+                                    "dic": 15.03,
+                                    "ene": 15.13,
+                                    "feb": 15.09,
+                                    "jul": 15.66,
+                                    "jun": 15.56,
+                                    "mar": 15.08,
+                                    "may": 15.32,
+                                    "nov": 14.92,
+                                    "oct": 15.31,
+                                    "sep": 15.95
+                                },
+                                "temperatura_std_mensual": {
+                                    "abr": 0.7,
+                                    "ago": 0.63,
+                                    "dic": 0.79,
+                                    "ene": 0.87,
+                                    "feb": 0.94,
+                                    "jul": 0.63,
+                                    "jun": 0.55,
+                                    "mar": 0.85,
+                                    "may": 0.57,
+                                    "nov": 0.52,
+                                    "oct": 0.56,
+                                    "sep": 0.78
+                                }
+                            }
+                        },
+                        "open_meteo": {
+                            "humedad_relativa_pct": 90,
+                            "lluvia_reciente": 0,
+                            "temperatura_media_c": 11.4,
+                            "temperatura_suelo_c": 13.35,
+                            "viento_speed": 2.5
+                        },
+                        "soilgrids": null
+                    },
+                    "produccion_total": 10.59,
+                    "recomendaciones": [
+                        "Temperatura elevada (24.5°C) superior al óptimo (14-18°C). Implementar riego para reducir estrés térmico.",
+                        "Humedad relativa adecuada (70.0%) para el cultivo.",
+                        "Precipitación adecuada (800 mm) en rango óptimo (800-1200 mm).",
+                        "Dosis de Nitrógeno (150 kg/ha) en rango sugerido (135-160 kg/ha).",
+                        "pH del suelo alcalino (6.2). Rango óptimo: 6.0-6.0. Considerar materia orgánica para bajar el pH."
+                    ],
+                    "rendimiento_estimado": 4.2357,
+                    "shap_values": {
+                        "area": 0,
+                        "fertilizante": 0.0697,
+                        "humedad": -0.0062,
+                        "phSuelo": 0.1573,
+                        "precipitacion": 0.0413,
+                        "temperatura": 0.1255,
+                        "tipoSuelo": 0.0127
+                    },
+                    "success": true,
+                    "simulacion_id": "<volatil>"
+                }
+            }
+        },
+        {
+            "nombre": "historial",
+            "metodo": "GET",
+            "ruta": "/api/simulaciones/historial?anio=2026",
+            "volatilidad": "exacto",
+            "http": 200,
+            "cuerpo": {
+                "simulaciones": [
+                    {
+                        "id": "<volatil>",
+                        "usuario_id": "<volatil>",
+                        "cultivo_id": "<volatil>",
+                        "nombre": "Simulación Contrato",
+                        "modelo_usado": "xgboost",
+                        "temperatura": "24.50",
+                        "humedad": "70.00",
+                        "precipitacion": "800.00",
+                        "fertilizante": "150.00",
+                        "ph_suelo": "6.20",
+                        "tipo_suelo": "franco",
+                        "area_simulada": "2.50",
+                        "rendimiento_estimado": "4.2357",
+                        "produccion_total": "10.59",
+                        "confianza": "67.00",
+                        "shap_json": "{\"area\":0,\"fertilizante\":0.0697,\"humedad\":-0.0062,\"phSuelo\":0.1573,\"precipitacion\":0.0413,\"temperatura\":0.1255,\"tipoSuelo\":0.0127}",
+                        "recomendaciones_json": "[\"Temperatura elevada (24.5\\u00b0C) superior al \\u00f3ptimo (14-18\\u00b0C). Implementar riego para reducir estr\\u00e9s t\\u00e9rmico.\",\"Humedad relativa adecuada (70.0%) para el cultivo.\",\"Precipitaci\\u00f3n adecuada (800 mm) en rango \\u00f3ptimo (800-1200 mm).\",\"Dosis de Nitr\\u00f3geno (150 kg\\/ha) en rango sugerido (135-160 kg\\/ha).\",\"pH del suelo alcalino (6.2). Rango \\u00f3ptimo: 6.0-6.0. Considerar materia org\\u00e1nica para bajar el pH.\"]",
+                        "fecha": "<volatil>",
+                        "categoria_cosecha": "Baja",
+                        "escenarios_json": "{\"lluvioso\":{\"produccion\":10.56,\"rendimiento\":4.22},\"sequia\":{\"produccion\":9.05,\"rendimiento\":3.62},\"verano\":{\"produccion\":10.35,\"rendimiento\":4.14}}",
+                        "nombre_parcela": "Lote Contrato"
+                    }
+                ],
+                "estadisticas": {
+                    "total_simulaciones": 1,
+                    "rendimiento_promedio": "4.23570000",
+                    "rendimiento_maximo": "4.2357",
+                    "rendimiento_minimo": "4.2357",
+                    "confianza_promedio": "67.000000",
+                    "produccion_total": "10.59"
+                }
+            }
+        },
+        {
+            "nombre": "explain cascada",
+            "metodo": "POST",
+            "ruta": "/api/simulaciones/explain",
+            "volatilidad": "exacto",
+            "http": 200,
+            "cuerpo": {
+                "titulo": "Cascada de Brechas de Rendimiento",
+                "nivel": "riesgoso",
+                "nivel_del_resultado": "riesgoso",
+                "secciones": [
+                    {
+                        "titulo": "1. ¿Cuál es la limitante principal de tu lote?",
+                        "tipo": "danger",
+                        "contenido": "En tu parcela Lote Contrato, el factor que más frena tu cosecha es **Nitrógeno** (150 kg/ha aplicados vs 180 kg/ha recomendados). Te resta **-0.47 t/ha** del rendimiento potencial de 11.2 t/ha."
+                    },
+                    {
+                        "titulo": "2. ¿Cuánto dinero pierdes por esta limitante?",
+                        "tipo": "warning",
+                        "contenido": "Esa pérdida de -0.47 t/ha equivale a dejar de ingresar **-170.61 USD por hectárea** (al precio de $16.50 USD/qq, con 22 quintales por tonelada)."
+                    },
+                    {
+                        "titulo": "3. ¿Qué puedes hacer para reducir esta brecha?",
+                        "tipo": "success",
+                        "contenido": "Enfoca tu inversión en corregir Nitrógeno antes de agregar otros insumos, ya que es el cuello de botella que más impacto tiene en tu rendimiento."
+                    },
+                    {
+                        "titulo": "4. Seguimiento recomendado",
+                        "tipo": "info",
+                        "contenido": "Después de aplicar la corrección, vuelve a correr la simulación para verificar que la brecha se redujo y que tu cosecha estimada subió."
+                    }
+                ],
+                "que_significa": "En tu parcela Lote Contrato, el factor que más frena tu cosecha es **Nitrógeno** (150 kg/ha aplicados vs 180 kg/ha recomendados). Te resta **-0.47 t/ha** del rendimiento potencial de 11.2 t/ha.",
+                "por_que_pudo_pasar": "Esa pérdida de -0.47 t/ha equivale a dejar de ingresar **-170.61 USD por hectárea** (al precio de $16.50 USD/qq, con 22 quintales por tonelada).",
+                "como_mejorarlo": "Enfoca tu inversión en corregir Nitrógeno antes de agregar otros insumos, ya que es el cuello de botella que más impacto tiene en tu rendimiento.",
+                "alerta_clave": "Revisar recomendaciones.",
+                "source": "Intérprete Agrícola ZeaSys",
+                "offline": true
+            }
+        },
+        {
+            "nombre": "explain ROI",
+            "metodo": "POST",
+            "ruta": "/api/simulaciones/explain",
+            "volatilidad": "exacto",
+            "http": 200,
+            "cuerpo": {
+                "titulo": "ROI Anual",
+                "nivel": "favorable",
+                "nivel_del_resultado": "favorable",
+                "secciones": [
+                    {
+                        "titulo": "1. ¿Qué significa un ROI de 35 %?",
+                        "tipo": "info",
+                        "contenido": "Un Retorno de Inversión de **35 %** significa que por cada dólar que inviertes en tu lote Lote Contrato, recuperas ese dólar más **0.35 USD** de ganancia. Es una rentabilidad atractiva."
+                    },
+                    {
+                        "titulo": "2. ¿Tu inversión en maíz es rentable?",
+                        "tipo": "success",
+                        "contenido": "Sí. Con un rendimiento de 4.24 t/ha y el precio actual del maíz, tu inversión genera más ganancia que dejar el dinero en el banco."
+                    },
+                    {
+                        "titulo": "3. ¿Cómo mejorar la rentabilidad?",
+                        "tipo": "success",
+                        "contenido": "Reduce costos fraccionando la compra de insumos y negocia el precio de venta anticipadamente para asegurar un ingreso mínimo."
+                    }
+                ],
+                "que_significa": "Un Retorno de Inversión de **35 %** significa que por cada dólar que inviertes en tu lote Lote Contrato, recuperas ese dólar más **0.35 USD** de ganancia. Es una rentabilidad atractiva.",
+                "por_que_pudo_pasar": "Sí. Con un rendimiento de 4.24 t/ha y el precio actual del maíz, tu inversión genera más ganancia que dejar el dinero en el banco.",
+                "como_mejorarlo": "Reduce costos fraccionando la compra de insumos y negocia el precio de venta anticipadamente para asegurar un ingreso mínimo.",
+                "alerta_clave": "Revisar recomendaciones.",
+                "source": "Intérprete Agrícola ZeaSys",
+                "offline": true
+            }
+        },
+        {
+            "nombre": "explain probabilidad",
+            "metodo": "POST",
+            "ruta": "/api/simulaciones/explain",
+            "volatilidad": "exacto",
+            "http": 200,
+            "cuerpo": {
+                "titulo": "Probabilidad de Cosecha",
+                "nivel": "favorable",
+                "nivel_del_resultado": "favorable",
+                "secciones": [
+                    {
+                        "titulo": "1. ¿Qué significa una Probabilidad de Cosecha del 82%?",
+                        "tipo": "info",
+                        "contenido": "Hay un **82%** de certeza estadística de que tu cultivo Pioneer P4039 alcanzará las **4.24 t/ha** estimadas sin sufrir un colapso por sequía, plagas o heladas durante el ciclo."
+                    },
+                    {
+                        "titulo": "2. ¿Es buena esta probabilidad?",
+                        "tipo": "success",
+                        "contenido": "Sí. Una confianza por encima del 80% indica que las condiciones de Quito son estables y tu plan de manejo es sólido."
+                    },
+                    {
+                        "titulo": "3. ¿Cómo mantener alta esta probabilidad?",
+                        "tipo": "success",
+                        "contenido": "Mantén el monitoreo de plagas, asegura riegos oportunos y evita sembrar fuera de la ventana óptima para Quito."
+                    }
+                ],
+                "que_significa": "Hay un **82%** de certeza estadística de que tu cultivo Pioneer P4039 alcanzará las **4.24 t/ha** estimadas sin sufrir un colapso por sequía, plagas o heladas durante el ciclo.",
+                "por_que_pudo_pasar": "Sí. Una confianza por encima del 80% indica que las condiciones de Quito son estables y tu plan de manejo es sólido.",
+                "como_mejorarlo": "Mantén el monitoreo de plagas, asegura riegos oportunos y evita sembrar fuera de la ventana óptima para Quito.",
+                "alerta_clave": "Revisar recomendaciones.",
+                "source": "Intérprete Agrícola ZeaSys",
+                "offline": true
+            }
+        },
+        {
+            "nombre": "dashboard yield",
+            "metodo": "GET",
+            "ruta": "/api/yield?cultivo_id=45&anio=2026",
+            "volatilidad": "tolerante",
+            "http": 200,
+            "cuerpo": {
+                "cultivo_activo": {
+                    "id": "<volatil>",
+                    "usuario_id": "<volatil>",
+                    "nombre_parcela": "Lote Contrato",
+                    "variedad_maiz": "Pioneer P4039",
+                    "ubicacion": "Quito - Pichincha",
+                    "area": "2.50",
+                    "latitud": "-0.1807000",
+                    "longitud": "-78.4678000",
+                    "fecha_siembra": "<volatil>",
+                    "fecha_registro": "<volatil>",
+                    "activo": 1,
+                    "geojson": null,
+                    "altitud": "2850.0",
+                    "ph": "6.2",
+                    "tipo_maiz": "Duro Amarillo",
+                    "fertilizacion_fecha": "<volatil>",
+                    "fertilizacion_dosis": null,
+                    "fertilizacion_tipo": null
+                },
+                "kpis": {
+                    "rendimiento_potencial": 10,
+                    "rendimiento_alcanzable": 8.14,
+                    "rendimiento_predicho": 4.24,
+                    "yield_gap_total": 5.8,
+                    "principal_limitante": "Temperatura"
+                },
+                "waterfall_losses": [
+                    {
+                        "name": "Potencial Teórico",
+                        "value": 10,
+                        "is_kpi": true
+                    },
+                    {
+                        "name": "Pérdida Nitrógeno",
+                        "value": -0.9
+                    },
+                    {
+                        "name": "Pérdida Agua",
+                        "value": -0.9
+                    },
+                    {
+                        "name": "Pérdida Temperatura",
+                        "value": -2.9
+                    },
+                    {
+                        "name": "Pérdida Fecha Siembra",
+                        "value": -0.9
+                    },
+                    {
+                        "name": "Pérdida Suelo (pH)",
+                        "value": -0.2
+                    },
+                    {
+                        "name": "Rendimiento Final Predicho",
+                        "value": 4.24,
+                        "is_kpi": true
+                    }
+                ],
+                "fenologia_comparativa": {
+                    "labels": [
+                        "Sem 2",
+                        "Sem 4",
+                        "Sem 6",
+                        "Sem 8 (Floración)",
+                        "Sem 10",
+                        "Sem 12",
+                        "Sem 14 (Madurez)"
+                    ],
+                    "proyeccion_actual": [
+                        0,
+                        1.1,
+                        2.12,
+                        3,
+                        3.67,
+                        4.1,
+                        4.24
+                    ],
+                    "mejor_ano": [
+                        0,
+                        1.22,
+                        2.35,
+                        3.32,
+                        4.07,
+                        4.54,
+                        4.7
+                    ],
+                    "peor_ano": [
+                        0,
+                        0.93,
+                        1.8,
+                        2.55,
+                        3.12,
+                        3.48,
+                        3.6
+                    ]
+                },
+                "factores_contribucion": [
+                    {
+                        "factor": "Nitrógeno",
+                        "porcentaje": 15.5
+                    },
+                    {
+                        "factor": "Agua",
+                        "porcentaje": 15.5
+                    },
+                    {
+                        "factor": "Temperatura",
+                        "porcentaje": 50
+                    },
+                    {
+                        "factor": "Fecha de Siembra",
+                        "porcentaje": 15.5
+                    },
+                    {
+                        "factor": "Suelo (pH)",
+                        "porcentaje": 3.4
+                    }
+                ]
+            }
+        },
+        {
+            "nombre": "dashboard scenarios",
+            "metodo": "GET",
+            "ruta": "/api/scenarios?cultivo_id=45&anio=2026",
+            "volatilidad": "tolerante",
+            "http": 200,
+            "cuerpo": {
+                "cultivo_activo": {
+                    "id": "<volatil>",
+                    "usuario_id": "<volatil>",
+                    "nombre_parcela": "Lote Contrato",
+                    "variedad_maiz": "Pioneer P4039",
+                    "ubicacion": "Quito - Pichincha",
+                    "area": "2.50",
+                    "latitud": "-0.1807000",
+                    "longitud": "-78.4678000",
+                    "fecha_siembra": "<volatil>",
+                    "fecha_registro": "<volatil>",
+                    "activo": 1,
+                    "geojson": null,
+                    "altitud": "2850.0",
+                    "ph": "6.2",
+                    "tipo_maiz": "Duro Amarillo",
+                    "fertilizacion_fecha": "<volatil>",
+                    "fertilizacion_dosis": null,
+                    "fertilizacion_tipo": null
+                },
+                "recomendaciones": [
+                    {
+                        "tipo": "success",
+                        "icono": "CheckCircle",
+                        "titulo": "Condiciones Óptimas",
+                        "texto": "Todos los parámetros están dentro de los rangos óptimos para el cultivo de maíz. Mantener el manejo actual.",
+                        "accion": "Mantener plan actual"
+                    }
+                ],
+                "kpis": {
+                    "rendimiento_esperado": 4.24,
+                    "prob_superar_objetivo": 12,
+                    "riesgo_agronomico": {
+                        "nivel": "bajo",
+                        "color": "success",
+                        "texto": "Bajo"
+                    },
+                    "estabilidad": 85,
+                    "fecha_siembra_recomendada": "<volatil>"
+                },
+                "percentiles": {
+                    "p10": 4.24,
+                    "p50": 4.24,
+                    "p90": 4.24
+                },
+                "heatmap": [
+                    {
+                        "fecha": "<volatil>",
+                        "hibrido": "INIAP 180 'Alto Rendimiento'",
+                        "valor": 5.8
+                    },
+                    {
+                        "fecha": "<volatil>",
+                        "hibrido": "INIAP 122 'Chaucho Mejorado'",
+                        "valor": 4.8
+                    },
+                    {
+                        "fecha": "<volatil>",
+                        "hibrido": "Bonanza (dulce)",
+                        "valor": 4.8
+                    },
+                    {
+                        "fecha": "<volatil>",
+                        "hibrido": "INIAP 111 'Guagal Mejorado'",
+                        "valor": 4.4
+                    },
+                    {
+                        "fecha": "<volatil>",
+                        "hibrido": "INIAP 101 'Blanco Harinoso Precoz'",
+                        "valor": 4.8
+                    },
+                    {
+                        "fecha": "<volatil>",
+                        "hibrido": "INIAP 180 'Alto Rendimiento'",
+                        "valor": 5.8
+                    },
+                    {
+                        "fecha": "<volatil>",
+                        "hibrido": "INIAP 122 'Chaucho Mejorado'",
+                        "valor": 4.7
+                    },
+                    {
+                        "fecha": "<volatil>",
+                        "hibrido": "Bonanza (dulce)",
+                        "valor": 4.4
+                    },
+                    {
+                        "fecha": "<volatil>",
+                        "hibrido": "INIAP 111 'Guagal Mejorado'",
+                        "valor": 4
+                    },
+                    {
+                        "fecha": "<volatil>",
+                        "hibrido": "INIAP 101 'Blanco Harinoso Precoz'",
+                        "valor": 3.9
+                    },
+                    {
+                        "fecha": "<volatil>",
+                        "hibrido": "INIAP 180 'Alto Rendimiento'",
+                        "valor": 5.3
+                    },
+                    {
+                        "fecha": "<volatil>",
+                        "hibrido": "INIAP 122 'Chaucho Mejorado'",
+                        "valor": 4.4
+                    },
+                    {
+                        "fecha": "<volatil>",
+                        "hibrido": "Bonanza (dulce)",
+                        "valor": 4
+                    },
+                    {
+                        "fecha": "<volatil>",
+                        "hibrido": "INIAP 111 'Guagal Mejorado'",
+                        "valor": 3.6
+                    },
+                    {
+                        "fecha": "<volatil>",
+                        "hibrido": "INIAP 101 'Blanco Harinoso Precoz'",
+                        "valor": 3.8
+                    }
+                ],
+                "ranking": [
+                    {
+                        "estrategia": "Rendimiento Máximo",
+                        "combinacion": "INIAP 180 'Alto Rendimiento' + Siembra Temprana",
+                        "valor": 7,
+                        "unidad": "t/ha",
+                        "badge": "Recomendado",
+                        "porque": "Maximiza la captación de radiación solar y la fotosíntesis C4 en la fase vegetativa, evitando pérdidas por estrés hídrico en floración VT."
+                    },
+                    {
+                        "estrategia": "Menor Riesgo Climático",
+                        "combinacion": "INIAP 122 'Chaucho Mejorado' + Siembra Media",
+                        "valor": 4.5,
+                        "unidad": "t/ha",
+                        "badge": "Estable",
+                        "porque": "Evita las lluvias extremas o variaciones térmicas bruscas de inicio de temporada, protegiendo las plántulas en su germinación."
+                    },
+                    {
+                        "estrategia": "Máxima Estabilidad",
+                        "combinacion": "Bonanza (dulce) + Siembra Temprana",
+                        "valor": 4.18,
+                        "unidad": "t/ha",
+                        "badge": "Resiliente",
+                        "porque": "Mantiene un rendimiento constante (<8% de variación) tanto en años secos como en temporadas con exceso de precipitaciones."
+                    },
+                    {
+                        "estrategia": "Alta Eficiencia de N",
+                        "combinacion": "INIAP 111 'Guagal Mejorado' + Siembra Temprana",
+                        "valor": 4.1,
+                        "unidad": "t/ha",
+                        "badge": "Eficiente",
+                        "porque": "Presenta la mayor tasa de conversión de nitrógeno a biomasa de grano, reduciendo la necesidad de sobre-fertilización sintética."
+                    },
+                    {
+                        "estrategia": "Resiliencia Hídrica",
+                        "combinacion": "INIAP 101 'Blanco Harinoso Precoz' + Siembra Media",
+                        "valor": 4,
+                        "unidad": "t/ha",
+                        "badge": "Tolerante",
+                        "porque": "Su arquitectura radicular profunda le permite tolerar veranillos imprevistos de hasta 18 días sin reducir el llenado de mazorca."
+                    }
+                ],
+                "viabilidad_siembra": [
+                    {
+                        "rango": "1–31 MAR",
+                        "estado": "Siembra: Imbabura / Carchi / Pichincha",
+                        "evaluacion": "muy_favorable",
+                        "color": "success",
+                        "nota": "Época óptima de siembra recomendada en la zona Imbabura / Carchi / Pichincha (Maíz Suave (Sierra Norte)) para obtener el máximo rendimiento."
+                    },
+                    {
+                        "rango": "1–30 ABR",
+                        "estado": "Siembra: Imbabura / Carchi / Pichincha",
+                        "evaluacion": "muy_favorable",
+                        "color": "success",
+                        "nota": "Época óptima de siembra recomendada en la zona Imbabura / Carchi / Pichincha (Maíz Suave (Sierra Norte)) para obtener el máximo rendimiento."
+                    },
+                    {
+                        "rango": "1–31 MAY",
+                        "estado": "Siembra: Imbabura / Carchi / Pichincha",
+                        "evaluacion": "muy_favorable",
+                        "color": "success",
+                        "nota": "Época óptima de siembra recomendada en la zona Imbabura / Carchi / Pichincha (Maíz Suave (Sierra Norte)) para obtener el máximo rendimiento."
+                    },
+                    {
+                        "rango": "1–31 OCT",
+                        "estado": "Cosecha: Imbabura / Carchi / Pichincha",
+                        "evaluacion": "favorable",
+                        "color": "info",
+                        "nota": "Periodo de cosecha estimado en la zona Imbabura / Carchi / Pichincha (Maíz Suave (Sierra Norte)) según ciclo fenológico."
+                    },
+                    {
+                        "rango": "1–30 NOV",
+                        "estado": "Cosecha: Imbabura / Carchi / Pichincha",
+                        "evaluacion": "favorable",
+                        "color": "info",
+                        "nota": "Periodo de cosecha estimado en la zona Imbabura / Carchi / Pichincha (Maíz Suave (Sierra Norte)) según ciclo fenológico."
+                    }
+                ],
+                "simulaciones_count": 1
+            }
+        },
+        {
+            "nombre": "dashboard climate (externo)",
+            "metodo": "GET",
+            "ruta": "/api/climate?cultivo_id=45&anio=2026",
+            "volatilidad": "estructural",
+            "http": 200,
+            "cuerpo": {
+                "kpis": {
+                    "enso": {
+                        "estado": "Niño (Activo)",
+                        "color": "danger",
+                        "desc": "Fenómeno global de El Niño activo para el período 2026 en todo el país"
+                    },
+                    "prob_lluvia_bajo_promedio": 10,
+                    "prob_estres_termico": 5,
+                    "agua_util": 108,
+                    "indice_riesgo": {
+                        "nivel": "Bajo",
+                        "color": "success"
+                    }
+                },
+                "api_source": "Open-Meteo Archive API (Promedio 30 dias) (Caché local de la parcela)",
+                "clima_actual": {
+                    "temperatura": 13.1,
+                    "humedad": 78.5,
+                    "precipitacion": 2700
+                },
+                "timeline_anomalia": {
+                    "labels": [
+                        "Ene",
+                        "Feb",
+                        "Mar",
+                        "Abr",
+                        "May",
+                        "Jun",
+                        "Jul",
+                        "Ago",
+                        "Sep",
+                        "Oct",
+                        "Nov",
+                        "Dic"
+                    ],
+                    "lluvia_historica": [
+                        80,
+                        106,
+                        106,
+                        80,
+                        54,
+                        54,
+                        80,
+                        106,
+                        106,
+                        80,
+                        54,
+                        54
+                    ],
+                    "lluvia_anomala": [
+                        72,
+                        105,
+                        114,
+                        87,
+                        51,
+                        52,
+                        87,
+                        110,
+                        98,
+                        89,
+                        63,
+                        57
+                    ],
+                    "temperatura_anomala": [
+                        15.5,
+                        16.2,
+                        16.1,
+                        15.1,
+                        14.3,
+                        15,
+                        14.5,
+                        14,
+                        13.3,
+                        14.1,
+                        15.2,
+                        15.2
+                    ]
+                },
+                "agua_estratos": {
+                    "labels": [
+                        "0-20 cm",
+                        "20-40 cm",
+                        "40-60 cm",
+                        "60-100 cm"
+                    ],
+                    "valores": [
+                        27,
+                        32,
+                        49,
+                        0
+                    ]
+                },
+                "timeline_fenologico": [
+                    {
+                        "etapa": "Emergencia",
+                        "mes": "Oct-Nov",
+                        "riesgo": "Bajo Riesgo",
+                        "alerta": "Bajo",
+                        "color": "success",
+                        "descripcion": "Suelo: Andosol (suelo volcánico rico en MO) Franco-arcilloso (pH óptimo: 6.0). Densidad objetivo: 45,000–62,500 pl/ha. Riego: Lluvia + riego complementario Aspersión/goteo. Plagas clave: Gusano Alambre (Umbral: 3–5 larvas/m²; Control: Clorpirifos al suelo Carbofurán)"
+                    },
+                    {
+                        "etapa": "Crecimiento",
+                        "mes": "Nov-Dic",
+                        "riesgo": "Riesgo Moderado",
+                        "alerta": "Moderado",
+                        "color": "warning",
+                        "descripcion": "Fertilización recomendada: 135–160 kg/ha de N. Fraccionamiento: 3 aplicaciones: • Siembra (P+K base) • 45 dds (N1) • 75 dds (N2). Biofertilización: INIAP Biofertilizante (bacterias promotoras). Plagas clave: Gusano Cogollero (Umbral: ≥30% plantas afectadas; Control: Clorpirifos, Lambda-cialotrina, Emamectina benzoato) | Pulgón del Maíz (Umbral: 100+ pulgones por planta; Control: Imidacloprid, Pirimicarb) | Tizón Foliar (Umbral: Alta HR + Temp 18–25°C > 7 días; Control: Mancozeb, Trifloxistrobin + Propiconazol) | Roya Común (Umbral: Alta HR (>85%) Temperatura fresca; Control: Mancozeb, Azoxistrobina + Propiconazol) | Carbón del Maíz (Umbral: Condiciones cálidas con heridas; Control: —) | Mancha Foliar (Umbral: HR >75% Altas lluvias; Control: Mancozeb, Clorotalonil)"
+                    },
+                    {
+                        "etapa": "Floración",
+                        "mes": "Ene-Feb",
+                        "riesgo": "Alto Riesgo",
+                        "alerta": "Alto",
+                        "color": "danger",
+                        "descripcion": "Temperatura óptima de desarrollo: 14–18 °C. Evitar encharcamientos o sequías extremas durante polinización. Plagas clave: Gusano del Choclo (Umbral: ≥20% mazorcas infestadas; Control: Lambdacialotrina, Deltametrina (aplicar en seda fresca)) | Mosca del Choclo (Umbral: Monitoreo visual; Control: Cipermetrina, Malatión) | Pulgón del Maíz (Umbral: 100+ pulgones por planta; Control: Imidacloprid, Pirimicarb) | Roya Común (Umbral: Alta HR (>85%) Temperatura fresca; Control: Mancozeb, Azoxistrobina + Propiconazol) | Carbón del Maíz (Umbral: Condiciones cálidas con heridas; Control: —)"
+                    },
+                    {
+                        "etapa": "Llenado de grano",
+                        "mes": "Mar-Abr",
+                        "riesgo": "Riesgo Moderado",
+                        "alerta": "Moderado",
+                        "color": "warning",
+                        "descripcion": "Duración estimada del ciclo en esta zona: 180–220 días. Mantener humedad residual. Plagas clave: Gusano del Choclo (Umbral: ≥20% mazorcas infestadas; Control: Lambdacialotrina, Deltametrina (aplicar en seda fresca)) | Pudrición de Mazorca (Umbral: Alta HR + calor; Control: Fungicidas preventivos (antes de aparición))"
+                    }
+                ],
+                "fecha_siembra": "<volatil>"
+            }
+        },
+        {
+            "nombre": "dashboard financial",
+            "metodo": "GET",
+            "ruta": "/api/financial?cultivo_id=45&anio=2026",
+            "volatilidad": "tolerante",
+            "http": 200,
+            "cuerpo": {
+                "datos_base_sistema": {
+                    "precio_maiz_qq": 16.5,
+                    "rendimiento_qq": 93.5,
+                    "costo_semilla": 85,
+                    "costo_fert": 120,
+                    "costo_riego": 60,
+                    "costo_proteccion": 45,
+                    "otros_var": 80,
+                    "costos_fijos": 120,
+                    "area_parcela": 2.5,
+                    "nombre_parcela": "Lote Contrato",
+                    "rendimiento_tha": 4.241
+                },
+                "kpis": {
+                    "margen_neto": 1032.71,
+                    "margen_bruto": 1152.71,
+                    "punto_equilibrio": 1.4,
+                    "prob_superar_break_even": 88,
+                    "roi": 202.5,
+                    "precio_maiz": 363.76,
+                    "precio_maiz_qq": 16.5,
+                    "precio_piso_qq": 5.45,
+                    "ganancia_por_dolar": 2.02,
+                    "area_parcela": 2.5,
+                    "nombre_parcela": "Lote Contrato",
+                    "ingreso_bruto_parcela": 3856.78,
+                    "costo_total_parcela": 1275,
+                    "margen_neto_parcela": 2581.78,
+                    "produccion_total_qq": 233.8
+                },
+                "costo_total": 510,
+                "sensibilidad": [
+                    {
+                        "precio": 12,
+                        "rendimiento": 70,
+                        "margen": 330
+                    },
+                    {
+                        "precio": 12,
+                        "rendimiento": 90,
+                        "margen": 570
+                    },
+                    {
+                        "precio": 12,
+                        "rendimiento": 110,
+                        "margen": 810
+                    },
+                    {
+                        "precio": 12,
+                        "rendimiento": 130,
+                        "margen": 1050
+                    },
+                    {
+                        "precio": 12,
+                        "rendimiento": 150,
+                        "margen": 1290
+                    },
+                    {
+                        "precio": 14.5,
+                        "rendimiento": 70,
+                        "margen": 505
+                    },
+                    {
+                        "precio": 14.5,
+                        "rendimiento": 90,
+                        "margen": 795
+                    },
+                    {
+                        "precio": 14.5,
+                        "rendimiento": 110,
+                        "margen": 1085
+                    },
+                    {
+                        "precio": 14.5,
+                        "rendimiento": 130,
+                        "margen": 1375
+                    },
+                    {
+                        "precio": 14.5,
+                        "rendimiento": 150,
+                        "margen": 1665
+                    },
+                    {
+                        "precio": 16.5,
+                        "rendimiento": 70,
+                        "margen": 645
+                    },
+                    {
+                        "precio": 16.5,
+                        "rendimiento": 90,
+                        "margen": 975
+                    },
+                    {
+                        "precio": 16.5,
+                        "rendimiento": 110,
+                        "margen": 1305
+                    },
+                    {
+                        "precio": 16.5,
+                        "rendimiento": 130,
+                        "margen": 1635
+                    },
+                    {
+                        "precio": 16.5,
+                        "rendimiento": 150,
+                        "margen": 1965
+                    },
+                    {
+                        "precio": 18.5,
+                        "rendimiento": 70,
+                        "margen": 785
+                    },
+                    {
+                        "precio": 18.5,
+                        "rendimiento": 90,
+                        "margen": 1155
+                    },
+                    {
+                        "precio": 18.5,
+                        "rendimiento": 110,
+                        "margen": 1525
+                    },
+                    {
+                        "precio": 18.5,
+                        "rendimiento": 130,
+                        "margen": 1895
+                    },
+                    {
+                        "precio": 18.5,
+                        "rendimiento": 150,
+                        "margen": 2265
+                    },
+                    {
+                        "precio": 21,
+                        "rendimiento": 70,
+                        "margen": 960
+                    },
+                    {
+                        "precio": 21,
+                        "rendimiento": 90,
+                        "margen": 1380
+                    },
+                    {
+                        "precio": 21,
+                        "rendimiento": 110,
+                        "margen": 1800
+                    },
+                    {
+                        "precio": 21,
+                        "rendimiento": 130,
+                        "margen": 2220
+                    },
+                    {
+                        "precio": 21,
+                        "rendimiento": 150,
+                        "margen": 2640
+                    }
+                ],
+                "precios_rango": [
+                    12,
+                    14.5,
+                    16.5,
+                    18.5,
+                    21
+                ],
+                "rendimientos_rango": [
+                    70,
+                    90,
+                    110,
+                    130,
+                    150
+                ],
+                "roi_estrategias": [
+                    {
+                        "nombre": "Manejo Convencional (Base)",
+                        "roi": 202.5,
+                        "margen": 1032.71,
+                        "rendimiento": 4.24
+                    },
+                    {
+                        "nombre": "Biofertilizante INIAP (Ahorro 40% Fert.)",
+                        "roi": 233.9,
+                        "margen": 1080.71,
+                        "rendimiento": 4.24
+                    },
+                    {
+                        "nombre": "Fertirriego por Goteo (Alta Precisión)",
+                        "roi": 222.6,
+                        "margen": 1224.12,
+                        "rendimiento": 4.88
+                    },
+                    {
+                        "nombre": "Materia Orgánica (Compost/Enmienda)",
+                        "roi": 205.7,
+                        "margen": 1100.27,
+                        "rendimiento": 4.5
+                    }
+                ],
+                "waterfall_costos": [
+                    {
+                        "label": "Ingreso Bruto",
+                        "amount": 1542.71,
+                        "is_total": true
+                    },
+                    {
+                        "label": "Semilla",
+                        "amount": -85
+                    },
+                    {
+                        "label": "Fertilización",
+                        "amount": -120
+                    },
+                    {
+                        "label": "Riego / Manejo",
+                        "amount": -60
+                    },
+                    {
+                        "label": "Protección Plagas",
+                        "amount": -45
+                    },
+                    {
+                        "label": "Otros Costos Var.",
+                        "amount": -80
+                    },
+                    {
+                        "label": "Costos Fijos",
+                        "amount": -120
+                    },
+                    {
+                        "label": "Margen Neto",
+                        "amount": 1032.71,
+                        "is_total": true
+                    }
+                ]
+            }
+        },
+        {
+            "nombre": "auth update",
+            "metodo": "POST",
+            "ruta": "/api/auth/update",
+            "volatilidad": "exacto",
+            "http": 200,
+            "cuerpo": {
+                "success": true,
+                "message": "¡Nombre de perfil actualizado correctamente!",
+                "user": {
+                    "id": "<volatil>",
+                    "nombre": "Contrato Test Editado",
+                    "correo": "contrato_<ts>@zeasys.local",
+                    "foto_perfil": null,
+                    "es_google": 0
+                }
+            }
+        },
+        {
+            "nombre": "subir avatar",
+            "metodo": "POST",
+            "ruta": "/api/auth/upload-avatar",
+            "volatilidad": "exacto",
+            "http": 200,
+            "cuerpo": {
+                "success": true,
+                "message": "¡Foto de perfil actualizada correctamente!",
+                "user": {
+                    "id": "<volatil>",
+                    "nombre": "Contrato Test Editado",
+                    "correo": "contrato_<ts>@zeasys.local",
+                    "foto_perfil": "/backend-api/public/uploads/avatars/avatar_<ts>.png",
+                    "es_google": 0
+                }
+            }
+        },
+        {
+            "nombre": "eliminar avatar",
+            "metodo": "POST",
+            "ruta": "/api/auth/delete-avatar",
+            "volatilidad": "exacto",
+            "http": 200,
+            "cuerpo": {
+                "success": true,
+                "message": "¡Foto de perfil eliminada!",
+                "user": {
+                    "id": "<volatil>",
+                    "nombre": "Contrato Test Editado",
+                    "correo": "contrato_<ts>@zeasys.local",
+                    "foto_perfil": null,
+                    "es_google": 0
+                }
+            }
+        },
+        {
+            "nombre": "sync google avatar",
+            "metodo": "POST",
+            "ruta": "/api/auth/sync-google-avatar",
+            "volatilidad": "exacto",
+            "http": 200,
+            "cuerpo": {
+                "success": true,
+                "message": "¡Foto de Google sincronizada correctamente!",
+                "user": {
+                    "id": "<volatil>",
+                    "nombre": "Contrato Test Editado",
+                    "correo": "contrato_<ts>@zeasys.local",
+                    "foto_perfil": "https://lh3.googleusercontent.com/a/contrato_test=s400",
+                    "es_google": 1
+                }
+            }
+        },
+        {
+            "nombre": "eliminar avatar (google)",
+            "metodo": "POST",
+            "ruta": "/api/auth/delete-avatar",
+            "volatilidad": "exacto",
+            "http": 200,
+            "cuerpo": {
+                "success": true,
+                "message": "¡Foto de perfil eliminada!",
+                "user": {
+                    "id": "<volatil>",
+                    "nombre": "Contrato Test Editado",
+                    "correo": "contrato_<ts>@zeasys.local",
+                    "foto_perfil": null,
+                    "es_google": 0
+                }
+            }
+        },
+        {
+            "nombre": "logout",
+            "metodo": "POST",
+            "ruta": "/api/auth/logout",
+            "volatilidad": "exacto",
+            "http": 200,
+            "cuerpo": {
+                "success": true,
+                "message": "Sesión cerrada correctamente."
+            }
+        },
+        {
+            "nombre": "login de nuevo",
+            "metodo": "POST",
+            "ruta": "/api/auth/login",
+            "volatilidad": "exacto",
+            "http": 200,
+            "cuerpo": {
+                "success": true,
+                "message": "¡Bienvenido, Contrato Test Editado!",
+                "user": {
+                    "id": "<volatil>",
+                    "nombre": "Contrato Test Editado",
+                    "correo": "contrato_<ts>@zeasys.local",
+                    "foto_perfil": null,
+                    "es_google": 0
+                }
+            }
+        },
+        {
+            "nombre": "eliminar simulacion",
+            "metodo": "DELETE",
+            "ruta": "/api/simulaciones/eliminar?id=59",
+            "volatilidad": "exacto",
+            "http": 200,
+            "cuerpo": {
+                "success": true,
+                "message": "Simulación eliminada correctamente."
+            }
+        },
+        {
+            "nombre": "eliminar cultivo",
+            "metodo": "DELETE",
+            "ruta": "/api/cultivos?id=45",
+            "volatilidad": "exacto",
+            "http": 200,
+            "cuerpo": {
+                "success": true,
+                "message": "Parcela eliminada correctamente."
+            }
+        },
+        {
+            "nombre": "eliminar cuenta",
+            "metodo": "POST",
+            "ruta": "/api/auth/delete",
+            "volatilidad": "exacto",
+            "http": 200,
+            "cuerpo": {
+                "success": true,
+                "message": "¡Su cuenta y todos sus datos han sido eliminados permanentemente del sistema!"
+            }
+        },
+        {
+            "nombre": "me tras eliminar cuenta",
+            "metodo": "GET",
+            "ruta": "/api/auth/me",
+            "volatilidad": "exacto",
+            "http": 200,
+            "cuerpo": {
+                "authenticated": false
+            }
+        }
+    ]
+}
