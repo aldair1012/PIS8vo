@@ -172,11 +172,62 @@ return static function (): Container {
             )
     );
 
+    // --- Analítica DSS (F05): catálogo compartido + 4 dashboards ---
+    $contenedor->registrar(
+        \ZeaSys\Dominios\Analitica\Dominio\CatalogoAgronomicoInterface::class,
+        static fn (): \ZeaSys\Dominios\Analitica\Infraestructura\RepositorioCatalogoAgronomico =>
+            new \ZeaSys\Dominios\Analitica\Infraestructura\RepositorioCatalogoAgronomico()
+    );
+    $contenedor->registrar(
+        \ZeaSys\Dominios\Analitica\Aplicacion\ServicioAnaliticaYield::class,
+        static fn (Container $c): \ZeaSys\Dominios\Analitica\Aplicacion\ServicioAnaliticaYield =>
+            new \ZeaSys\Dominios\Analitica\Aplicacion\ServicioAnaliticaYield(
+                $c->get(\ZeaSys\Dominios\Analitica\Dominio\CatalogoAgronomicoInterface::class),
+                $c->get(\ZeaSys\Dominios\Lotes\Dominio\CultivoRepositoryInterface::class),
+                $c->get(\ZeaSys\Dominios\Simulaciones\Dominio\SimulacionRepositoryInterface::class),
+            )
+    );
+    $contenedor->registrar(
+        \ZeaSys\Dominios\Analitica\Aplicacion\ServicioAnaliticaScenario::class,
+        static fn (Container $c): \ZeaSys\Dominios\Analitica\Aplicacion\ServicioAnaliticaScenario =>
+            new \ZeaSys\Dominios\Analitica\Aplicacion\ServicioAnaliticaScenario(
+                $c->get(\ZeaSys\Dominios\Analitica\Dominio\CatalogoAgronomicoInterface::class),
+                $c->get(\ZeaSys\Dominios\Lotes\Dominio\CultivoRepositoryInterface::class),
+                $c->get(\ZeaSys\Dominios\Simulaciones\Dominio\SimulacionRepositoryInterface::class),
+            )
+    );
+    $contenedor->registrar(
+        \ZeaSys\Dominios\Analitica\Aplicacion\ServicioAnaliticaFinancial::class,
+        static fn (Container $c): \ZeaSys\Dominios\Analitica\Aplicacion\ServicioAnaliticaFinancial =>
+            new \ZeaSys\Dominios\Analitica\Aplicacion\ServicioAnaliticaFinancial(
+                $c->get(\ZeaSys\Dominios\Lotes\Dominio\CultivoRepositoryInterface::class),
+                $c->get(\ZeaSys\Dominios\Simulaciones\Dominio\SimulacionRepositoryInterface::class),
+            )
+    );
+    $contenedor->registrar(
+        \ZeaSys\Dominios\Analitica\Http\YieldController::class,
+        static fn (Container $c): \ZeaSys\Dominios\Analitica\Http\YieldController =>
+            new \ZeaSys\Dominios\Analitica\Http\YieldController(
+                $c->get(\ZeaSys\Dominios\Analitica\Aplicacion\ServicioAnaliticaYield::class)
+            )
+    );
+    $contenedor->registrar(
+        \ZeaSys\Dominios\Analitica\Http\ScenarioController::class,
+        static fn (Container $c): \ZeaSys\Dominios\Analitica\Http\ScenarioController =>
+            new \ZeaSys\Dominios\Analitica\Http\ScenarioController(
+                $c->get(\ZeaSys\Dominios\Analitica\Aplicacion\ServicioAnaliticaScenario::class)
+            )
+    );
+    $contenedor->registrar(
+        \ZeaSys\Dominios\Analitica\Http\FinancialController::class,
+        static fn (Container $c): \ZeaSys\Dominios\Analitica\Http\FinancialController =>
+            new \ZeaSys\Dominios\Analitica\Http\FinancialController(
+                $c->get(\ZeaSys\Dominios\Analitica\Aplicacion\ServicioAnaliticaFinancial::class)
+            )
+    );
+
     $legacy = [
-        'ScenarioController',
         'ClimateController',
-        'YieldController',
-        'FinancialController',
     ];
     foreach ($legacy as $clase) {
         $contenedor->registrar($clase, static fn (): object => new $clase());
