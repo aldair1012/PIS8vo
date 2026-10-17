@@ -1,4 +1,5 @@
 <?php
+// src/Kernel/Errores/ZeaSysException.php — excepción base del kernel con código HTTP asociado.
 declare(strict_types=1);
 
 namespace ZeaSys\Kernel\Errores;
