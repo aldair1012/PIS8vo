@@ -1,5 +1,5 @@
 <?php
-// src/Dominios/Simulaciones/Explicacion/Explicadores/ExplicadorPrecioMinimo.php — Puerto verbatim de SimulacionController::explain() línea 666 (precio mínimo de venta).
+// src/Dominios/Simulaciones/Explicacion/Explicadores/ExplicadorPrecioMinimo.php
 declare(strict_types=1);
 
 namespace ZeaSys\Dominios\Simulaciones\Explicacion\Explicadores;
@@ -42,17 +42,32 @@ final class ExplicadorPrecioMinimo implements ExplicadorInterface
         $perdidaDolaresHa = $contexto['perdida_dolares_ha'];
         $nombreLower = $contexto['nombre_lower'];
 
+        $variante = crc32((string)($contexto['nombre'] ?? '')) % 2;
+        $ingresoTotal = round($rendPredichoVal * $areaHa * 22 * 16.50, 2);
+        $opt = round($rendPredichoVal * 1.15, 2);
+        $pes = round($rendPredichoVal * 0.85, 2);
+        if ($variante === 0) {
+            $s1 = "Tu indicador {$nombre} registra {$valorConUnidad} para {$areaHa} ha en {$ubicacion} con la variedad {$variedadMaiz}: rendimiento {$rendPredichoVal} t/ha e ingreso bruto estimado de {$ingresoTotal} USD a 16.50 USD/qq.";
+        } else {
+            $s1 = "En la parcela {$nombreParcela} ({$areaHa} ha), {$nombre} = {$valorConUnidad}; con {$rendPredichoVal} t/ha el ingreso bruto alcanza {$ingresoTotal} USD. Factor limitante: {$principalNombre} ({$principalPerdida} t/ha).";
+        }
+        if ($variante === 0) {
+            $s2 = "Escenarios: base {$rendPredichoVal} t/ha ({$ingresoTotal} USD); optimista {$opt} t/ha (" . round($opt * $areaHa * 22 * 16.50, 2) . " USD); pesimista {$pes} t/ha (" . round($pes * $areaHa * 22 * 16.50, 2) . " USD).";
+        } else {
+            $s2 = "Rango de resultado: de {$pes} t/ha (pesimista) a {$opt} t/ha (optimista), con base en {$rendPredichoVal} t/ha. Cada 0.5 t/ha equivale a " . round(0.5 * $areaHa * 22 * 16.50, 2) . " USD.";
+        }
+        $rec = !empty($recomendacionBase) ? $recomendacionBase : "reduce costos variables, asegura precio minimo antes de la siembra y protege el margen con cobertura de insumos.";
+        if ($variante === 0) {
+            $s3 = "Riesgo financiero: el factor que mas afecta es {$principalNombre} ({$principalPerdida} t/ha, ~{$perdidaDolaresHa} USD/ha). Recomendacion: {$rec} Cierre: valida el flujo de caja mensual y el punto de equilibrio antes de sembrar.";
+        } else {
+            $s3 = "Sensibilidad: una perdida de {$principalPerdida} t/ha por {$principalNombre} cuesta ~{$perdidaDolaresHa} USD/ha. Accion: {$rec} Cierra con una re-simulacion del escenario pesimista.";
+        }
         $secciones = [
-            ['titulo' => "1. ¿A cuánto mínimo debes vender tu maíz?", 'tipo' => 'info',
-             'contenido' => "Para cubrir todos los costos de producción de tu parcela $nombreParcela, necesitas vender cada quintal a un precio mínimo de **$valorConUnidad**. Si vendes por debajo de este precio, pierdes dinero."],
-            ['titulo' => "2. ¿El precio de mercado actual cubre tu piso?", 'tipo' => floatval(str_replace(['USD/qq', ' ', '$'], '', $valor)) <= 16.50 ? 'success' : 'danger',
-             'contenido' => floatval(str_replace(['USD/qq', ' ', '$'], '', $valor)) <= 16.50
-                ? "Sí. El precio de referencia de $16.50 USD/qq está por encima de tu precio piso, así que deberías obtener ganancia."
-                : "Cuidado. Tu precio piso es alto y el mercado podría no cubrirlo. Necesitas reducir costos o aumentar el rendimiento para bajar tu precio de sustentación."],
-            ['titulo' => "3. Estrategia de venta recomendada", 'tipo' => 'success',
-             'contenido' => !empty($recomendacionBase) ? $recomendacionBase : "Negocia contratos de compra anticipada con un precio mínimo garantizado y almacena parte de la cosecha para vender cuando el precio suba."]
+            ['titulo' => $variante === 0 ? "1. Inversion y retorno" : "1. Resultado financiero", 'tipo' => 'info', 'contenido' => $s1],
+            ['titulo' => $variante === 0 ? "2. Escenarios" : "2. Rango de resultados", 'tipo' => 'info', 'contenido' => $s2],
+            ['titulo' => $variante === 0 ? "3. Riesgo financiero" : "3. Sensibilidad", 'tipo' => ($nivelText === 'riesgoso' ? 'warning' : 'success'), 'contenido' => $s3],
         ];
-
         return $secciones;
+
     }
 }

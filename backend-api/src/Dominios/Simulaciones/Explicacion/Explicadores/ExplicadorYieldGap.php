@@ -1,5 +1,5 @@
 <?php
-// src/Dominios/Simulaciones/Explicacion/Explicadores/ExplicadorYieldGap.php — Puerto verbatim de SimulacionController::explain() línea 527 (yield gap / brecha).
+// src/Dominios/Simulaciones/Explicacion/Explicadores/ExplicadorYieldGap.php
 declare(strict_types=1);
 
 namespace ZeaSys\Dominios\Simulaciones\Explicacion\Explicadores;
@@ -42,15 +42,30 @@ final class ExplicadorYieldGap implements ExplicadorInterface
         $perdidaDolaresHa = $contexto['perdida_dolares_ha'];
         $nombreLower = $contexto['nombre_lower'];
 
+        $variante = crc32((string)($contexto['nombre'] ?? '')) % 2;
+        $gap = round($potencialMax - $rendPredichoVal, 2);
+        if ($variante === 0) {
+            $s1 = "En {$ubicacion}, tu rendimiento estimado es {$rendPredichoVal} t/ha frente a un potencial de {$potencialMax} t/ha: te faltan {$gap} t/ha, equivalentes a " . round($gap * $areaHa * 22 * 16.50, 2) . " USD en {$areaHa} ha con la variedad {$variedadMaiz}.";
+        } else {
+            $s1 = "Para la parcela {$nombreParcela} ({$areaHa} ha, {$variedadMaiz}), el modelo proyecta {$rendPredichoVal} t/ha contra un techo de {$potencialMax} t/ha en {$ubicacion}: brecha de {$gap} t/ha = " . round($gap * $areaHa * 22 * 16.50, 2) . " USD.";
+        }
+        $lossesText = "Nitrogeno: {$lossN} t/ha; Lluvia: {$lossWater} t/ha; pH: {$lossPh} t/ha; Temperatura: {$lossTemp} t/ha.";
+        if ($variante === 0) {
+            $s2 = "Factores limitantes (perdida en t/ha): {$lossesText} El principal es {$principalNombre} ({$principalDetalle}), que te resta {$principalPerdida} t/ha (~{$perdidaDolaresHa} USD/ha).";
+        } else {
+            $s2 = "El factor que mas te resta es {$principalNombre}: {$principalDetalle}, con {$principalPerdida} t/ha de perdida (~{$perdidaDolaresHa} USD/ha). Desglose: {$lossesText}";
+        }
+        if ($variante === 0) {
+            $s3 = "Accion concreta: corrige primero {$principalNombre}; aplica urea 180 kg/ha fraccionada (60% siembra, 40% V6), asegura 750 mm de agua total y cal agricola 2 t/ha en pre-siembra si el pH es menor a 5.8. Cierre: monitorea semanalmente y re-simula antes de la siembra.";
+        } else {
+            $s3 = "Siguiente paso: ataca {$principalNombre} ({$principalDetalle}) con dosis y fecha segun recomendacion tecnica; despues optimiza los demas factores para ganar hasta {$gap} t/ha. Cierra con una nueva simulacion del escenario.";
+        }
         $secciones = [
-            ['titulo' => "1. ¿Cuánto rendimiento estás perdiendo?", 'tipo' => 'danger',
-             'contenido' => "La brecha de **$valorConUnidad** es la diferencia entre lo que tu semilla puede producir ($potencialMax t/ha) y lo que realmente vas a cosechar ($rendPredichoVal t/ha). Son toneladas que se pierden por limitaciones del campo."],
-            ['titulo' => "2. ¿Cuál es la causa principal de esta pérdida?", 'tipo' => 'warning',
-             'contenido' => "El factor que más contribuye a la brecha es **$principalNombre**: $principalDetalle. Corregir solo este factor podría recuperar hasta **$principalPerdida t/ha**."],
-            ['titulo' => "3. ¿Vale la pena invertir en cerrar esta brecha?", 'tipo' => 'success',
-             'contenido' => "Sí. Recuperar $principalPerdida t/ha equivale a **+$perdidaDolaresHa USD por hectárea** adicionales en ingresos. En tus $areaHa ha, eso sería **+" . round($perdidaDolaresHa * $areaHa, 2) . " USD** más."]
+            ['titulo' => $variante === 0 ? "1. Potencial vs. realidad" : "1. Brecha de rendimiento", 'tipo' => 'info', 'contenido' => $s1],
+            ['titulo' => $variante === 0 ? "2. Factores limitantes" : "2. Donde se pierde", 'tipo' => ($principalPerdida > 1.0 ? 'warning' : 'success'), 'contenido' => $s2],
+            ['titulo' => $variante === 0 ? "3. Accion concreta" : "3. Plan de mejora", 'tipo' => 'success', 'contenido' => $s3],
         ];
-
         return $secciones;
+
     }
 }

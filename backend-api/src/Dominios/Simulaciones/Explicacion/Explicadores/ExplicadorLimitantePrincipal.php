@@ -1,5 +1,5 @@
 <?php
-// src/Dominios/Simulaciones/Explicacion/Explicadores/ExplicadorLimitantePrincipal.php — Puerto verbatim de SimulacionController::explain() línea 560 (limitante principal).
+// src/Dominios/Simulaciones/Explicacion/Explicadores/ExplicadorLimitantePrincipal.php
 declare(strict_types=1);
 
 namespace ZeaSys\Dominios\Simulaciones\Explicacion\Explicadores;
@@ -42,15 +42,28 @@ final class ExplicadorLimitantePrincipal implements ExplicadorInterface
         $perdidaDolaresHa = $contexto['perdida_dolares_ha'];
         $nombreLower = $contexto['nombre_lower'];
 
+        $variante = crc32((string)($contexto['nombre'] ?? '')) % 2;
+        if ($variante === 0) {
+            $s1 = "Estado actual del suelo ({$tipoSuelo}) en {$ubicacion}: pH {$phSuelo} (ideal 5.8-6.8), fertilizacion {$fertilizanteVal} kg/ha (recomendado 180), temperatura {$temperaturaVal} °C. {$principalDetalle}.";
+        } else {
+            $s1 = "En la parcela {$nombreParcela} ({$areaHa} ha), el suelo {$tipoSuelo} presenta pH {$phSuelo}, fertilizacion {$fertilizanteVal} kg/ha y temperatura {$temperaturaVal} °C: {$principalDetalle}.";
+        }
+        if ($variante === 0) {
+            $s2 = "Impacto: {$principalNombre} te resta {$principalPerdida} t/ha (~{$perdidaDolaresHa} USD/ha) en {$areaHa} ha con variedad {$variedadMaiz}.";
+        } else {
+            $s2 = "Perdida por {$principalNombre}: {$principalPerdida} t/ha (~{$perdidaDolaresHa} USD/ha); ingreso en riesgo " . round($principalPerdida * $areaHa * 22 * 16.50, 2) . " USD.";
+        }
+        if ($variante === 0) {
+            $s3 = "Correccion: aplica cal agricola 2 t/ha en pre-siembra si el pH es menor a 5.8; urea 180 kg/ha fraccionada (60% siembra, 40% V6); materia organica 5 t/ha. Cierre: realiza analisis de suelo post-cosecha y re-simula.";
+        } else {
+            $s3 = "Siguiente paso: corrige {$principalNombre} con el producto y dosis indicados, fracciona la fertilizacion y monitorea el pH. Cierra con un nuevo analisis de suelo y simulacion.";
+        }
         $secciones = [
-            ['titulo' => "1. ¿Cuál es el principal cuello de botella?", 'tipo' => 'danger',
-             'contenido' => "El factor que más está limitando tu rendimiento en $nombreParcela es **$principalNombre**: $principalDetalle. Te resta **-$principalPerdida t/ha**."],
-            ['titulo' => "2. ¿Por qué este factor es el más importante?", 'tipo' => 'warning',
-             'contenido' => "Mientras no corrijas $principalNombre, invertir en otros insumos tendrá muy poco impacto. Es como regar una planta que necesita sol: el agua sobra si falta lo esencial."],
-            ['titulo' => "3. ¿Cuánto dinero recuperas al corregirlo?", 'tipo' => 'success',
-             'contenido' => "Corregir $principalNombre puede recuperar hasta **$principalPerdida t/ha**, equivalente a **+$perdidaDolaresHa USD/ha** adicionales (+" . round($perdidaDolaresHa * $areaHa, 2) . " USD en tus $areaHa ha)."]
+            ['titulo' => $variante === 0 ? "1. Estado actual" : "1. Diagnostico del suelo", 'tipo' => 'info', 'contenido' => $s1],
+            ['titulo' => $variante === 0 ? "2. Impacto" : "2. Perdida estimada", 'tipo' => ($principalPerdida > 1.0 ? 'warning' : 'success'), 'contenido' => $s2],
+            ['titulo' => $variante === 0 ? "3. Correccion" : "3. Plan de correccion", 'tipo' => 'success', 'contenido' => $s3],
         ];
-
         return $secciones;
+
     }
 }

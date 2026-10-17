@@ -1,5 +1,5 @@
 <?php
-// src/Dominios/Simulaciones/Explicacion/Explicadores/ExplicadorMargenNeto.php — Puerto verbatim de SimulacionController::explain() línea 607 (margen neto / ganancia).
+// src/Dominios/Simulaciones/Explicacion/Explicadores/ExplicadorMargenNeto.php
 declare(strict_types=1);
 
 namespace ZeaSys\Dominios\Simulaciones\Explicacion\Explicadores;
@@ -42,17 +42,32 @@ final class ExplicadorMargenNeto implements ExplicadorInterface
         $perdidaDolaresHa = $contexto['perdida_dolares_ha'];
         $nombreLower = $contexto['nombre_lower'];
 
+        $variante = crc32((string)($contexto['nombre'] ?? '')) % 2;
+        $ingresoTotal = round($rendPredichoVal * $areaHa * 22 * 16.50, 2);
+        $opt = round($rendPredichoVal * 1.15, 2);
+        $pes = round($rendPredichoVal * 0.85, 2);
+        if ($variante === 0) {
+            $s1 = "Tu indicador {$nombre} registra {$valorConUnidad} para {$areaHa} ha en {$ubicacion} con la variedad {$variedadMaiz}: rendimiento {$rendPredichoVal} t/ha e ingreso bruto estimado de {$ingresoTotal} USD a 16.50 USD/qq.";
+        } else {
+            $s1 = "En la parcela {$nombreParcela} ({$areaHa} ha), {$nombre} = {$valorConUnidad}; con {$rendPredichoVal} t/ha el ingreso bruto alcanza {$ingresoTotal} USD. Factor limitante: {$principalNombre} ({$principalPerdida} t/ha).";
+        }
+        if ($variante === 0) {
+            $s2 = "Escenarios: base {$rendPredichoVal} t/ha ({$ingresoTotal} USD); optimista {$opt} t/ha (" . round($opt * $areaHa * 22 * 16.50, 2) . " USD); pesimista {$pes} t/ha (" . round($pes * $areaHa * 22 * 16.50, 2) . " USD).";
+        } else {
+            $s2 = "Rango de resultado: de {$pes} t/ha (pesimista) a {$opt} t/ha (optimista), con base en {$rendPredichoVal} t/ha. Cada 0.5 t/ha equivale a " . round(0.5 * $areaHa * 22 * 16.50, 2) . " USD.";
+        }
+        $rec = !empty($recomendacionBase) ? $recomendacionBase : "reduce costos variables, asegura precio minimo antes de la siembra y protege el margen con cobertura de insumos.";
+        if ($variante === 0) {
+            $s3 = "Riesgo financiero: el factor que mas afecta es {$principalNombre} ({$principalPerdida} t/ha, ~{$perdidaDolaresHa} USD/ha). Recomendacion: {$rec} Cierre: valida el flujo de caja mensual y el punto de equilibrio antes de sembrar.";
+        } else {
+            $s3 = "Sensibilidad: una perdida de {$principalPerdida} t/ha por {$principalNombre} cuesta ~{$perdidaDolaresHa} USD/ha. Accion: {$rec} Cierra con una re-simulacion del escenario pesimista.";
+        }
         $secciones = [
-            ['titulo' => "1. ¿Cuánto dinero te queda limpio?", 'tipo' => 'info',
-             'contenido' => "El Margen Neto de **$valorConUnidad** es lo que te queda después de restar todos los costos (semilla, fertilizante, mano de obra, riego) del ingreso total por la venta del maíz en tu parcela $nombreParcela."],
-            ['titulo' => "2. ¿Este margen cubre tu trabajo?", 'tipo' => $nivelText === 'favorable' ? 'success' : 'danger',
-             'contenido' => $nivelText === 'favorable'
-                ? "Sí. Con $rendPredichoVal t/ha de cosecha y tus costos actuales, la siembra está generando una utilidad que justifica la inversión de tiempo y recursos."
-                : "Tu margen está ajustado. Con el rendimiento actual de $rendPredichoVal t/ha, cualquier gasto imprevisto o caída de precio podría dejarte sin ganancia."],
-            ['titulo' => "3. ¿Cómo aumentar tu margen?", 'tipo' => 'success',
-             'contenido' => !empty($recomendacionBase) ? $recomendacionBase : "Aumenta tu rendimiento corrigiendo $principalNombre y vende al menos a $16.50 USD/qq para cubrir costos con holgura."]
+            ['titulo' => $variante === 0 ? "1. Inversion y retorno" : "1. Resultado financiero", 'tipo' => 'info', 'contenido' => $s1],
+            ['titulo' => $variante === 0 ? "2. Escenarios" : "2. Rango de resultados", 'tipo' => 'info', 'contenido' => $s2],
+            ['titulo' => $variante === 0 ? "3. Riesgo financiero" : "3. Sensibilidad", 'tipo' => ($nivelText === 'riesgoso' ? 'warning' : 'success'), 'contenido' => $s3],
         ];
-
         return $secciones;
+
     }
 }

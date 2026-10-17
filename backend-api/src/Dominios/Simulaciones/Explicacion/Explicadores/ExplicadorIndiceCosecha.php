@@ -1,5 +1,5 @@
 <?php
-// src/Dominios/Simulaciones/Explicacion/Explicadores/ExplicadorIndiceCosecha.php — Puerto verbatim de SimulacionController::explain() línea 516 (índice de cosecha (HI)).
+// src/Dominios/Simulaciones/Explicacion/Explicadores/ExplicadorIndiceCosecha.php
 declare(strict_types=1);
 
 namespace ZeaSys\Dominios\Simulaciones\Explicacion\Explicadores;
@@ -42,15 +42,30 @@ final class ExplicadorIndiceCosecha implements ExplicadorInterface
         $perdidaDolaresHa = $contexto['perdida_dolares_ha'];
         $nombreLower = $contexto['nombre_lower'];
 
+        $variante = crc32((string)($contexto['nombre'] ?? '')) % 2;
+        $gap = round($potencialMax - $rendPredichoVal, 2);
+        if ($variante === 0) {
+            $s1 = "En {$ubicacion}, tu rendimiento estimado es {$rendPredichoVal} t/ha frente a un potencial de {$potencialMax} t/ha: te faltan {$gap} t/ha, equivalentes a " . round($gap * $areaHa * 22 * 16.50, 2) . " USD en {$areaHa} ha con la variedad {$variedadMaiz}.";
+        } else {
+            $s1 = "Para la parcela {$nombreParcela} ({$areaHa} ha, {$variedadMaiz}), el modelo proyecta {$rendPredichoVal} t/ha contra un techo de {$potencialMax} t/ha en {$ubicacion}: brecha de {$gap} t/ha = " . round($gap * $areaHa * 22 * 16.50, 2) . " USD.";
+        }
+        $lossesText = "Nitrogeno: {$lossN} t/ha; Lluvia: {$lossWater} t/ha; pH: {$lossPh} t/ha; Temperatura: {$lossTemp} t/ha.";
+        if ($variante === 0) {
+            $s2 = "Factores limitantes (perdida en t/ha): {$lossesText} El principal es {$principalNombre} ({$principalDetalle}), que te resta {$principalPerdida} t/ha (~{$perdidaDolaresHa} USD/ha).";
+        } else {
+            $s2 = "El factor que mas te resta es {$principalNombre}: {$principalDetalle}, con {$principalPerdida} t/ha de perdida (~{$perdidaDolaresHa} USD/ha). Desglose: {$lossesText}";
+        }
+        if ($variante === 0) {
+            $s3 = "Accion concreta: corrige primero {$principalNombre}; aplica urea 180 kg/ha fraccionada (60% siembra, 40% V6), asegura 750 mm de agua total y cal agricola 2 t/ha en pre-siembra si el pH es menor a 5.8. Cierre: monitorea semanalmente y re-simula antes de la siembra.";
+        } else {
+            $s3 = "Siguiente paso: ataca {$principalNombre} ({$principalDetalle}) con dosis y fecha segun recomendacion tecnica; despues optimiza los demas factores para ganar hasta {$gap} t/ha. Cierra con una nueva simulacion del escenario.";
+        }
         $secciones = [
-            ['titulo' => "1. ¿Qué es el Índice de Cosecha de $valorConUnidad?", 'tipo' => 'info',
-             'contenido' => "El Índice de Cosecha (HI) de **$valorConUnidad** indica que el **" . round(floatval(str_replace([' HI', ' '], '', $valor)) * 100, 0) . "%** de toda la biomasa que produce tu planta se convierte en grano de maíz. El resto son tallos, hojas y raíces."],
-            ['titulo' => "2. ¿Tu planta es eficiente convirtiendo biomasa en grano?", 'tipo' => $nivelText === 'favorable' ? 'success' : 'warning',
-             'contenido' => !empty($impactoBase) ? $impactoBase : "Un HI entre 0.45 y 0.52 es óptimo. Tu valor de $valorConUnidad " . (floatval(str_replace([' HI', ' '], '', $valor)) >= 0.45 ? "es bueno, la planta está convirtiendo biomasa eficientemente." : "está por debajo, la planta gasta más energía en tallos y hojas que en grano.")],
-            ['titulo' => "3. ¿Cómo mejorar esta conversión?", 'tipo' => 'success',
-             'contenido' => !empty($recomendacionBase) ? $recomendacionBase : "Asegura suficiente nitrógeno durante el llenado de grano (etapa R3-R5) para que las hojas mantengan la fotosíntesis activa el mayor tiempo posible."]
+            ['titulo' => $variante === 0 ? "1. Potencial vs. realidad" : "1. Brecha de rendimiento", 'tipo' => 'info', 'contenido' => $s1],
+            ['titulo' => $variante === 0 ? "2. Factores limitantes" : "2. Donde se pierde", 'tipo' => ($principalPerdida > 1.0 ? 'warning' : 'success'), 'contenido' => $s2],
+            ['titulo' => $variante === 0 ? "3. Accion concreta" : "3. Plan de mejora", 'tipo' => 'success', 'contenido' => $s3],
         ];
-
         return $secciones;
+
     }
 }

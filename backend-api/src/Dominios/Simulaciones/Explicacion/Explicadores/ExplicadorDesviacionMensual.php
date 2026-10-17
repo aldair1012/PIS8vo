@@ -1,5 +1,5 @@
 <?php
-// src/Dominios/Simulaciones/Explicacion/Explicadores/ExplicadorDesviacionMensual.php — Puerto verbatim de SimulacionController::explain() línea 790 (desviación mensual (gráfico clima)).
+// src/Dominios/Simulaciones/Explicacion/Explicadores/ExplicadorDesviacionMensual.php
 declare(strict_types=1);
 
 namespace ZeaSys\Dominios\Simulaciones\Explicacion\Explicadores;
@@ -42,15 +42,28 @@ final class ExplicadorDesviacionMensual implements ExplicadorInterface
         $perdidaDolaresHa = $contexto['perdida_dolares_ha'];
         $nombreLower = $contexto['nombre_lower'];
 
+        $variante = crc32((string)($contexto['nombre'] ?? '')) % 2;
+        if ($variante === 0) {
+            $s1 = "Fenomeno climatico: {$nombre} = {$valorConUnidad} en {$ubicacion}; temperatura {$temperaturaVal} °C, lluvia {$precipitacionVal} mm y humedad {$humedadVal}%.";
+        } else {
+            $s1 = "En la parcela {$nombreParcela} ({$areaHa} ha, {$variedadMaiz}), {$nombre} registra {$valorConUnidad}; condiciones: {$temperaturaVal} °C, {$precipitacionVal} mm de lluvia y {$humedadVal}% de humedad.";
+        }
+        if ($variante === 0) {
+            $s2 = "Impacto en tu cultivo: {$principalDetalle}; perdida estimada de {$principalPerdida} t/ha (~{$perdidaDolaresHa} USD/ha) si no se corrige a tiempo.";
+        } else {
+            $s2 = "El clima te resta {$principalPerdida} t/ha (~{$perdidaDolaresHa} USD/ha) por {$principalNombre}: {$principalDetalle}. Ingreso en riesgo: " . round($principalPerdida * $areaHa * 22 * 16.50, 2) . " USD.";
+        }
+        if ($variante === 0) {
+            $s3 = "Ventana de accion: ajusta la fecha de siembra y la variedad segun el pronostico ENSO; monitorea a 7-10 dias; prepara un plan de contingencia hidrica y de drenaje. Cierre: re-simula el escenario antes de sembrar.";
+        } else {
+            $s3 = "Siguiente paso: define la ventana de siembra optima segun el pronostico, prepara reserva de agua y drenaje; monitorea cada 7 dias. Cierra con una nueva simulacion del escenario climatico.";
+        }
         $secciones = [
-            ['titulo' => "1. ¿Qué muestra la Desviación Mensual?", 'tipo' => 'info',
-             'contenido' => "Este gráfico compara la lluvia y temperatura de cada mes contra el promedio histórico de $ubicacion. Las barras que se salen del rango normal indican meses atípicos que pueden afectar tu cultivo."],
-            ['titulo' => "2. ¿Hay meses preocupantes?", 'tipo' => 'warning',
-             'contenido' => !empty($impactoBase) ? $impactoBase : "Los meses con desviaciones grandes durante la floración (VT-R1) son los más riesgosos. Una sequía de 15 días en ese periodo puede costar hasta 2 t/ha de rendimiento."],
-            ['titulo' => "3. ¿Cómo usar esta información?", 'tipo' => 'success',
-             'contenido' => !empty($recomendacionBase) ? $recomendacionBase : "Planifica tu fecha de siembra para que la floración no coincida con los meses de mayor riesgo climático identificados en este gráfico."]
+            ['titulo' => $variante === 0 ? "1. Fenomeno" : "1. Condicion climatica", 'tipo' => 'info', 'contenido' => $s1],
+            ['titulo' => $variante === 0 ? "2. Impacto en tu cultivo" : "2. Efecto sobre el rendimiento", 'tipo' => ($principalPerdida > 1.0 ? 'warning' : 'success'), 'contenido' => $s2],
+            ['titulo' => $variante === 0 ? "3. Ventana de accion" : "3. Que hacer y cuando", 'tipo' => 'success', 'contenido' => $s3],
         ];
-
         return $secciones;
+
     }
 }

@@ -1,5 +1,5 @@
 <?php
-// src/Dominios/Simulaciones/Explicacion/Explicadores/ExplicadorFechaSiembra.php — Puerto verbatim de SimulacionController::explain() línea 846 (fecha de siembra).
+// src/Dominios/Simulaciones/Explicacion/Explicadores/ExplicadorFechaSiembra.php
 declare(strict_types=1);
 
 namespace ZeaSys\Dominios\Simulaciones\Explicacion\Explicadores;
@@ -42,15 +42,31 @@ final class ExplicadorFechaSiembra implements ExplicadorInterface
         $perdidaDolaresHa = $contexto['perdida_dolares_ha'];
         $nombreLower = $contexto['nombre_lower'];
 
+        $variante = crc32((string)($contexto['nombre'] ?? '')) % 2;
+        $desc = !empty($descripcionTecnica) ? $descripcionTecnica : "indicador de desempeno del sistema";
+        $imp = !empty($impactoBase) ? $impactoBase : "afecta directamente el rendimiento final";
+        $rec = !empty($recomendacionBase) ? $recomendacionBase : "optimiza {$principalNombre} y re-simula el escenario.";
+        if ($variante === 0) {
+            $s1 = "El indicador {$nombre} registra {$valorConUnidad} en {$ubicacion} ({$areaHa} ha, {$variedadMaiz}). {$desc}.";
+        } else {
+            $s1 = "En la parcela {$nombreParcela}, {$nombre} = {$valorConUnidad}; {$desc}. Condiciones: {$temperaturaVal} °C, {$precipitacionVal} mm, pH {$phSuelo}.";
+        }
+        if ($variante === 0) {
+            $s2 = "Importa porque {$imp}. El factor limitante principal es {$principalNombre} ({$principalPerdida} t/ha, ~{$perdidaDolaresHa} USD/ha).";
+        } else {
+            $s2 = "Impacto: {$imp}. Principal cuello de botella: {$principalNombre} con {$principalPerdida} t/ha de perdida (~{$perdidaDolaresHa} USD/ha).";
+        }
+        if ($variante === 0) {
+            $s3 = "Accion: {$rec} Cierre: monitorea el indicador y ajusta antes de la siguiente etapa fenologica.";
+        } else {
+            $s3 = "Siguiente paso: {$rec} Cierra con una re-simulacion y seguimiento semanal.";
+        }
         $secciones = [
-            ['titulo' => "1. ¿Cuándo es el mejor momento para sembrar?", 'tipo' => 'info',
-             'contenido' => "La fecha de siembra recomendada es **$valor**. Esta ventana se calcula cruzando los patrones históricos de lluvia y temperatura de $ubicacion con las necesidades fisiológicas de la variedad $variedadMaiz."],
-            ['titulo' => "2. ¿Qué pasa si siembras fuera de la ventana?", 'tipo' => 'warning',
-             'contenido' => !empty($impactoBase) ? $impactoBase : "Sembrar muy temprano o muy tarde puede hacer que la floración coincida con días de calor extremo o sequía, reduciendo tu cosecha entre 1.5 y 3.0 t/ha."],
-            ['titulo' => "3. ¿Cómo ajustar la fecha según tu zona?", 'tipo' => 'success',
-             'contenido' => !empty($recomendacionBase) ? $recomendacionBase : "Consulta el calendario agroclimático del INAMHI para tu provincia y confirma que el suelo tenga buena humedad antes de colocar la semilla."]
+            ['titulo' => $variante === 0 ? "1. Que significa?" : "1. Definicion y valor", 'tipo' => 'info', 'contenido' => $s1],
+            ['titulo' => $variante === 0 ? "2. Por que importa?" : "2. Impacto en el cultivo", 'tipo' => ($nivelText === 'riesgoso' ? 'warning' : 'success'), 'contenido' => $s2],
+            ['titulo' => $variante === 0 ? "3. Que hacer?" : "3. Accion recomendada", 'tipo' => 'success', 'contenido' => $s3],
         ];
-
         return $secciones;
+
     }
 }

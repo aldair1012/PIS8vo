@@ -1,5 +1,5 @@
 <?php
-// src/Dominios/Simulaciones/Explicacion/Explicadores/ExplicadorRiesgoEstacional.php — Puerto verbatim de SimulacionController::explain() línea 779 (índice de riesgo estacional).
+// src/Dominios/Simulaciones/Explicacion/Explicadores/ExplicadorRiesgoEstacional.php
 declare(strict_types=1);
 
 namespace ZeaSys\Dominios\Simulaciones\Explicacion\Explicadores;
@@ -42,15 +42,28 @@ final class ExplicadorRiesgoEstacional implements ExplicadorInterface
         $perdidaDolaresHa = $contexto['perdida_dolares_ha'];
         $nombreLower = $contexto['nombre_lower'];
 
+        $variante = crc32((string)($contexto['nombre'] ?? '')) % 2;
+        if ($variante === 0) {
+            $s1 = "Fenomeno climatico: {$nombre} = {$valorConUnidad} en {$ubicacion}; temperatura {$temperaturaVal} °C, lluvia {$precipitacionVal} mm y humedad {$humedadVal}%.";
+        } else {
+            $s1 = "En la parcela {$nombreParcela} ({$areaHa} ha, {$variedadMaiz}), {$nombre} registra {$valorConUnidad}; condiciones: {$temperaturaVal} °C, {$precipitacionVal} mm de lluvia y {$humedadVal}% de humedad.";
+        }
+        if ($variante === 0) {
+            $s2 = "Impacto en tu cultivo: {$principalDetalle}; perdida estimada de {$principalPerdida} t/ha (~{$perdidaDolaresHa} USD/ha) si no se corrige a tiempo.";
+        } else {
+            $s2 = "El clima te resta {$principalPerdida} t/ha (~{$perdidaDolaresHa} USD/ha) por {$principalNombre}: {$principalDetalle}. Ingreso en riesgo: " . round($principalPerdida * $areaHa * 22 * 16.50, 2) . " USD.";
+        }
+        if ($variante === 0) {
+            $s3 = "Ventana de accion: ajusta la fecha de siembra y la variedad segun el pronostico ENSO; monitorea a 7-10 dias; prepara un plan de contingencia hidrica y de drenaje. Cierre: re-simula el escenario antes de sembrar.";
+        } else {
+            $s3 = "Siguiente paso: define la ventana de siembra optima segun el pronostico, prepara reserva de agua y drenaje; monitorea cada 7 dias. Cierra con una nueva simulacion del escenario climatico.";
+        }
         $secciones = [
-            ['titulo' => "1. ¿Qué mide el Índice de Riesgo de $valorConUnidad?", 'tipo' => $nivelText === 'favorable' ? 'success' : 'danger',
-             'contenido' => "Este índice combina el riesgo de sequía, calor extremo, exceso de lluvia y deficiencia nutricional en un solo número. Un valor de **$valorConUnidad** " . ($nivelText === 'favorable' ? "indica que las condiciones generales son estables para tu cultivo." : "indica que varios factores de riesgo coinciden en esta temporada y debes estar alerta.")],
-            ['titulo' => "2. ¿Qué factores pesan más en el riesgo?", 'tipo' => 'warning',
-             'contenido' => !empty($impactoBase) ? $impactoBase : "Para tu zona de $ubicacion, los factores de mayor peso son: lluvia ($precipitacionVal mm), temperatura ($temperaturaVal °C) y la fertilización aplicada ($fertilizanteVal kg/ha de N)."],
-            ['titulo' => "3. ¿Cómo bajar el riesgo estacional?", 'tipo' => 'success',
-             'contenido' => !empty($recomendacionBase) ? $recomendacionBase : "Diversifica las fechas de siembra, asegura riego complementario y mantén reserva de insumos para aplicar fertilización de emergencia si es necesario."]
+            ['titulo' => $variante === 0 ? "1. Fenomeno" : "1. Condicion climatica", 'tipo' => 'info', 'contenido' => $s1],
+            ['titulo' => $variante === 0 ? "2. Impacto en tu cultivo" : "2. Efecto sobre el rendimiento", 'tipo' => ($principalPerdida > 1.0 ? 'warning' : 'success'), 'contenido' => $s2],
+            ['titulo' => $variante === 0 ? "3. Ventana de accion" : "3. Que hacer y cuando", 'tipo' => 'success', 'contenido' => $s3],
         ];
-
         return $secciones;
+
     }
 }

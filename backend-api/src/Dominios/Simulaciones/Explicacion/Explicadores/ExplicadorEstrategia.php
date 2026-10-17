@@ -1,5 +1,5 @@
 <?php
-// src/Dominios/Simulaciones/Explicacion/Explicadores/ExplicadorEstrategia.php — Puerto verbatim de SimulacionController::explain() línea 879 (estrategia específica).
+// src/Dominios/Simulaciones/Explicacion/Explicadores/ExplicadorEstrategia.php
 declare(strict_types=1);
 
 namespace ZeaSys\Dominios\Simulaciones\Explicacion\Explicadores;
@@ -42,15 +42,31 @@ final class ExplicadorEstrategia implements ExplicadorInterface
         $perdidaDolaresHa = $contexto['perdida_dolares_ha'];
         $nombreLower = $contexto['nombre_lower'];
 
+        $variante = crc32((string)($contexto['nombre'] ?? '')) % 2;
+        $desc = !empty($descripcionTecnica) ? $descripcionTecnica : "sin descripcion tecnica adicional";
+        $imp = !empty($impactoBase) ? $impactoBase : "impacto moderado sobre el rendimiento";
+        $rec = !empty($recomendacionBase) ? $recomendacionBase : "aplica el control segun el umbral de accion con dosis de etiqueta y rota los modos de accion.";
+        if ($variante === 0) {
+            $s1 = "Riesgo identificado: {$nombre} = {$valorConUnidad} en {$ubicacion}. {$desc}. Impacto base: {$imp}.";
+        } else {
+            $s1 = "En la parcela {$nombreParcela} ({$areaHa} ha), {$nombre} registra {$valorConUnidad}: {$desc}. Impacto estimado: {$imp}.";
+        }
+        if ($variante === 0) {
+            $s2 = "Control recomendado: {$rec} Momento: al alcanzar el umbral de accion; dosis segun etiqueta y rotacion de modos de accion.";
+        } else {
+            $s2 = "Accion de control: {$rec} Aplica en la ventana optima y verifica la eficacia a los 7 dias.";
+        }
+        if ($variante === 0) {
+            $s3 = "Prevencion: monitoreo semanal, control biologico, rotacion de cultivos y eliminacion de residuos. Cierre: registra la incidencia y re-evalua en 7 dias.";
+        } else {
+            $s3 = "Siguiente paso: implementa monitoreo semanal, control biologico y rotacion; registra incidencias. Cierra con una re-evaluacion en 7 dias.";
+        }
         $secciones = [
-            ['titulo' => "1. Análisis de $nombre", 'tipo' => 'info',
-             'contenido' => !empty($descripcionTecnica) ? $descripcionTecnica : "Esta estrategia combina un conjunto específico de insumos, densidad de siembra y manejo agronómico para alcanzar un rendimiento objetivo en tu parcela $nombreParcela."],
-            ['titulo' => "2. ¿Es viable para tu lote?", 'tipo' => $nivelText === 'favorable' ? 'success' : 'warning',
-             'contenido' => !empty($impactoBase) ? $impactoBase : "La viabilidad depende de tu presupuesto disponible y las condiciones de suelo y clima de $ubicacion. Compara el costo total contra el ingreso esperado."],
-            ['titulo' => "3. Recomendación de implementación", 'tipo' => 'success',
-             'contenido' => !empty($recomendacionBase) ? $recomendacionBase : "Si decides implementar esta estrategia, planifica las compras de insumos con anticipación y confirma la disponibilidad de riego antes de comprometer la inversión."]
+            ['titulo' => $variante === 0 ? "1. Riesgo identificado" : "1. Diagnostico de riesgo", 'tipo' => ($nivelText === 'riesgoso' ? 'danger' : 'warning'), 'contenido' => $s1],
+            ['titulo' => $variante === 0 ? "2. Control recomendado" : "2. Plan de control", 'tipo' => 'success', 'contenido' => $s2],
+            ['titulo' => $variante === 0 ? "3. Prevencion" : "3. Medidas preventivas", 'tipo' => 'info', 'contenido' => $s3],
         ];
-
         return $secciones;
+
     }
 }

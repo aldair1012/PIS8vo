@@ -1,5 +1,5 @@
 <?php
-// src/Dominios/Simulaciones/Explicacion/Explicadores/ExplicadorPerdidaNitrogeno.php — Puerto verbatim de SimulacionController::explain() línea 549 (pérdida por nitrógeno).
+// src/Dominios/Simulaciones/Explicacion/Explicadores/ExplicadorPerdidaNitrogeno.php
 declare(strict_types=1);
 
 namespace ZeaSys\Dominios\Simulaciones\Explicacion\Explicadores;
@@ -42,15 +42,28 @@ final class ExplicadorPerdidaNitrogeno implements ExplicadorInterface
         $perdidaDolaresHa = $contexto['perdida_dolares_ha'];
         $nombreLower = $contexto['nombre_lower'];
 
+        $variante = crc32((string)($contexto['nombre'] ?? '')) % 2;
+        if ($variante === 0) {
+            $s1 = "Estado actual del suelo ({$tipoSuelo}) en {$ubicacion}: pH {$phSuelo} (ideal 5.8-6.8), fertilizacion {$fertilizanteVal} kg/ha (recomendado 180), temperatura {$temperaturaVal} °C. {$principalDetalle}.";
+        } else {
+            $s1 = "En la parcela {$nombreParcela} ({$areaHa} ha), el suelo {$tipoSuelo} presenta pH {$phSuelo}, fertilizacion {$fertilizanteVal} kg/ha y temperatura {$temperaturaVal} °C: {$principalDetalle}.";
+        }
+        if ($variante === 0) {
+            $s2 = "Impacto: {$principalNombre} te resta {$principalPerdida} t/ha (~{$perdidaDolaresHa} USD/ha) en {$areaHa} ha con variedad {$variedadMaiz}.";
+        } else {
+            $s2 = "Perdida por {$principalNombre}: {$principalPerdida} t/ha (~{$perdidaDolaresHa} USD/ha); ingreso en riesgo " . round($principalPerdida * $areaHa * 22 * 16.50, 2) . " USD.";
+        }
+        if ($variante === 0) {
+            $s3 = "Correccion: aplica cal agricola 2 t/ha en pre-siembra si el pH es menor a 5.8; urea 180 kg/ha fraccionada (60% siembra, 40% V6); materia organica 5 t/ha. Cierre: realiza analisis de suelo post-cosecha y re-simula.";
+        } else {
+            $s3 = "Siguiente paso: corrige {$principalNombre} con el producto y dosis indicados, fracciona la fertilizacion y monitorea el pH. Cierra con un nuevo analisis de suelo y simulacion.";
+        }
         $secciones = [
-            ['titulo' => "1. ¿Por qué pierdes $valorConUnidad por falta de Nitrógeno?", 'tipo' => 'danger',
-             'contenido' => "Estás aplicando **$fertilizanteVal kg/ha** de Nitrógeno cuando tu variedad $variedadMaiz necesita al menos **180 kg/ha** para alcanzar su potencial. Esos " . round(180 - $fertilizanteVal, 0) . " kg/ha que faltan se traducen directamente en granos más pequeños y mazorcas incompletas."],
-            ['titulo' => "2. ¿En qué se nota la falta de Nitrógeno?", 'tipo' => 'warning',
-             'contenido' => "Las hojas inferiores se ponen amarillas formando una 'V' desde la punta. Las plantas crecen más bajas y las mazorcas pesan menos porque no tienen suficiente nutriente para llenar todos los granos."],
-            ['titulo' => "3. ¿Cómo corregir el déficit?", 'tipo' => 'success',
-             'contenido' => !empty($recomendacionBase) ? $recomendacionBase : "Sube la dosis total a 180 kg/ha dividida en 3 aplicaciones: 60 kg/ha en siembra, 60 kg/ha en V4 (aporque) y 60 kg/ha en V8 (pre-floración)."]
+            ['titulo' => $variante === 0 ? "1. Estado actual" : "1. Diagnostico del suelo", 'tipo' => 'info', 'contenido' => $s1],
+            ['titulo' => $variante === 0 ? "2. Impacto" : "2. Perdida estimada", 'tipo' => ($principalPerdida > 1.0 ? 'warning' : 'success'), 'contenido' => $s2],
+            ['titulo' => $variante === 0 ? "3. Correccion" : "3. Plan de correccion", 'tipo' => 'success', 'contenido' => $s3],
         ];
-
         return $secciones;
+
     }
 }

@@ -1,5 +1,5 @@
 <?php
-// src/Dominios/Simulaciones/Explicacion/Explicadores/ExplicadorDistribucionProbabilistica.php — Puerto verbatim de SimulacionController::explain() línea 387 (distribución probabilística gauss/montecarlo (gráfico)).
+// src/Dominios/Simulaciones/Explicacion/Explicadores/ExplicadorDistribucionProbabilistica.php
 declare(strict_types=1);
 
 namespace ZeaSys\Dominios\Simulaciones\Explicacion\Explicadores;
@@ -41,31 +41,32 @@ final class ExplicadorDistribucionProbabilistica implements ExplicadorInterface
         $principalDetalle = $contexto['principal_detalle'];
         $perdidaDolaresHa = $contexto['perdida_dolares_ha'];
         $nombreLower = $contexto['nombre_lower'];
-        $dg = $contexto['datos_grafico'];
 
-        $rawP50 = isset($dg['p50']) && floatval($dg['p50']) > 0 ? floatval($dg['p50']) : $rendPredichoVal;
-        $rawP10 = isset($dg['p10']) && floatval($dg['p10']) > 0 ? floatval($dg['p10']) : ($rawP50 * 0.72);
-        $rawP90 = isset($dg['p90']) && floatval($dg['p90']) > 0 ? floatval($dg['p90']) : ($rawP50 * 1.28);
-
-        if (abs($rawP90 - $rawP10) < 0.3) {
-            $rawP10 = max(2.1, round($rawP50 * 0.72, 2));
-            $rawP90 = round($rawP50 * 1.28, 2);
+        $variante = crc32((string)($contexto['nombre'] ?? '')) % 2;
+        $desc = !empty($descripcionTecnica) ? $descripcionTecnica : "indicador de desempeno del sistema";
+        $imp = !empty($impactoBase) ? $impactoBase : "afecta directamente el rendimiento final";
+        $rec = !empty($recomendacionBase) ? $recomendacionBase : "optimiza {$principalNombre} y re-simula el escenario.";
+        if ($variante === 0) {
+            $s1 = "El indicador {$nombre} registra {$valorConUnidad} en {$ubicacion} ({$areaHa} ha, {$variedadMaiz}). {$desc}.";
+        } else {
+            $s1 = "En la parcela {$nombreParcela}, {$nombre} = {$valorConUnidad}; {$desc}. Condiciones: {$temperaturaVal} °C, {$precipitacionVal} mm, pH {$phSuelo}.";
         }
-
-        $p10 = round($rawP10, 2);
-        $p50 = round($rawP50, 2);
-        $p90 = round($rawP90, 2);
-        $rango = round($p90 - $p10, 2);
-
+        if ($variante === 0) {
+            $s2 = "Importa porque {$imp}. El factor limitante principal es {$principalNombre} ({$principalPerdida} t/ha, ~{$perdidaDolaresHa} USD/ha).";
+        } else {
+            $s2 = "Impacto: {$imp}. Principal cuello de botella: {$principalNombre} con {$principalPerdida} t/ha de perdida (~{$perdidaDolaresHa} USD/ha).";
+        }
+        if ($variante === 0) {
+            $s3 = "Accion: {$rec} Cierre: monitorea el indicador y ajusta antes de la siguiente etapa fenologica.";
+        } else {
+            $s3 = "Siguiente paso: {$rec} Cierra con una re-simulacion y seguimiento semanal.";
+        }
         $secciones = [
-            ['titulo' => "1. Los 3 escenarios de cosecha posibles", 'tipo' => 'info',
-             'contenido' => "Tu cosecha más probable es **$p50 t/ha**. En un año con clima favorable podrías alcanzar hasta **$p90 t/ha**, pero si hay sequía o lluvias excesivas en $ubicacion, la cosecha podría caer a **$p10 t/ha**."],
-            ['titulo' => "2. ¿Qué tan amplio es el riesgo?", 'tipo' => 'warning',
-             'contenido' => "La diferencia entre el mejor y peor escenario es de **$rango t/ha**. Cuanto más grande sea este rango, más depende tu cosecha de factores climáticos que no puedes controlar."],
-            ['titulo' => "3. ¿Cómo reducir la incertidumbre?", 'tipo' => 'success',
-             'contenido' => "Para elevar el piso pesimista de $p10 t/ha, incorpora materia orgánica al suelo $tipoSuelo para retener más agua y considera semillas tolerantes a sequía para la próxima campaña."]
+            ['titulo' => $variante === 0 ? "1. Que significa?" : "1. Definicion y valor", 'tipo' => 'info', 'contenido' => $s1],
+            ['titulo' => $variante === 0 ? "2. Por que importa?" : "2. Impacto en el cultivo", 'tipo' => ($nivelText === 'riesgoso' ? 'warning' : 'success'), 'contenido' => $s2],
+            ['titulo' => $variante === 0 ? "3. Que hacer?" : "3. Accion recomendada", 'tipo' => 'success', 'contenido' => $s3],
         ];
-
         return $secciones;
+
     }
 }

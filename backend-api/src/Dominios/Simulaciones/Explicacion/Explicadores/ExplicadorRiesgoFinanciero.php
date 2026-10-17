@@ -1,5 +1,5 @@
 <?php
-// src/Dominios/Simulaciones/Explicacion/Explicadores/ExplicadorRiesgoFinanciero.php — Puerto verbatim de SimulacionController::explain() línea 701 (riesgo financiero / agronómico).
+// src/Dominios/Simulaciones/Explicacion/Explicadores/ExplicadorRiesgoFinanciero.php
 declare(strict_types=1);
 
 namespace ZeaSys\Dominios\Simulaciones\Explicacion\Explicadores;
@@ -42,15 +42,31 @@ final class ExplicadorRiesgoFinanciero implements ExplicadorInterface
         $perdidaDolaresHa = $contexto['perdida_dolares_ha'];
         $nombreLower = $contexto['nombre_lower'];
 
+        $variante = crc32((string)($contexto['nombre'] ?? '')) % 2;
+        $desc = !empty($descripcionTecnica) ? $descripcionTecnica : "indicador de desempeno del sistema";
+        $imp = !empty($impactoBase) ? $impactoBase : "afecta directamente el rendimiento final";
+        $rec = !empty($recomendacionBase) ? $recomendacionBase : "optimiza {$principalNombre} y re-simula el escenario.";
+        if ($variante === 0) {
+            $s1 = "El indicador {$nombre} registra {$valorConUnidad} en {$ubicacion} ({$areaHa} ha, {$variedadMaiz}). {$desc}.";
+        } else {
+            $s1 = "En la parcela {$nombreParcela}, {$nombre} = {$valorConUnidad}; {$desc}. Condiciones: {$temperaturaVal} °C, {$precipitacionVal} mm, pH {$phSuelo}.";
+        }
+        if ($variante === 0) {
+            $s2 = "Importa porque {$imp}. El factor limitante principal es {$principalNombre} ({$principalPerdida} t/ha, ~{$perdidaDolaresHa} USD/ha).";
+        } else {
+            $s2 = "Impacto: {$imp}. Principal cuello de botella: {$principalNombre} con {$principalPerdida} t/ha de perdida (~{$perdidaDolaresHa} USD/ha).";
+        }
+        if ($variante === 0) {
+            $s3 = "Accion: {$rec} Cierre: monitorea el indicador y ajusta antes de la siguiente etapa fenologica.";
+        } else {
+            $s3 = "Siguiente paso: {$rec} Cierra con una re-simulacion y seguimiento semanal.";
+        }
         $secciones = [
-            ['titulo' => "1. ¿Qué tan alto es tu riesgo con $valorConUnidad?", 'tipo' => $nivelText === 'favorable' ? 'success' : 'danger',
-             'contenido' => "Un nivel de riesgo de **$valorConUnidad** " . ($nivelText === 'favorable' ? "es bajo, lo que indica que las condiciones actuales son estables para tu cultivo en $ubicacion." : "es preocupante. Indica que hay una probabilidad significativa de que tu cosecha no cubra la inversión en $nombreParcela.")],
-            ['titulo' => "2. ¿Qué factores elevan tu riesgo?", 'tipo' => 'warning',
-             'contenido' => !empty($impactoBase) ? $impactoBase : "Los factores que más influyen en el riesgo son: variabilidad de lluvias ($precipitacionVal mm), temperatura ($temperaturaVal °C) y el precio de venta del quintal de maíz."],
-            ['titulo' => "3. ¿Cómo reducir el riesgo?", 'tipo' => 'success',
-             'contenido' => !empty($recomendacionBase) ? $recomendacionBase : "Diversifica con diferentes fechas de siembra, asegura contratos de precio fijo y mantén un fondo de contingencia para imprevistos."]
+            ['titulo' => $variante === 0 ? "1. Que significa?" : "1. Definicion y valor", 'tipo' => 'info', 'contenido' => $s1],
+            ['titulo' => $variante === 0 ? "2. Por que importa?" : "2. Impacto en el cultivo", 'tipo' => ($nivelText === 'riesgoso' ? 'warning' : 'success'), 'contenido' => $s2],
+            ['titulo' => $variante === 0 ? "3. Que hacer?" : "3. Accion recomendada", 'tipo' => 'success', 'contenido' => $s3],
         ];
-
         return $secciones;
+
     }
 }

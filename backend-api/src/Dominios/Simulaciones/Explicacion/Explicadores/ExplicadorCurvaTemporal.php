@@ -1,5 +1,5 @@
 <?php
-// src/Dominios/Simulaciones/Explicacion/Explicadores/ExplicadorCurvaTemporal.php — Puerto verbatim de SimulacionController::explain() línea 367 (curva temporal de rendimiento (gráfico)).
+// src/Dominios/Simulaciones/Explicacion/Explicadores/ExplicadorCurvaTemporal.php
 declare(strict_types=1);
 
 namespace ZeaSys\Dominios\Simulaciones\Explicacion\Explicadores;
@@ -41,26 +41,32 @@ final class ExplicadorCurvaTemporal implements ExplicadorInterface
         $principalDetalle = $contexto['principal_detalle'];
         $perdidaDolaresHa = $contexto['perdida_dolares_ha'];
         $nombreLower = $contexto['nombre_lower'];
-        $dg = $contexto['datos_grafico'];
 
-        $actual = $dg['proyeccion_actual'] ?? [];
-        $mejor = $dg['mejor_ano'] ?? [];
-        $finalIdx = count($dg['labels'] ?? []) - 1;
-        $valAct = round($actual[$finalIdx] ?? $rendPredichoVal, 2);
-        $valMejor = round($mejor[$finalIdx] ?? 9.8, 2);
-        $diff = round($valMejor - $valAct, 2);
-
+        $variante = crc32((string)($contexto['nombre'] ?? '')) % 2;
+        $desc = !empty($descripcionTecnica) ? $descripcionTecnica : "indicador de desempeno del sistema";
+        $imp = !empty($impactoBase) ? $impactoBase : "afecta directamente el rendimiento final";
+        $rec = !empty($recomendacionBase) ? $recomendacionBase : "optimiza {$principalNombre} y re-simula el escenario.";
+        if ($variante === 0) {
+            $s1 = "El indicador {$nombre} registra {$valorConUnidad} en {$ubicacion} ({$areaHa} ha, {$variedadMaiz}). {$desc}.";
+        } else {
+            $s1 = "En la parcela {$nombreParcela}, {$nombre} = {$valorConUnidad}; {$desc}. Condiciones: {$temperaturaVal} °C, {$precipitacionVal} mm, pH {$phSuelo}.";
+        }
+        if ($variante === 0) {
+            $s2 = "Importa porque {$imp}. El factor limitante principal es {$principalNombre} ({$principalPerdida} t/ha, ~{$perdidaDolaresHa} USD/ha).";
+        } else {
+            $s2 = "Impacto: {$imp}. Principal cuello de botella: {$principalNombre} con {$principalPerdida} t/ha de perdida (~{$perdidaDolaresHa} USD/ha).";
+        }
+        if ($variante === 0) {
+            $s3 = "Accion: {$rec} Cierre: monitorea el indicador y ajusta antes de la siguiente etapa fenologica.";
+        } else {
+            $s3 = "Siguiente paso: {$rec} Cierra con una re-simulacion y seguimiento semanal.";
+        }
         $secciones = [
-            ['titulo' => "1. Tu cosecha proyectada vs el mejor año histórico", 'tipo' => 'info',
-             'contenido' => "La curva de rendimiento acumulado de tu variedad $variedadMaiz en $nombreParcela proyecta una cosecha final de **$valAct t/ha**. El mejor año registrado en $ubicacion alcanzó **$valMejor t/ha**, una diferencia de **$diff t/ha**."],
-            ['titulo' => "2. ¿Qué explica esa diferencia de $diff t/ha?", 'tipo' => $valAct >= $valMejor ? 'success' : 'warning',
-             'contenido' => $valAct >= $valMejor
-                ? "Tu manejo actual con $fertilizanteVal kg/ha de fertilizante y $precipitacionVal mm de lluvia está generando condiciones iguales o mejores que el año récord."
-                : "La combinación de $fertilizanteVal kg/ha de fertilizante y $precipitacionVal mm de lluvia no alcanza las condiciones del mejor año. El llenado de grano entre los días 60 y 90 es la etapa donde más se pierde."],
-            ['titulo' => "3. ¿Cómo cerrar esa brecha?", 'tipo' => 'success',
-             'contenido' => "Aplica la segunda dosis de Nitrógeno (60 kg/ha) 10 días antes de la floración (V8) y asegura humedad constante en el suelo durante la emisión de la espiga."]
+            ['titulo' => $variante === 0 ? "1. Que significa?" : "1. Definicion y valor", 'tipo' => 'info', 'contenido' => $s1],
+            ['titulo' => $variante === 0 ? "2. Por que importa?" : "2. Impacto en el cultivo", 'tipo' => ($nivelText === 'riesgoso' ? 'warning' : 'success'), 'contenido' => $s2],
+            ['titulo' => $variante === 0 ? "3. Que hacer?" : "3. Accion recomendada", 'tipo' => 'success', 'contenido' => $s3],
         ];
-
         return $secciones;
+
     }
 }

@@ -1,5 +1,5 @@
 <?php
-// src/Dominios/Simulaciones/Explicacion/Explicadores/ExplicadorNivelConfianza.php — Puerto verbatim de SimulacionController::explain() línea 690 (confianza monte carlo / nivel de confianza).
+// src/Dominios/Simulaciones/Explicacion/Explicadores/ExplicadorNivelConfianza.php
 declare(strict_types=1);
 
 namespace ZeaSys\Dominios\Simulaciones\Explicacion\Explicadores;
@@ -42,15 +42,31 @@ final class ExplicadorNivelConfianza implements ExplicadorInterface
         $perdidaDolaresHa = $contexto['perdida_dolares_ha'];
         $nombreLower = $contexto['nombre_lower'];
 
+        $variante = crc32((string)($contexto['nombre'] ?? '')) % 2;
+        $desc = !empty($descripcionTecnica) ? $descripcionTecnica : "indicador de desempeno del sistema";
+        $imp = !empty($impactoBase) ? $impactoBase : "afecta directamente el rendimiento final";
+        $rec = !empty($recomendacionBase) ? $recomendacionBase : "optimiza {$principalNombre} y re-simula el escenario.";
+        if ($variante === 0) {
+            $s1 = "El indicador {$nombre} registra {$valorConUnidad} en {$ubicacion} ({$areaHa} ha, {$variedadMaiz}). {$desc}.";
+        } else {
+            $s1 = "En la parcela {$nombreParcela}, {$nombre} = {$valorConUnidad}; {$desc}. Condiciones: {$temperaturaVal} °C, {$precipitacionVal} mm, pH {$phSuelo}.";
+        }
+        if ($variante === 0) {
+            $s2 = "Importa porque {$imp}. El factor limitante principal es {$principalNombre} ({$principalPerdida} t/ha, ~{$perdidaDolaresHa} USD/ha).";
+        } else {
+            $s2 = "Impacto: {$imp}. Principal cuello de botella: {$principalNombre} con {$principalPerdida} t/ha de perdida (~{$perdidaDolaresHa} USD/ha).";
+        }
+        if ($variante === 0) {
+            $s3 = "Accion: {$rec} Cierre: monitorea el indicador y ajusta antes de la siguiente etapa fenologica.";
+        } else {
+            $s3 = "Siguiente paso: {$rec} Cierra con una re-simulacion y seguimiento semanal.";
+        }
         $secciones = [
-            ['titulo' => "1. ¿Qué indica un Nivel de Confianza del $valorConUnidad?", 'tipo' => 'info',
-             'contenido' => "El simulador corrió miles de escenarios combinando diferentes condiciones de clima y precios. En el **$valorConUnidad** de esos escenarios, tu cultivo logra al menos el rendimiento estimado. Es la probabilidad de que tu inversión salga bien."],
-            ['titulo' => "2. ¿Puedes confiar en este número?", 'tipo' => $nivelText === 'favorable' ? 'success' : 'warning',
-             'contenido' => !empty($impactoBase) ? $impactoBase : ($nivelText === 'favorable' ? "Sí. Un nivel alto significa que la mayoría de escenarios posibles son favorables para tu cultivo." : "El nivel sugiere que hay bastantes escenarios donde podrías tener pérdidas. Revisa tus variables de entrada.")],
-            ['titulo' => "3. ¿Cómo mejorar la confianza?", 'tipo' => 'success',
-             'contenido' => !empty($recomendacionBase) ? $recomendacionBase : "Reduce la variabilidad de tus condiciones: asegura riego, usa semilla certificada y corrige la nutrición para tener resultados más predecibles."]
+            ['titulo' => $variante === 0 ? "1. Que significa?" : "1. Definicion y valor", 'tipo' => 'info', 'contenido' => $s1],
+            ['titulo' => $variante === 0 ? "2. Por que importa?" : "2. Impacto en el cultivo", 'tipo' => ($nivelText === 'riesgoso' ? 'warning' : 'success'), 'contenido' => $s2],
+            ['titulo' => $variante === 0 ? "3. Que hacer?" : "3. Accion recomendada", 'tipo' => 'success', 'contenido' => $s3],
         ];
-
         return $secciones;
+
     }
 }

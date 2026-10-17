@@ -1,5 +1,5 @@
 <?php
-// src/Dominios/Simulaciones/Explicacion/Explicadores/ExplicadorRendimientoPredicho.php — Puerto verbatim de SimulacionController::explain() línea 489 (rendimiento predicho).
+// src/Dominios/Simulaciones/Explicacion/Explicadores/ExplicadorRendimientoPredicho.php
 declare(strict_types=1);
 
 namespace ZeaSys\Dominios\Simulaciones\Explicacion\Explicadores;
@@ -42,17 +42,30 @@ final class ExplicadorRendimientoPredicho implements ExplicadorInterface
         $perdidaDolaresHa = $contexto['perdida_dolares_ha'];
         $nombreLower = $contexto['nombre_lower'];
 
+        $variante = crc32((string)($contexto['nombre'] ?? '')) % 2;
+        $gap = round($potencialMax - $rendPredichoVal, 2);
+        if ($variante === 0) {
+            $s1 = "En {$ubicacion}, tu rendimiento estimado es {$rendPredichoVal} t/ha frente a un potencial de {$potencialMax} t/ha: te faltan {$gap} t/ha, equivalentes a " . round($gap * $areaHa * 22 * 16.50, 2) . " USD en {$areaHa} ha con la variedad {$variedadMaiz}.";
+        } else {
+            $s1 = "Para la parcela {$nombreParcela} ({$areaHa} ha, {$variedadMaiz}), el modelo proyecta {$rendPredichoVal} t/ha contra un techo de {$potencialMax} t/ha en {$ubicacion}: brecha de {$gap} t/ha = " . round($gap * $areaHa * 22 * 16.50, 2) . " USD.";
+        }
+        $lossesText = "Nitrogeno: {$lossN} t/ha; Lluvia: {$lossWater} t/ha; pH: {$lossPh} t/ha; Temperatura: {$lossTemp} t/ha.";
+        if ($variante === 0) {
+            $s2 = "Factores limitantes (perdida en t/ha): {$lossesText} El principal es {$principalNombre} ({$principalDetalle}), que te resta {$principalPerdida} t/ha (~{$perdidaDolaresHa} USD/ha).";
+        } else {
+            $s2 = "El factor que mas te resta es {$principalNombre}: {$principalDetalle}, con {$principalPerdida} t/ha de perdida (~{$perdidaDolaresHa} USD/ha). Desglose: {$lossesText}";
+        }
+        if ($variante === 0) {
+            $s3 = "Accion concreta: corrige primero {$principalNombre}; aplica urea 180 kg/ha fraccionada (60% siembra, 40% V6), asegura 750 mm de agua total y cal agricola 2 t/ha en pre-siembra si el pH es menor a 5.8. Cierre: monitorea semanalmente y re-simula antes de la siembra.";
+        } else {
+            $s3 = "Siguiente paso: ataca {$principalNombre} ({$principalDetalle}) con dosis y fecha segun recomendacion tecnica; despues optimiza los demas factores para ganar hasta {$gap} t/ha. Cierra con una nueva simulacion del escenario.";
+        }
         $secciones = [
-            ['titulo' => "1. ¿Cuánto maíz vas a cosechar?", 'tipo' => 'info',
-             'contenido' => "La simulación estima que vas a cosechar **$valorConUnidad** en tu parcela $nombreParcela ($areaHa ha) con la variedad $variedadMaiz. " . ($rendPredichoVal > 6.0 ? "Este es un rendimiento competitivo para la zona de $ubicacion." : "Este rendimiento está por debajo del promedio de $ubicacion.")],
-            ['titulo' => "2. ¿Qué variables determinaron este resultado?", 'tipo' => $nivelText === 'favorable' ? 'success' : 'warning',
-             'contenido' => "El modelo consideró: temperatura de **$temperaturaVal °C**, lluvia de **$precipitacionVal mm**, fertilización de **$fertilizanteVal kg/ha** y pH de **$phSuelo**. Tu factor más débil es **$principalNombre** ($principalDetalle)."],
-            ['titulo' => "3. ¿Cómo subir tu rendimiento?", 'tipo' => 'success',
-             'contenido' => !empty($recomendacionBase) ? $recomendacionBase : "Corrige primero $principalNombre ya que es lo que más te resta. Después optimiza los otros factores para ganar toneladas adicionales."],
-            ['titulo' => "4. Valor económico de tu cosecha", 'tipo' => 'info',
-             'contenido' => "Con $rendPredichoVal t/ha en $areaHa ha, tu producción total sería de **" . round($rendPredichoVal * $areaHa, 1) . " toneladas** (" . round($rendPredichoVal * $areaHa * 22, 0) . " quintales), con un ingreso bruto estimado de **" . round($rendPredichoVal * $areaHa * 22 * 16.50, 2) . " USD** a $16.50 USD/qq."]
+            ['titulo' => $variante === 0 ? "1. Potencial vs. realidad" : "1. Brecha de rendimiento", 'tipo' => 'info', 'contenido' => $s1],
+            ['titulo' => $variante === 0 ? "2. Factores limitantes" : "2. Donde se pierde", 'tipo' => ($principalPerdida > 1.0 ? 'warning' : 'success'), 'contenido' => $s2],
+            ['titulo' => $variante === 0 ? "3. Accion concreta" : "3. Plan de mejora", 'tipo' => 'success', 'contenido' => $s3],
         ];
-
         return $secciones;
+
     }
 }

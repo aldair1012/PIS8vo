@@ -1,5 +1,5 @@
 <?php
-// src/Dominios/Simulaciones/Explicacion/Explicadores/ExplicadorMesEspecifico.php — Puerto verbatim de SimulacionController::explain() línea 857 (mes específico).
+// src/Dominios/Simulaciones/Explicacion/Explicadores/ExplicadorMesEspecifico.php
 declare(strict_types=1);
 
 namespace ZeaSys\Dominios\Simulaciones\Explicacion\Explicadores;
@@ -42,15 +42,31 @@ final class ExplicadorMesEspecifico implements ExplicadorInterface
         $perdidaDolaresHa = $contexto['perdida_dolares_ha'];
         $nombreLower = $contexto['nombre_lower'];
 
+        $variante = crc32((string)($contexto['nombre'] ?? '')) % 2;
+        $desc = !empty($descripcionTecnica) ? $descripcionTecnica : "indicador de desempeno del sistema";
+        $imp = !empty($impactoBase) ? $impactoBase : "afecta directamente el rendimiento final";
+        $rec = !empty($recomendacionBase) ? $recomendacionBase : "optimiza {$principalNombre} y re-simula el escenario.";
+        if ($variante === 0) {
+            $s1 = "El indicador {$nombre} registra {$valorConUnidad} en {$ubicacion} ({$areaHa} ha, {$variedadMaiz}). {$desc}.";
+        } else {
+            $s1 = "En la parcela {$nombreParcela}, {$nombre} = {$valorConUnidad}; {$desc}. Condiciones: {$temperaturaVal} °C, {$precipitacionVal} mm, pH {$phSuelo}.";
+        }
+        if ($variante === 0) {
+            $s2 = "Importa porque {$imp}. El factor limitante principal es {$principalNombre} ({$principalPerdida} t/ha, ~{$perdidaDolaresHa} USD/ha).";
+        } else {
+            $s2 = "Impacto: {$imp}. Principal cuello de botella: {$principalNombre} con {$principalPerdida} t/ha de perdida (~{$perdidaDolaresHa} USD/ha).";
+        }
+        if ($variante === 0) {
+            $s3 = "Accion: {$rec} Cierre: monitorea el indicador y ajusta antes de la siguiente etapa fenologica.";
+        } else {
+            $s3 = "Siguiente paso: {$rec} Cierra con una re-simulacion y seguimiento semanal.";
+        }
         $secciones = [
-            ['titulo' => "1. ¿Qué dice el análisis de $nombre?", 'tipo' => 'info',
-             'contenido' => "Este mes " . (strpos($nombreLower, 'recomendado') !== false ? "**sí es recomendado** para sembrar." : "**no es recomendado** para la siembra.") . " La evaluación considera la lluvia esperada, temperatura promedio y riesgo de eventos extremos para $ubicacion."],
-            ['titulo' => "2. ¿Cuáles son las condiciones esperadas?", 'tipo' => strpos($nombreLower, 'recomendado') !== false ? 'success' : 'warning',
-             'contenido' => !empty($impactoBase) ? $impactoBase : (strpos($nombreLower, 'recomendado') !== false ? "Las condiciones de lluvia y temperatura son favorables para el establecimiento del cultivo y su posterior floración." : "Las condiciones de este mes podrían exponer la floración a estrés hídrico o térmico, reduciendo el potencial de cosecha.")],
-            ['titulo' => "3. Recomendación", 'tipo' => 'success',
-             'contenido' => !empty($recomendacionBase) ? $recomendacionBase : "Compara este mes con las alternativas disponibles en el calendario y elige la ventana que mejor proteja la etapa de floración."]
+            ['titulo' => $variante === 0 ? "1. Que significa?" : "1. Definicion y valor", 'tipo' => 'info', 'contenido' => $s1],
+            ['titulo' => $variante === 0 ? "2. Por que importa?" : "2. Impacto en el cultivo", 'tipo' => ($nivelText === 'riesgoso' ? 'warning' : 'success'), 'contenido' => $s2],
+            ['titulo' => $variante === 0 ? "3. Que hacer?" : "3. Accion recomendada", 'tipo' => 'success', 'contenido' => $s3],
         ];
-
         return $secciones;
+
     }
 }

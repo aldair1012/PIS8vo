@@ -1,5 +1,5 @@
 <?php
-// src/Dominios/Simulaciones/Explicacion/Explicadores/ExplicadorAguaUtil.php — Puerto verbatim de SimulacionController::explain() línea 478 (agua útil / balance hídrico).
+// src/Dominios/Simulaciones/Explicacion/Explicadores/ExplicadorAguaUtil.php
 declare(strict_types=1);
 
 namespace ZeaSys\Dominios\Simulaciones\Explicacion\Explicadores;
@@ -42,15 +42,28 @@ final class ExplicadorAguaUtil implements ExplicadorInterface
         $perdidaDolaresHa = $contexto['perdida_dolares_ha'];
         $nombreLower = $contexto['nombre_lower'];
 
+        $variante = crc32((string)($contexto['nombre'] ?? '')) % 2;
+        if ($variante === 0) {
+            $s1 = "Fenomeno climatico: {$nombre} = {$valorConUnidad} en {$ubicacion}; temperatura {$temperaturaVal} °C, lluvia {$precipitacionVal} mm y humedad {$humedadVal}%.";
+        } else {
+            $s1 = "En la parcela {$nombreParcela} ({$areaHa} ha, {$variedadMaiz}), {$nombre} registra {$valorConUnidad}; condiciones: {$temperaturaVal} °C, {$precipitacionVal} mm de lluvia y {$humedadVal}% de humedad.";
+        }
+        if ($variante === 0) {
+            $s2 = "Impacto en tu cultivo: {$principalDetalle}; perdida estimada de {$principalPerdida} t/ha (~{$perdidaDolaresHa} USD/ha) si no se corrige a tiempo.";
+        } else {
+            $s2 = "El clima te resta {$principalPerdida} t/ha (~{$perdidaDolaresHa} USD/ha) por {$principalNombre}: {$principalDetalle}. Ingreso en riesgo: " . round($principalPerdida * $areaHa * 22 * 16.50, 2) . " USD.";
+        }
+        if ($variante === 0) {
+            $s3 = "Ventana de accion: ajusta la fecha de siembra y la variedad segun el pronostico ENSO; monitorea a 7-10 dias; prepara un plan de contingencia hidrica y de drenaje. Cierre: re-simula el escenario antes de sembrar.";
+        } else {
+            $s3 = "Siguiente paso: define la ventana de siembra optima segun el pronostico, prepara reserva de agua y drenaje; monitorea cada 7 dias. Cierra con una nueva simulacion del escenario climatico.";
+        }
         $secciones = [
-            ['titulo' => "1. ¿Cuánta agua necesita tu cultivo?", 'tipo' => 'info',
-             'contenido' => "Tu maíz variedad $variedadMaiz necesita **$valorConUnidad** de agua durante todo su ciclo de 120 días. " . (!empty($rangoIdeal) ? "El rango adecuado es $rangoIdeal." : "Lo ideal son entre 450 y 550 mm.")],
-            ['titulo' => "2. ¿Tu zona cubre esa necesidad?", 'tipo' => $precipitacionVal >= 600 ? 'success' : 'danger',
-             'contenido' => "En $ubicacion se registran **$precipitacionVal mm/año** de lluvia. " . ($precipitacionVal >= 600 ? "Esto cubre la mayor parte de la demanda hídrica del cultivo." : "Esto está por debajo de lo necesario, lo que puede causar estrés hídrico durante la floración.")],
-            ['titulo' => "3. ¿Qué hacer si falta agua?", 'tipo' => 'success',
-             'contenido' => !empty($recomendacionBase) ? $recomendacionBase : "Programa riegos de auxilio de 25-30 mm en la etapa V8 a VT (floración) que es cuando la planta más agua consume."]
+            ['titulo' => $variante === 0 ? "1. Fenomeno" : "1. Condicion climatica", 'tipo' => 'info', 'contenido' => $s1],
+            ['titulo' => $variante === 0 ? "2. Impacto en tu cultivo" : "2. Efecto sobre el rendimiento", 'tipo' => ($principalPerdida > 1.0 ? 'warning' : 'success'), 'contenido' => $s2],
+            ['titulo' => $variante === 0 ? "3. Ventana de accion" : "3. Que hacer y cuando", 'tipo' => 'success', 'contenido' => $s3],
         ];
-
         return $secciones;
+
     }
 }

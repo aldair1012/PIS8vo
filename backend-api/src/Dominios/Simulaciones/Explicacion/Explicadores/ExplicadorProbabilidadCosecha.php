@@ -1,5 +1,5 @@
 <?php
-// src/Dominios/Simulaciones/Explicacion/Explicadores/ExplicadorProbabilidadCosecha.php — Puerto verbatim de SimulacionController::explain() línea 502 (probabilidad de cosecha).
+// src/Dominios/Simulaciones/Explicacion/Explicadores/ExplicadorProbabilidadCosecha.php
 declare(strict_types=1);
 
 namespace ZeaSys\Dominios\Simulaciones\Explicacion\Explicadores;
@@ -42,18 +42,31 @@ final class ExplicadorProbabilidadCosecha implements ExplicadorInterface
         $perdidaDolaresHa = $contexto['perdida_dolares_ha'];
         $nombreLower = $contexto['nombre_lower'];
 
-        $porciento = preg_replace('/[^0-9.]/', '', $valor);
+        $variante = crc32((string)($contexto['nombre'] ?? '')) % 2;
+        $desc = !empty($descripcionTecnica) ? $descripcionTecnica : "indicador de desempeno del sistema";
+        $imp = !empty($impactoBase) ? $impactoBase : "afecta directamente el rendimiento final";
+        $rec = !empty($recomendacionBase) ? $recomendacionBase : "optimiza {$principalNombre} y re-simula el escenario.";
+        if ($variante === 0) {
+            $s1 = "El indicador {$nombre} registra {$valorConUnidad} en {$ubicacion} ({$areaHa} ha, {$variedadMaiz}). {$desc}.";
+        } else {
+            $s1 = "En la parcela {$nombreParcela}, {$nombre} = {$valorConUnidad}; {$desc}. Condiciones: {$temperaturaVal} °C, {$precipitacionVal} mm, pH {$phSuelo}.";
+        }
+        if ($variante === 0) {
+            $s2 = "Importa porque {$imp}. El factor limitante principal es {$principalNombre} ({$principalPerdida} t/ha, ~{$perdidaDolaresHa} USD/ha).";
+        } else {
+            $s2 = "Impacto: {$imp}. Principal cuello de botella: {$principalNombre} con {$principalPerdida} t/ha de perdida (~{$perdidaDolaresHa} USD/ha).";
+        }
+        if ($variante === 0) {
+            $s3 = "Accion: {$rec} Cierre: monitorea el indicador y ajusta antes de la siguiente etapa fenologica.";
+        } else {
+            $s3 = "Siguiente paso: {$rec} Cierra con una re-simulacion y seguimiento semanal.";
+        }
         $secciones = [
-            ['titulo' => "1. ¿Qué significa una Probabilidad de Cosecha del $valor?", 'tipo' => 'info',
-             'contenido' => "Hay un **$valor** de certeza estadística de que tu cultivo $variedadMaiz alcanzará las **$rendPredichoVal t/ha** estimadas sin sufrir un colapso por sequía, plagas o heladas durante el ciclo."],
-            ['titulo' => "2. ¿Es buena esta probabilidad?", 'tipo' => floatval($porciento) >= 80 ? 'success' : 'warning',
-             'contenido' => floatval($porciento) >= 80
-                ? "Sí. Una confianza por encima del 80% indica que las condiciones de $ubicacion son estables y tu plan de manejo es sólido."
-                : "Es baja. Factores como lluvias irregulares o temperaturas extremas en $ubicacion aumentan la incertidumbre. Se recomienda un plan de contingencia."],
-            ['titulo' => "3. ¿Cómo mantener alta esta probabilidad?", 'tipo' => 'success',
-             'contenido' => !empty($recomendacionBase) ? $recomendacionBase : "Mantén el monitoreo de plagas, asegura riegos oportunos y evita sembrar fuera de la ventana óptima para $ubicacion."]
+            ['titulo' => $variante === 0 ? "1. Que significa?" : "1. Definicion y valor", 'tipo' => 'info', 'contenido' => $s1],
+            ['titulo' => $variante === 0 ? "2. Por que importa?" : "2. Impacto en el cultivo", 'tipo' => ($nivelText === 'riesgoso' ? 'warning' : 'success'), 'contenido' => $s2],
+            ['titulo' => $variante === 0 ? "3. Que hacer?" : "3. Accion recomendada", 'tipo' => 'success', 'contenido' => $s3],
         ];
-
         return $secciones;
+
     }
 }

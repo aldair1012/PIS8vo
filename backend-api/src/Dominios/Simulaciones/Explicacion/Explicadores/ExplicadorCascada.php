@@ -1,5 +1,5 @@
 <?php
-// src/Dominios/Simulaciones/Explicacion/Explicadores/ExplicadorCascada.php — Puerto verbatim de SimulacionController::explain() línea 354 (cascada de brechas (gráfico)).
+// src/Dominios/Simulaciones/Explicacion/Explicadores/ExplicadorCascada.php
 declare(strict_types=1);
 
 namespace ZeaSys\Dominios\Simulaciones\Explicacion\Explicadores;
@@ -41,19 +41,32 @@ final class ExplicadorCascada implements ExplicadorInterface
         $principalDetalle = $contexto['principal_detalle'];
         $perdidaDolaresHa = $contexto['perdida_dolares_ha'];
         $nombreLower = $contexto['nombre_lower'];
-        $dg = $contexto['datos_grafico'];
 
+        $variante = crc32((string)($contexto['nombre'] ?? '')) % 2;
+        $desc = !empty($descripcionTecnica) ? $descripcionTecnica : "indicador de desempeno del sistema";
+        $imp = !empty($impactoBase) ? $impactoBase : "afecta directamente el rendimiento final";
+        $rec = !empty($recomendacionBase) ? $recomendacionBase : "optimiza {$principalNombre} y re-simula el escenario.";
+        if ($variante === 0) {
+            $s1 = "El indicador {$nombre} registra {$valorConUnidad} en {$ubicacion} ({$areaHa} ha, {$variedadMaiz}). {$desc}.";
+        } else {
+            $s1 = "En la parcela {$nombreParcela}, {$nombre} = {$valorConUnidad}; {$desc}. Condiciones: {$temperaturaVal} °C, {$precipitacionVal} mm, pH {$phSuelo}.";
+        }
+        if ($variante === 0) {
+            $s2 = "Importa porque {$imp}. El factor limitante principal es {$principalNombre} ({$principalPerdida} t/ha, ~{$perdidaDolaresHa} USD/ha).";
+        } else {
+            $s2 = "Impacto: {$imp}. Principal cuello de botella: {$principalNombre} con {$principalPerdida} t/ha de perdida (~{$perdidaDolaresHa} USD/ha).";
+        }
+        if ($variante === 0) {
+            $s3 = "Accion: {$rec} Cierre: monitorea el indicador y ajusta antes de la siguiente etapa fenologica.";
+        } else {
+            $s3 = "Siguiente paso: {$rec} Cierra con una re-simulacion y seguimiento semanal.";
+        }
         $secciones = [
-            ['titulo' => "1. ¿Cuál es la limitante principal de tu lote?", 'tipo' => 'danger',
-             'contenido' => "En tu parcela $nombreParcela, el factor que más frena tu cosecha es **$principalNombre** ($principalDetalle). Te resta **-$principalPerdida t/ha** del rendimiento potencial de $potencialMax t/ha."],
-            ['titulo' => "2. ¿Cuánto dinero pierdes por esta limitante?", 'tipo' => 'warning',
-             'contenido' => "Esa pérdida de -$principalPerdida t/ha equivale a dejar de ingresar **-$perdidaDolaresHa USD por hectárea** (al precio de $16.50 USD/qq, con 22 quintales por tonelada)."],
-            ['titulo' => "3. ¿Qué puedes hacer para reducir esta brecha?", 'tipo' => 'success',
-             'contenido' => !empty($recomendacionBase) ? $recomendacionBase : "Enfoca tu inversión en corregir $principalNombre antes de agregar otros insumos, ya que es el cuello de botella que más impacto tiene en tu rendimiento."],
-            ['titulo' => "4. Seguimiento recomendado", 'tipo' => 'info',
-             'contenido' => "Después de aplicar la corrección, vuelve a correr la simulación para verificar que la brecha se redujo y que tu cosecha estimada subió."]
+            ['titulo' => $variante === 0 ? "1. Que significa?" : "1. Definicion y valor", 'tipo' => 'info', 'contenido' => $s1],
+            ['titulo' => $variante === 0 ? "2. Por que importa?" : "2. Impacto en el cultivo", 'tipo' => ($nivelText === 'riesgoso' ? 'warning' : 'success'), 'contenido' => $s2],
+            ['titulo' => $variante === 0 ? "3. Que hacer?" : "3. Accion recomendada", 'tipo' => 'success', 'contenido' => $s3],
         ];
-
         return $secciones;
+
     }
 }

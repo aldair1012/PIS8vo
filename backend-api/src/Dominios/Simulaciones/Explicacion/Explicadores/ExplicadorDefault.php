@@ -1,5 +1,5 @@
 <?php
-// src/Dominios/Simulaciones/Explicacion/Explicadores/ExplicadorDefault.php — Puerto verbatim de SimulacionController::explain() línea 901 (tarjeta no reconocida (fallback final)).
+// src/Dominios/Simulaciones/Explicacion/Explicadores/ExplicadorDefault.php
 declare(strict_types=1);
 
 namespace ZeaSys\Dominios\Simulaciones\Explicacion\Explicadores;
@@ -42,15 +42,31 @@ final class ExplicadorDefault implements ExplicadorInterface
         $perdidaDolaresHa = $contexto['perdida_dolares_ha'];
         $nombreLower = $contexto['nombre_lower'];
 
+        $variante = crc32((string)($contexto['nombre'] ?? '')) % 2;
+        $desc = !empty($descripcionTecnica) ? $descripcionTecnica : "indicador de desempeno del sistema";
+        $imp = !empty($impactoBase) ? $impactoBase : "afecta directamente el rendimiento final";
+        $rec = !empty($recomendacionBase) ? $recomendacionBase : "optimiza {$principalNombre} y re-simula el escenario.";
+        if ($variante === 0) {
+            $s1 = "El indicador {$nombre} registra {$valorConUnidad} en {$ubicacion} ({$areaHa} ha, {$variedadMaiz}). {$desc}.";
+        } else {
+            $s1 = "En la parcela {$nombreParcela}, {$nombre} = {$valorConUnidad}; {$desc}. Condiciones: {$temperaturaVal} °C, {$precipitacionVal} mm, pH {$phSuelo}.";
+        }
+        if ($variante === 0) {
+            $s2 = "Importa porque {$imp}. El factor limitante principal es {$principalNombre} ({$principalPerdida} t/ha, ~{$perdidaDolaresHa} USD/ha).";
+        } else {
+            $s2 = "Impacto: {$imp}. Principal cuello de botella: {$principalNombre} con {$principalPerdida} t/ha de perdida (~{$perdidaDolaresHa} USD/ha).";
+        }
+        if ($variante === 0) {
+            $s3 = "Accion: {$rec} Cierre: monitorea el indicador y ajusta antes de la siguiente etapa fenologica.";
+        } else {
+            $s3 = "Siguiente paso: {$rec} Cierra con una re-simulacion y seguimiento semanal.";
+        }
         $secciones = [
-            ['titulo' => "1. ¿Qué indica \"$nombre\" con valor de $valorConUnidad?", 'tipo' => 'info',
-             'contenido' => !empty($descripcionTecnica) ? "En tu parcela $nombreParcela: $descripcionTecnica" : "El indicador **$nombre** registra un valor de **$valorConUnidad** para tu parcela $nombreParcela ($areaHa ha) con la variedad $variedadMaiz en $ubicacion." . (!empty($rangoIdeal) ? " El rango ideal para esta métrica es de $rangoIdeal." : "")],
-            ['titulo' => "2. ¿Cómo afecta a tu cultivo?", 'tipo' => $nivelText === 'favorable' ? 'success' : 'warning',
-             'contenido' => !empty($impactoBase) ? $impactoBase : ($nivelText === 'favorable' ? "El valor de **$valorConUnidad** para $nombre es adecuado para las condiciones de $ubicacion y tu variedad $variedadMaiz." : "El valor de **$valorConUnidad** para $nombre podría estar afectando tu rendimiento estimado de $rendPredichoVal t/ha. Tu factor limitante principal es $principalNombre.")],
-            ['titulo' => "3. Recomendación para tu lote", 'tipo' => 'success',
-             'contenido' => !empty($recomendacionBase) ? $recomendacionBase : "Revisa si puedes optimizar $nombre ajustando los insumos o el manejo agronómico de tu parcela $nombreParcela."]
+            ['titulo' => $variante === 0 ? "1. Que significa?" : "1. Definicion y valor", 'tipo' => 'info', 'contenido' => $s1],
+            ['titulo' => $variante === 0 ? "2. Por que importa?" : "2. Impacto en el cultivo", 'tipo' => ($nivelText === 'riesgoso' ? 'warning' : 'success'), 'contenido' => $s2],
+            ['titulo' => $variante === 0 ? "3. Que hacer?" : "3. Accion recomendada", 'tipo' => 'success', 'contenido' => $s3],
         ];
-
         return $secciones;
+
     }
 }

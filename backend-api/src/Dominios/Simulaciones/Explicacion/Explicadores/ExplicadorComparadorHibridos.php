@@ -1,5 +1,5 @@
 <?php
-// src/Dominios/Simulaciones/Explicacion/Explicadores/ExplicadorComparadorHibridos.php — Puerto verbatim de SimulacionController::explain() línea 868 (comparador de híbridos).
+// src/Dominios/Simulaciones/Explicacion/Explicadores/ExplicadorComparadorHibridos.php
 declare(strict_types=1);
 
 namespace ZeaSys\Dominios\Simulaciones\Explicacion\Explicadores;
@@ -42,15 +42,31 @@ final class ExplicadorComparadorHibridos implements ExplicadorInterface
         $perdidaDolaresHa = $contexto['perdida_dolares_ha'];
         $nombreLower = $contexto['nombre_lower'];
 
+        $variante = crc32((string)($contexto['nombre'] ?? '')) % 2;
+        $desc = !empty($descripcionTecnica) ? $descripcionTecnica : "sin descripcion tecnica adicional";
+        $imp = !empty($impactoBase) ? $impactoBase : "impacto moderado sobre el rendimiento";
+        $rec = !empty($recomendacionBase) ? $recomendacionBase : "aplica el control segun el umbral de accion con dosis de etiqueta y rota los modos de accion.";
+        if ($variante === 0) {
+            $s1 = "Riesgo identificado: {$nombre} = {$valorConUnidad} en {$ubicacion}. {$desc}. Impacto base: {$imp}.";
+        } else {
+            $s1 = "En la parcela {$nombreParcela} ({$areaHa} ha), {$nombre} registra {$valorConUnidad}: {$desc}. Impacto estimado: {$imp}.";
+        }
+        if ($variante === 0) {
+            $s2 = "Control recomendado: {$rec} Momento: al alcanzar el umbral de accion; dosis segun etiqueta y rotacion de modos de accion.";
+        } else {
+            $s2 = "Accion de control: {$rec} Aplica en la ventana optima y verifica la eficacia a los 7 dias.";
+        }
+        if ($variante === 0) {
+            $s3 = "Prevencion: monitoreo semanal, control biologico, rotacion de cultivos y eliminacion de residuos. Cierre: registra la incidencia y re-evalua en 7 dias.";
+        } else {
+            $s3 = "Siguiente paso: implementa monitoreo semanal, control biologico y rotacion; registra incidencias. Cierra con una re-evaluacion en 7 dias.";
+        }
         $secciones = [
-            ['titulo' => "1. ¿Qué muestra este comparador?", 'tipo' => 'info',
-             'contenido' => "Compara cómo rinden diferentes combinaciones de fecha de siembra e híbridos de maíz para tu zona de $ubicacion. Te ayuda a elegir la mejor combinación para maximizar la cosecha."],
-            ['titulo' => "2. ¿Cómo interpretar los resultados?", 'tipo' => 'success',
-             'contenido' => !empty($impactoBase) ? $impactoBase : "Las celdas de color verde indican combinaciones con alto rendimiento. Las celdas rojas o amarillas indican combinaciones de menor productividad para las condiciones de tu zona."],
-            ['titulo' => "3. ¿Qué combinación elegir?", 'tipo' => 'success',
-             'contenido' => !empty($recomendacionBase) ? $recomendacionBase : "Elige la combinación con el mayor rendimiento estimado y verifica que el híbrido esté disponible en tu zona. Prioriza las celdas verdes con ventana de siembra de enero a marzo."]
+            ['titulo' => $variante === 0 ? "1. Riesgo identificado" : "1. Diagnostico de riesgo", 'tipo' => ($nivelText === 'riesgoso' ? 'danger' : 'warning'), 'contenido' => $s1],
+            ['titulo' => $variante === 0 ? "2. Control recomendado" : "2. Plan de control", 'tipo' => 'success', 'contenido' => $s2],
+            ['titulo' => $variante === 0 ? "3. Prevencion" : "3. Medidas preventivas", 'tipo' => 'info', 'contenido' => $s3],
         ];
-
         return $secciones;
+
     }
 }

@@ -1,5 +1,5 @@
 <?php
-// src/Dominios/Simulaciones/Explicacion/Explicadores/ExplicadorSensibilidad.php — Puerto verbatim de SimulacionController::explain() línea 412 (sensibilidad financiera (gráfico)).
+// src/Dominios/Simulaciones/Explicacion/Explicadores/ExplicadorSensibilidad.php
 declare(strict_types=1);
 
 namespace ZeaSys\Dominios\Simulaciones\Explicacion\Explicadores;
@@ -41,21 +41,32 @@ final class ExplicadorSensibilidad implements ExplicadorInterface
         $principalDetalle = $contexto['principal_detalle'];
         $perdidaDolaresHa = $contexto['perdida_dolares_ha'];
         $nombreLower = $contexto['nombre_lower'];
-        $dg = $contexto['datos_grafico'];
 
-        $margenes = array_column($dg, 'margen');
-        $maxMargen = !empty($margenes) ? round(max($margenes), 2) : 850;
-        $minMargen = !empty($margenes) ? round(min($margenes), 2) : -120;
-
+        $variante = crc32((string)($contexto['nombre'] ?? '')) % 2;
+        $desc = !empty($descripcionTecnica) ? $descripcionTecnica : "indicador de desempeno del sistema";
+        $imp = !empty($impactoBase) ? $impactoBase : "afecta directamente el rendimiento final";
+        $rec = !empty($recomendacionBase) ? $recomendacionBase : "optimiza {$principalNombre} y re-simula el escenario.";
+        if ($variante === 0) {
+            $s1 = "El indicador {$nombre} registra {$valorConUnidad} en {$ubicacion} ({$areaHa} ha, {$variedadMaiz}). {$desc}.";
+        } else {
+            $s1 = "En la parcela {$nombreParcela}, {$nombre} = {$valorConUnidad}; {$desc}. Condiciones: {$temperaturaVal} °C, {$precipitacionVal} mm, pH {$phSuelo}.";
+        }
+        if ($variante === 0) {
+            $s2 = "Importa porque {$imp}. El factor limitante principal es {$principalNombre} ({$principalPerdida} t/ha, ~{$perdidaDolaresHa} USD/ha).";
+        } else {
+            $s2 = "Impacto: {$imp}. Principal cuello de botella: {$principalNombre} con {$principalPerdida} t/ha de perdida (~{$perdidaDolaresHa} USD/ha).";
+        }
+        if ($variante === 0) {
+            $s3 = "Accion: {$rec} Cierre: monitorea el indicador y ajusta antes de la siguiente etapa fenologica.";
+        } else {
+            $s3 = "Siguiente paso: {$rec} Cierra con una re-simulacion y seguimiento semanal.";
+        }
         $secciones = [
-            ['titulo' => "1. ¿Cuánto puedes ganar o perder según el precio?", 'tipo' => 'info',
-             'contenido' => "Si el precio del maíz sube y mantienes tu rendimiento de $rendPredichoVal t/ha, tu ganancia puede alcanzar **+$maxMargen USD/ha**. Si el precio baja al mínimo, tu margen se reduce a **$minMargen USD/ha**."],
-            ['titulo' => "2. ¿Por qué varía tanto tu ganancia?", 'tipo' => 'warning',
-             'contenido' => "Tu margen es sensible porque tus costos de producción incluyen $fertilizanteVal kg/ha de fertilizante. Si el precio del maíz cae por debajo de $14.50 USD/qq, tus costos pueden superar tus ingresos."],
-            ['titulo' => "3. ¿Cómo protegerte de una caída de precios?", 'tipo' => 'success',
-             'contenido' => "Pacta contratos de venta anticipada fijando un precio mínimo de $16.50 USD/qq y reduce costos variables optimizando la dosis de fertilizante sin sacrificar rendimiento."]
+            ['titulo' => $variante === 0 ? "1. Que significa?" : "1. Definicion y valor", 'tipo' => 'info', 'contenido' => $s1],
+            ['titulo' => $variante === 0 ? "2. Por que importa?" : "2. Impacto en el cultivo", 'tipo' => ($nivelText === 'riesgoso' ? 'warning' : 'success'), 'contenido' => $s2],
+            ['titulo' => $variante === 0 ? "3. Que hacer?" : "3. Accion recomendada", 'tipo' => 'success', 'contenido' => $s3],
         ];
-
         return $secciones;
+
     }
 }
