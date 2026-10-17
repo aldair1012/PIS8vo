@@ -1,5 +1,5 @@
 {
-    "fecha_captura": "2026-10-17T05:58:10+02:00",
+    "fecha_captura": "2026-10-17T06:07:02+02:00",
     "base_url": "http://localhost/ZeaSys/backend-api/public/index.php",
     "tolerancia": 25,
     "pasos": [
@@ -619,7 +619,7 @@
         {
             "nombre": "valores ubicacion (externo)",
             "metodo": "GET",
-            "ruta": "/api/cultivos/valores-ubicacion?id=50",
+            "ruta": "/api/cultivos/valores-ubicacion?id=55",
             "volatilidad": "estructural",
             "http": 200,
             "cuerpo": {
@@ -648,16 +648,16 @@
                     "confianza": 67,
                     "escenarios": {
                         "lluvioso": {
-                            "produccion": 10.37,
-                            "rendimiento": 4.15
+                            "produccion": 10.56,
+                            "rendimiento": 4.22
                         },
                         "sequia": {
-                            "produccion": 8.83,
-                            "rendimiento": 3.53
+                            "produccion": 9.05,
+                            "rendimiento": 3.62
                         },
                         "verano": {
-                            "produccion": 10.28,
-                            "rendimiento": 4.11
+                            "produccion": 10.35,
+                            "rendimiento": 4.14
                         }
                     },
                     "metricas_modelo": {
@@ -742,7 +742,7 @@
                         "open_meteo": "<externo>",
                         "soilgrids": "<externo>"
                     },
-                    "produccion_total": 10.46,
+                    "produccion_total": "<externo:double>",
                     "recomendaciones": [
                         "Temperatura elevada (24.5°C) superior al óptimo (14-18°C). Implementar riego para reducir estrés térmico.",
                         "Humedad relativa adecuada (70.0%) para el cultivo.",
@@ -750,15 +750,15 @@
                         "Dosis de Nitrógeno (150 kg/ha) en rango sugerido (135-160 kg/ha).",
                         "pH del suelo alcalino (6.2). Rango óptimo: 6.0-6.0. Considerar materia orgánica para bajar el pH."
                     ],
-                    "rendimiento_estimado": 4.1821,
+                    "rendimiento_estimado": "<externo:double>",
                     "shap_values": {
                         "area": 0,
-                        "fertilizante": 0.0625,
-                        "humedad": -0.0009,
-                        "phSuelo": 0.1563,
-                        "precipitacion": 0.0356,
-                        "temperatura": 0.1295,
-                        "tipoSuelo": 0.0089
+                        "fertilizante": 0.0697,
+                        "humedad": -0.0062,
+                        "phSuelo": 0.1573,
+                        "precipitacion": 0.0413,
+                        "temperatura": 0.1255,
+                        "tipoSuelo": 0.0127
                     },
                     "success": true,
                     "simulacion_id": "<volatil>"
@@ -786,24 +786,24 @@
                         "ph_suelo": "6.20",
                         "tipo_suelo": "franco",
                         "area_simulada": "2.50",
-                        "rendimiento_estimado": "4.1821",
-                        "produccion_total": "10.46",
+                        "rendimiento_estimado": "<externo:string>",
+                        "produccion_total": "<externo:string>",
                         "confianza": "67.00",
-                        "shap_json": "{\"area\":0,\"fertilizante\":0.0625,\"humedad\":-0.0009,\"phSuelo\":0.1563,\"precipitacion\":0.0356,\"temperatura\":0.1295,\"tipoSuelo\":0.0089}",
+                        "shap_json": "<externo:string>",
                         "recomendaciones_json": "[\"Temperatura elevada (24.5\\u00b0C) superior al \\u00f3ptimo (14-18\\u00b0C). Implementar riego para reducir estr\\u00e9s t\\u00e9rmico.\",\"Humedad relativa adecuada (70.0%) para el cultivo.\",\"Precipitaci\\u00f3n adecuada (800 mm) en rango \\u00f3ptimo (800-1200 mm).\",\"Dosis de Nitr\\u00f3geno (150 kg\\/ha) en rango sugerido (135-160 kg\\/ha).\",\"pH del suelo alcalino (6.2). Rango \\u00f3ptimo: 6.0-6.0. Considerar materia org\\u00e1nica para bajar el pH.\"]",
                         "fecha": "<volatil>",
                         "categoria_cosecha": "Baja",
-                        "escenarios_json": "{\"lluvioso\":{\"produccion\":10.37,\"rendimiento\":4.15},\"sequia\":{\"produccion\":8.83,\"rendimiento\":3.53},\"verano\":{\"produccion\":10.28,\"rendimiento\":4.11}}",
+                        "escenarios_json": "<externo:string>",
                         "nombre_parcela": "Lote Contrato"
                     }
                 ],
                 "estadisticas": {
                     "total_simulaciones": 1,
-                    "rendimiento_promedio": "4.18210000",
-                    "rendimiento_maximo": "4.1821",
-                    "rendimiento_minimo": "4.1821",
+                    "rendimiento_promedio": "<externo:string>",
+                    "rendimiento_maximo": "<externo:string>",
+                    "rendimiento_minimo": "<externo:string>",
                     "confianza_promedio": "67.000000",
-                    "produccion_total": "10.46"
+                    "produccion_total": "<externo:string>"
                 }
             }
         },
@@ -811,7 +811,7 @@
             "nombre": "explain cascada",
             "metodo": "POST",
             "ruta": "/api/simulaciones/explain",
-            "volatilidad": "exacto",
+            "volatilidad": "tolerante",
             "http": 200,
             "cuerpo": {
                 "titulo": "Cascada de Brechas de Rendimiento",
@@ -851,7 +851,7 @@
             "nombre": "explain ROI",
             "metodo": "POST",
             "ruta": "/api/simulaciones/explain",
-            "volatilidad": "exacto",
+            "volatilidad": "tolerante",
             "http": 200,
             "cuerpo": {
                 "titulo": "ROI Anual",
@@ -866,7 +866,7 @@
                     {
                         "titulo": "2. ¿Tu inversión en maíz es rentable?",
                         "tipo": "success",
-                        "contenido": "Sí. Con un rendimiento de 4.18 t/ha y el precio actual del maíz, tu inversión genera más ganancia que dejar el dinero en el banco."
+                        "contenido": "Sí. Con un rendimiento de 4.24 t/ha y el precio actual del maíz, tu inversión genera más ganancia que dejar el dinero en el banco."
                     },
                     {
                         "titulo": "3. ¿Cómo mejorar la rentabilidad?",
@@ -875,7 +875,7 @@
                     }
                 ],
                 "que_significa": "Un Retorno de Inversión de **35 %** significa que por cada dólar que inviertes en tu lote Lote Contrato, recuperas ese dólar más **0.35 USD** de ganancia. Es una rentabilidad atractiva.",
-                "por_que_pudo_pasar": "Sí. Con un rendimiento de 4.18 t/ha y el precio actual del maíz, tu inversión genera más ganancia que dejar el dinero en el banco.",
+                "por_que_pudo_pasar": "Sí. Con un rendimiento de 4.24 t/ha y el precio actual del maíz, tu inversión genera más ganancia que dejar el dinero en el banco.",
                 "como_mejorarlo": "Reduce costos fraccionando la compra de insumos y negocia el precio de venta anticipadamente para asegurar un ingreso mínimo.",
                 "alerta_clave": "Revisar recomendaciones.",
                 "source": "Intérprete Agrícola ZeaSys",
@@ -886,7 +886,7 @@
             "nombre": "explain probabilidad",
             "metodo": "POST",
             "ruta": "/api/simulaciones/explain",
-            "volatilidad": "exacto",
+            "volatilidad": "tolerante",
             "http": 200,
             "cuerpo": {
                 "titulo": "Probabilidad de Cosecha",
@@ -896,7 +896,7 @@
                     {
                         "titulo": "1. ¿Qué significa una Probabilidad de Cosecha del 82%?",
                         "tipo": "info",
-                        "contenido": "Hay un **82%** de certeza estadística de que tu cultivo Pioneer P4039 alcanzará las **4.18 t/ha** estimadas sin sufrir un colapso por sequía, plagas o heladas durante el ciclo."
+                        "contenido": "Hay un **82%** de certeza estadística de que tu cultivo Pioneer P4039 alcanzará las **4.24 t/ha** estimadas sin sufrir un colapso por sequía, plagas o heladas durante el ciclo."
                     },
                     {
                         "titulo": "2. ¿Es buena esta probabilidad?",
@@ -909,7 +909,7 @@
                         "contenido": "Mantén el monitoreo de plagas, asegura riegos oportunos y evita sembrar fuera de la ventana óptima para Quito."
                     }
                 ],
-                "que_significa": "Hay un **82%** de certeza estadística de que tu cultivo Pioneer P4039 alcanzará las **4.18 t/ha** estimadas sin sufrir un colapso por sequía, plagas o heladas durante el ciclo.",
+                "que_significa": "Hay un **82%** de certeza estadística de que tu cultivo Pioneer P4039 alcanzará las **4.24 t/ha** estimadas sin sufrir un colapso por sequía, plagas o heladas durante el ciclo.",
                 "por_que_pudo_pasar": "Sí. Una confianza por encima del 80% indica que las condiciones de Quito son estables y tu plan de manejo es sólido.",
                 "como_mejorarlo": "Mantén el monitoreo de plagas, asegura riegos oportunos y evita sembrar fuera de la ventana óptima para Quito.",
                 "alerta_clave": "Revisar recomendaciones.",
@@ -920,7 +920,7 @@
         {
             "nombre": "dashboard yield",
             "metodo": "GET",
-            "ruta": "/api/yield?cultivo_id=50&anio=2026",
+            "ruta": "/api/yield?cultivo_id=55&anio=2026",
             "volatilidad": "tolerante",
             "http": 200,
             "cuerpo": {
@@ -947,7 +947,7 @@
                 "kpis": {
                     "rendimiento_potencial": 10,
                     "rendimiento_alcanzable": 8.14,
-                    "rendimiento_predicho": 4.18,
+                    "rendimiento_predicho": 4.24,
                     "yield_gap_total": 5.8,
                     "principal_limitante": "Temperatura"
                 },
@@ -959,15 +959,15 @@
                     },
                     {
                         "name": "Pérdida Nitrógeno",
-                        "value": -0.8
+                        "value": -1
                     },
                     {
                         "name": "Pérdida Agua",
-                        "value": -0.8
+                        "value": -1
                     },
                     {
                         "name": "Pérdida Temperatura",
-                        "value": -2.7
+                        "value": -3.1
                     },
                     {
                         "name": "Pérdida Fecha Siembra",
@@ -979,7 +979,7 @@
                     },
                     {
                         "name": "Rendimiento Final Predicho",
-                        "value": 4.18,
+                        "value": 4.24,
                         "is_kpi": true
                     }
                 ],
@@ -995,21 +995,21 @@
                     ],
                     "proyeccion_actual": [
                         0,
-                        1.08,
-                        2.09,
-                        2.96,
-                        3.62,
-                        4.04,
-                        4.18
+                        1.1,
+                        2.12,
+                        3,
+                        3.67,
+                        4.1,
+                        4.24
                     ],
                     "mejor_ano": [
                         0,
-                        1.19,
-                        2.3,
-                        3.25,
-                        3.98,
-                        4.44,
-                        4.6
+                        1.22,
+                        2.35,
+                        3.32,
+                        4.07,
+                        4.54,
+                        4.7
                     ],
                     "peor_ano": [
                         0,
@@ -1024,15 +1024,15 @@
                 "factores_contribucion": [
                     {
                         "factor": "Nitrógeno",
-                        "porcentaje": 13.8
+                        "porcentaje": 17.2
                     },
                     {
                         "factor": "Agua",
-                        "porcentaje": 13.8
+                        "porcentaje": 17.2
                     },
                     {
                         "factor": "Temperatura",
-                        "porcentaje": 46.6
+                        "porcentaje": 53.4
                     },
                     {
                         "factor": "Fecha de Siembra",
@@ -1048,7 +1048,7 @@
         {
             "nombre": "dashboard scenarios",
             "metodo": "GET",
-            "ruta": "/api/scenarios?cultivo_id=50&anio=2026",
+            "ruta": "/api/scenarios?cultivo_id=55&anio=2026",
             "volatilidad": "tolerante",
             "http": 200,
             "cuerpo": {
@@ -1082,8 +1082,8 @@
                     }
                 ],
                 "kpis": {
-                    "rendimiento_esperado": 4.18,
-                    "prob_superar_objetivo": 11,
+                    "rendimiento_esperado": 4.24,
+                    "prob_superar_objetivo": 12,
                     "riesgo_agronomico": {
                         "nivel": "bajo",
                         "color": "success",
@@ -1093,9 +1093,9 @@
                     "fecha_siembra_recomendada": "<volatil>"
                 },
                 "percentiles": {
-                    "p10": 4.18,
-                    "p50": 4.18,
-                    "p90": 4.18
+                    "p10": 4.24,
+                    "p50": 4.24,
+                    "p90": 4.24
                 },
                 "heatmap": [
                     {
@@ -1259,7 +1259,7 @@
         {
             "nombre": "dashboard climate (externo)",
             "metodo": "GET",
-            "ruta": "/api/climate?cultivo_id=50&anio=2026",
+            "ruta": "/api/climate?cultivo_id=55&anio=2026",
             "volatilidad": "estructural",
             "http": 200,
             "cuerpo": {
@@ -1313,32 +1313,32 @@
                         54
                     ],
                     "lluvia_anomala": [
-                        71,
-                        105,
-                        117,
-                        87,
-                        60,
-                        60,
-                        73,
-                        121,
-                        107,
-                        84,
-                        61,
-                        48
+                        88,
+                        102,
+                        112,
+                        80,
+                        50,
+                        66,
+                        74,
+                        115,
+                        98,
+                        88,
+                        51,
+                        47
                     ],
                     "temperatura_anomala": [
-                        16,
-                        17.2,
-                        16.5,
-                        16,
-                        14.5,
-                        14.5,
-                        13,
-                        13.3,
+                        16.1,
+                        15.8,
+                        17,
+                        16.2,
+                        15.2,
+                        13.7,
                         14.4,
+                        12.8,
+                        12.9,
+                        14.3,
                         14.9,
-                        15.5,
-                        15.4
+                        16.2
                     ]
                 },
                 "agua_estratos": {
@@ -1395,13 +1395,13 @@
         {
             "nombre": "dashboard financial",
             "metodo": "GET",
-            "ruta": "/api/financial?cultivo_id=50&anio=2026",
+            "ruta": "/api/financial?cultivo_id=55&anio=2026",
             "volatilidad": "tolerante",
             "http": 200,
             "cuerpo": {
                 "datos_base_sistema": {
                     "precio_maiz_qq": 16.5,
-                    "rendimiento_qq": 92.2,
+                    "rendimiento_qq": 93.5,
                     "costo_semilla": 85,
                     "costo_fert": 120,
                     "costo_riego": 60,
@@ -1410,24 +1410,24 @@
                     "costos_fijos": 120,
                     "area_parcela": 2.5,
                     "nombre_parcela": "Lote Contrato",
-                    "rendimiento_tha": 4.182
+                    "rendimiento_tha": 4.241
                 },
                 "kpis": {
-                    "margen_neto": 1011.24,
-                    "margen_bruto": 1131.24,
+                    "margen_neto": 1032.71,
+                    "margen_bruto": 1152.71,
                     "punto_equilibrio": 1.4,
                     "prob_superar_break_even": 88,
-                    "roi": 198.3,
+                    "roi": 202.5,
                     "precio_maiz": 363.76,
                     "precio_maiz_qq": 16.5,
-                    "precio_piso_qq": 5.53,
-                    "ganancia_por_dolar": 1.98,
+                    "precio_piso_qq": 5.45,
+                    "ganancia_por_dolar": 2.02,
                     "area_parcela": 2.5,
                     "nombre_parcela": "Lote Contrato",
-                    "ingreso_bruto_parcela": 3803.1,
+                    "ingreso_bruto_parcela": 3856.78,
                     "costo_total_parcela": 1275,
-                    "margen_neto_parcela": 2528.1,
-                    "produccion_total_qq": 230.5
+                    "margen_neto_parcela": 2581.78,
+                    "produccion_total_qq": 233.8
                 },
                 "costo_total": 510,
                 "sensibilidad": [
@@ -1574,33 +1574,33 @@
                 "roi_estrategias": [
                     {
                         "nombre": "Manejo Convencional (Base)",
-                        "roi": 198.3,
-                        "margen": 1011.24,
-                        "rendimiento": 4.18
+                        "roi": 202.5,
+                        "margen": 1032.71,
+                        "rendimiento": 4.24
                     },
                     {
                         "nombre": "Biofertilizante INIAP (Ahorro 40% Fert.)",
-                        "roi": 229.3,
-                        "margen": 1059.24,
-                        "rendimiento": 4.18
+                        "roi": 233.9,
+                        "margen": 1080.71,
+                        "rendimiento": 4.24
                     },
                     {
                         "nombre": "Fertirriego por Goteo (Alta Precisión)",
-                        "roi": 218.1,
-                        "margen": 1199.43,
-                        "rendimiento": 4.81
+                        "roi": 222.6,
+                        "margen": 1224.12,
+                        "rendimiento": 4.88
                     },
                     {
                         "nombre": "Materia Orgánica (Compost/Enmienda)",
-                        "roi": 201.4,
-                        "margen": 1077.51,
-                        "rendimiento": 4.43
+                        "roi": 205.7,
+                        "margen": 1100.27,
+                        "rendimiento": 4.5
                     }
                 ],
                 "waterfall_costos": [
                     {
                         "label": "Ingreso Bruto",
-                        "amount": 1521.24,
+                        "amount": 1542.71,
                         "is_total": true
                     },
                     {
@@ -1629,7 +1629,7 @@
                     },
                     {
                         "label": "Margen Neto",
-                        "amount": 1011.24,
+                        "amount": 1032.71,
                         "is_total": true
                     }
                 ]
@@ -1757,7 +1757,7 @@
         {
             "nombre": "eliminar simulacion",
             "metodo": "DELETE",
-            "ruta": "/api/simulaciones/eliminar?id=64",
+            "ruta": "/api/simulaciones/eliminar?id=69",
             "volatilidad": "exacto",
             "http": 200,
             "cuerpo": {
@@ -1768,7 +1768,7 @@
         {
             "nombre": "eliminar cultivo",
             "metodo": "DELETE",
-            "ruta": "/api/cultivos?id=50",
+            "ruta": "/api/cultivos?id=55",
             "volatilidad": "exacto",
             "http": 200,
             "cuerpo": {

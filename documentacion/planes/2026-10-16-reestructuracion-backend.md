@@ -308,15 +308,15 @@ function ejecutarEscenario(): array
         'nombre' => 'Cascada de Brechas de Rendimiento', 'cultivo_id' => $ids['cultivo'], 'anio' => (int) date('Y'),
         'valor' => '4.2', 'unidad' => 't/ha', 'estado' => 'riesgoso',
         'datos_grafico' => ['labels' => ['Potencial', 'Nitrógeno', 'Agua', 'Final'], 'proyeccion_actual' => [11.2, 9.1, 7.4, 6.9]],
-    ], 'exacto');
+    ], 'tolerante');
     $registrar('explain ROI', 'POST', '/api/simulaciones/explain', [
         'nombre' => 'ROI Anual', 'cultivo_id' => $ids['cultivo'], 'anio' => (int) date('Y'),
         'valor' => '35', 'unidad' => '%', 'estado' => 'optimo',
-    ], 'exacto');
+    ], 'tolerante');
     $registrar('explain probabilidad', 'POST', '/api/simulaciones/explain', [
         'nombre' => 'Probabilidad de Cosecha', 'cultivo_id' => $ids['cultivo'], 'anio' => (int) date('Y'),
         'valor' => '82%', 'unidad' => '', 'estado' => 'bueno',
-    ], 'exacto');
+    ], 'tolerante');
 
     // 5) Dashboards DSS
     $q = '?cultivo_id=' . $ids['cultivo'] . '&anio=' . date('Y');
@@ -422,7 +422,7 @@ fail('Modo no reconocido: ' . $modo);
 exit(2);
 ```
 
-> Ajuste post-implementación (commit correctivo de F00): `normalizar()` además colapsa claves externas en vivo (`soilgrids`, `open_meteo` → `<externo>`) e items aleatorios de "fecha de siembra" (mt_rand de YieldController → `<volatil>`). El archivo `backend-api/tests/contrato/ejecutar.php` (versionado) es la fuente de verdad final de la suite.
+> Ajuste post-implementación (commit correctivo de F00): `normalizar()` además colapsa claves externas en vivo (`soilgrids`, `open_meteo` → `<externo>`) e items aleatorios de "fecha de siembra" (mt_rand de YieldController → `<volatil>`). El archivo `backend-api/tests/contrato/ejecutar.php` (versionado) es la fuente de verdad final de la suite. Además, las salidas derivadas del motor ML (rendimiento_estimado, produccion_total, rendimiento_promedio, blobs *_json) se colapsan a <externo:tipo>, y en modo tolerante los strings comparan esqueleto + números con ±25%: cubre la volatilidad de SoilGrids aguas abajo.
 
 - [ ] **Step 2: Crear `backend-api/tests/contrato/README.md`**
 
