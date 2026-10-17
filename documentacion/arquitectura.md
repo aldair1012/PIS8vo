@@ -1,167 +1,196 @@
-# Arquitectura del Sistema ZeaSys (AgroPredict DSS)
+# Arquitectura ZeaSys — AgroPredict DSS
 
+## 1. Visión general
 
-## 1. Fundamentos Teóricos y Tipo de Arquitectura
-
-El sistema ZeaSys implementa una **Arquitectura Multicapa Distribución Orientada a Servicios (Microservicios Híbridos)** combinada con el patrón **MVC (Modelo-Vista-Controlador)** y **DSS (Decision Support Systems)**.
-
-### A. Patrones y Estilos Arquitectónicos Aplicados
-1. **Arquitectura Multicapa Decoplada (Multi-Tier Architecture):**
-   - **Capa de Presentación (Frontend Client-Side):** Interfaz Single Page Application (SPA) construida en React 18 que gestiona el estado visual, interacciones de mapas GIS y gráficos interactivos sin recargar la página.
-   - **Capa de Servicios y Negocio (Backend API):** Servidor PHP estructurado en MVC que expone servicios RESTful, gestiona reglas de negocio agronómicas, sesiones de usuario y validaciones.
-   - **Capa de Inteligencia y Microservicio de ML (AI Inference Engine):** Servidor independiente Flask en Python enfocado exclusivamente en la ejecución de algoritmos de aprendizaje automático y explicabilidad.
-   - **Capa de Persistencia de Datos (Data Tier):** Base de datos relacional MySQL con modelos relacionales normalizados y almacenamiento geográfico GeoJSON.
-
-2. **Arquitectura DSS (Decision Support System):**
-   ZeaSys está diseñado bajo los principios teóricos de los Sistemas de Soporte de Decisiones impulsados por datos y modelos (*Data-Driven & Model-Driven DSS*). Transforma variables agrícolas puras (suelo, precipitación, temperatura, fertilización) en indicadores clave de rendimiento (KPIs), recomendaciones operativas y proyecciones de riesgo financiero.
-
----
-
-## 2. Tecnologías y Modelos de Inteligencia Artificial / Machine Learning
-
-### A. Modelos y Algoritmos Inteligentes Utilizados
-1. **XGBoost (Extreme Gradient Boosting):**
-   - **Propósito:** Estimación del rendimiento real (*Yield Gap*) y predicción de toneladas por hectárea ($t/ha$).
-   - **Justificación Teórica:** Es un algoritmo de ensamble basado en árboles de decisión optimizados por gradiente, ideal para datos tabulares agrícolas donde existen interacciones no lineales entre variables edafológicas y climáticas.
-2. **Random Forest Regressor:**
-   - **Propósito:** Modelo secundario de validación y cálculo de variabilidad de escenarios (*Monte Carlo simulation*).
-   - **Justificación Teórica:** Evita el sobreajuste (*overfitting*) promediando múltiples árboles de decisión independientes entrenados con submuestras del conjunto de datos.
-3. **Distribución Gaussiana y Percentiles (Análisis Estadístico Probabilístico):**
-   - **Propósito:** Cálculo de percentiles (P10, P50, P90) e histograma de curva normal de densidad en el *DSS 2: Viabilidad de Siembra*.
-   - **Justificación Teórica:** Permite representar la incertidumbre climática a lo largo de 30 simulaciones históricas, mostrando al agricultor la probabilidad matemática de superar un objetivo de rendimiento.
-4. **Explicabilidad de Modelos (XAI - Explainable AI con SHAP / Feature Importance):**
-   - **Propósito:** Desglosar la contribución porcentual de cada factor (*Agua, Nitrógeno, Temperatura, pH, Fecha de Siembra*) en la pérdida de rendimiento.
-   - **Justificación Teórica:** Convierte una "caja negra" predictiva en explicaciones agronómicas comprensibles para el usuario final.
-
----
-
-## 3. Diagrama de Arquitectura de Alto Nivel
+ZeaSys es un DSS (Sistema de Apoyo a la Decisión) para cultivo de maíz en Ecuador. El backend está organizado en **5 dominios lógicos** sobre XAMPP (Apache + PHP + MySQL + Python/Flask), sin microservicios físicos ni framework.
 
 ```
-┌────────────────────────────────────────────────────────────────────────────────────────┐
-│                          CAPA PRESENTACIÓN / FRONTEND WEB                              │
-│                    (React 18 / Vite / CSS Vanilla / Chart.js / Leaflet)                │
-│                                                                                        │
-│  ┌──────────────┐   ┌──────────────┐   ┌──────────────┐   ┌──────────────┐             │
-│  │ Autenticación│   │ DSS 1: Brecha│   │ DSS 2: Siembra│   │ DSS 3: Clima │             │
-│  │ Google / Correo│ │   Rendimiento│   │   Viabilidad │   │   Fenología  │             │
-│  └──────┬───────┘   └──────┬───────┘   └──────┬───────┘   └──────┬───────┘             │
-│         │                  │                  │                  │                     │
-│  ┌──────┴───────┐   ┌──────┴───────┐   ┌──────┴───────┐   ┌──────┴───────┐             │
-│  │ DSS 4: Margen│   │ Simulación   │   │ Mapa Polígonos│   │ Gestión Lotes│             │
-│  │   Financiero │   │   Escenarios │   │   GIS Leaflet│   │   y Modelos  │             │
-│  └──────┬───────┘   └──────┬───────┘   └──────┬───────┘   └──────┬───────┘             │
-└─────────┼──────────────────┼──────────────────┼──────────────────┼─────────────────────┘
-          │                  │                  │                  │
-          ▼                  ▼                  ▼                  ▼
-┌────────────────────────────────────────────────────────────────────────────────────────┐
-│                              CAPA API BACKEND (PHP MVC)                                │
-│                                (XAMPP / Apache / Port 80)                              │
-│                                                                                        │
-│   Front Controller (index.php) ───► Router RESTful API ───► Middlewares / Auth Token    │
-│                                                                                        │
-│  ┌────────────────────┐   ┌────────────────────┐   ┌────────────────────┐              │
-│  │ AuthController.php │   │ LotesControlador.php│  │SimulacionCtrl.php  │              │
-│  └─────────┬──────────┘   └─────────┬──────────┘   └─────────┬──────────┘              │
-│            │                        │                        │                         │
-│  ┌─────────▼──────────┐   ┌─────────▼──────────┐   ┌─────────▼──────────┐              │
-│  │  ModeloUsuario.php │   │   ModeloLote.php   │   │ModeloSimulacion.php│              │
-│  └─────────┬──────────┘   └─────────┬──────────┘   └─────────┬──────────┘              │
-│            │                        │                        │                         │
-│            └────────────────────────┼────────────────────────┘                         │
-│                                     │ Client cURL HTTP                                 │
-└─────────────────────────────────────┼──────────────────────────────────────────────────┘
-                                      │
-               ┌──────────────────────┴──────────────────────┐
-               ▼                                             ▼
-┌──────────────────────────────┐              ┌──────────────────────────────┐
-│  BASE DE DATOS RELACIONAL    │              │  MOTOR IA / MACHINE LEARNING │
-│    MySQL (phpMyAdmin)        │              │  Python 3.10+ / Flask API    │
-│                              │              │     (http://localhost:5000)  │
-│ ┌──────────────────────────┐ │              │                              │
-│ │ usuarios                 │ │              │ ┌──────────────────────────┐ │
-│ ├──────────────────────────┤ │              │ │ POST /predict            │ │
-│ │ cultivos / lotes (GIS)   │ │              │ │ ├─ Modelos XGBoost (ml) │ │
-│ ├──────────────────────────┤ │              │ │ ├─ Scikit-Learn Pipeline │ │
-│ │ simulaciones_historial   │ │              │ │ └─ SHAP / Feature Importance│
-│ └──────────────────────────┘ │              │ └──────────────────────────┘ │
-└──────────────────────────────┘              └──────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────┐
+│                        Apache + PHP-FPM                             │
+│  ┌──────────────────────────────────────────────────────────────┐   │
+│  │  public/index.php  (front controller, ~45 líneas)            │   │
+│  │    → CORS → Sesión → Router → Middleware → Container        │   │
+│  └──────────────────────────────────────────────────────────────┘   │
+│                              │                                      │
+│  ┌───────────────────────────┼───────────────────────────────────┐  │
+│  │                    src/Kernel/                                 │  │
+│  │  AutoloaderPsr4 · Router · Container · Peticion · Respuesta  │  │
+│  │  Cors · AutenticacionMiddleware · ManejadorErrores            │  │
+│  │  Errores/: ZeaSysException + Validacion/NoAutorizado/         │  │
+│  │    AccesoDenegado/RecursoNoEncontrado/ServicioExterno         │  │
+│  └───────────────────────────────────────────────────────────────┘  │
+│                              │                                      │
+│  ┌───────────────────────────┼───────────────────────────────────┐  │
+│  │              src/Dominios/  (5 dominios lógicos)               │  │
+│  │                                                               │  │
+│  │  Autenticacion/    Lotes/    Terreno/    Simulaciones/        │  │
+│  │  Analitica/                                                   │  │
+│  │                                                               │  │
+│  │  Cada dominio:  Dominio/  Infraestructura/  Aplicacion/  Http/│  │
+│  │  (interfaces)    (impl PDO/cURL)  (servicios)     (ctrls)    │  │
+│  └───────────────────────────────────────────────────────────────┘  │
+│                              │                                      │
+│  ┌───────────────────────────┼───────────────────────────────────┐  │
+│  │  src/Config/: aplicacion.php · constantes_negocio.php ·        │  │
+│  │    google.php · rutas.php · contenedor.php                     │  │
+│  └───────────────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────────┘
+         │                                    │
+    ┌────┴────┐                          ┌────┴────┐
+    │  MySQL  │                          │  Flask  │
+    │ (XAMPP) │                          │  :5000  │
+    └─────────┘                          │ motor ML│
+                                         └─────────┘
 ```
 
----
-
-## 4. Stack Tecnológico Completo
-
-### A. Frontend (Interfaz de Usuario)
-- **Framework & Empaquetador:** React 18 + Vite (Javascript ES6+).
-- **Estilos:** Vanilla CSS modular optimizado con variables CSS adaptativas (Dark Theme predeterminado y Light Theme compatible).
-- **Librería de Gráficos:** Chart.js 4 + React-ChartJS-2 (Líneas, Barras, Gaussianas y Cascada Waterfall).
-- **Sistemas de Información Geográfica (GIS):** Leaflet.js + React-Leaflet (polígonos vectoriales GeoJSON, medición de área en hectáreas y capas satelitales/callejero).
-- **Iconografía y Tipografía:** Lucide React, Google Fonts (*Plus Jakarta Sans* para interfaz y *JetBrains Mono* para valores numéricos/KPIs).
-
-### B. Backend API & Conectividad
-- **Lenguaje & Servidor Web:** PHP 8.x sobre Servidor Apache (XAMPP).
-- **Patrón de Enrutamiento:** Front Controller RESTful (`index.php`) con respuestas estándar en formato JSON.
-- **Autenticación Integrada:**
-  - Login tradicional con hashing seguro de contraseñas (`password_hash`).
-  - Autenticación OAuth 2.0 mediante **Google Identity Services (One-Tap / SDK oficial)**.
-- **Comunicación Inter-servicio:** Cliente cURL en PHP para solicitudes sincrónicas hacia el servidor de Inteligencia Artificial en Python.
-
-### C. Backend de Inteligencia Artificial (ML Engine)
-- **Lenguaje & Microframework:** Python 3.10+ con Flask y Flask-CORS.
-- **Librerías de ML & Ciencia de Datos:**
-  - `xgboost` (Gradiente incrementado para predicción).
-  - `scikit-learn` (Pipelines de procesamiento y Random Forest).
-  - `pandas` y `numpy` (Manipulación de matrices agronómicas y climáticas).
-  - `joblib` (Serialización y carga en memoria de modelos entrenados).
-
-### D. Base de Datos
-- **Motor:** MySQL 8.x / MariaDB administrado mediante phpMyAdmin.
-- **Driver de Conexión:** PHP Data Objects (PDO) con sentencias preparadas contra Inyección SQL.
-
----
-
-## 5. Descripción de los Módulos DSS (Decision Support System)
-
-1. **DSS 1 - Brecha de Rendimiento (Yield Gap Analysis):**
-   - Compara el rendimiento predicho contra el potencial genético del híbrido de maíz (*Pioneer P4039, INIAP H-551, Dekalb DK-7088, INIAP Renacer*, etc.).
-   - Muestra la cascada de mermas (*Waterfall*) causadas por agua, nitrógeno, temperatura y manejo.
-
-2. **DSS 2 - Viabilidad de Siembra (Scenario Simulation):**
-   - Ejecuta simulaciones estocásticas con datos climáticos históricos.
-   - Muestra la curva de densidad Gaussiana con la probabilidad de superar la meta del productor y la ventana óptima de siembra.
-
-3. **DSS 3 - Calendario Fenológico y Riesgo Climático:**
-   - Mapea el ciclo biológico del maíz (Emergencia, V6, VT Floración, R1-R6) y alerta sobre riesgos de heladas o sequía estival.
-
-4. **DSS 4 - Viabilidad Financiera & Análisis de Riesgo:**
-   - Proyecta costos de producción por hectárea, ingresos netos, ROI (Retorno de Inversión), TIR y punto de equilibrio en escenarios Pesimista, Moderado y Optimista.
-
----
-
-## 6. Estructura de Directorios del Repositorio
+## 2. Regla de dependencia
 
 ```
-AgroPredict/
-├── backend-api/             # API RESTful en PHP (Controllers, Models, Config)
-│   ├── config/              # Conexión PDO a MySQL (database.php)
-│   ├── controllers/         # Controladores (AuthController, CultivoController, ScenarioController, etc.)
-│   └── models/              # Modelos de datos (Usuario, Cultivo, Simulacion)
-├── database/                # Esquema de base de datos MySQL (agropredict_db.sql)
-├── documentacion/           # Documentación del proyecto (arquitectura.md, Guia.md)
-├── frontend-app/            # Aplicación Frontend React 18 (Vite)
-│   ├── src/
-│   │   ├── assets/          # Estilos globales (styles.css) y logos SVG
-│   │   ├── services/        # Conector API Axios (api.js)
-│   │   ├── templates/       # Componentes visuales reutilizables, Navbar, Sidebar
-│   │   └── views/           # Pantallas principales (Login, Register, DSS 1-4, Cultivos)
-│   └── copy-build.js        # Script automático de despliegue a la raíz de XAMPP
-└── ml-engine/               # Servidor de Inteligencia Artificial (app.py, modelos .joblib)
+Http/  →  Aplicacion/  →  Dominio/  ←  Infraestructura/
+(ctrl)     (servicio)     (interface)    (impl PDO/cURL)
 ```
 
----
+- **Http** traduce Peticion → args → RespuestaJson. No contiene lógica de negocio.
+- **Aplicacion** orquesta: validaciones, llamadas a repositorios/servicios, cálculos. Sin superglobals ni PDO.
+- **Dominio** define interfaces (puertos). No tiene implementaciones.
+- **Infraestructura** implementa interfaces con PDO/cURL. Único lugar con `getConnection()`.
 
-## 7. Medidas de Seguridad, Calibración y Optimización
-- **Calibración Territorial Exclusiva:** El sistema detecta mediante coordenadas geográficas si el lote está dentro del territorio de Ecuador. Si el lote está en el exterior, el sistema emite una alerta indicando que los modelos no poseen validez agronómica fuera del país.
-- **Inmunidad SQLi & CORS:** Uso de consultas preparadas PDO y restricción estricta de orígenes HTTP.
-- **Rendimiento Frontend:** Empaquetado optimizado con Vite, minificación de bundles y actualización automática en XAMPP mediante `copy-build.js`.
+## 3. Tabla de rutas
+
+| Ruta | Controlador | Servicio | Repositorio/Interfaz |
+|------|-------------|----------|----------------------|
+| `api/auth/login` | `Autenticacion\Http\AuthController` | `AutenticacionService` | `UsuarioRepositoryInterface` |
+| `api/auth/register` | `AuthController` | `AutenticacionService` | `UsuarioRepositoryInterface` |
+| `api/auth/google-login` | `AuthController` | `AutenticacionService` | `VerificadorTokenGoogleInterface` |
+| `api/auth/me` | `AuthController` | `AutenticacionService` | — |
+| `api/auth/logout` | `AuthController` | `AutenticacionService` | — |
+| `api/auth/update` | `AuthController` | `AutenticacionService` | `UsuarioRepositoryInterface` |
+| `api/auth/upload-avatar` | `AuthController` | `AutenticacionService` | `AlmacenAvatarInterface` |
+| `api/auth/delete-avatar` | `AuthController` | `AutenticacionService` | `AlmacenAvatarInterface` |
+| `api/auth/sync-google-avatar` | `AuthController` | `AutenticacionService` | `AlmacenAvatarInterface` |
+| `api/auth/delete` | `AuthController` | `AutenticacionService` | `UsuarioRepositoryInterface` |
+| `api/cultivos` (GET/POST/PUT/DELETE) | `Lotes\Http\CultivoController` | `CultivoService` | `CultivoRepositoryInterface` |
+| `api/cultivos/mapa` | `CultivoController` | `CultivoService` | `CultivoRepositoryInterface` |
+| `api/cultivos/valores-ubicacion` | `CultivoController` | `CultivoService` | `CultivoRepositoryInterface` + `ServicioDatosTerreno` |
+| `api/simulaciones/simular` | `Simulaciones\Http\SimulacionController` | `SimulacionService` | `SimulacionRepositoryInterface` + `MotorPrediccionInterface` |
+| `api/simulaciones/historial` | `SimulacionController` | `SimulacionService` | `SimulacionRepositoryInterface` |
+| `api/simulaciones/eliminar` | `SimulacionController` | `SimulacionService` | `SimulacionRepositoryInterface` |
+| `api/simulaciones/ia-status` | `SimulacionController` | `SimulacionService` | `GestorMotorIaInterface` |
+| `api/simulaciones/explain` | `SimulacionController` | `SimulacionService` | `ServicioExplicabilidad` (46 estrategias) |
+| `api/yield` | `Analitica\Http\YieldController` | `ServicioAnaliticaYield` | `CultivoRepositoryInterface` + `SimulacionRepositoryInterface` + `CatalogoAgronomicoInterface` |
+| `api/scenarios` | `Analitica\Http\ScenarioController` | `ServicioAnaliticaScenario` | idem |
+| `api/climate` | `Analitica\Http\ClimateController` | `ServicioAnaliticaClimate` | `CultivoRepositoryInterface` + `ServicioDatosTerreno` + `CatalogoAgronomicoInterface` |
+| `api/financial` | `Analitica\Http\FinancialController` | `ServicioAnaliticaFinancial` | `CultivoRepositoryInterface` + `SimulacionRepositoryInterface` |
+
+## 4. Flujo de una petición
+
+```
+1. Apache → public/index.php
+2. Cors::aplicar() + preflight OPTIONS → 204
+3. session_name(SESSION_NAME) + session_start()
+4. ManejadorErrores::registrar() (JSON errors)
+5. Router::despachar(Peticion::desdeGlobal())
+   a. resolverRutaActual(): $_GET['action'] → PATH_INFO → URI
+   b. AutenticacionMiddleware::procesar(ruta, definicion)
+      - ruta pública → OK
+      - sesión activa → OK
+      - sin sesión → 401 {"error":"No autorizado. Debe iniciar sesión."}
+      - session_write_close() selectivo (según flag 'sesion')
+   c. Container::get(controlador FQCN)
+   d. method_exists + is_object guards
+   e. $controlador->{$accion}($peticion)
+6. Controller: Peticion → args → Servicio → RespuestaJson::enviar(array)
+7. Servicio: interfaces → repositorios → cálculos → return array
+8. RespuestaJson: json_encode + Content-Type + http_response_code
+```
+
+## 5. Cómo agregar un indicador DSS nuevo (explicador)
+
+1. Crear `src/Dominios/Simulaciones/Explicacion/Explicadores/Explicador<Nombre>.php`:
+   ```php
+   final class Explicador<Nombre> implements ExplicadorInterface
+   {
+       public function explicar(array $datos): array
+       {
+           // Lógica del indicador → return ['secciones' => [...]]
+       }
+   }
+   ```
+2. Registrar en `RegistroExplicadores::reglas()` (el orden es contrato):
+   ```php
+   ['explicador' => Explicador<Nombre>::class, 'condicion' => ['cualquiera' => ['palabra_clave']]],
+   ```
+3. Verificar con la suite de contrato.
+
+## 6. Cómo agregar una ruta
+
+1. Añadir entrada en `src/Config/rutas.php`:
+   ```php
+   'api/nueva-ruta' => ['controlador' => \ZeaSys\Dominios\<Dominio>\Http\<Controller>::class, 'accion' => 'metodo'],
+   ```
+2. Crear el controlador en `Http/` (delgado, recibe `Peticion`).
+3. Crear el servicio en `Aplicacion/` (recibe interfaces por constructor).
+4. Registrar bindings en `src/Config/contenedor.php`.
+5. Verificar con la suite de contrato.
+
+## 7. Suite de contrato
+
+```powershell
+# Comparar contra la huella "antes" (exit 0 = OK, 1 = diferencias, 2 = infra)
+C:\xampp\php\php.exe backend-api\tests\contrato\ejecutar.php --modo=comparar
+
+# Captura inicial (solo al inicio; NO correr después)
+C:\xampp\php\php.exe backend-api\tests\contrato\ejecutar.php --modo=capturar
+```
+
+La suite ejecuta 29 pasos reales (registro→login→lotes→simulación→explain→4 dashboards→avatares→limpieza) y normaliza volátiles (ids, fechas, tokens, salidas ML, `mt_rand`).
+
+## 8. Mapa de bindings del contenedor
+
+| Interface / Clase | Implementación | Dependencias |
+|-------------------|----------------|--------------|
+| `UsuarioRepositoryInterface` | `UsuarioRepositoryMysql` | `getConnection()` |
+| `VerificadorTokenGoogleInterface` | `VerificadorTokenGoogle` | — |
+| `AlmacenAvatarInterface` | `AlmacenAvatarArchivos` | — |
+| `GestorSesionInterface` | `GestorSesion` | — |
+| `AutenticacionService` | — | 4 interfaces |
+| `CacheInterface` | `CacheArchivos` | — |
+| `ProveedorClimaInterface` | `ProveedorOpenMeteo` | — |
+| `ProveedorSueloInterface` | `ProveedorSoilGrids` | — |
+| `AltitudPorCultivoInterface` | `AltitudMysql` | `getConnection()` |
+| `ServicioDatosTerreno` | — | 4 interfaces |
+| `CultivoRepositoryInterface` | `CultivoRepositoryMysql` | `getConnection()` |
+| `ValidadorLimitesEcuador` | — | — |
+| `CultivoService` | — | 3 interfaces |
+| `SimulacionRepositoryInterface` | `SimulacionRepositoryMysql` | `getConnection()` |
+| `MotorPrediccionInterface` | `ClienteMotorFlask` | — |
+| `GestorMotorIaInterface` | `GestorMotorIa` | — |
+| `EvaluadorCondiciones` | — | — |
+| `RegistroExplicadores` | — | — |
+| `ResolutorContextoExplicacion` | — | 2 interfaces |
+| `ServicioExplicabilidad` | — | 3 clases |
+| `SimulacionService` | — | 5 interfaces |
+| `CatalogoAgronomicoInterface` | `RepositorioCatalogoAgronomico` | — |
+| `ServicioAnaliticaYield` | — | 3 interfaces |
+| `ServicioAnaliticaScenario` | — | 3 interfaces |
+| `ServicioAnaliticaClimate` | — | 3 interfaces |
+| `ServicioAnaliticaFinancial` | — | 2 interfaces |
+| 4 controladores Http | — | 1 servicio c/u |
+
+## 9. Estructura final
+
+```
+backend-api/
+├── public/index.php            ← bootstrap ~45 líneas
+├── src/
+│   ├── Kernel/                 ← Autoloader, Router, Container, Peticion, RespuestaJson, Cors,
+│   │   └── Errores/            ←   Middleware, excepciones tipadas + ManejadorErrores
+│   ├── Config/                 ← aplicacion.php, constantes_negocio.php, google.php, rutas.php, contenedor.php
+│   └── Dominios/
+│       ├── Autenticacion/      ← Dominio/ Infraestructura/ Aplicacion/ Http/
+│       ├── Lotes/
+│       ├── Terreno/
+│       ├── Simulaciones/       ← + Explicacion/ (46 explicadores)
+│       └── Analitica/
+├── data/ · uploads/ · tests/   ← sin cambios
+```
