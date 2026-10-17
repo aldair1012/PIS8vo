@@ -105,6 +105,15 @@ function normalizar(mixed $valor): mixed
     return $valor;
 }
 
+/** Etiqueta de tipo para la comparación estructural: integer y float son una sola familia. */
+function etiquetaTipo(mixed $valor): string
+{
+    if (is_int($valor) || is_float($valor)) {
+        return 'number';
+    }
+    return gettype($valor);
+}
+
 /** Devuelve la "forma" del JSON (rutas de claves + tipos) para comparación estructural. */
 function estructura(mixed $valor, string $prefijo = ''): array
 {
@@ -118,7 +127,7 @@ function estructura(mixed $valor, string $prefijo = ''): array
         }
         return $salida;
     }
-    return [$prefijo => gettype($valor)];
+    return [$prefijo => etiquetaTipo($valor)];
 }
 
 function comparar(mixed $esperado, mixed $obtenido, string $ruta, string $modo, float $tolerancia, array &$diferencias): void

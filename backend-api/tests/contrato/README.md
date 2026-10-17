@@ -16,6 +16,7 @@ C:\xampp\php\php.exe tests\contrato\ejecutar.php --modo=comparar
 - Claves de APIs externas en vivo (soilgrids, open_meteo) se colapsan a <externo>; los ítems aleatorios de "fecha de siembra" (mt_rand) se neutralizan a <volatil>.
 - Salidas derivadas del motor ML (rendimiento_estimado, produccion_total, rendimiento_promedio, shap_json, escenarios_json, ...) se colapsan a <externo:tipo>: comparamos solo el tipo de dato (la variabilidad proviene de SoilGrids dentro del motor).
 - En pasos con volatilidad tolerante, los textos comparan esqueleto exacto (números → #) y cada número embebido con ±25% — cubre la prosa de explain cuando cambia el rendimiento ML.
+- La comparación estructural une integer y float en la familia "number" (json_encode emite floats enteros sin decimal: 15.0 → 15).
 
 ## Requisitos
 Apache + MySQL de XAMPP corriendo. El motor IA se verifica y se arranca solo (auto_ia_server.bat).

@@ -117,6 +117,15 @@ function normalizar(mixed $valor): mixed
     return $valor;
 }
 
+/** Etiqueta de tipo para la comparación estructural: integer y float son una sola familia. */
+function etiquetaTipo(mixed $valor): string
+{
+    if (is_int($valor) || is_float($valor)) {
+        return 'number';
+    }
+    return gettype($valor);
+}
+
 /** Devuelve la "forma" del JSON (rutas de claves + tipos) para comparación estructural. */
 function estructura(mixed $valor, string $prefijo = ''): array
 {
@@ -130,7 +139,7 @@ function estructura(mixed $valor, string $prefijo = ''): array
         }
         return $salida;
     }
-    return [$prefijo => gettype($valor)];
+    return [$prefijo => etiquetaTipo($valor)];
 }
 
 function comparar(mixed $esperado, mixed $obtenido, string $ruta, string $modo, float $tolerancia, array &$diferencias): void
@@ -422,7 +431,7 @@ fail('Modo no reconocido: ' . $modo);
 exit(2);
 ```
 
-> Ajuste post-implementación (commit correctivo de F00): `normalizar()` además colapsa claves externas en vivo (`soilgrids`, `open_meteo` → `<externo>`) e items aleatorios de "fecha de siembra" (mt_rand de YieldController → `<volatil>`). El archivo `backend-api/tests/contrato/ejecutar.php` (versionado) es la fuente de verdad final de la suite. Además, las salidas derivadas del motor ML (rendimiento_estimado, produccion_total, rendimiento_promedio, blobs *_json) se colapsan a <externo:tipo>, y en modo tolerante los strings comparan esqueleto + números con ±25%: cubre la volatilidad de SoilGrids aguas abajo.
+> Ajuste post-implementación (commit correctivo de F00): `normalizar()` además colapsa claves externas en vivo (`soilgrids`, `open_meteo` → `<externo>`) e items aleatorios de "fecha de siembra" (mt_rand de YieldController → `<volatil>`). El archivo `backend-api/tests/contrato/ejecutar.php` (versionado) es la fuente de verdad final de la suite. Además, las salidas derivadas del motor ML (rendimiento_estimado, produccion_total, rendimiento_promedio, blobs *_json) se colapsan a <externo:tipo>, y en modo tolerante los strings comparan esqueleto + números con ±25%: cubre la volatilidad de SoilGrids aguas abajo. Además, estructura() une integer/float en la familia "number" (json_encode emite 15.0 como 15).
 
 - [ ] **Step 2: Crear `backend-api/tests/contrato/README.md`**
 

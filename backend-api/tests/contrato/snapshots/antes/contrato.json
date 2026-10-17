@@ -1,5 +1,5 @@
 {
-    "fecha_captura": "2026-10-17T06:07:02+02:00",
+    "fecha_captura": "2026-10-17T06:23:38+02:00",
     "base_url": "http://localhost/ZeaSys/backend-api/public/index.php",
     "tolerancia": 25,
     "pasos": [
@@ -619,7 +619,7 @@
         {
             "nombre": "valores ubicacion (externo)",
             "metodo": "GET",
-            "ruta": "/api/cultivos/valores-ubicacion?id=55",
+            "ruta": "/api/cultivos/valores-ubicacion?id=93",
             "volatilidad": "estructural",
             "http": 200,
             "cuerpo": {
@@ -920,7 +920,7 @@
         {
             "nombre": "dashboard yield",
             "metodo": "GET",
-            "ruta": "/api/yield?cultivo_id=55&anio=2026",
+            "ruta": "/api/yield?cultivo_id=93&anio=2026",
             "volatilidad": "tolerante",
             "http": 200,
             "cuerpo": {
@@ -959,15 +959,15 @@
                     },
                     {
                         "name": "Pérdida Nitrógeno",
-                        "value": -1
+                        "value": -0.9
                     },
                     {
                         "name": "Pérdida Agua",
-                        "value": -1
+                        "value": -0.9
                     },
                     {
                         "name": "Pérdida Temperatura",
-                        "value": -3.1
+                        "value": -3
                     },
                     {
                         "name": "Pérdida Fecha Siembra",
@@ -1024,15 +1024,15 @@
                 "factores_contribucion": [
                     {
                         "factor": "Nitrógeno",
-                        "porcentaje": 17.2
+                        "porcentaje": 15.5
                     },
                     {
                         "factor": "Agua",
-                        "porcentaje": 17.2
+                        "porcentaje": 15.5
                     },
                     {
                         "factor": "Temperatura",
-                        "porcentaje": 53.4
+                        "porcentaje": 51.7
                     },
                     {
                         "factor": "Fecha de Siembra",
@@ -1048,7 +1048,7 @@
         {
             "nombre": "dashboard scenarios",
             "metodo": "GET",
-            "ruta": "/api/scenarios?cultivo_id=55&anio=2026",
+            "ruta": "/api/scenarios?cultivo_id=93&anio=2026",
             "volatilidad": "tolerante",
             "http": 200,
             "cuerpo": {
@@ -1259,7 +1259,7 @@
         {
             "nombre": "dashboard climate (externo)",
             "metodo": "GET",
-            "ruta": "/api/climate?cultivo_id=55&anio=2026",
+            "ruta": "/api/climate?cultivo_id=93&anio=2026",
             "volatilidad": "estructural",
             "http": 200,
             "cuerpo": {
@@ -1313,32 +1313,32 @@
                         54
                     ],
                     "lluvia_anomala": [
-                        88,
-                        102,
-                        112,
-                        80,
-                        50,
-                        66,
-                        74,
-                        115,
+                        75,
+                        121,
+                        120,
+                        81,
+                        48,
+                        59,
+                        93,
+                        104,
                         98,
                         88,
-                        51,
+                        56,
                         47
                     ],
                     "temperatura_anomala": [
-                        16.1,
-                        15.8,
-                        17,
+                        15.9,
                         16.2,
-                        15.2,
+                        16.9,
+                        15.4,
+                        15.8,
+                        14.1,
+                        13.5,
+                        14,
                         13.7,
-                        14.4,
-                        12.8,
-                        12.9,
-                        14.3,
-                        14.9,
-                        16.2
+                        14.5,
+                        15.8,
+                        15.2
                     ]
                 },
                 "agua_estratos": {
@@ -1395,7 +1395,7 @@
         {
             "nombre": "dashboard financial",
             "metodo": "GET",
-            "ruta": "/api/financial?cultivo_id=55&anio=2026",
+            "ruta": "/api/financial?cultivo_id=93&anio=2026",
             "volatilidad": "tolerante",
             "http": 200,
             "cuerpo": {
@@ -1757,7 +1757,7 @@
         {
             "nombre": "eliminar simulacion",
             "metodo": "DELETE",
-            "ruta": "/api/simulaciones/eliminar?id=69",
+            "ruta": "/api/simulaciones/eliminar?id=107",
             "volatilidad": "exacto",
             "http": 200,
             "cuerpo": {
@@ -1768,7 +1768,7 @@
         {
             "nombre": "eliminar cultivo",
             "metodo": "DELETE",
-            "ruta": "/api/cultivos?id=55",
+            "ruta": "/api/cultivos?id=93",
             "volatilidad": "exacto",
             "http": 200,
             "cuerpo": {
