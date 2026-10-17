@@ -140,6 +140,8 @@ final class RegistroExplicadores
                 ]],
             ],
             [
+                // INALCANZABLE en legacy: sombreada por ExplicadorMargenNeto (token 'margen',
+                // más arriba en el if/elseif). Preservada por paridad — NO borrar ni "arreglar".
                 'explicador' => \ZeaSys\Dominios\Simulaciones\Explicacion\Explicadores\ExplicadorMargenSeguridad::class,
                 'condicion'  => ['cualquiera' => ['seguridad']],
             ],
@@ -173,10 +175,15 @@ final class RegistroExplicadores
                 'condicion'  => ['todas' => ['lluvia', 'promedio']],
             ],
             [
+                // INALCANZABLE en legacy: sombreada por ExplicadorAguaUtil (token 'agua',
+                // más arriba en el if/elseif; 'agua'+'inicial' siempre la alcanza antes).
+                // Preservada por paridad — NO borrar ni "arreglar".
                 'explicador' => \ZeaSys\Dominios\Simulaciones\Explicacion\Explicadores\ExplicadorAguaInicial::class,
                 'condicion'  => ['todas' => ['agua', 'inicial']],
             ],
             [
+                // INALCANZABLE en legacy: sombreada por ExplicadorRiesgoFinanciero (token 'riesgo',
+                // más arriba en el if/elseif). Preservada por paridad — NO borrar ni "arreglar".
                 'explicador' => \ZeaSys\Dominios\Simulaciones\Explicacion\Explicadores\ExplicadorRiesgoEstacional::class,
                 'condicion'  => ['cualquiera' => ['riesgo estacional', 'riesgo compuesto', 'riesgo agronómico', 'riesgo agronomico']],
             ],
@@ -213,6 +220,9 @@ final class RegistroExplicadores
                 'condicion'  => ['cualquiera' => ['mes de']],
             ],
             [
+                // INALCANZABLE en legacy: sombreada por ExplicadorRadiacionFotosintetica (token
+                // 'par', que es subcadena de "comparador" — strpos del legacy la gana siempre
+                // para 'comparador'; 'híbridos' solo era alcanzable). Preservada por paridad.
                 'explicador' => \ZeaSys\Dominios\Simulaciones\Explicacion\Explicadores\ExplicadorComparadorHibridos::class,
                 'condicion'  => ['cualquiera' => ['comparador', 'híbridos', 'hibridos']],
             ],

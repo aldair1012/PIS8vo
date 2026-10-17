@@ -18,11 +18,12 @@ interface SimulacionRepositoryInterface
     /** @return array<string, mixed> */
     public function obtenerEstadisticas(int $usuarioId, ?int $year = null): array;
 
-    /** @return array<int, array<string, mixed>> */
+    /** @return array<int, array<string, mixed>> @used-by F05 (Scenario/Financial migrarán a este repositorio). */
     public function obtenerRecientes(int $usuarioId, int $limite = 5, ?int $year = null): array;
 
     public function eliminar(int $id): bool;
 
+    /** @used-by F05 (Scenario migrará a este repositorio). */
     public function contarPorUsuario(int $usuarioId): int;
 
     /**

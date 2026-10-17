@@ -114,6 +114,7 @@ final class SimulacionService
                 'resultado' => $resultado
             ];
         } catch (\Exception $e) {
+            // paridad: legacy catch(Exception) → 500 con mensaje concatenado exacto.
             throw new ZeaSysException('Error al guardar la simulación: ' . $e->getMessage(), 500);
         }
     }
@@ -151,6 +152,7 @@ final class SimulacionService
             $this->simulaciones->eliminar($id);
             return ['success' => true, 'message' => 'Simulación eliminada correctamente.'];
         } catch (\Exception $e) {
+            // paridad: legacy catch(Exception) → 500 con mensaje concatenado exacto.
             throw new ZeaSysException('Error al eliminar la simulación: ' . $e->getMessage(), 500);
         }
     }
@@ -167,10 +169,13 @@ final class SimulacionService
      * explain() 223–929: validaciones 225–238 + delegación al catálogo Strategy.
      * El preprocesamiento (líneas 238–344) y la cadena if/elseif (354–911) viven en
      * ServicioExplicabilidad; el ensamblado final (913–929) es verbatim allí.
+     * TRAMPA DE PARIDAD: $usuarioId NO se usa — el legacy solo llamaba getAuthUserOrError()
+     * y NO validaba pertenencia del cultivo/simulación explicada (posible IDOR heredado).
+     * Se conserva igual por paridad; arreglarlo es decisión explícita fuera de esta fase (deuda F06/T19).
      */
     public function explain(int $usuarioId, Peticion $p): array
     {
-        @set_time_limit(240);
+        @set_time_limit(240); // paridad: el legacy lo fijaba a 240 s antes del catálogo (el explain puede tardar).
 
         $data = $p->cuerpo();
 

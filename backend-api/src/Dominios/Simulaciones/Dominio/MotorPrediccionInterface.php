@@ -6,6 +6,11 @@ namespace ZeaSys\Dominios\Simulaciones\Dominio;
 
 interface MotorPrediccionInterface
 {
-    /** @param array<string, mixed> $datos @return array<string, mixed>   respuesta cruda del motor (con success/error) */
+    /**
+     * Contrato de claves posicionales (asumidas por el adapter, verbatim del modelo legacy):
+     * ph/temperatura/precipitacion/radiacion/viento/humedad... — un caller que omita una clave
+     * recibe advertencia PHP y 0.0 (misma semántica legacy; no validar aquí por paridad).
+     * @param array<string, mixed> $datos @return array<string, mixed>   respuesta cruda del motor (con success/error)
+     */
     public function predecir(array $datos): array;
 }
