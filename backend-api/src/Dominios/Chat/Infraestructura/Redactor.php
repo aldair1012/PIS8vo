@@ -49,7 +49,11 @@ final class Redactor implements RedactorInterface
             // Eliminar prefijo numérico del título si existe (ej. "1. ¿Qué significa...?")
             $tituloClean = preg_replace('/^\d+\.\s*/', '', $titulo);
 
-            $partes[] = "**$tituloClean** — $contenido";
+            // Sanitizar contenido para prevenir XSS
+            $contenidoSeguro = htmlspecialchars($contenido, ENT_QUOTES, 'UTF-8');
+            $tituloClean = htmlspecialchars($tituloClean, ENT_QUOTES, 'UTF-8');
+
+            $partes[] = "**$tituloClean** — $contenidoSeguro";
         }
 
         // Datos en vivo inyectados

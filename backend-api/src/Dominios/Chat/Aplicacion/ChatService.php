@@ -89,7 +89,8 @@ final class ChatService
                 $data = $this->construirContextoIndicador($pregunta, $cultivosUsuario, $simulacionesRecientes);
                 $explicacion = $this->explicabilidad->explicar($data);
                 $secciones = $explicacion['secciones'] ?? [];
-                $texto = $this->redactor->redactar($secciones, $data, $memoria, crc32($pregunta . microtime()));
+                $hashDeterministico = crc32($pregunta . '|' . ($memoria['temas'] ? implode(',', $memoria['temas']) : ''));
+$texto = $this->redactor->redactar($secciones, $data, $memoria, $hashDeterministico);
                 $accion = $this->inferirAccion($explicacion, $data);
                 break;
 
@@ -133,6 +134,26 @@ final class ChatService
         $cultivo = $cultivos[0] ?? [];
         $simulacion = $simulaciones[0] ?? [];
 
+        // Obtener datos históricos reales si hay simulaciones
+        $rendimientosHistoricos = [];
+        $promedioHistorico = 0;
+        $mejorRendimiento = 0;
+        $peorRendimiento = 0;
+        
+        if (!empty($simulaciones)) {
+            foreach ($simulaciones as $sim) {
+                $r = floatval($sim['rendimiento_estimado'] ?? 0);
+                if ($r > 0) {
+                    $rendimientosHistoricos[] = $r;
+                }
+            }
+            if (!empty($rendimientosHistoricos)) {
+                $promedioHistorico = round(array_sum($rendimientosHistoricos) / count($rendimientosHistoricos), 2);
+                $mejorRendimiento = max($rendimientosHistoricos);
+                $peorRendimiento = min($rendimientosHistoricos);
+            }
+        }
+
         return [
             'cultivo_id' => $cultivo['id'] ?? null,
             'anio' => null,
@@ -157,6 +178,12 @@ final class ChatService
             'impacto_base' => '',
             'recomendacion_base' => '',
             'rango_ideal' => '',
+            // Datos históricos reales
+            'rendimientos_historicos' => $rendimientosHistoricos,
+            'promedio_historico' => $promedioHistorico,
+            'mejor_rendimiento' => $mejorRendimiento,
+            'peor_rendimiento' => $peorRendimiento,
+            'total_simulaciones' => count($simulaciones),
         ];
     }
 

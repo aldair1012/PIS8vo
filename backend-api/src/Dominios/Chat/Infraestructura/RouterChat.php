@@ -21,7 +21,8 @@ final class RouterChat implements RouterChatInterface
             'precipitacion', 'humedad', 'agua', 'riesgo', 'estabilidad', 'probabilidad', 'cosecha',
             'que significa', 'que es', 'explica', 'explicame', 'interpretar', 'interpretacion', 'ayuda',
             'significado', 'concepto', 'definicion', 'valor', 'resultado', 'calculo', 'calcular', 'significa',
-            'que quiere decir', 'que representa', 'como se calcula', 'por que', 'que pasa', 'porque'],
+            'que quiere decir', 'que representa', 'como se calcula', 'por que', 'que pasa', 'porque',
+            'mi', 'mis', 'tu', 'tus', 'mi ', 'mis ', 'tu ', 'tus '],
         'ubicacion' => ['ubicacion', 'ubicaciones', 'donde', 'coordenada', 'coordenadas', 'zona', 'zonas',
             'region', 'regiones', 'provincia', 'provincias', 'parcela', 'parcelas', 'lote', 'lotes',
             'latitud', 'longitud', 'altitud', 'mapa', 'mapas', 'sierra', 'costa', 'amazonia', 'terreno'],
@@ -30,7 +31,7 @@ final class RouterChat implements RouterChatInterface
             'nina', 'sequia', 'sequias', 'anomalia', 'anomalias', 'fenologia', 'fenologico', 'estacion',
             'estaciones', 'calendario', 'siembra', 'cosecha', 'meses'],
         'financiero' => ['financiero', 'finanzas', 'dinero', 'precio', 'precios', 'costo', 'costos',
-            'margen', 'margenes', 'roi', 'retorno', 'inversion', 'ingreso', 'ingresos', 'beneficio',
+            'margen', 'margenes', 'mi margen', 'mi margen', 'roi', 'retorno', 'inversion', 'ingreso', 'ingresos', 'beneficio',
             'beneficios', 'equilibrio', 'punto de equilibrio', 'rentabilidad', 'rentable', 'dolares',
             'quintal', 'quintales', 'produccion', 'produccion total', 'break even', 'sensibilidad',
             'waterfall', 'cascada', 'escenarios', 'escenario'],
@@ -125,6 +126,18 @@ final class RouterChat implements RouterChatInterface
                 if (in_array($ultimoTema, ['indicador', 'ubicacion', 'clima', 'financiero', 'plaga'], true)) {
                     $intencion = $ultimoTema;
                     $confianza = 0.6;
+                }
+            }
+        }
+
+        // Si no hay intención clara pero hay follow-up y hay memoria, usar último tema
+        if ($esFollowUp && $maxScoreInicial === 0 && $this->memoria !== null) {
+            $temas = $this->memoria->temas();
+            if (!empty($temas)) {
+                $ultimoTema = end($temas);
+                if (in_array($ultimoTema, ['indicador', 'ubicacion', 'clima', 'financiero', 'plaga'], true)) {
+                    $intencion = $ultimoTema;
+                    $confianza = 0.5;
                 }
             }
         }

@@ -1,5 +1,5 @@
 {
-    "fecha_captura": "2026-10-17T20:14:40+02:00",
+    "fecha_captura": "2026-10-17T23:17:14+02:00",
     "base_url": "http://localhost/ZeaSys/backend-api/public/index.php",
     "tolerancia": 25,
     "pasos": [
@@ -172,27 +172,6 @@
                     "fertilizacion_dosis": null,
                     "fertilizacion_tipo": null,
                     "nombre_usuario": "Contrato Test"
-                },
-                {
-                    "id": "<volatil>",
-                    "usuario_id": "<volatil>",
-                    "nombre_parcela": "Parcela Recorrido",
-                    "variedad_maiz": "Híbrido convencional",
-                    "ubicacion": "Quito - Pichincha",
-                    "area": "2.50",
-                    "latitud": "-0.2210000",
-                    "longitud": "-78.5120000",
-                    "fecha_siembra": "<volatil>",
-                    "fecha_registro": "<volatil>",
-                    "activo": 1,
-                    "geojson": null,
-                    "altitud": "2850.0",
-                    "ph": "6.4",
-                    "tipo_maiz": "Duro Amarillo",
-                    "fertilizacion_fecha": "<volatil>",
-                    "fertilizacion_dosis": null,
-                    "fertilizacion_tipo": null,
-                    "nombre_usuario": "Test Browser2"
                 },
                 {
                     "id": "<volatil>",
@@ -619,7 +598,7 @@
         {
             "nombre": "valores ubicacion (externo)",
             "metodo": "GET",
-            "ruta": "/api/cultivos/valores-ubicacion?id=167",
+            "ruta": "/api/cultivos/valores-ubicacion?id=174",
             "volatilidad": "estructural",
             "http": 200,
             "cuerpo": {
@@ -915,7 +894,7 @@
         {
             "nombre": "dashboard yield",
             "metodo": "GET",
-            "ruta": "/api/yield?cultivo_id=167&anio=2026",
+            "ruta": "/api/yield?cultivo_id=174&anio=2026",
             "volatilidad": "tolerante",
             "http": 200,
             "cuerpo": {
@@ -954,15 +933,15 @@
                     },
                     {
                         "name": "Pérdida Nitrógeno",
-                        "value": -0.9
+                        "value": -1
                     },
                     {
                         "name": "Pérdida Agua",
-                        "value": -0.9
+                        "value": -1
                     },
                     {
                         "name": "Pérdida Temperatura",
-                        "value": -2.8
+                        "value": -3.1
                     },
                     {
                         "name": "Pérdida Fecha Siembra",
@@ -1019,15 +998,15 @@
                 "factores_contribucion": [
                     {
                         "factor": "Nitrógeno",
-                        "porcentaje": 15.5
+                        "porcentaje": 17.2
                     },
                     {
                         "factor": "Agua",
-                        "porcentaje": 15.5
+                        "porcentaje": 17.2
                     },
                     {
                         "factor": "Temperatura",
-                        "porcentaje": 48.3
+                        "porcentaje": 53.4
                     },
                     {
                         "factor": "Fecha de Siembra",
@@ -1043,7 +1022,7 @@
         {
             "nombre": "dashboard scenarios",
             "metodo": "GET",
-            "ruta": "/api/scenarios?cultivo_id=167&anio=2026",
+            "ruta": "/api/scenarios?cultivo_id=174&anio=2026",
             "volatilidad": "tolerante",
             "http": 200,
             "cuerpo": {
@@ -1254,7 +1233,7 @@
         {
             "nombre": "dashboard climate (externo)",
             "metodo": "GET",
-            "ruta": "/api/climate?cultivo_id=167&anio=2026",
+            "ruta": "/api/climate?cultivo_id=174&anio=2026",
             "volatilidad": "estructural",
             "http": 200,
             "cuerpo": {
@@ -1308,31 +1287,31 @@
                         54
                     ],
                     "lluvia_anomala": [
-                        80,
-                        99,
-                        111,
-                        94,
-                        62,
-                        55,
-                        93,
-                        111,
-                        105,
+                        91,
+                        97,
+                        97,
+                        75,
+                        45,
+                        65,
+                        75,
+                        116,
+                        106,
                         89,
-                        52,
-                        47
+                        65,
+                        59
                     ],
                     "temperatura_anomala": [
-                        16,
-                        16.4,
                         16.9,
-                        16.3,
-                        15.3,
-                        14,
-                        13.6,
-                        14.1,
-                        12.9,
-                        13.7,
                         15.8,
+                        16.2,
+                        15.1,
+                        15.4,
+                        13.9,
+                        14,
+                        12.8,
+                        13,
+                        14.2,
+                        14.9,
                         15
                     ]
                 },
@@ -1390,7 +1369,7 @@
         {
             "nombre": "dashboard financial",
             "metodo": "GET",
-            "ruta": "/api/financial?cultivo_id=167&anio=2026",
+            "ruta": "/api/financial?cultivo_id=174&anio=2026",
             "volatilidad": "tolerante",
             "http": 200,
             "cuerpo": {
@@ -1637,7 +1616,7 @@
             "volatilidad": "tolerante",
             "http": 200,
             "cuerpo": {
-                "texto": "En tu parcela *Lote Contrato*, el indicador **¿Qué significa mi ROI?** (4.1821) dice lo siguiente:\n\n**Inversion y retorno** — Tu indicador ¿Qué significa mi ROI? registra 4.1821 t/ha para 2.5 ha en Quito con la variedad Pioneer P4039: rendimiento 4.18 t/ha e ingreso bruto estimado de 3793.35 USD a 16.50 USD/qq.\n\n**Escenarios** — Escenarios: base 4.18 t/ha (3793.35 USD); optimista 4.81 t/ha (4365.08 USD); pesimista 3.55 t/ha (3221.63 USD).\n\n**Riesgo financiero** — Riesgo financiero: el factor que mas afecta es Nitrógeno (0.47 t/ha, ~170.61 USD/ha). Recomendacion: reduce costos variables, asegura precio minimo antes de la siembra y protege el margen con cobertura de insumos. Cierre: valida el flujo de caja mensual y el punto de equilibrio antes de sembrar.\n\n📊 *En tu situación:* Tu rendimiento estimado actual es **4.1821 t/ha**.",
+                "texto": "Sobre **¿Qué significa mi ROI?** en tu parcela *Lote Contrato*:\n\n**Inversion y retorno** — Tu indicador ¿Qué significa mi ROI? registra 4.1821 t/ha para 2.5 ha en Quito con la variedad Pioneer P4039: rendimiento 4.18 t/ha e ingreso bruto estimado de 3793.35 USD a 16.50 USD/qq.\n\n**Escenarios** — Escenarios: base 4.18 t/ha (3793.35 USD); optimista 4.81 t/ha (4365.08 USD); pesimista 3.55 t/ha (3221.63 USD).\n\n**Riesgo financiero** — Riesgo financiero: el factor que mas afecta es Nitrógeno (0.47 t/ha, ~170.61 USD/ha). Recomendacion: reduce costos variables, asegura precio minimo antes de la siembra y protege el margen con cobertura de insumos. Cierre: valida el flujo de caja mensual y el punto de equilibrio antes de sembrar.\n\n📊 *En tu situación:* Tu rendimiento estimado actual es **4.1821 t/ha**.",
                 "secciones": [
                     {
                         "titulo": "1. Inversion y retorno",
@@ -1656,7 +1635,7 @@
                     }
                 ],
                 "accion": "Riesgo financiero: el factor que mas afecta es Nitrógeno (0.47 t/ha, ~170.61 USD/ha). Recomendacion: reduce costos variables, asegura precio minimo antes de la siembra y protege el margen con cobertura de insumos. Cierre: valida el flujo de caja mensual y el punto de equilibrio antes de sembrar.",
-                "confianza": 0.64,
+                "confianza": 0.73,
                 "intencion": "indicador"
             }
         },
@@ -1782,7 +1761,7 @@
         {
             "nombre": "eliminar simulacion",
             "metodo": "DELETE",
-            "ruta": "/api/simulaciones/eliminar?id=175",
+            "ruta": "/api/simulaciones/eliminar?id=182",
             "volatilidad": "exacto",
             "http": 200,
             "cuerpo": {
@@ -1793,7 +1772,7 @@
         {
             "nombre": "eliminar cultivo",
             "metodo": "DELETE",
-            "ruta": "/api/cultivos?id=167",
+            "ruta": "/api/cultivos?id=174",
             "volatilidad": "exacto",
             "http": 200,
             "cuerpo": {
