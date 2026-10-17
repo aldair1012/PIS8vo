@@ -422,6 +422,8 @@ fail('Modo no reconocido: ' . $modo);
 exit(2);
 ```
 
+> Ajuste post-implementación (commit correctivo de F00): `normalizar()` además colapsa claves externas en vivo (`soilgrids`, `open_meteo` → `<externo>`) e items aleatorios de "fecha de siembra" (mt_rand de YieldController → `<volatil>`). El archivo `backend-api/tests/contrato/ejecutar.php` (versionado) es la fuente de verdad final de la suite.
+
 - [ ] **Step 2: Crear `backend-api/tests/contrato/README.md`**
 
 ```markdown
@@ -475,9 +477,11 @@ Expected: `== CONTRATO OK: sin diferencias ==` y exit code 0.
 
 Run (PowerShell):
 ```powershell
-$origen  = "backend-api\tests\contrato\snapshots\antes\contrato.json"
+$origen   = "backend-api\tests\contrato\snapshots\antes\contrato.json"
 $temporal = "$env:TEMP\contrato_danado.json"
-(Get-Content $origen -Raw) -replace '"titulo"', '"tituloX"' | Set-Content $temporal -Encoding UTF8
+$texto = [System.IO.File]::ReadAllText((Resolve-Path $origen), [System.Text.Encoding]::UTF8)
+$texto = $texto.Replace('"titulo"', '"tituloX"')
+[System.IO.File]::WriteAllText($temporal, $texto, (New-Object System.Text.UTF8Encoding($false)))
 ```
 
 - [ ] **Step 2: Comparar contra la huella dañada — DEBE FALLAR**

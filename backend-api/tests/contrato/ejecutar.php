@@ -63,12 +63,26 @@ function normalizarString(string $valor): string
     return $valor;
 }
 
-/** Normaliza claves volátiles (ids, fechas, tokens) para que la huella sea comparable. */
+/** Normaliza claves volátiles (ids, fechas, aleatorios, datos externos) para que la huella sea comparable. */
 function normalizar(mixed $valor): mixed
 {
     if (is_array($valor)) {
+        // Ítems aleatorios (mt_rand en YieldController): {name|factor: '...Fecha de Siembra...', value/porcentaje}
+        $etiquetaAleatoria = $valor['name'] ?? $valor['factor'] ?? null; // waterfall_losses usa 'name'; factores_contribucion usa 'factor'
+        $esItemAleatorio = is_string($etiquetaAleatoria)
+            && stripos($etiquetaAleatoria, 'fecha') !== false
+            && stripos($etiquetaAleatoria, 'siembra') !== false;
+
         $salida = [];
         foreach ($valor as $clave => $sub) {
+            if ($esItemAleatorio && is_string($clave) && in_array($clave, ['value', 'porcentaje'], true) && !is_array($sub)) {
+                $salida[$clave] = '<volatil>';
+                continue;
+            }
+            if (is_string($clave) && in_array(strtolower($clave), ['soilgrids', 'open_meteo', 'openmeteo'], true)) {
+                $salida[$clave] = '<externo>'; // datos externos en vivo: no comparar (null/array son ambos válidos)
+                continue;
+            }
             if (is_string($clave)
                 && preg_match('/^(id|.*_id|.*token.*|.*_token)$/i', $clave)
                 && !is_array($sub)
