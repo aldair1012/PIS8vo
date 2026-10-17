@@ -1,0 +1,31 @@
+# =========================================================
+# ZeaSys — .gitignore raíz
+# =========================================================
+
+# Dependencias (frontend)
+node_modules/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Logs
+*.log
+ml-engine/flask_server.log
+
+# Caché generada en tiempo de ejecución (se regenera sola)
+backend-api/data/cache/
+
+# Datos subidos por usuarios (avatares) — datos personales, no versionar
+backend-api/public/uploads/
+
+# Editor / sistema
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Nota: los artefactos de despliegue en la raíz (index.html, assets/, images/)
+# SÍ se versionan a propósito: son lo que XAMPP sirve en /ZeaSys y permiten
+# revertir el sistema desplegado con un solo comando.

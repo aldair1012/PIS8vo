@@ -1,0 +1,389 @@
+{
+    "features": {
+        "zona": {
+            "type": "categorical",
+            "description": "Zona agroclimática de Ecuador (e.g. Costa, Sierra, Oriente)",
+            "examples": [
+                "Costa_Invierno",
+                "Costa_Verano_Riego",
+                "Sierra_Norte",
+                "Sierra_Centro",
+                "Sierra_Sur"
+            ]
+        },
+        "provincia": {
+            "type": "categorical",
+            "description": "Provincia de Ecuador donde se localiza el cultivo",
+            "examples": [
+                "Manabí",
+                "Esmeraldas",
+                "Los Ríos",
+                "Guayas",
+                "Santa Elena"
+            ]
+        },
+        "variedad": {
+            "type": "categorical",
+            "description": "Variedad o híbrido de maíz utilizado",
+            "examples": [
+                "Pioneer P4039",
+                "INIAP H-551",
+                "Dekalb DK-7088",
+                "INIAP H-603 Superior",
+                "INIAP H-553"
+            ]
+        },
+        "tipo_grano": {
+            "type": "categorical",
+            "description": "Tipo de grano (e.g. Duro Amarillo, Suave)",
+            "examples": [
+                "Duro Amarillo",
+                "Duro Amarillo / Blanco",
+                "Suave Harinoso"
+            ]
+        },
+        "riego_tipo": {
+            "type": "categorical",
+            "description": "Tipo de riego aplicado (e.g. temporal_lluvia, goteo)",
+            "examples": [
+                "temporal_lluvia",
+                "goteo_aspersion",
+                "aspersion_lluvia",
+                "lluvia_complementario",
+                "goteo"
+            ]
+        },
+        "tipo_suelo": {
+            "type": "categorical",
+            "description": "Textura o tipo de suelo de la parcela",
+            "examples": [
+                "Arcillo limoso",
+                "Franco limoso",
+                "Franco arcilloso",
+                "Franco arenoso",
+                "Franco"
+            ]
+        },
+        "ph_suelo": {
+            "type": "numeric",
+            "description": "pH medido en el suelo",
+            "examples": [
+                6.2,
+                6.52,
+                6.98,
+                6.38,
+                6.13
+            ]
+        },
+        "materia_organica_pct": {
+            "type": "numeric",
+            "description": "Porcentaje de materia orgánica en el suelo",
+            "examples": [
+                2.71,
+                0.88,
+                1.69,
+                1.3,
+                1.52
+            ]
+        },
+        "profundidad_suelo_cm": {
+            "type": "numeric",
+            "description": "Variable predictora de tipo numeric (profundidad_suelo_cm)",
+            "examples": [
+                51.0,
+                47.0,
+                77.0,
+                59.0,
+                31.0
+            ]
+        },
+        "textura_arcilla_pct": {
+            "type": "numeric",
+            "description": "Variable predictora de tipo numeric (textura_arcilla_pct)",
+            "examples": [
+                17.3,
+                46.0,
+                29.8,
+                50.3,
+                35.1
+            ]
+        },
+        "textura_arena_pct": {
+            "type": "numeric",
+            "description": "Variable predictora de tipo numeric (textura_arena_pct)",
+            "examples": [
+                38.9,
+                47.6,
+                36.8,
+                23.0,
+                12.1
+            ]
+        },
+        "textura_limo_pct": {
+            "type": "numeric",
+            "description": "Variable predictora de tipo numeric (textura_limo_pct)",
+            "examples": [
+                43.8,
+                6.4,
+                33.4,
+                26.7,
+                52.8
+            ]
+        },
+        "altitud_msnm": {
+            "type": "numeric",
+            "description": "Altitud en metros sobre el nivel del mar",
+            "examples": [
+                348.0,
+                263.0,
+                80.0,
+                159.0,
+                179.0
+            ]
+        },
+        "temperatura_media_c": {
+            "type": "numeric",
+            "description": "Temperatura media registrada durante el ciclo (°C)",
+            "examples": [
+                21.7,
+                20.3,
+                26.4,
+                25.4,
+                23.3
+            ]
+        },
+        "temperatura_min_c": {
+            "type": "numeric",
+            "description": "Variable predictora de tipo numeric (temperatura_min_c)",
+            "examples": [
+                21.3,
+                21.7,
+                21.4,
+                21.1,
+                21.9
+            ]
+        },
+        "temperatura_max_c": {
+            "type": "numeric",
+            "description": "Variable predictora de tipo numeric (temperatura_max_c)",
+            "examples": [
+                28.2,
+                29.2,
+                27.4,
+                27.1,
+                27.2
+            ]
+        },
+        "precipitacion_mm": {
+            "type": "numeric",
+            "description": "Precipitación acumulada en el ciclo (mm)",
+            "examples": [
+                656.0,
+                731.9,
+                824.2,
+                718.5,
+                588.1
+            ]
+        },
+        "humedad_relativa_pct": {
+            "type": "numeric",
+            "description": "Variable predictora de tipo numeric (humedad_relativa_pct)",
+            "examples": [
+                72.0,
+                76.2,
+                83.0,
+                75.9,
+                79.9
+            ]
+        },
+        "horas_luz_dia": {
+            "type": "numeric",
+            "description": "Variable predictora de tipo numeric (horas_luz_dia)",
+            "examples": [
+                7.4,
+                7.5,
+                8.3,
+                6.7,
+                7.1
+            ]
+        },
+        "densidad_plantas_ha": {
+            "type": "numeric",
+            "description": "Variable predictora de tipo numeric (densidad_plantas_ha)",
+            "examples": [
+                78333.0,
+                81557.0,
+                80380.0,
+                65230.0,
+                79548.0
+            ]
+        },
+        "ciclo_dias": {
+            "type": "numeric",
+            "description": "Variable predictora de tipo numeric (ciclo_dias)",
+            "examples": [
+                116.0,
+                118.0,
+                117.0,
+                126.0,
+                115.0
+            ]
+        },
+        "nitrogeno_kg_ha": {
+            "type": "numeric",
+            "description": "Cantidad de nitrógeno aplicada (kg/ha)",
+            "examples": [
+                160.9,
+                185.9,
+                185.5,
+                171.4,
+                188.1
+            ]
+        },
+        "fosforo_p2o5_kg_ha": {
+            "type": "numeric",
+            "description": "Variable predictora de tipo numeric (fosforo_p2o5_kg_ha)",
+            "examples": [
+                40.5,
+                62.7,
+                43.2,
+                62.2,
+                55.4
+            ]
+        },
+        "potasio_k2o_kg_ha": {
+            "type": "numeric",
+            "description": "Variable predictora de tipo numeric (potasio_k2o_kg_ha)",
+            "examples": [
+                44.1,
+                37.7,
+                51.8,
+                43.2,
+                50.9
+            ]
+        },
+        "magnesio_kg_ha": {
+            "type": "numeric",
+            "description": "Variable predictora de tipo numeric (magnesio_kg_ha)",
+            "examples": [
+                15.3,
+                10.7,
+                13.4,
+                17.1,
+                14.3
+            ]
+        },
+        "azufre_kg_ha": {
+            "type": "numeric",
+            "description": "Variable predictora de tipo numeric (azufre_kg_ha)",
+            "examples": [
+                14.0,
+                8.6,
+                21.6,
+                8.0,
+                15.7
+            ]
+        },
+        "aplicaciones_nitrogeno": {
+            "type": "numeric",
+            "description": "Variable predictora de tipo numeric (aplicaciones_nitrogeno)",
+            "examples": [
+                2.0,
+                4.0,
+                3.0
+            ]
+        },
+        "lamina_riego_mm": {
+            "type": "numeric",
+            "description": "Variable predictora de tipo numeric (lamina_riego_mm)",
+            "examples": [
+                52.5,
+                38.9,
+                76.1,
+                86.1,
+                67.2
+            ]
+        },
+        "biofertilizante": {
+            "type": "numeric",
+            "description": "Uso de biofertilizante (0 = No, 1 = Sí)",
+            "examples": [
+                0.0,
+                1.0
+            ]
+        },
+        "semilla_certificada": {
+            "type": "numeric",
+            "description": "Uso de semilla certificada (0 = No, 1 = Sí)",
+            "examples": [
+                0.0,
+                1.0
+            ]
+        },
+        "ndvi_v6_vegetativo": {
+            "type": "numeric",
+            "description": "Variable predictora de tipo numeric (ndvi_v6_vegetativo)",
+            "examples": [
+                0.623,
+                0.357,
+                0.491,
+                0.471,
+                0.726
+            ]
+        },
+        "ndvi_vt_floracion": {
+            "type": "numeric",
+            "description": "Índice de vegetación NDVI en fase de floración",
+            "examples": [
+                0.61,
+                0.698,
+                0.728,
+                0.635,
+                0.662
+            ]
+        },
+        "ndvi_r3_llenado_grano": {
+            "type": "numeric",
+            "description": "Variable predictora de tipo numeric (ndvi_r3_llenado_grano)",
+            "examples": [
+                0.476,
+                0.608,
+                0.813,
+                0.517,
+                0.525
+            ]
+        },
+        "plagas_presentes": {
+            "type": "categorical",
+            "description": "Variable predictora de tipo categorical (plagas_presentes)",
+            "examples": [
+                "Cogollero, Barrenador, Tizón Foliar",
+                "Barrenador",
+                "Gusano Gris, Pudrición Mazorca",
+                "Ninguna",
+                "Cogollero, Chicharrita"
+            ]
+        },
+        "presion_plaga_score": {
+            "type": "numeric",
+            "description": "Nivel de presión de plagas de 0 a 1",
+            "examples": [
+                0.59,
+                0.3,
+                0.03,
+                0.48,
+                0.54
+            ]
+        },
+        "control_plaga": {
+            "type": "categorical",
+            "description": "Variable predictora de tipo categorical (control_plaga)",
+            "examples": [
+                "ninguno",
+                "quimico",
+                "biologico",
+                "integrado"
+            ]
+        }
+    }
+}

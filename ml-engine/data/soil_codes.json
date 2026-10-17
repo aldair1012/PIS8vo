@@ -1,0 +1,10 @@
+{
+  "suelo_map": {
+    "franco": "Franco limoso",
+    "arcilloso": "Franco arcilloso",
+    "arenoso": "Franco arenoso"
+  },
+  "metadata": {
+    "description": "Mapping from UI simplified soil types to ML model categorical features."
+  }
+}

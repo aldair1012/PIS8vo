@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+*.pyo
+logs/
+flask_server.log
+*.log
