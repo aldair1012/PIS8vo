@@ -20,12 +20,12 @@ return [
     'api/cultivos/mapa'            => ['controlador' => \ZeaSys\Dominios\Lotes\Http\CultivoController::class, 'accion' => 'mapa'],
     'api/cultivos/valores-ubicacion' => ['controlador' => \ZeaSys\Dominios\Lotes\Http\CultivoController::class, 'accion' => 'obtenerValoresUbicacion'],
 
-    // --- Simulaciones ---
-    'api/simulaciones/simular'     => ['controlador' => 'SimulacionController', 'accion' => 'simular'],
-    'api/simulaciones/historial'   => ['controlador' => 'SimulacionController', 'accion' => 'historial'],
-    'api/simulaciones/eliminar'    => ['controlador' => 'SimulacionController', 'accion' => 'eliminar'],
-    'api/simulaciones/ia-status'   => ['controlador' => 'SimulacionController', 'accion' => 'iaStatus', 'publica' => true],
-    'api/simulaciones/explain'     => ['controlador' => 'SimulacionController', 'accion' => 'explain'],
+    // --- Simulaciones (F04: dominio ZeaSys\Dominios\Simulaciones) ---
+    'api/simulaciones/simular'     => ['controlador' => \ZeaSys\Dominios\Simulaciones\Http\SimulacionController::class, 'accion' => 'simular'],
+    'api/simulaciones/historial'   => ['controlador' => \ZeaSys\Dominios\Simulaciones\Http\SimulacionController::class, 'accion' => 'historial'],
+    'api/simulaciones/eliminar'    => ['controlador' => \ZeaSys\Dominios\Simulaciones\Http\SimulacionController::class, 'accion' => 'eliminar'],
+    'api/simulaciones/ia-status'   => ['controlador' => \ZeaSys\Dominios\Simulaciones\Http\SimulacionController::class, 'accion' => 'iaStatus', 'publica' => true],
+    'api/simulaciones/explain'     => ['controlador' => \ZeaSys\Dominios\Simulaciones\Http\SimulacionController::class, 'accion' => 'explain'],
 
     // --- DSS Dashboards ---
     'api/scenarios'                => ['controlador' => 'ScenarioController', 'accion' => 'index'],

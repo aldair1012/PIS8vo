@@ -109,8 +109,70 @@ return static function (): Container {
             )
     );
 
+    // --- Simulaciones (F04): motor IA por puerto, repositorio y explicabilidad por estrategias ---
+    $contenedor->registrar(
+        \ZeaSys\Dominios\Simulaciones\Dominio\SimulacionRepositoryInterface::class,
+        static fn (): \ZeaSys\Dominios\Simulaciones\Infraestructura\SimulacionRepositoryMysql =>
+            new \ZeaSys\Dominios\Simulaciones\Infraestructura\SimulacionRepositoryMysql(getConnection())
+    );
+    $contenedor->registrar(
+        \ZeaSys\Dominios\Simulaciones\Dominio\MotorPrediccionInterface::class,
+        static fn (): \ZeaSys\Dominios\Simulaciones\Infraestructura\ClienteMotorFlask =>
+            new \ZeaSys\Dominios\Simulaciones\Infraestructura\ClienteMotorFlask()
+    );
+    $contenedor->registrar(
+        \ZeaSys\Dominios\Simulaciones\Dominio\GestorMotorIaInterface::class,
+        static fn (): \ZeaSys\Dominios\Simulaciones\Infraestructura\GestorMotorIa =>
+            new \ZeaSys\Dominios\Simulaciones\Infraestructura\GestorMotorIa()
+    );
+    $contenedor->registrar(
+        \ZeaSys\Dominios\Simulaciones\Explicacion\Dominio\EvaluadorCondiciones::class,
+        static fn (): \ZeaSys\Dominios\Simulaciones\Explicacion\Dominio\EvaluadorCondiciones =>
+            new \ZeaSys\Dominios\Simulaciones\Explicacion\Dominio\EvaluadorCondiciones()
+    );
+    $contenedor->registrar(
+        \ZeaSys\Dominios\Simulaciones\Explicacion\Aplicacion\RegistroExplicadores::class,
+        static fn (): \ZeaSys\Dominios\Simulaciones\Explicacion\Aplicacion\RegistroExplicadores =>
+            new \ZeaSys\Dominios\Simulaciones\Explicacion\Aplicacion\RegistroExplicadores()
+    );
+    $contenedor->registrar(
+        \ZeaSys\Dominios\Simulaciones\Explicacion\Aplicacion\ResolutorContextoExplicacion::class,
+        static fn (Container $c): \ZeaSys\Dominios\Simulaciones\Explicacion\Aplicacion\ResolutorContextoExplicacion =>
+            new \ZeaSys\Dominios\Simulaciones\Explicacion\Aplicacion\ResolutorContextoExplicacion(
+                $c->get(\ZeaSys\Dominios\Lotes\Dominio\CultivoRepositoryInterface::class),
+                $c->get(\ZeaSys\Dominios\Simulaciones\Dominio\SimulacionRepositoryInterface::class),
+            )
+    );
+    $contenedor->registrar(
+        \ZeaSys\Dominios\Simulaciones\Explicacion\Aplicacion\ServicioExplicabilidad::class,
+        static fn (Container $c): \ZeaSys\Dominios\Simulaciones\Explicacion\Aplicacion\ServicioExplicabilidad =>
+            new \ZeaSys\Dominios\Simulaciones\Explicacion\Aplicacion\ServicioExplicabilidad(
+                $c->get(\ZeaSys\Dominios\Simulaciones\Explicacion\Dominio\EvaluadorCondiciones::class),
+                $c->get(\ZeaSys\Dominios\Simulaciones\Explicacion\Aplicacion\RegistroExplicadores::class),
+                $c->get(\ZeaSys\Dominios\Simulaciones\Explicacion\Aplicacion\ResolutorContextoExplicacion::class),
+            )
+    );
+    $contenedor->registrar(
+        \ZeaSys\Dominios\Simulaciones\Aplicacion\SimulacionService::class,
+        static fn (Container $c): \ZeaSys\Dominios\Simulaciones\Aplicacion\SimulacionService =>
+            new \ZeaSys\Dominios\Simulaciones\Aplicacion\SimulacionService(
+                $c->get(\ZeaSys\Dominios\Simulaciones\Dominio\SimulacionRepositoryInterface::class),
+                $c->get(\ZeaSys\Dominios\Simulaciones\Dominio\MotorPrediccionInterface::class),
+                $c->get(\ZeaSys\Dominios\Simulaciones\Dominio\GestorMotorIaInterface::class),
+                $c->get(\ZeaSys\Dominios\Simulaciones\Explicacion\Aplicacion\ServicioExplicabilidad::class),
+                $c->get(\ZeaSys\Dominios\Terreno\Dominio\CacheInterface::class),
+                $c->get(\ZeaSys\Dominios\Lotes\Dominio\CultivoRepositoryInterface::class),
+            )
+    );
+    $contenedor->registrar(
+        \ZeaSys\Dominios\Simulaciones\Http\SimulacionController::class,
+        static fn (Container $c): \ZeaSys\Dominios\Simulaciones\Http\SimulacionController =>
+            new \ZeaSys\Dominios\Simulaciones\Http\SimulacionController(
+                $c->get(\ZeaSys\Dominios\Simulaciones\Aplicacion\SimulacionService::class)
+            )
+    );
+
     $legacy = [
-        'SimulacionController',
         'ScenarioController',
         'ClimateController',
         'YieldController',
