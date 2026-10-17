@@ -48,8 +48,61 @@ return static function (): Container {
             )
     );
 
+    // --- Terreno (F03): datos de clima/suelo con caché de archivos ---
+    $contenedor->registrar(
+        \ZeaSys\Dominios\Terreno\Dominio\CacheInterface::class,
+        static fn (): \ZeaSys\Dominios\Terreno\Infraestructura\CacheArchivos =>
+            new \ZeaSys\Dominios\Terreno\Infraestructura\CacheArchivos()
+    );
+    $contenedor->registrar(
+        \ZeaSys\Dominios\Terreno\Dominio\ProveedorClimaInterface::class,
+        static fn (): \ZeaSys\Dominios\Terreno\Infraestructura\ProveedorOpenMeteo =>
+            new \ZeaSys\Dominios\Terreno\Infraestructura\ProveedorOpenMeteo()
+    );
+    $contenedor->registrar(
+        \ZeaSys\Dominios\Terreno\Dominio\ProveedorSueloInterface::class,
+        static fn (): \ZeaSys\Dominios\Terreno\Infraestructura\ProveedorSoilGrids =>
+            new \ZeaSys\Dominios\Terreno\Infraestructura\ProveedorSoilGrids()
+    );
+    $contenedor->registrar(
+        \ZeaSys\Dominios\Terreno\Aplicacion\ServicioDatosTerreno::class,
+        static fn (Container $c): \ZeaSys\Dominios\Terreno\Aplicacion\ServicioDatosTerreno =>
+            new \ZeaSys\Dominios\Terreno\Aplicacion\ServicioDatosTerreno(
+                $c->get(\ZeaSys\Dominios\Terreno\Dominio\CacheInterface::class),
+                $c->get(\ZeaSys\Dominios\Terreno\Dominio\ProveedorClimaInterface::class),
+                $c->get(\ZeaSys\Dominios\Terreno\Dominio\ProveedorSueloInterface::class),
+            )
+    );
+
+    // --- Lotes (F03): cultivos/parcelas ---
+    $contenedor->registrar(
+        \ZeaSys\Dominios\Lotes\Dominio\CultivoRepositoryInterface::class,
+        static fn (): \ZeaSys\Dominios\Lotes\Infraestructura\CultivoRepositoryMysql =>
+            new \ZeaSys\Dominios\Lotes\Infraestructura\CultivoRepositoryMysql(getConnection())
+    );
+    $contenedor->registrar(
+        \ZeaSys\Dominios\Lotes\Dominio\ValidadorLimitesEcuador::class,
+        static fn (): \ZeaSys\Dominios\Lotes\Dominio\ValidadorLimitesEcuador =>
+            new \ZeaSys\Dominios\Lotes\Dominio\ValidadorLimitesEcuador()
+    );
+    $contenedor->registrar(
+        \ZeaSys\Dominios\Lotes\Aplicacion\CultivoService::class,
+        static fn (Container $c): \ZeaSys\Dominios\Lotes\Aplicacion\CultivoService =>
+            new \ZeaSys\Dominios\Lotes\Aplicacion\CultivoService(
+                $c->get(\ZeaSys\Dominios\Lotes\Dominio\CultivoRepositoryInterface::class),
+                $c->get(\ZeaSys\Dominios\Lotes\Dominio\ValidadorLimitesEcuador::class),
+                $c->get(\ZeaSys\Dominios\Terreno\Aplicacion\ServicioDatosTerreno::class),
+            )
+    );
+    $contenedor->registrar(
+        \ZeaSys\Dominios\Lotes\Http\CultivoController::class,
+        static fn (Container $c): \ZeaSys\Dominios\Lotes\Http\CultivoController =>
+            new \ZeaSys\Dominios\Lotes\Http\CultivoController(
+                $c->get(\ZeaSys\Dominios\Lotes\Aplicacion\CultivoService::class)
+            )
+    );
+
     $legacy = [
-        'CultivoController',
         'SimulacionController',
         'ScenarioController',
         'ClimateController',

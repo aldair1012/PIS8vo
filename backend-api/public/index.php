@@ -37,7 +37,7 @@ ini_set('display_errors', '1');
 
 // F01: controladores legacy (globales, sin namespace). Se eliminan fase a fase (F02–F05) y en F06 no queda ninguno.
 // F02: la autenticación ahora se enruta al dominio nuevo (src/Config/rutas.php, Fase F02 del plan).
-require_once __DIR__ . '/../controllers/CultivoController.php';
+// F03: los cultivos ahora se enrutan al dominio Lotes (src/Config/rutas.php, Fase F03 del plan).
 require_once __DIR__ . '/../controllers/SimulacionController.php';
 require_once __DIR__ . '/../controllers/ScenarioController.php';
 require_once __DIR__ . '/../controllers/ClimateController.php';

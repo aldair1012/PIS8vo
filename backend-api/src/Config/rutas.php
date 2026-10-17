@@ -15,10 +15,10 @@ return [
     'api/auth/sync-google-avatar'  => ['controlador' => \ZeaSys\Dominios\Autenticacion\Http\AuthController::class, 'accion' => 'syncGoogleAvatar'],
     'api/auth/delete'              => ['controlador' => \ZeaSys\Dominios\Autenticacion\Http\AuthController::class, 'accion' => 'eliminar', 'sesion' => true],
 
-    // --- Cultivos / Parcelas ---
-    'api/cultivos'                 => ['controlador' => 'CultivoController', 'acciones' => ['GET' => 'listar', 'POST' => 'crear', 'PUT' => 'actualizar', 'DELETE' => 'eliminar']],
-    'api/cultivos/mapa'            => ['controlador' => 'CultivoController', 'accion' => 'mapa'],
-    'api/cultivos/valores-ubicacion' => ['controlador' => 'CultivoController', 'accion' => 'obtenerValoresUbicacion'],
+    // --- Cultivos / Parcelas (F03: dominio ZeaSys\Dominios\Lotes) ---
+    'api/cultivos'                 => ['controlador' => \ZeaSys\Dominios\Lotes\Http\CultivoController::class, 'acciones' => ['GET' => 'listar', 'POST' => 'crear', 'PUT' => 'actualizar', 'DELETE' => 'eliminar']],
+    'api/cultivos/mapa'            => ['controlador' => \ZeaSys\Dominios\Lotes\Http\CultivoController::class, 'accion' => 'mapa'],
+    'api/cultivos/valores-ubicacion' => ['controlador' => \ZeaSys\Dominios\Lotes\Http\CultivoController::class, 'accion' => 'obtenerValoresUbicacion'],
 
     // --- Simulaciones ---
     'api/simulaciones/simular'     => ['controlador' => 'SimulacionController', 'accion' => 'simular'],
