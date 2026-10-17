@@ -65,12 +65,18 @@ return static function (): Container {
             new \ZeaSys\Dominios\Terreno\Infraestructura\ProveedorSoilGrids()
     );
     $contenedor->registrar(
+        \ZeaSys\Dominios\Terreno\Dominio\AltitudPorCultivoInterface::class,
+        static fn (): \ZeaSys\Dominios\Terreno\Infraestructura\AltitudMysql =>
+            new \ZeaSys\Dominios\Terreno\Infraestructura\AltitudMysql(getConnection())
+    );
+    $contenedor->registrar(
         \ZeaSys\Dominios\Terreno\Aplicacion\ServicioDatosTerreno::class,
         static fn (Container $c): \ZeaSys\Dominios\Terreno\Aplicacion\ServicioDatosTerreno =>
             new \ZeaSys\Dominios\Terreno\Aplicacion\ServicioDatosTerreno(
                 $c->get(\ZeaSys\Dominios\Terreno\Dominio\CacheInterface::class),
                 $c->get(\ZeaSys\Dominios\Terreno\Dominio\ProveedorClimaInterface::class),
                 $c->get(\ZeaSys\Dominios\Terreno\Dominio\ProveedorSueloInterface::class),
+                $c->get(\ZeaSys\Dominios\Terreno\Dominio\AltitudPorCultivoInterface::class),
             )
     );
 

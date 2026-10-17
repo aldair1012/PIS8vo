@@ -747,6 +747,8 @@ git add backend-api/src/Dominios/Terreno
 git commit -m "refactor(terreno): dominio Terreno con cache de archivos y proveedores clima/suelo desacoplados"
 ```
 
+> **Ajuste post-implementación (F03):** la recuperación de altitud desde la BD (`ClimateController` líneas 47–60, `SELECT altitud … WHERE ROUND(latitud, 3) = … LIMIT 1`) se OMITE en el cuerpo del `ServicioDatosTerreno` descrito arriba, lo que rompía la paridad en el path `altitud === null` + caché fría + proveedor caído. Se restaura vía el puerto `src/Dominios/Terreno/Dominio/AltitudPorCultivoInterface.php` + `src/Dominios/Terreno/Infraestructura/AltitudMysql.php` (4ª dependencia por constructor, binding en `contenedor.php` con el mismo puente `getConnection()` de ADR-07): misma SQL, mismo `try/catch` que ignora, mismo `floatval()`, misma posición del flujo (tras la caché, antes de estimar la región) y **sin PDO en `Aplicación`** — la opción A decide el plan original, que violaba la capa al omitirla. Nota: el método es `altitudPorCoordenadas(float, float)` y no `altitudParaCultivo(int $id)` porque la SQL legacy busca por coordenada aproximada (puede devolver la altitud de otra parcela) y `ServicioDatosTerreno::obtener()` no recibe id de cultivo.
+
 ### Task 10: Dominio Lotes (Cultivos)
 
 **Files:**

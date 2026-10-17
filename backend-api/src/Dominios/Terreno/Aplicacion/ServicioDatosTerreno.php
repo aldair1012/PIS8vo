@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace ZeaSys\Dominios\Terreno\Aplicacion;
 
+use ZeaSys\Dominios\Terreno\Dominio\AltitudPorCultivoInterface;
 use ZeaSys\Dominios\Terreno\Dominio\CacheInterface;
 use ZeaSys\Dominios\Terreno\Dominio\ProveedorClimaInterface;
 use ZeaSys\Dominios\Terreno\Dominio\ProveedorSueloInterface;
@@ -15,6 +16,7 @@ final class ServicioDatosTerreno
         private CacheInterface $cache,
         private ProveedorClimaInterface $clima,
         private ProveedorSueloInterface $suelo,
+        private AltitudPorCultivoInterface $altitudPorCultivo,
     ) {
     }
 
@@ -34,6 +36,13 @@ final class ServicioDatosTerreno
         if ($datosCache !== null) {
             $datosCache['source'] .= ' (Caché local de la parcela)';
             return $datosCache;
+        }
+
+        // Si no se pasó la altitud, intentar recuperarla del cultivo en la BD usando coordenadas aproximadas
+        // (líneas 47–60 del original: mismo punto del flujo — tras la caché y antes de estimar la región;
+        //  la consulta y su try/catch viven en AltitudMysql, sin PDO en Aplicación).
+        if ($altitud === null) {
+            $altitud = $this->altitudPorCultivo->altitudPorCoordenadas($latitud, $longitud);
         }
 
         // Estimar región e indicar temperatura adecuada
