@@ -32,7 +32,7 @@ html {
   --popover-foreground: 210 40% 98%;
 
   /* Primary Accent - Logo Purple */
-  --primary: 262 100% 62%;
+  --primary: 142 71% 45%;
   --primary-foreground: 355.7 100% 99%;
 
   /* Secondary Accent - Logo Blue */
@@ -48,7 +48,7 @@ html {
   --danger-foreground: 210 40% 98%;
 
   /* Logo Glow - Dark Theme (White/Light highlight) */
-  --logo-glow-1: rgba(134, 59, 255, 0.4);
+  --logo-glow-1: rgba(34, 197, 94, 0.4);
   --logo-glow-2: rgba(59, 130, 246, 0.2);
 
   /* Modal Styles - Dark Theme */
@@ -4168,7 +4168,7 @@ body.light-theme .dss-timeline-item {
 
 .dss-timeline-item.active {
   background: rgba(134, 59, 255, 0.08);
-  border-color: rgba(134, 59, 255, 0.4) !important;
+  border-color: rgba(34, 197, 94, 0.4) !important;
   box-shadow: 0 0 10px rgba(134, 59, 255, 0.1);
 }
 

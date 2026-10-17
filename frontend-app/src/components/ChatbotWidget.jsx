@@ -3,22 +3,28 @@ import { MessageCircle, X, Send, Bot, User, Loader2 } from 'lucide-react';
 import { chatService } from '../services/chatService';
 
 const CHIPS_POR_VISTA = {
-  yield: ['¿Qué significa mi ROI?', '¿Cómo mejoro el rendimiento?', '¿Cuál es el yield gap?'],
-  scenarios: ['¿Cuándo sembrar?', '¿Qué variedad elegir?', '¿Qué riesgo climático hay?'],
-  climate: ['¿Qué clima hace?', '¿Qué plaga afecta mi cultivo?', '¿Cuál es el ENSO?'],
-  finance: ['¿Cuál es mi margen?', '¿Cuánto gano por hectárea?', '¿Cuál es mi punto de equilibrio?'],
-  simular: ['¿Qué variables necesito?', '¿Qué modelo usar?', '¿Cómo interpretar el resultado?'],
-  cultivos: ['¿Dónde está mi parcela?', '¿Qué variedad usar?', '¿Cómo registrar un lote?'],
-  history: ['¿Qué simulaciones tengo?', '¿Cuál fue mi mejor rendimiento?'],
-  map: ['¿Dónde está mi parcela?', '¿Qué zona es mejor?'],
-  default: ['¿Qué significa mi ROI?', '¿Cómo mejoro el rendimiento?', '¿Qué clima hace?'],
+  yield: ['Qué significa mi ROI?', 'Cómo mejoro el rendimiento?', 'Cuál es el yield gap?'],
+  scenarios: ['Cuándo sembrar?', 'Qué variedad elegir?', 'Qué riesgo climático hay?'],
+  climate: ['Qué clima hace?', 'Qué plaga afecta mi cultivo?', 'Cuál es el ENSO?'],
+  finance: ['Cuál es mi margen?', 'Cuánto gano por hectárea?', 'Cuál es mi punto de equilibrio?'],
+  simular: ['Qué variables necesito?', 'Qué modelo usar?', 'Cómo interpretar el resultado?'],
+  cultivos: ['Dónde está mi parcela?', 'Qué variedad usar?', 'Cómo registrar un lote?'],
+  history: ['Qué simulaciones tengo?', 'Cuál fue mi mejor rendimiento?'],
+  map: ['Dónde está mi parcela?', 'Qué zona es mejor?'],
+  default: ['Qué significa mi ROI?', 'Cómo mejoro el rendimiento?', 'Qué clima hace?'],
 };
 
 const renderMarkdown = (text) => {
   if (!text) return '';
-  return text
+  // Sanitizar antes de renderizar para prevenir XSS
+  const sanitized = text
+    .replace(/</g, '<')
+    .replace(/>/g, '>')
+    .replace(/"/g, '"')
+    .replace(/'/g, "'")
     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
     .replace(/\n/g, '<br/>');
+  return sanitized;
 };
 
 const ChatbotWidget = ({ vistaActual }) => {
@@ -30,6 +36,13 @@ const ChatbotWidget = ({ vistaActual }) => {
   const inputRef = useRef(null);
 
   const chips = CHIPS_POR_VISTA[vistaActual] || CHIPS_POR_VISTA.default;
+
+  // Resetear estado del chat al cambiar de vista
+  useEffect(() => {
+    setMensajes([]);
+    setInput('');
+    setEscribiendo(false);
+  }, [vistaActual]);
 
   useEffect(() => {
     if (messagesEndRef.current) {
