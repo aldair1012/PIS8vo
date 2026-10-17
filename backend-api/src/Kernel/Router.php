@@ -42,11 +42,16 @@ final class Router
     public function despachar(Peticion $peticion): void
     {
         $ruta = $this->resolverRutaActual();
-        if (!isset($this->rutas[$ruta])) {
+        $definicion = $this->rutas[$ruta] ?? null;
+
+        if ($definicion === null) {
+            // Paridad exacta con el index.php legacy: la autenticación corría ANTES del
+            // switch, así que una ruta inexistente sin sesión devolvía 401 (el 404 del
+            // case default solo era alcanzable con la sesión ya abierta).
+            $this->middleware->procesar($ruta, ['publica' => false]);
             throw new RecursoNoEncontradoException("Ruta no encontrada: {$ruta}");
         }
 
-        $definicion = $this->rutas[$ruta];
         $this->middleware->procesar($ruta, $definicion);
 
         // Rutas con despacho por método HTTP (p. ej. api/cultivos) o de acción única.
