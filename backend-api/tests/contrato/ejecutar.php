@@ -465,13 +465,13 @@ if ($modo === 'comparar') {
         if (($pasoA['volatilidad'] ?? null) !== ($pasoB['volatilidad'] ?? null)) {
             $diferencias[] = "paso '{$pasoA['nombre']}': volatilidad cambió (antes " . ($pasoA['volatilidad'] ?? '?') . ', ahora ' . ($pasoB['volatilidad'] ?? '?') . ')';
         }
-        $modo = $pasoA['volatilidad']; // la de la referencia manda en la evaluación
-        if ($modo === 'estructural') {
+        $modoPaso = $pasoA['volatilidad']; // la de la referencia manda en la evaluación
+        if ($modoPaso === 'estructural') {
             $estructuraA = estructura($pasoA['cuerpo']);
             $estructuraB = estructura($pasoB['cuerpo']);
             comparar($estructuraA, $estructuraB, 'estructura', 'exacto', $tolerancia, $diferencias);
         } else {
-            comparar($pasoA['cuerpo'], $pasoB['cuerpo'], 'cuerpo', $modo, $tolerancia, $diferencias);
+            comparar($pasoA['cuerpo'], $pasoB['cuerpo'], 'cuerpo', $modoPaso, $tolerancia, $diferencias);
         }
 
         if ($diferencias === []) {

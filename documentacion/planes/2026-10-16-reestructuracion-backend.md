@@ -32,39 +32,9 @@ El script vive versionado en `backend-api/tests/contrato/ejecutar.php` (fuente �
 
 > Ajuste post-implementación (commits correctivos de F00): `normalizar()` colapsa claves externas en vivo (`soilgrids`, `open_meteo` → `<externo>`), neutraliza items aleatorios de "fecha de siembra" (mt_rand de YieldController → `<volatil>`) y salidas derivadas del motor ML (rendimiento_estimado, produccion_total, rendimiento_promedio, blobs `*_json` → `<externo:tipo>`). En modo tolerante los strings comparan esqueleto + números con ±25%; `estructura()` une integer/float en la familia "number" (json_encode emite 15.0 como 15). Endurecimiento final del gate: la volatilidad de la referencia manda y se diffea, captura validada (curl_error/5xx → exit 2), familias de tipo escalar comparadas, `--modo` obligatorio, huella corrupta → exit 2. El archivo versionado es la fuente de verdad final de la suite.
 
-- [ ] **Step 2: Crear `backend-api/tests/contrato/README.md`**
+- [ ] **Step 2: Crear `backend-api/tests/contrato/README.md` (hecho en F00)**
 
-```markdown
-# Suite de contrato ZeaSys
-
-Verifica que la reestructuración del backend no cambia ninguna respuesta del API.
-
-## Uso
-
-```
-C:\xampp\php\php.exe tests\contrato\ejecutar.php --modo=capturar
-C:\xampp\php\php.exe tests\contrato\ejecutar.php --modo=comparar
-```
-
-- `capturar` guarda la huella en `tests/contrato/snapshots/antes/contrato.json`.
-- `comparar` re-ejecuta el escenario y la compara (exit 0 = OK, 1 = diferencias, 2 = infraestructura).
-- Volatilidad por paso: `exacto` (comparación estricta), `tolerante` (±25% en números), `estructural` (solo forma/tipos; para APIs externas).
-- IDs, fechas, tokens y correos de prueba se normalizan automáticamente.
-
-## Requisitos
-Apache + MySQL de XAMPP corriendo. El motor IA se verifica y se arranca solo (auto_ia_server.bat).
-
-## Limpieza manual (opcional, si una corrida se interrumpe)
-
-```sql
-DELETE FROM usuarios WHERE correo LIKE 'contrato\_%@zeasys.local';
-```
-
-```powershell
-# Avatares residuales de las corridas de contrato (deleteAvatar no borra el archivo, igual que hoy)
-Remove-Item backend-api\public\uploads\avatars\avatar_*_*.png -ErrorAction SilentlyContinue
-```
-```
+El README vive versionado en `backend-api/tests/contrato/README.md` (fuente única de verdad: uso, volatilidad, reglas de normalización, límites conocidas y limpieza SEGURA). No se pega aquí para evitar desfases. Nota de seguridad: la limpieza de avatares residuales se hace por los ids de los usuarios `contrato_%` (consulta SQL primero, después borrado selectivo) — NUNCA con un wildcard global `avatar_*_*.png` (borraría avatares de usuarios reales).
 
 - [ ] **Step 3: Ejecutar la captura y verificar que funciona**
 
