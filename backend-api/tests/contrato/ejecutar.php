@@ -12,30 +12,57 @@
 
 const BASE_URL  = 'http://localhost/ZeaSys/backend-api/public/index.php';
 const IA_HEALTH = 'http://127.0.0.1:5000/health';
-const BAT_IA    = 'C:\\xampp\\htdocs\\ZeaSys\\auto_ia_server.bat';
+const BAT_IA    = __DIR__ . '/../../../auto_ia_server.bat';
 
-$opciones   = getopt('', ['modo::', 'destino::', 'tolerancia::']);
-$modo       = $opciones['modo'] ?? 'capturar';
-$dirBase    = __DIR__;
-$destino    = $opciones['destino'] ?? ($dirBase . '/snapshots/antes/contrato.json');
+// Temporales de la corrida (cookies, PNG): se borran siempre, incluso con exit().
+$temporalesSuite = [];
+register_shutdown_function(static function () use (&$temporalesSuite): void {
+    foreach ($temporalesSuite as $archivo) {
+        if (is_string($archivo) && is_file($archivo)) { @unlink($archivo); }
+    }
+});
+
+$opciones = getopt('', ['modo::', 'destino::', 'tolerancia::']);
+$modo     = $opciones['modo'] ?? null;
+if ($modo === null || !in_array($modo, ['capturar', 'comparar'], true)) {
+    fail('Uso: php tests/contrato/ejecutar.php --modo=capturar|comparar [--destino=snapshots/antes/contrato.json] [--tolerancia=25]');
+    exit(2);
+}
+
+$dirBase = __DIR__;
+$destino = $opciones['destino'] ?? ($dirBase . '/snapshots/antes/contrato.json');
 if (!preg_match('~^([A-Za-z]:)?[\\\\/]~', (string) $destino)) {
     $destino = $dirBase . '/' . $destino;
 }
-$tolerancia = (float) ($opciones['tolerancia'] ?? 25);
+
+$tolerancia = 25.0;
+if (array_key_exists('tolerancia', $opciones)) {
+    if (!is_numeric($opciones['tolerancia'])) {
+        fail('[X] --tolerancia debe ser numérica (recibido: ' . $opciones['tolerancia'] . ')');
+        exit(2);
+    }
+    $tolerancia = (float) $opciones['tolerancia'];
+}
 
 // ---------------------------------------------------------------- utilidades
 
 function say(string $texto): void { fwrite(STDOUT, $texto . PHP_EOL); }
 function fail(string $texto): void { fwrite(STDERR, $texto . PHP_EOL); }
 
-function asegurarFlask(): bool
+/** Un chequeo de salud del motor IA (true si responde 200). */
+function saludarMotor(): bool
 {
     $ch = curl_init(IA_HEALTH);
     curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 3, CURLOPT_CONNECTTIMEOUT => 2]);
     curl_exec($ch);
     $ok = curl_getinfo($ch, CURLINFO_HTTP_CODE) === 200;
     curl_close($ch);
-    if ($ok) { return true; }
+    return $ok;
+}
+
+function asegurarFlask(): bool
+{
+    if (saludarMotor()) { return true; }
 
     say('[*] Motor IA apagado; intentando arrancar con auto_ia_server.bat ...');
     if (PHP_OS_FAMILY === 'Windows' && file_exists(BAT_IA)) {
@@ -43,12 +70,7 @@ function asegurarFlask(): bool
     }
     for ($i = 0; $i < 25; $i++) {
         sleep(1);
-        $ch = curl_init(IA_HEALTH);
-        curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 3, CURLOPT_CONNECTTIMEOUT => 2]);
-        curl_exec($ch);
-        $ok = curl_getinfo($ch, CURLINFO_HTTP_CODE) === 200;
-        curl_close($ch);
-        if ($ok) { return true; }
+        if (saludarMotor()) { return true; }
     }
     return false;
 }
@@ -120,7 +142,7 @@ function estructura(mixed $valor, string $prefijo = ''): array
     if (is_array($valor)) {
         $esLista = array_is_list($valor);
         $salida  = [];
-        if ($esLista) { $salida[$prefijo . '/{count}'] = 'int:' . count($valor); }
+        if ($esLista) { $salida[$prefijo . '/{count}'] = 'number:' . count($valor); }
         foreach ($valor as $clave => $sub) {
             $hijo = $esLista ? $prefijo . '/*' : $prefijo . '/' . $clave;
             $salida = array_merge($salida, estructura($sub, $hijo));
@@ -130,11 +152,9 @@ function estructura(mixed $valor, string $prefijo = ''): array
     return [$prefijo => etiquetaTipo($valor)];
 }
 
+/** Compara recursivamente esperado vs obtenido. `estructural` nunca llega aquí (se compara con `estructura()` + exacto). */
 function comparar(mixed $esperado, mixed $obtenido, string $ruta, string $modo, float $tolerancia, array &$diferencias): void
 {
-    if ($modo === 'estructural') {
-        return; // se compara con estructura() antes de llamar aquí
-    }
     if (is_array($esperado) || is_array($obtenido)) {
         if (!is_array($esperado) || !is_array($obtenido)) {
             $diferencias[] = "$ruta: tipo distinto (esperado " . gettype($esperado) . ", obtenido " . gettype($obtenido) . ')';
@@ -153,6 +173,12 @@ function comparar(mixed $esperado, mixed $obtenido, string $ruta, string $modo, 
                 $diferencias[] = "$ruta/$clave: CLAVE NUEVA no presente antes";
             }
         }
+        return;
+    }
+    $familiaA = etiquetaTipo($esperado);
+    $familiaB = etiquetaTipo($obtenido);
+    if ($familiaA !== $familiaB) {
+        $diferencias[] = "$ruta: tipo distinto (antes $familiaA, ahora $familiaB)";
         return;
     }
     if (is_float($esperado) || is_float($obtenido) || (is_int($esperado) && is_int($obtenido))) {
@@ -217,17 +243,7 @@ final class ClienteHttp
         if ($cuerpo !== null) {
             curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($cuerpo, JSON_UNESCAPED_UNICODE));
         }
-        $respuesta = curl_exec($ch);
-        $codigo    = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        $errorCurl = curl_error($ch);
-        curl_close($ch);
-
-        $json = is_string($respuesta) ? json_decode($respuesta, true) : null;
-        return [
-            'http'  => $codigo,
-            'cuerpo' => $json !== null ? $json : (is_string($respuesta) ? $respuesta : ''),
-            'curl_error' => $errorCurl ?: null,
-        ];
+        return $this->capturarRespuesta($ch);
     }
 
     /** Subida multipart (para /api/auth/upload-avatar, que lee $_FILES['foto']). */
@@ -242,6 +258,12 @@ final class ClienteHttp
             CURLOPT_TIMEOUT        => 120,
             CURLOPT_POSTFIELDS     => $campos,
         ]);
+        return $this->capturarRespuesta($ch);
+    }
+
+    /** Ejecuta el handle y normaliza la respuesta a http/cuerpo/curl_error. */
+    private function capturarRespuesta(\CurlHandle $ch): array
+    {
         $respuesta = curl_exec($ch);
         $codigo    = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
         $errorCurl = curl_error($ch);
@@ -258,9 +280,10 @@ final class ClienteHttp
 
 // ---------------------------------------------------------------- escenario
 
-function ejecutarEscenario(): array
+function ejecutarEscenario(string $modo, array &$temporales): array
 {
     $cookieJar = sys_get_temp_dir() . '/zeasys_contrato_cookies_' . uniqid() . '.txt';
+    $temporales[] = $cookieJar;
     $cliente   = new ClienteHttp($cookieJar);
     $email     = 'contrato_' . time() . '@zeasys.local';
     $password  = 'Contrato123!';
@@ -269,9 +292,10 @@ function ejecutarEscenario(): array
 
     // PNG 1x1 válido para la prueba de subida de avatar
     $tmpPng = sys_get_temp_dir() . '/zeasys_contrato_avatar_' . uniqid() . '.png';
+    $temporales[] = $tmpPng;
     file_put_contents($tmpPng, base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=='));
 
-    $registrar = function (string $nombre, string $metodo, string $ruta, ?array $cuerpo, string $volatilidad, bool $multipart = false) use (&$pasos, $cliente): array {
+    $registrar = function (string $nombre, string $metodo, string $ruta, ?array $cuerpo, string $volatilidad, bool $multipart = false) use (&$pasos, $cliente, $modo): array {
         $r = $multipart
             ? $cliente->solicitarMultipart($ruta, $cuerpo ?? [])
             : $cliente->solicitar($metodo, $ruta, $cuerpo);
@@ -283,6 +307,19 @@ function ejecutarEscenario(): array
             'http'        => $r['http'],
             'cuerpo'      => normalizar($r['cuerpo']),
         ];
+        if ($modo === 'capturar') {
+            if ($r['curl_error'] !== null) {
+                fail("Paso '$nombre': error de curl: {$r['curl_error']}");
+                exit(2);
+            }
+            if ($r['http'] >= 500) {
+                fail("Paso '$nombre': HTTP {$r['http']} — estado del servidor, la huella quedaría envenenada");
+                exit(2);
+            }
+            if ($r['http'] >= 400) {
+                say("[!] Paso '$nombre': HTTP {$r['http']} — advertencia: se captura igual (puede ser un 4xx esperado del contrato)");
+            }
+        }
         if ($r['curl_error'] !== null) {
             fail("    curl_error en [$nombre]: {$r['curl_error']}");
         }
@@ -361,8 +398,6 @@ function ejecutarEscenario(): array
     $registrar('eliminar cuenta', 'POST', '/api/auth/delete', null, 'exacto');
     $registrar('me tras eliminar cuenta', 'GET', '/api/auth/me', null, 'exacto');
 
-    @unlink($cookieJar);
-    @unlink($tmpPng);
     return $pasos;
 }
 
@@ -375,17 +410,25 @@ if (!asegurarFlask()) {
     exit(2);
 }
 
-$pasosNuevos = ejecutarEscenario();
+$pasosNuevos = ejecutarEscenario($modo, $temporalesSuite);
 say('[*] Pasos ejecutados: ' . count($pasosNuevos));
 
 if ($modo === 'capturar') {
-    if (!is_dir(dirname($destino))) { mkdir(dirname($destino), 0777, true); }
-    file_put_contents($destino, json_encode([
+    $dirHuella = dirname($destino);
+    if (!is_dir($dirHuella) && !mkdir($dirHuella, 0777, true)) {
+        fail('[X] No se pudo crear el directorio de la huella: ' . $dirHuella);
+        exit(2);
+    }
+    $jsonHuella = json_encode([
         'fecha_captura' => date('c'),
         'base_url'      => BASE_URL,
         'tolerancia'    => $tolerancia,
         'pasos'         => $pasosNuevos,
-    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    if ($jsonHuella === false || file_put_contents($destino, $jsonHuella) === false) {
+        fail('[X] No se pudo escribir la huella en: ' . $destino);
+        exit(2);
+    }
     say('[OK] Huella capturada en: ' . $destino);
     exit(0);
 }
@@ -395,9 +438,16 @@ if ($modo === 'comparar') {
         fail('[X] No existe la huella de referencia: ' . $destino);
         exit(2);
     }
-    $referencia = json_decode(file_get_contents($destino), true);
-    $pasosA      = $referencia['pasos'] ?? [];
-    $total       = 0;
+    $referencia = json_decode((string) file_get_contents($destino), true);
+    if (!is_array($referencia) || !is_array($referencia['pasos'] ?? null)) {
+        fail('[X] Huella de referencia ilegible/corrupta: ' . $destino);
+        exit(2);
+    }
+    if (isset($referencia['tolerancia']) && (float) $referencia['tolerancia'] !== $tolerancia) {
+        fail('[!] Tolerancia distinta a la de la referencia: antes ' . $referencia['tolerancia'] . ', ahora ' . $tolerancia);
+    }
+    $pasosA = $referencia['pasos'];
+    $total  = 0;
 
     foreach ($pasosNuevos as $i => $pasoB) {
         $pasoA = $pasosA[$i] ?? null;
@@ -412,12 +462,16 @@ if ($modo === 'comparar') {
         if ($pasoA['http'] !== $pasoB['http']) {
             $diferencias[] = "HTTP: antes {$pasoA['http']}, ahora {$pasoB['http']}";
         }
-        if ($pasoB['volatilidad'] === 'estructural') {
+        if (($pasoA['volatilidad'] ?? null) !== ($pasoB['volatilidad'] ?? null)) {
+            $diferencias[] = "paso '{$pasoA['nombre']}': volatilidad cambió (antes " . ($pasoA['volatilidad'] ?? '?') . ', ahora ' . ($pasoB['volatilidad'] ?? '?') . ')';
+        }
+        $modo = $pasoA['volatilidad']; // la de la referencia manda en la evaluación
+        if ($modo === 'estructural') {
             $estructuraA = estructura($pasoA['cuerpo']);
             $estructuraB = estructura($pasoB['cuerpo']);
             comparar($estructuraA, $estructuraB, 'estructura', 'exacto', $tolerancia, $diferencias);
         } else {
-            comparar($pasoA['cuerpo'], $pasoB['cuerpo'], 'cuerpo', $pasoB['volatilidad'], $tolerancia, $diferencias);
+            comparar($pasoA['cuerpo'], $pasoB['cuerpo'], 'cuerpo', $modo, $tolerancia, $diferencias);
         }
 
         if ($diferencias === []) {
@@ -438,6 +492,3 @@ if ($modo === 'comparar') {
     fail("== CONTRATO FALLIDO: $total diferencias ==");
     exit(1);
 }
-
-fail('Modo no reconocido: ' . $modo);
-exit(2);
