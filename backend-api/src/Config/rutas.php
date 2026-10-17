@@ -3,17 +3,17 @@
 // F01: controladores legacy (id = nombre de clase global). F02–F05 los reemplazan dominio a dominio.
 
 return [
-    // --- Autenticación ---
-    'api/auth/login'               => ['controlador' => 'AuthController', 'accion' => 'login', 'publica' => true, 'sesion' => true],
-    'api/auth/register'            => ['controlador' => 'AuthController', 'accion' => 'registro', 'publica' => true, 'sesion' => true],
-    'api/auth/google-login'        => ['controlador' => 'AuthController', 'accion' => 'googleLogin', 'publica' => true, 'sesion' => true],
-    'api/auth/me'                  => ['controlador' => 'AuthController', 'accion' => 'me', 'publica' => true],
-    'api/auth/logout'              => ['controlador' => 'AuthController', 'accion' => 'logout', 'sesion' => true],
-    'api/auth/update'              => ['controlador' => 'AuthController', 'accion' => 'update', 'sesion' => true],
-    'api/auth/upload-avatar'       => ['controlador' => 'AuthController', 'accion' => 'uploadAvatar', 'sesion' => true],
-    'api/auth/delete-avatar'       => ['controlador' => 'AuthController', 'accion' => 'deleteAvatar', 'sesion' => true],
-    'api/auth/sync-google-avatar'  => ['controlador' => 'AuthController', 'accion' => 'syncGoogleAvatar'],
-    'api/auth/delete'              => ['controlador' => 'AuthController', 'accion' => 'eliminar', 'sesion' => true],
+    // --- Autenticación (F02: dominio ZeaSys\Dominios\Autenticacion) ---
+    'api/auth/login'               => ['controlador' => \ZeaSys\Dominios\Autenticacion\Http\AuthController::class, 'accion' => 'login', 'publica' => true, 'sesion' => true],
+    'api/auth/register'            => ['controlador' => \ZeaSys\Dominios\Autenticacion\Http\AuthController::class, 'accion' => 'registro', 'publica' => true, 'sesion' => true],
+    'api/auth/google-login'        => ['controlador' => \ZeaSys\Dominios\Autenticacion\Http\AuthController::class, 'accion' => 'googleLogin', 'publica' => true, 'sesion' => true],
+    'api/auth/me'                  => ['controlador' => \ZeaSys\Dominios\Autenticacion\Http\AuthController::class, 'accion' => 'me', 'publica' => true],
+    'api/auth/logout'              => ['controlador' => \ZeaSys\Dominios\Autenticacion\Http\AuthController::class, 'accion' => 'logout', 'sesion' => true],
+    'api/auth/update'              => ['controlador' => \ZeaSys\Dominios\Autenticacion\Http\AuthController::class, 'accion' => 'update', 'sesion' => true],
+    'api/auth/upload-avatar'       => ['controlador' => \ZeaSys\Dominios\Autenticacion\Http\AuthController::class, 'accion' => 'uploadAvatar', 'sesion' => true],
+    'api/auth/delete-avatar'       => ['controlador' => \ZeaSys\Dominios\Autenticacion\Http\AuthController::class, 'accion' => 'deleteAvatar', 'sesion' => true],
+    'api/auth/sync-google-avatar'  => ['controlador' => \ZeaSys\Dominios\Autenticacion\Http\AuthController::class, 'accion' => 'syncGoogleAvatar'],
+    'api/auth/delete'              => ['controlador' => \ZeaSys\Dominios\Autenticacion\Http\AuthController::class, 'accion' => 'eliminar', 'sesion' => true],
 
     // --- Cultivos / Parcelas ---
     'api/cultivos'                 => ['controlador' => 'CultivoController', 'acciones' => ['GET' => 'listar', 'POST' => 'crear', 'PUT' => 'actualizar', 'DELETE' => 'eliminar']],

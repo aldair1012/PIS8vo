@@ -7,8 +7,47 @@ use ZeaSys\Kernel\Container;
 return static function (): Container {
     $contenedor = new Container();
 
+    require_once __DIR__ . '/google.php';
+
+    $contenedor->registrar(
+        \ZeaSys\Dominios\Autenticacion\Dominio\UsuarioRepositoryInterface::class,
+        static fn (): \ZeaSys\Dominios\Autenticacion\Infraestructura\UsuarioRepositoryMysql =>
+            new \ZeaSys\Dominios\Autenticacion\Infraestructura\UsuarioRepositoryMysql(getConnection())
+    );
+    $contenedor->registrar(
+        \ZeaSys\Dominios\Autenticacion\Dominio\VerificadorTokenGoogleInterface::class,
+        static fn (): \ZeaSys\Dominios\Autenticacion\Infraestructura\VerificadorTokenGoogle =>
+            new \ZeaSys\Dominios\Autenticacion\Infraestructura\VerificadorTokenGoogle()
+    );
+    $contenedor->registrar(
+        \ZeaSys\Dominios\Autenticacion\Dominio\AlmacenAvatarInterface::class,
+        static fn (): \ZeaSys\Dominios\Autenticacion\Infraestructura\AlmacenAvatarArchivos =>
+            new \ZeaSys\Dominios\Autenticacion\Infraestructura\AlmacenAvatarArchivos()
+    );
+    $contenedor->registrar(
+        \ZeaSys\Dominios\Autenticacion\Dominio\GestorSesionInterface::class,
+        static fn (): \ZeaSys\Dominios\Autenticacion\Infraestructura\GestorSesion =>
+            new \ZeaSys\Dominios\Autenticacion\Infraestructura\GestorSesion()
+    );
+    $contenedor->registrar(
+        \ZeaSys\Dominios\Autenticacion\Aplicacion\AutenticacionService::class,
+        static fn (Container $c): \ZeaSys\Dominios\Autenticacion\Aplicacion\AutenticacionService =>
+            new \ZeaSys\Dominios\Autenticacion\Aplicacion\AutenticacionService(
+                $c->get(\ZeaSys\Dominios\Autenticacion\Dominio\UsuarioRepositoryInterface::class),
+                $c->get(\ZeaSys\Dominios\Autenticacion\Dominio\VerificadorTokenGoogleInterface::class),
+                $c->get(\ZeaSys\Dominios\Autenticacion\Dominio\AlmacenAvatarInterface::class),
+                $c->get(\ZeaSys\Dominios\Autenticacion\Dominio\GestorSesionInterface::class),
+            )
+    );
+    $contenedor->registrar(
+        \ZeaSys\Dominios\Autenticacion\Http\AuthController::class,
+        static fn (Container $c): \ZeaSys\Dominios\Autenticacion\Http\AuthController =>
+            new \ZeaSys\Dominios\Autenticacion\Http\AuthController(
+                $c->get(\ZeaSys\Dominios\Autenticacion\Aplicacion\AutenticacionService::class)
+            )
+    );
+
     $legacy = [
-        'AuthController',
         'CultivoController',
         'SimulacionController',
         'ScenarioController',

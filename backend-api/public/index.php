@@ -36,7 +36,7 @@ error_reporting(E_ALL);
 ini_set('display_errors', '1');
 
 // F01: controladores legacy (globales, sin namespace). Se eliminan fase a fase (F02–F05) y en F06 no queda ninguno.
-require_once __DIR__ . '/../controllers/AuthController.php';
+// F02: la autenticación ahora se enruta al dominio nuevo (src/Config/rutas.php, Fase F02 del plan).
 require_once __DIR__ . '/../controllers/CultivoController.php';
 require_once __DIR__ . '/../controllers/SimulacionController.php';
 require_once __DIR__ . '/../controllers/ScenarioController.php';
