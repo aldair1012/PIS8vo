@@ -27,7 +27,7 @@ Apache + MySQL de XAMPP corriendo. El motor IA se verifica y se arranca solo (au
 ```powershell
 # 1) Borra SOLO los avatares de usuarios de contrato (los avatares reales NO se tocan).
 #    Ejecutar ANTES del DELETE de usuarios: necesita que aún existan en la DB (si no, no encontrará ids).
-#    Los archivos se nombran avatar_<usuarioId>_<timestamp>.png (ver AuthController).
+#    Los archivos se nombran avatar_<usuarioId>_<timestamp>.png (ver src/Dominios/Autenticacion/Infraestructura/AlmacenAvatarArchivos.php).
 $ids = & C:\xampp\mysql\bin\mysql.exe -u root -N -e "SELECT id FROM agropredict_db.usuarios WHERE correo LIKE 'contrato\_%@zeasys.local';"
 foreach ($id in $ids) { Remove-Item "backend-api\public\uploads\avatars\avatar_${id}_*.png" -ErrorAction SilentlyContinue }
 ```
