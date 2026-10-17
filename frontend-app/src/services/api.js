@@ -5,9 +5,8 @@ const getApiBaseUrl = () => {
     return import.meta.env.VITE_API_BASE_URL.replace(/\/$/, '');
   }
 
-  const isViteDevServer = window.location.port === '5173' || window.location.port === '5174' || window.location.port === '3000';
-  if (isViteDevServer) {
-    return 'http://localhost/ZeaSys/backend-api/public/index.php';
+  if (import.meta.env.DEV) {
+    return `${window.location.protocol}//${window.location.hostname}/ZeaSys/backend-api/public/index.php`;
   }
 
   const basePath = window.location.pathname.includes('/ZeaSys') ? '/ZeaSys' : (window.location.pathname.includes('/AgroPredict') ? '/AgroPredict' : '');

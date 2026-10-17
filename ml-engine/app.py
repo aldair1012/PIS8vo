@@ -52,11 +52,18 @@ def predict_route():
             if campo not in data:
                 return jsonify({"error": f"Campo requerido faltante: {campo}"}), 400
 
+        modelo_nombre = data.get("modelo", "xgboost")
+        if not isinstance(modelo_nombre, str) or modelo_nombre.lower() not in predictor.MODELOS_DISPONIBLES:
+            return jsonify({
+                "error": "Modelo no disponible",
+                "modelos_disponibles": predictor.MODELOS_DISPONIBLES
+            }), 400
+        data["modelo"] = modelo_nombre.lower()
+
         # 1) Construir features
         df_features, metadata = feature_builder.build_features(data)
 
         # 2) Predecir
-        modelo_nombre = data.get("modelo", "xgboost").lower()
         area = float(data["area"])
         resultado = predictor.predict(df_features, modelo_nombre, area)
 

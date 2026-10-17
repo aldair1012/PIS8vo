@@ -32,7 +32,7 @@ rf_explainer = shap.TreeExplainer(rf_model)
 xgb_explainer = shap.TreeExplainer(xgb_model)
 
 # Lista de modelos disponibles (para el endpoint /health)
-MODELOS_DISPONIBLES = ["random_forest", "xgboost", "random_forest_clf", "xgboost_clf"]
+MODELOS_DISPONIBLES = ["random_forest", "xgboost"]
 
 
 def predict(df_features, modelo_nombre="xgboost", area=1.0):
@@ -44,13 +44,15 @@ def predict(df_features, modelo_nombre="xgboost", area=1.0):
     df_encoded = df_features.copy()
     df_encoded[CATEGORICAL_COLS] = label_encoder.transform(df_encoded[CATEGORICAL_COLS].astype(str))
 
+    if modelo_nombre not in MODELOS_DISPONIBLES:
+        raise ValueError(f"Modelo no disponible: {modelo_nombre}")
+
     # Elegir modelo según lo que pidió el usuario
     if modelo_nombre == "random_forest":
         reg_model = rf_model
         clf_model = rf_clf_model
         explainer = rf_explainer
     else:
-        modelo_nombre = "xgboost"
         reg_model = xgb_model
         clf_model = xgb_clf_model
         explainer = xgb_explainer

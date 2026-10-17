@@ -15,16 +15,17 @@ const CHIPS_POR_VISTA = {
 };
 
 const renderMarkdown = (text) => {
-  if (!text) return '';
-  // Sanitizar antes de renderizar para prevenir XSS
-  const sanitized = text
-    .replace(/</g, '<')
-    .replace(/>/g, '>')
-    .replace(/"/g, '"')
-    .replace(/'/g, "'")
-    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-    .replace(/\n/g, '<br/>');
-  return sanitized;
+  const lines = String(text ?? '').split('\n');
+  return lines.map((line, lineIndex) => (
+    <React.Fragment key={lineIndex}>
+      {line.split(/(\*\*[^*]+\*\*)/g).map((segment, segmentIndex) => (
+        segment.startsWith('**') && segment.endsWith('**')
+          ? <strong key={segmentIndex}>{segment.slice(2, -2)}</strong>
+          : segment
+      ))}
+      {lineIndex < lines.length - 1 && <br />}
+    </React.Fragment>
+  ));
 };
 
 const ChatbotWidget = ({ vistaActual }) => {
@@ -36,13 +37,6 @@ const ChatbotWidget = ({ vistaActual }) => {
   const inputRef = useRef(null);
 
   const chips = CHIPS_POR_VISTA[vistaActual] || CHIPS_POR_VISTA.default;
-
-  // Resetear estado del chat al cambiar de vista
-  useEffect(() => {
-    setMensajes([]);
-    setInput('');
-    setEscribiendo(false);
-  }, [vistaActual]);
 
   useEffect(() => {
     if (messagesEndRef.current) {
@@ -59,7 +53,7 @@ const ChatbotWidget = ({ vistaActual }) => {
   const enviarPregunta = async (pregunta) => {
     if (!pregunta.trim() || escribiendo) return;
 
-    const nuevoMsg = { rol: 'usuario', texto: pregunta, ts: Date.now() };
+    const nuevoMsg = { rol: 'usuario', texto: pregunta };
     setMensajes(prev => [...prev, nuevoMsg]);
     setInput('');
     setEscribiendo(true);
@@ -73,13 +67,11 @@ const ChatbotWidget = ({ vistaActual }) => {
         texto: data.texto || 'No pude generar una respuesta.',
         secciones: data.secciones || [],
         accion: data.accion,
-        ts: Date.now(),
       }]);
-    } catch (err) {
+    } catch {
       setMensajes(prev => [...prev, {
         rol: 'asistente',
         texto: 'Ocurrió un error al procesar tu pregunta. Intenta de nuevo.',
-        ts: Date.now(),
       }]);
     } finally {
       setEscribiendo(false);
@@ -102,6 +94,9 @@ const ChatbotWidget = ({ vistaActual }) => {
       {/* Botón flotante */}
       <button
         onClick={() => setAbierto(!abierto)}
+          type="button"
+          aria-expanded={abierto}
+          aria-controls="zeasys-chat-panel"
         style={{
           position: 'fixed',
           bottom: '1.5rem',
@@ -131,6 +126,9 @@ const ChatbotWidget = ({ vistaActual }) => {
       {/* Panel de chat */}
       {abierto && (
         <div
+          id="zeasys-chat-panel"
+          role="region"
+          aria-label="Asistente ZeaSys"
           style={{
             position: 'fixed',
             bottom: '5.5rem',
@@ -165,6 +163,8 @@ const ChatbotWidget = ({ vistaActual }) => {
             </div>
             <button
               onClick={limpiarChat}
+                            type="button"
+                            aria-label="Limpiar conversación"
               style={{
                 background: 'rgba(255,255,255,0.2)',
                 border: 'none',
@@ -187,7 +187,7 @@ const ChatbotWidget = ({ vistaActual }) => {
             display: 'flex',
             flexDirection: 'column',
             gap: '0.75rem',
-          }}>
+          }} role="log" aria-label="Mensajes del asistente" aria-live="polite">
             {mensajes.length === 0 && (
               <div style={{ textAlign: 'center', color: 'var(--text-muted, #94a3b8)', padding: '2rem 1rem', fontSize: '0.85rem' }}>
                 <Bot size={40} style={{ margin: '0 auto 0.75rem', opacity: 0.5 }} />
@@ -281,6 +281,7 @@ const ChatbotWidget = ({ vistaActual }) => {
             }}>
               {chips.map((chip, idx) => (
                 <button
+                  type="button"
                   key={idx}
                   onClick={() => enviarPregunta(chip)}
                   disabled={escribiendo}
@@ -311,6 +312,7 @@ const ChatbotWidget = ({ vistaActual }) => {
             flexShrink: 0,
           }}>
             <input
+              aria-label="Escribe tu pregunta al asistente"
               ref={inputRef}
               type="text"
               value={input}
@@ -331,6 +333,8 @@ const ChatbotWidget = ({ vistaActual }) => {
             />
             <button
               onClick={() => enviarPregunta(input)}
+                            type="button"
+                            aria-label={escribiendo ? 'Enviando pregunta' : 'Enviar pregunta'}
               disabled={escribiendo || !input.trim()}
               style={{
                 width: '40px',
