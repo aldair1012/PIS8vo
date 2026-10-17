@@ -1,5 +1,5 @@
 {
-    "fecha_captura": "2026-10-17T06:23:38+02:00",
+    "fecha_captura": "2026-10-17T19:20:26+02:00",
     "base_url": "http://localhost/ZeaSys/backend-api/public/index.php",
     "tolerancia": 25,
     "pasos": [
@@ -619,15 +619,15 @@
         {
             "nombre": "valores ubicacion (externo)",
             "metodo": "GET",
-            "ruta": "/api/cultivos/valores-ubicacion?id=93",
+            "ruta": "/api/cultivos/valores-ubicacion?id=163",
             "volatilidad": "estructural",
             "http": 200,
             "cuerpo": {
                 "success": true,
-                "source": "Open-Meteo Archive API (Promedio 30 dias) (Caché local de la parcela)",
+                "source": "SoilGrids API (Tiempo real) (Caché local de la parcela)",
                 "temperatura": 13.1,
-                "humedad": 78.5,
-                "precipitacion": 2700,
+                "humedad": 78.7,
+                "precipitacion": 2827.2,
                 "ph_suelo": 6.2,
                 "tipo_suelo": "franco",
                 "area_simulada": 2.5
@@ -648,16 +648,16 @@
                     "confianza": 67,
                     "escenarios": {
                         "lluvioso": {
-                            "produccion": 10.56,
-                            "rendimiento": 4.22
+                            "produccion": 10.37,
+                            "rendimiento": 4.15
                         },
                         "sequia": {
-                            "produccion": 9.05,
-                            "rendimiento": 3.62
+                            "produccion": 8.83,
+                            "rendimiento": 3.53
                         },
                         "verano": {
-                            "produccion": 10.35,
-                            "rendimiento": 4.14
+                            "produccion": 10.28,
+                            "rendimiento": 4.11
                         }
                     },
                     "metricas_modelo": {
@@ -753,12 +753,12 @@
                     "rendimiento_estimado": "<externo:double>",
                     "shap_values": {
                         "area": 0,
-                        "fertilizante": 0.0697,
-                        "humedad": -0.0062,
-                        "phSuelo": 0.1573,
-                        "precipitacion": 0.0413,
-                        "temperatura": 0.1255,
-                        "tipoSuelo": 0.0127
+                        "fertilizante": 0.0625,
+                        "humedad": -0.0009,
+                        "phSuelo": 0.1563,
+                        "precipitacion": 0.0356,
+                        "temperatura": 0.1295,
+                        "tipoSuelo": 0.0089
                     },
                     "success": true,
                     "simulacion_id": "<volatil>"
@@ -819,29 +819,24 @@
                 "nivel_del_resultado": "riesgoso",
                 "secciones": [
                     {
-                        "titulo": "1. ¿Cuál es la limitante principal de tu lote?",
-                        "tipo": "danger",
-                        "contenido": "En tu parcela Lote Contrato, el factor que más frena tu cosecha es **Nitrógeno** (150 kg/ha aplicados vs 180 kg/ha recomendados). Te resta **-0.47 t/ha** del rendimiento potencial de 11.2 t/ha."
-                    },
-                    {
-                        "titulo": "2. ¿Cuánto dinero pierdes por esta limitante?",
-                        "tipo": "warning",
-                        "contenido": "Esa pérdida de -0.47 t/ha equivale a dejar de ingresar **-170.61 USD por hectárea** (al precio de $16.50 USD/qq, con 22 quintales por tonelada)."
-                    },
-                    {
-                        "titulo": "3. ¿Qué puedes hacer para reducir esta brecha?",
-                        "tipo": "success",
-                        "contenido": "Enfoca tu inversión en corregir Nitrógeno antes de agregar otros insumos, ya que es el cuello de botella que más impacto tiene en tu rendimiento."
-                    },
-                    {
-                        "titulo": "4. Seguimiento recomendado",
+                        "titulo": "1. Que significa?",
                         "tipo": "info",
-                        "contenido": "Después de aplicar la corrección, vuelve a correr la simulación para verificar que la brecha se redujo y que tu cosecha estimada subió."
+                        "contenido": "El indicador Cascada de Brechas de Rendimiento registra 4.2 t/ha en Quito (2.5 ha, Pioneer P4039). indicador de desempeno del sistema."
+                    },
+                    {
+                        "titulo": "2. Por que importa?",
+                        "tipo": "warning",
+                        "contenido": "Importa porque afecta directamente el rendimiento final. El factor limitante principal es Nitrógeno (0.47 t/ha, ~170.61 USD/ha)."
+                    },
+                    {
+                        "titulo": "3. Que hacer?",
+                        "tipo": "success",
+                        "contenido": "Accion: optimiza Nitrógeno y re-simula el escenario. Cierre: monitorea el indicador y ajusta antes de la siguiente etapa fenologica."
                     }
                 ],
-                "que_significa": "En tu parcela Lote Contrato, el factor que más frena tu cosecha es **Nitrógeno** (150 kg/ha aplicados vs 180 kg/ha recomendados). Te resta **-0.47 t/ha** del rendimiento potencial de 11.2 t/ha.",
-                "por_que_pudo_pasar": "Esa pérdida de -0.47 t/ha equivale a dejar de ingresar **-170.61 USD por hectárea** (al precio de $16.50 USD/qq, con 22 quintales por tonelada).",
-                "como_mejorarlo": "Enfoca tu inversión en corregir Nitrógeno antes de agregar otros insumos, ya que es el cuello de botella que más impacto tiene en tu rendimiento.",
+                "que_significa": "El indicador Cascada de Brechas de Rendimiento registra 4.2 t/ha en Quito (2.5 ha, Pioneer P4039). indicador de desempeno del sistema.",
+                "por_que_pudo_pasar": "Importa porque afecta directamente el rendimiento final. El factor limitante principal es Nitrógeno (0.47 t/ha, ~170.61 USD/ha).",
+                "como_mejorarlo": "Accion: optimiza Nitrógeno y re-simula el escenario. Cierre: monitorea el indicador y ajusta antes de la siguiente etapa fenologica.",
                 "alerta_clave": "Revisar recomendaciones.",
                 "source": "Intérprete Agrícola ZeaSys",
                 "offline": true
@@ -859,24 +854,24 @@
                 "nivel_del_resultado": "favorable",
                 "secciones": [
                     {
-                        "titulo": "1. ¿Qué significa un ROI de 35 %?",
+                        "titulo": "1. Inversion y retorno",
                         "tipo": "info",
-                        "contenido": "Un Retorno de Inversión de **35 %** significa que por cada dólar que inviertes en tu lote Lote Contrato, recuperas ese dólar más **0.35 USD** de ganancia. Es una rentabilidad atractiva."
+                        "contenido": "Tu indicador ROI Anual registra 35 % para 2.5 ha en Quito con la variedad Pioneer P4039: rendimiento 4.18 t/ha e ingreso bruto estimado de 3793.35 USD a 16.50 USD/qq."
                     },
                     {
-                        "titulo": "2. ¿Tu inversión en maíz es rentable?",
-                        "tipo": "success",
-                        "contenido": "Sí. Con un rendimiento de 4.24 t/ha y el precio actual del maíz, tu inversión genera más ganancia que dejar el dinero en el banco."
+                        "titulo": "2. Escenarios",
+                        "tipo": "info",
+                        "contenido": "Escenarios: base 4.18 t/ha (3793.35 USD); optimista 4.81 t/ha (4365.08 USD); pesimista 3.55 t/ha (3221.63 USD)."
                     },
                     {
-                        "titulo": "3. ¿Cómo mejorar la rentabilidad?",
+                        "titulo": "3. Riesgo financiero",
                         "tipo": "success",
-                        "contenido": "Reduce costos fraccionando la compra de insumos y negocia el precio de venta anticipadamente para asegurar un ingreso mínimo."
+                        "contenido": "Riesgo financiero: el factor que mas afecta es Nitrógeno (0.47 t/ha, ~170.61 USD/ha). Recomendacion: reduce costos variables, asegura precio minimo antes de la siembra y protege el margen con cobertura de insumos. Cierre: valida el flujo de caja mensual y el punto de equilibrio antes de sembrar."
                     }
                 ],
-                "que_significa": "Un Retorno de Inversión de **35 %** significa que por cada dólar que inviertes en tu lote Lote Contrato, recuperas ese dólar más **0.35 USD** de ganancia. Es una rentabilidad atractiva.",
-                "por_que_pudo_pasar": "Sí. Con un rendimiento de 4.24 t/ha y el precio actual del maíz, tu inversión genera más ganancia que dejar el dinero en el banco.",
-                "como_mejorarlo": "Reduce costos fraccionando la compra de insumos y negocia el precio de venta anticipadamente para asegurar un ingreso mínimo.",
+                "que_significa": "Tu indicador ROI Anual registra 35 % para 2.5 ha en Quito con la variedad Pioneer P4039: rendimiento 4.18 t/ha e ingreso bruto estimado de 3793.35 USD a 16.50 USD/qq.",
+                "por_que_pudo_pasar": "Escenarios: base 4.18 t/ha (3793.35 USD); optimista 4.81 t/ha (4365.08 USD); pesimista 3.55 t/ha (3221.63 USD).",
+                "como_mejorarlo": "Riesgo financiero: el factor que mas afecta es Nitrógeno (0.47 t/ha, ~170.61 USD/ha). Recomendacion: reduce costos variables, asegura precio minimo antes de la siembra y protege el margen con cobertura de insumos. Cierre: valida el flujo de caja mensual y el punto de equilibrio antes de sembrar.",
                 "alerta_clave": "Revisar recomendaciones.",
                 "source": "Intérprete Agrícola ZeaSys",
                 "offline": true
@@ -894,24 +889,24 @@
                 "nivel_del_resultado": "favorable",
                 "secciones": [
                     {
-                        "titulo": "1. ¿Qué significa una Probabilidad de Cosecha del 82%?",
+                        "titulo": "1. Definicion y valor",
                         "tipo": "info",
-                        "contenido": "Hay un **82%** de certeza estadística de que tu cultivo Pioneer P4039 alcanzará las **4.24 t/ha** estimadas sin sufrir un colapso por sequía, plagas o heladas durante el ciclo."
+                        "contenido": "En la parcela Lote Contrato, Probabilidad de Cosecha = 82%; indicador de desempeno del sistema. Condiciones: 24.5 °C, 800 mm, pH 6.2."
                     },
                     {
-                        "titulo": "2. ¿Es buena esta probabilidad?",
+                        "titulo": "2. Impacto en el cultivo",
                         "tipo": "success",
-                        "contenido": "Sí. Una confianza por encima del 80% indica que las condiciones de Quito son estables y tu plan de manejo es sólido."
+                        "contenido": "Impacto: afecta directamente el rendimiento final. Principal cuello de botella: Nitrógeno con 0.47 t/ha de perdida (~170.61 USD/ha)."
                     },
                     {
-                        "titulo": "3. ¿Cómo mantener alta esta probabilidad?",
+                        "titulo": "3. Accion recomendada",
                         "tipo": "success",
-                        "contenido": "Mantén el monitoreo de plagas, asegura riegos oportunos y evita sembrar fuera de la ventana óptima para Quito."
+                        "contenido": "Siguiente paso: optimiza Nitrógeno y re-simula el escenario. Cierra con una re-simulacion y seguimiento semanal."
                     }
                 ],
-                "que_significa": "Hay un **82%** de certeza estadística de que tu cultivo Pioneer P4039 alcanzará las **4.24 t/ha** estimadas sin sufrir un colapso por sequía, plagas o heladas durante el ciclo.",
-                "por_que_pudo_pasar": "Sí. Una confianza por encima del 80% indica que las condiciones de Quito son estables y tu plan de manejo es sólido.",
-                "como_mejorarlo": "Mantén el monitoreo de plagas, asegura riegos oportunos y evita sembrar fuera de la ventana óptima para Quito.",
+                "que_significa": "En la parcela Lote Contrato, Probabilidad de Cosecha = 82%; indicador de desempeno del sistema. Condiciones: 24.5 °C, 800 mm, pH 6.2.",
+                "por_que_pudo_pasar": "Impacto: afecta directamente el rendimiento final. Principal cuello de botella: Nitrógeno con 0.47 t/ha de perdida (~170.61 USD/ha).",
+                "como_mejorarlo": "Siguiente paso: optimiza Nitrógeno y re-simula el escenario. Cierra con una re-simulacion y seguimiento semanal.",
                 "alerta_clave": "Revisar recomendaciones.",
                 "source": "Intérprete Agrícola ZeaSys",
                 "offline": true
@@ -920,7 +915,7 @@
         {
             "nombre": "dashboard yield",
             "metodo": "GET",
-            "ruta": "/api/yield?cultivo_id=93&anio=2026",
+            "ruta": "/api/yield?cultivo_id=163&anio=2026",
             "volatilidad": "tolerante",
             "http": 200,
             "cuerpo": {
@@ -947,7 +942,7 @@
                 "kpis": {
                     "rendimiento_potencial": 10,
                     "rendimiento_alcanzable": 8.14,
-                    "rendimiento_predicho": 4.24,
+                    "rendimiento_predicho": 4.18,
                     "yield_gap_total": 5.8,
                     "principal_limitante": "Temperatura"
                 },
@@ -967,7 +962,7 @@
                     },
                     {
                         "name": "Pérdida Temperatura",
-                        "value": -3
+                        "value": -2.9
                     },
                     {
                         "name": "Pérdida Fecha Siembra",
@@ -979,7 +974,7 @@
                     },
                     {
                         "name": "Rendimiento Final Predicho",
-                        "value": 4.24,
+                        "value": 4.18,
                         "is_kpi": true
                     }
                 ],
@@ -995,21 +990,21 @@
                     ],
                     "proyeccion_actual": [
                         0,
-                        1.1,
-                        2.12,
-                        3,
-                        3.67,
-                        4.1,
-                        4.24
+                        1.08,
+                        2.09,
+                        2.96,
+                        3.62,
+                        4.04,
+                        4.18
                     ],
                     "mejor_ano": [
                         0,
-                        1.22,
-                        2.35,
-                        3.32,
-                        4.07,
-                        4.54,
-                        4.7
+                        1.19,
+                        2.3,
+                        3.25,
+                        3.98,
+                        4.44,
+                        4.6
                     ],
                     "peor_ano": [
                         0,
@@ -1032,7 +1027,7 @@
                     },
                     {
                         "factor": "Temperatura",
-                        "porcentaje": 51.7
+                        "porcentaje": 50
                     },
                     {
                         "factor": "Fecha de Siembra",
@@ -1048,7 +1043,7 @@
         {
             "nombre": "dashboard scenarios",
             "metodo": "GET",
-            "ruta": "/api/scenarios?cultivo_id=93&anio=2026",
+            "ruta": "/api/scenarios?cultivo_id=163&anio=2026",
             "volatilidad": "tolerante",
             "http": 200,
             "cuerpo": {
@@ -1082,8 +1077,8 @@
                     }
                 ],
                 "kpis": {
-                    "rendimiento_esperado": 4.24,
-                    "prob_superar_objetivo": 12,
+                    "rendimiento_esperado": 4.18,
+                    "prob_superar_objetivo": 11,
                     "riesgo_agronomico": {
                         "nivel": "bajo",
                         "color": "success",
@@ -1093,9 +1088,9 @@
                     "fecha_siembra_recomendada": "<volatil>"
                 },
                 "percentiles": {
-                    "p10": 4.24,
-                    "p50": 4.24,
-                    "p90": 4.24
+                    "p10": 4.18,
+                    "p50": 4.18,
+                    "p90": 4.18
                 },
                 "heatmap": [
                     {
@@ -1259,7 +1254,7 @@
         {
             "nombre": "dashboard climate (externo)",
             "metodo": "GET",
-            "ruta": "/api/climate?cultivo_id=93&anio=2026",
+            "ruta": "/api/climate?cultivo_id=163&anio=2026",
             "volatilidad": "estructural",
             "http": 200,
             "cuerpo": {
@@ -1271,17 +1266,17 @@
                     },
                     "prob_lluvia_bajo_promedio": 10,
                     "prob_estres_termico": 5,
-                    "agua_util": 108,
+                    "agua_util": 112,
                     "indice_riesgo": {
                         "nivel": "Bajo",
                         "color": "success"
                     }
                 },
-                "api_source": "Open-Meteo Archive API (Promedio 30 dias) (Caché local de la parcela)",
+                "api_source": "SoilGrids API (Tiempo real) (Caché local de la parcela)",
                 "clima_actual": {
                     "temperatura": 13.1,
-                    "humedad": 78.5,
-                    "precipitacion": 2700
+                    "humedad": 78.7,
+                    "precipitacion": 2827.2
                 },
                 "timeline_anomalia": {
                     "labels": [
@@ -1314,31 +1309,31 @@
                     ],
                     "lluvia_anomala": [
                         75,
-                        121,
-                        120,
-                        81,
-                        48,
-                        59,
-                        93,
-                        104,
-                        98,
-                        88,
+                        113,
+                        96,
+                        94,
+                        45,
                         56,
-                        47
+                        90,
+                        112,
+                        107,
+                        84,
+                        50,
+                        45
                     ],
                     "temperatura_anomala": [
                         15.9,
-                        16.2,
-                        16.9,
-                        15.4,
-                        15.8,
+                        16,
+                        16,
+                        16.6,
+                        15.6,
+                        13.7,
+                        13.8,
+                        13.9,
                         14.1,
                         13.5,
-                        14,
-                        13.7,
-                        14.5,
                         15.8,
-                        15.2
+                        15.7
                     ]
                 },
                 "agua_estratos": {
@@ -1349,9 +1344,9 @@
                         "60-100 cm"
                     ],
                     "valores": [
-                        27,
-                        32,
-                        49,
+                        30,
+                        36,
+                        46,
                         0
                     ]
                 },
@@ -1382,7 +1377,7 @@
                     },
                     {
                         "etapa": "Llenado de grano",
-                        "mes": "Mar-Abr",
+                        "mes": "Mar-Apr",
                         "riesgo": "Riesgo Moderado",
                         "alerta": "Moderado",
                         "color": "warning",
@@ -1395,13 +1390,13 @@
         {
             "nombre": "dashboard financial",
             "metodo": "GET",
-            "ruta": "/api/financial?cultivo_id=93&anio=2026",
+            "ruta": "/api/financial?cultivo_id=163&anio=2026",
             "volatilidad": "tolerante",
             "http": 200,
             "cuerpo": {
                 "datos_base_sistema": {
                     "precio_maiz_qq": 16.5,
-                    "rendimiento_qq": 93.5,
+                    "rendimiento_qq": 92.2,
                     "costo_semilla": 85,
                     "costo_fert": 120,
                     "costo_riego": 60,
@@ -1410,24 +1405,24 @@
                     "costos_fijos": 120,
                     "area_parcela": 2.5,
                     "nombre_parcela": "Lote Contrato",
-                    "rendimiento_tha": 4.241
+                    "rendimiento_tha": 4.182
                 },
                 "kpis": {
-                    "margen_neto": 1032.71,
-                    "margen_bruto": 1152.71,
+                    "margen_neto": 1011.24,
+                    "margen_bruto": 1131.24,
                     "punto_equilibrio": 1.4,
                     "prob_superar_break_even": 88,
-                    "roi": 202.5,
+                    "roi": 198.3,
                     "precio_maiz": 363.76,
                     "precio_maiz_qq": 16.5,
-                    "precio_piso_qq": 5.45,
-                    "ganancia_por_dolar": 2.02,
+                    "precio_piso_qq": 5.53,
+                    "ganancia_por_dolar": 1.98,
                     "area_parcela": 2.5,
                     "nombre_parcela": "Lote Contrato",
-                    "ingreso_bruto_parcela": 3856.78,
+                    "ingreso_bruto_parcela": 3803.1,
                     "costo_total_parcela": 1275,
-                    "margen_neto_parcela": 2581.78,
-                    "produccion_total_qq": 233.8
+                    "margen_neto_parcela": 2528.1,
+                    "produccion_total_qq": 230.5
                 },
                 "costo_total": 510,
                 "sensibilidad": [
@@ -1574,33 +1569,33 @@
                 "roi_estrategias": [
                     {
                         "nombre": "Manejo Convencional (Base)",
-                        "roi": 202.5,
-                        "margen": 1032.71,
-                        "rendimiento": 4.24
+                        "roi": 198.3,
+                        "margen": 1011.24,
+                        "rendimiento": 4.18
                     },
                     {
                         "nombre": "Biofertilizante INIAP (Ahorro 40% Fert.)",
-                        "roi": 233.9,
-                        "margen": 1080.71,
-                        "rendimiento": 4.24
+                        "roi": 229.3,
+                        "margen": 1059.24,
+                        "rendimiento": 4.18
                     },
                     {
                         "nombre": "Fertirriego por Goteo (Alta Precisión)",
-                        "roi": 222.6,
-                        "margen": 1224.12,
-                        "rendimiento": 4.88
+                        "roi": 218.1,
+                        "margen": 1199.43,
+                        "rendimiento": 4.81
                     },
                     {
                         "nombre": "Materia Orgánica (Compost/Enmienda)",
-                        "roi": 205.7,
-                        "margen": 1100.27,
-                        "rendimiento": 4.5
+                        "roi": 201.4,
+                        "margen": 1077.51,
+                        "rendimiento": 4.43
                     }
                 ],
                 "waterfall_costos": [
                     {
                         "label": "Ingreso Bruto",
-                        "amount": 1542.71,
+                        "amount": 1521.24,
                         "is_total": true
                     },
                     {
@@ -1629,10 +1624,40 @@
                     },
                     {
                         "label": "Margen Neto",
-                        "amount": 1032.71,
+                        "amount": 1011.24,
                         "is_total": true
                     }
                 ]
+            }
+        },
+        {
+            "nombre": "chat responde indicador",
+            "metodo": "POST",
+            "ruta": "/api/chat/preguntar",
+            "volatilidad": "tolerante",
+            "http": 200,
+            "cuerpo": {
+                "texto": "En tu parcela *Lote Contrato*, el indicador **¿Qué significa mi ROI?** (4.1821) dice lo siguiente:\n\n**Inversion y retorno** — Tu indicador ¿Qué significa mi ROI? registra 4.1821 t/ha para 2.5 ha en Quito con la variedad Pioneer P4039: rendimiento 4.18 t/ha e ingreso bruto estimado de 3793.35 USD a 16.50 USD/qq.\n\n**Escenarios** — Escenarios: base 4.18 t/ha (3793.35 USD); optimista 4.81 t/ha (4365.08 USD); pesimista 3.55 t/ha (3221.63 USD).\n\n**Riesgo financiero** — Riesgo financiero: el factor que mas afecta es Nitrógeno (0.47 t/ha, ~170.61 USD/ha). Recomendacion: reduce costos variables, asegura precio minimo antes de la siembra y protege el margen con cobertura de insumos. Cierre: valida el flujo de caja mensual y el punto de equilibrio antes de sembrar.\n\n📊 *En tu situación:* Tu rendimiento estimado actual es **4.1821 t/ha**.",
+                "secciones": [
+                    {
+                        "titulo": "1. Inversion y retorno",
+                        "tipo": "info",
+                        "contenido": "Tu indicador ¿Qué significa mi ROI? registra 4.1821 t/ha para 2.5 ha en Quito con la variedad Pioneer P4039: rendimiento 4.18 t/ha e ingreso bruto estimado de 3793.35 USD a 16.50 USD/qq."
+                    },
+                    {
+                        "titulo": "2. Escenarios",
+                        "tipo": "info",
+                        "contenido": "Escenarios: base 4.18 t/ha (3793.35 USD); optimista 4.81 t/ha (4365.08 USD); pesimista 3.55 t/ha (3221.63 USD)."
+                    },
+                    {
+                        "titulo": "3. Riesgo financiero",
+                        "tipo": "success",
+                        "contenido": "Riesgo financiero: el factor que mas afecta es Nitrógeno (0.47 t/ha, ~170.61 USD/ha). Recomendacion: reduce costos variables, asegura precio minimo antes de la siembra y protege el margen con cobertura de insumos. Cierre: valida el flujo de caja mensual y el punto de equilibrio antes de sembrar."
+                    }
+                ],
+                "accion": "Riesgo financiero: el factor que mas afecta es Nitrógeno (0.47 t/ha, ~170.61 USD/ha). Recomendacion: reduce costos variables, asegura precio minimo antes de la siembra y protege el margen con cobertura de insumos. Cierre: valida el flujo de caja mensual y el punto de equilibrio antes de sembrar.",
+                "confianza": 0.64,
+                "intencion": "indicador"
             }
         },
         {
@@ -1757,7 +1782,7 @@
         {
             "nombre": "eliminar simulacion",
             "metodo": "DELETE",
-            "ruta": "/api/simulaciones/eliminar?id=107",
+            "ruta": "/api/simulaciones/eliminar?id=171",
             "volatilidad": "exacto",
             "http": 200,
             "cuerpo": {
@@ -1768,7 +1793,7 @@
         {
             "nombre": "eliminar cultivo",
             "metodo": "DELETE",
-            "ruta": "/api/cultivos?id=93",
+            "ruta": "/api/cultivos?id=163",
             "volatilidad": "exacto",
             "http": 200,
             "cuerpo": {

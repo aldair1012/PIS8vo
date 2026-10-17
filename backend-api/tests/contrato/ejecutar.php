@@ -383,6 +383,12 @@ function ejecutarEscenario(string $modo, array &$temporales): array
     $registrar('dashboard climate (externo)', 'GET', '/api/climate' . $q, null, 'estructural');
     $registrar('dashboard financial', 'GET', '/api/financial' . $q, null, 'tolerante');
 
+    // 5b) Chatbot (paso 30): pregunta por un indicador conocido y verifica respuesta
+    $registrar('chat responde indicador', 'POST', '/api/chat/preguntar', [
+        'pregunta' => '¿Qué significa mi ROI?',
+        'vista' => 'dashboard-financial',
+    ], 'tolerante');
+
     // 6) Perfil y cierre
     $registrar('auth update', 'POST', '/api/auth/update', ['nombre' => 'Contrato Test Editado'], 'exacto');
     $registrar('subir avatar', 'POST', '/api/auth/upload-avatar', ['foto' => new CURLFile($tmpPng, 'image/png', 'contrato.png')], 'exacto', multipart: true);
