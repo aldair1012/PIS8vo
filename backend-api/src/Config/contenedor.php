@@ -226,9 +226,24 @@ return static function (): Container {
             )
     );
 
-    $legacy = [
-        'ClimateController',
-    ];
+    $contenedor->registrar(
+        \ZeaSys\Dominios\Analitica\Aplicacion\ServicioAnaliticaClimate::class,
+        static fn (Container $c): \ZeaSys\Dominios\Analitica\Aplicacion\ServicioAnaliticaClimate =>
+            new \ZeaSys\Dominios\Analitica\Aplicacion\ServicioAnaliticaClimate(
+                $c->get(\ZeaSys\Dominios\Analitica\Dominio\CatalogoAgronomicoInterface::class),
+                $c->get(\ZeaSys\Dominios\Lotes\Dominio\CultivoRepositoryInterface::class),
+                $c->get(\ZeaSys\Dominios\Terreno\Aplicacion\ServicioDatosTerreno::class),
+            )
+    );
+    $contenedor->registrar(
+        \ZeaSys\Dominios\Analitica\Http\ClimateController::class,
+        static fn (Container $c): \ZeaSys\Dominios\Analitica\Http\ClimateController =>
+            new \ZeaSys\Dominios\Analitica\Http\ClimateController(
+                $c->get(\ZeaSys\Dominios\Analitica\Aplicacion\ServicioAnaliticaClimate::class)
+            )
+    );
+
+    $legacy = [];
     foreach ($legacy as $clase) {
         $contenedor->registrar($clase, static fn (): object => new $clase());
     }

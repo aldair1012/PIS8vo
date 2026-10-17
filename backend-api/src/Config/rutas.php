@@ -29,8 +29,7 @@ return [
 
     // --- DSS Dashboards (F05: dominio ZeaSys\Dominios\Analitica) ---
     'api/scenarios'                => ['controlador' => \ZeaSys\Dominios\Analitica\Http\ScenarioController::class, 'accion' => 'index'],
+    'api/climate'                  => ['controlador' => \ZeaSys\Dominios\Analitica\Http\ClimateController::class, 'accion' => 'index'],
     'api/yield'                    => ['controlador' => \ZeaSys\Dominios\Analitica\Http\YieldController::class, 'accion' => 'index'],
     'api/financial'                => ['controlador' => \ZeaSys\Dominios\Analitica\Http\FinancialController::class, 'accion' => 'index'],
-    // Climate queda legacy hasta F05 Task 17 (switch final + limpieza)
-    'api/climate'                  => ['controlador' => 'ClimateController', 'accion' => 'index'],
 ];
