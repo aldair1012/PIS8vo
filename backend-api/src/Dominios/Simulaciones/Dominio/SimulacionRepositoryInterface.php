@@ -24,4 +24,12 @@ interface SimulacionRepositoryInterface
     public function eliminar(int $id): bool;
 
     public function contarPorUsuario(int $usuarioId): int;
+
+    /**
+     * Última simulación de una parcela (con fallback sin año): SQL inline de
+     * SimulacionController::explain() líneas 249–265 (port en T13 del catálogo de explicadores).
+     *
+     * @return array<string, mixed>|null
+     */
+    public function obtenerUltimaPorCultivo(int $cultivoId, ?int $anio = null): ?array;
 }

@@ -139,4 +139,28 @@ final class SimulacionRepositoryMysql implements SimulacionRepositoryInterface
         $stmt->execute(['usuario_id' => $usuarioId]);
         return (int) $stmt->fetchColumn();
     }
+
+    public function obtenerUltimaPorCultivo(int $cultivoId, ?int $anio = null): ?array
+    {
+        // Port verbatim del SQL inline de SimulacionController::explain() (líneas 249–265).
+        $sql = 'SELECT * FROM simulaciones WHERE cultivo_id = :cultivo_id';
+        $params = ['cultivo_id' => $cultivoId];
+        if ($anio) {
+            $sql .= ' AND YEAR(fecha) = :year';
+            $params['year'] = $anio;
+        }
+        $sql .= ' ORDER BY fecha DESC LIMIT 1';
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        $simulacionInfo = $stmt->fetch(\PDO::FETCH_ASSOC) ?: null;
+
+        if (!$simulacionInfo) {
+            $stmt2 = $this->db->prepare('SELECT * FROM simulaciones WHERE cultivo_id = :cultivo_id ORDER BY fecha DESC LIMIT 1');
+            $stmt2->execute(['cultivo_id' => $cultivoId]);
+            $simulacionInfo = $stmt2->fetch(\PDO::FETCH_ASSOC) ?: null;
+        }
+
+        return $simulacionInfo;
+    }
 }
