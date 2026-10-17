@@ -12,5 +12,5 @@ interface RedactorInterface
      * @param array<string, mixed> $contexto
      * @param array<string, mixed> $memoria
      */
-    public function redactar(array $secciones, array $contexto, array $memoria): string;
+    public function redactar(array $secciones, array $contexto, array $memoria, int $hash = 0): string;
 }

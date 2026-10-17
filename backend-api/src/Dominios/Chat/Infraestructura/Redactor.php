@@ -9,7 +9,7 @@ use ZeaSys\Dominios\Chat\Dominio\RedactorInterface;
 
 final class Redactor implements RedactorInterface
 {
-    public function redactar(array $secciones, array $contexto, array $memoria): string
+    public function redactar(array $secciones, array $contexto, array $memoria, int $hash = 0): string
     {
         $nombre = $contexto['nombre'] ?? 'indicador';
         $valor = $contexto['valor'] ?? '';
@@ -23,8 +23,8 @@ final class Redactor implements RedactorInterface
         $principalDetalle = $contexto['principal_detalle'] ?? '';
         $recomendacion = $contexto['recomendacion_base'] ?? '';
 
-        // Hash de sesión para variación
-        $seed = crc32(implode('|', array_column($memoria['temas'] ?? [], 'tema') ?: [session_id()]));
+        // Hash para variación (usar el parámetro si se pasa, si no derivar de la memoria)
+        $seed = $hash > 0 ? $hash : crc32(implode('|', array_column($memoria['temas'] ?? [], 'tema') ?: [session_id()]));
         $variante = $seed % 3;
 
         $partes = [];

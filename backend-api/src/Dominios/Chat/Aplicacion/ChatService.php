@@ -31,7 +31,7 @@ final class ChatService
      */
     public function preguntar(string $pregunta, ?string $vista = null, int $usuarioId = 0): array
     {
-        $clasificacion = $this->router->clasificar($pregunta, $vista);
+        $clasificacion = $this->router->classificar($pregunta, $vista);
         $intencion = $clasificacion['intencion'];
         $confianza = $clasificacion['confianza'];
 
@@ -89,7 +89,7 @@ final class ChatService
                 $data = $this->construirContextoIndicador($pregunta, $cultivosUsuario, $simulacionesRecientes);
                 $explicacion = $this->explicabilidad->explicar($data);
                 $secciones = $explicacion['secciones'] ?? [];
-                $texto = $this->redactor->redactar($secciones, $data, $memoria);
+                $texto = $this->redactor->redactar($secciones, $data, $memoria, crc32($pregunta . microtime()));
                 $accion = $this->inferirAccion($explicacion, $data);
                 break;
 

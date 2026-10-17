@@ -41,6 +41,11 @@ final class MemoriaSesion implements MemoriaSesionInterface
         return $_SESSION[self::CLAVE]['temas'] ?? [];
     }
 
+    public function establecerContexto(array $contexto): void
+    {
+        $this->registrarContexto($contexto);
+    }
+
     public function registrarContexto(array $contexto): void
     {
         if (!isset($_SESSION[self::CLAVE])) {

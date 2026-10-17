@@ -10,5 +10,5 @@ interface RouterChatInterface
      * Clasifica la intención de una pregunta del usuario.
      * @return array{intencion: string, confianza: float, parametros: array<string, mixed>}
      */
-    public function clasificar(string $pregunta, ?string $vista = null): array;
+    public function classificar(string $pregunta, ?string $vista = null): array;
 }

@@ -8,6 +8,12 @@ use ZeaSys\Dominios\Chat\Dominio\RouterChatInterface;
 
 final class RouterChat implements RouterChatInterface
 {
+    private ?\ZeaSys\Dominios\Chat\Dominio\MemoriaSesionInterface $memoria = null;
+
+    public function __construct(?\ZeaSys\Dominios\Chat\Dominio\MemoriaSesionInterface $memoria = null)
+    {
+        $this->memoria = $memoria;
+    }
     private const SINONIMOS = [
         'indicador' => ['indicador', 'indicadores', 'metrica', 'metricas', 'variable', 'variables', 'kpi', 'kpis',
             'rendimiento', 'rendimientos', 'yield', 'gap', 'yield gap', 'perdida', 'perdidas', 'potencial',
@@ -47,13 +53,13 @@ final class RouterChat implements RouterChatInterface
         'history' => 'general',
     ];
 
-    public function clasificar(string $pregunta, ?string $vista = null): array
+    public function classificar(string $pregunta, ?string $vista = null): array
     {
         $preguntaNorm = $this->normalizar($pregunta);
         $palabras = $this->tokenizar($preguntaNorm);
 
         if (trim($preguntaNorm) === '') {
-            return ['intencion' => 'general', 'confianza' => 0.0, 'parametros' => []];
+            throw new \ZeaSys\Kernel\Errores\ValidacionException('La pregunta no puede estar vacía.');
         }
 
         // Contar coincidencias por intención
@@ -110,6 +116,18 @@ final class RouterChat implements RouterChatInterface
 
         // Detectar si es follow-up
         $esFollowUp = $this->esFollowUp($preguntaNorm);
+
+        // Si es follow-up con baja confianza, usar el último tema de la memoria
+        if ($esFollowUp && $maxScore === 0 && $this->memoria !== null) {
+            $temas = $this->memoria->temas();
+            if (!empty($temas)) {
+                $ultimoTema = end($temas);
+                if (in_array($ultimoTema, ['indicador', 'ubicacion', 'clima', 'financiero', 'plaga'], true)) {
+                    $intencion = $ultimoTema;
+                    $confianza = 0.6;
+                }
+            }
+        }
 
         return [
             'intencion' => $intencion,
