@@ -1,4 +1,5 @@
 <?php
+// src/Kernel/Errores/NoAutorizadoException.php — 401: sesión requerida (no autorizado).
 declare(strict_types=1);
 
 namespace ZeaSys\Kernel\Errores;

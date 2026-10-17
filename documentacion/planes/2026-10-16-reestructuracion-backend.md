@@ -98,161 +98,17 @@ git commit -m "test(contrato): suite de contrato PHP CLI + huella del estado act
 
 - [ ] **Step 1: Crear `AutoloaderPsr4.php`**
 
-```php
-<?php
-declare(strict_types=1);
-
-namespace ZeaSys\Kernel;
-
-final class AutoloaderPsr4
-{
-    public static function registrar(string $dirBase, string $prefijo = 'ZeaSys\\'): void
-    {
-        spl_autoload_register(static function (string $clase) use ($dirBase, $prefijo): void {
-            if (strncmp($clase, $prefijo, strlen($prefijo)) !== 0) {
-                return;
-            }
-            $relativa = substr($clase, strlen($prefijo));
-            $archivo  = $dirBase . '/' . str_replace('\\', '/', $relativa) . '.php';
-            if (is_file($archivo)) {
-                require $archivo;
-            }
-        });
-    }
-}
-```
+El código vive versionado en `backend-api/src/Kernel/AutoloaderPsr4.php` (fuente única de verdad del kernel; autoloader PSR-4 idempotente). No se pega aquí para evitar desfases: consultarlo/leerlo directamente del repo.
 
 - [ ] **Step 2: Crear las excepciones (una clase por archivo, misma forma)**
 
-`ZeaSysException.php`:
-```php
-<?php
-declare(strict_types=1);
-
-namespace ZeaSys\Kernel\Errores;
-
-class ZeaSysException extends \Exception
-{
-    public function __construct(string $mensaje, private int $codigoHttp = 500, ?\Throwable $anterior = null)
-    {
-        parent::__construct($mensaje, 0, $anterior);
-    }
-
-    public function codigoHttp(): int
-    {
-        return $this->codigoHttp;
-    }
-}
-```
-
-`NoAutorizadoException.php`:
-```php
-<?php
-declare(strict_types=1);
-
-namespace ZeaSys\Kernel\Errores;
-
-class NoAutorizadoException extends ZeaSysException
-{
-    public function __construct(string $mensaje = 'No autorizado. Debe iniciar sesión.')
-    {
-        parent::__construct($mensaje, 401);
-    }
-}
-```
-
-`ValidacionException.php`:
-```php
-<?php
-declare(strict_types=1);
-
-namespace ZeaSys\Kernel\Errores;
-
-class ValidacionException extends ZeaSysException
-{
-    public function __construct(string $mensaje)
-    {
-        parent::__construct($mensaje, 400);
-    }
-}
-```
-
-`AccesoDenegadoException.php`:
-```php
-<?php
-declare(strict_types=1);
-
-namespace ZeaSys\Kernel\Errores;
-
-class AccesoDenegadoException extends ZeaSysException
-{
-    public function __construct(string $mensaje)
-    {
-        parent::__construct($mensaje, 403);
-    }
-}
-```
-
-`RecursoNoEncontradoException.php`:
-```php
-<?php
-declare(strict_types=1);
-
-namespace ZeaSys\Kernel\Errores;
-
-class RecursoNoEncontradoException extends ZeaSysException
-{
-    public function __construct(string $mensaje)
-    {
-        parent::__construct($mensaje, 404);
-    }
-}
-```
-
-`ServicioExternoException.php`:
-```php
-<?php
-declare(strict_types=1);
-
-namespace ZeaSys\Kernel\Errores;
-
-class ServicioExternoException extends ZeaSysException
-{
-    public function __construct(string $mensaje)
-    {
-        parent::__construct($mensaje, 502);
-    }
-}
-```
+Las 6 excepciones tipadas (`ZeaSysException`, `NoAutorizadoException`, `ValidacionException`, `AccesoDenegadoException`, `RecursoNoEncontradoException`, `ServicioExternoException`) viven versionadas en `backend-api/src/Kernel/Errores/` (una clase por archivo, misma forma: extienden `ZeaSysException` con su código HTTP). No se pegan aquí para evitar desfases: consultarlas/leerlas directamente del repo.
 
 - [ ] **Step 3: Crear `ManejadorErrores.php`**
 
 Formato de error IDÉNTICO al actual (`{"error": "..."}`; 500 con prefijo `Error interno del servidor: `):
-```php
-<?php
-declare(strict_types=1);
 
-namespace ZeaSys\Kernel\Errores;
-
-final class ManejadorErrores
-{
-    public static function registrar(): void
-    {
-        set_exception_handler(static function (\Throwable $e): void {
-            $codigo  = $e instanceof ZeaSysException ? $e->codigoHttp() : 500;
-            $mensaje = $e instanceof ZeaSysException
-                ? $e->getMessage()
-                : 'Error interno del servidor: ' . $e->getMessage();
-
-            if (!headers_sent()) {
-                http_response_code($codigo);
-                header('Content-Type: application/json; charset=utf-8');
-            }
-            echo json_encode(['error' => $mensaje], JSON_UNESCAPED_UNICODE);
-        });
-    }
-}
-```
+El código vive versionado en `backend-api/src/Kernel/Errores/ManejadorErrores.php` (fuente única de verdad; handler global con fallback mínimo `try/catch(\Throwable)`). No se pega aquí para evitar desfases: consultarlo/leerlo directamente del repo.
 
 - [ ] **Step 4: Verificar sintaxis y autoload**
 
@@ -272,98 +128,15 @@ Expected: `No syntax errors detected` y `autoload OK`.
 
 - [ ] **Step 1: Crear `Peticion.php`** (lectura perezosa del cuerpo para no interferir con controladores legacy)
 
-```php
-<?php
-declare(strict_types=1);
-
-namespace ZeaSys\Kernel;
-
-final class Peticion
-{
-    private ?array $cuerpo = null;
-
-    public function __construct(private string $metodo)
-    {
-    }
-
-    public static function desdeGlobal(): self
-    {
-        return new self($_SERVER['REQUEST_METHOD'] ?? 'GET');
-    }
-
-    public function metodo(): string
-    {
-        return $this->metodo;
-    }
-
-    public function cuerpo(): array
-    {
-        if ($this->cuerpo === null) {
-            $raw = file_get_contents('php://input');
-            $json = json_decode($raw !== false ? $raw : '', true);
-            $this->cuerpo = is_array($json) ? $json : $_POST;
-        }
-        return $this->cuerpo;
-    }
-
-    public function campo(string $clave, mixed $defecto = null): mixed
-    {
-        return $this->cuerpo()[$clave] ?? $defecto;
-    }
-
-    public function query(string $clave, mixed $defecto = null): mixed
-    {
-        return $_GET[$clave] ?? $defecto;
-    }
-}
-```
+El código vive versionado en `backend-api/src/Kernel/Peticion.php` (fuente única de verdad; captura ruta resuelta + snapshot de `$_GET`, cuerpo perezoso con fallback a `$_POST`). No se pega aquí para evitar desfases: consultarlo/leerlo directamente del repo.
 
 - [ ] **Step 2: Crear `RespuestaJson.php`**
 
-```php
-<?php
-declare(strict_types=1);
-
-namespace ZeaSys\Kernel;
-
-final class RespuestaJson
-{
-    public static function enviar(array $datos, int $codigo = 200): void
-    {
-        http_response_code($codigo);
-        header('Content-Type: application/json; charset=utf-8');
-        echo json_encode($datos, JSON_UNESCAPED_UNICODE);
-    }
-}
-```
+El código vive versionado en `backend-api/src/Kernel/RespuestaJson.php` (fuente única de verdad; envío JSON con guard `headers_sent()`). No se pega aquí para evitar desfases: consultarlo/leerlo directamente del repo.
 
 - [ ] **Step 3: Crear `Cors.php`** (comportamiento idéntico al actual: refleja el Origin con credenciales)
 
-```php
-<?php
-declare(strict_types=1);
-
-namespace ZeaSys\Kernel;
-
-final class Cors
-{
-    public static function aplicar(): void
-    {
-        $allowedOrigin = 'http://localhost:5173';
-        if (isset($_SERVER['HTTP_ORIGIN'])) {
-            $origin = $_SERVER['HTTP_ORIGIN'];
-            if (preg_match('/^https?:\/\//', $origin)) {
-                $allowedOrigin = $origin;
-            }
-        }
-        header("Access-Control-Allow-Origin: {$allowedOrigin}");
-        header('Vary: Origin');
-        header('Access-Control-Allow-Credentials: true');
-        header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With');
-        header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
-    }
-}
-```
+El código vive versionado en `backend-api/src/Kernel/Cors.php` (fuente única de verdad). No se pega aquí para evitar desfases: consultarlo/leerlo directamente del repo.
 
 - [ ] **Step 4: Verificar sintaxis**
 
@@ -380,72 +153,19 @@ Expected: `No syntax errors detected` para cada archivo.
 
 - [ ] **Step 1: Crear `Container.php`**
 
-```php
-<?php
-declare(strict_types=1);
-
-namespace ZeaSys\Kernel;
-
-final class Container
-{
-    /** @var array<string, mixed> */
-    private array $instancias = [];
-
-    /** @var array<string, callable> */
-    private array $fabricas = [];
-
-    public function registrar(string $id, callable $fabrica): void
-    {
-        $this->fabricas[$id] = $fabrica;
-    }
-
-    public function get(string $id): mixed
-    {
-        if (array_key_exists($id, $this->instancias)) {
-            return $this->instancias[$id];
-        }
-        if (!isset($this->fabricas[$id])) {
-            throw new \RuntimeException("No hay definición en el contenedor para: {$id}");
-        }
-        return $this->instancias[$id] = ($this->fabricas[$id])($this);
-    }
-
-    public function tiene(string $id): bool
-    {
-        return isset($this->fabricas[$id]) || array_key_exists($id, $this->instancias);
-    }
-}
-```
+El código vive versionado en `backend-api/src/Kernel/Container.php` (fuente única de verdad; DI con fábricas, caché de instancias y detección de dependencias circulares). No se pega aquí para evitar desfases: consultarlo/leerlo directamente del repo.
 
 - [ ] **Step 2: Crear `src/Config/aplicacion.php`**
 
-Contenido = copia verbatim del actual `backend-api/config/database.php` (líneas 1–51 del commit `e89067d`), **quitando** las dos constantes de negocio (`PRECIO_MAIZ_TON`, `PRECIO_MAIZ_FUENTE`), que pasan al paso siguiente. Encabezado nuevo:
-
-```php
-<?php
-// src/Config/aplicacion.php — Infraestructura: base de datos, motor IA y sesión.
-// (Resto del archivo: copia verbatim del config/database.php original SIN las constantes PRECIO_*)
-```
+Contenido = copia verbatim del actual `backend-api/config/database.php` (líneas 1–51 del commit `e89067d`), **quitando** las dos constantes de negocio (`PRECIO_MAIZ_TON`, `PRECIO_MAIZ_FUENTE`), que pasan al paso siguiente. El encabezado (comentario de propósito + nota de `declare(strict_types=1)` omitido a propósito) vive versionado en `backend-api/src/Config/aplicacion.php`: no se pega aquí para evitar desfases.
 
 - [ ] **Step 3: Crear `src/Config/constantes_negocio.php`**
 
-```php
-<?php
-// src/Config/constantes_negocio.php — Constantes de negocio (agronomía/economía).
-
-define('PRECIO_MAIZ_TON', 178); // USD/ton
-define('PRECIO_MAIZ_FUENTE', 'MAG 2024');
-```
+El código vive versionado en `backend-api/src/Config/constantes_negocio.php` (fuente única de verdad; `PRECIO_MAIZ_TON=178`, `PRECIO_MAIZ_FUENTE='MAG 2024'`). No se pega aquí para evitar desfases: consultarlo/leerlo directamente del repo.
 
 - [ ] **Step 4: Convertir `backend-api/config/database.php` en shim temporal**
 
-Reemplazar TODO el contenido por:
-```php
-<?php
-// Shim temporal de compatibilidad (F01–F05). Al terminar la migración este archivo se elimina.
-require_once __DIR__ . '/../src/Config/aplicacion.php';
-require_once __DIR__ . '/../src/Config/constantes_negocio.php';
-```
+Reemplazar TODO el contenido por un shim que haga `require_once` de `src/Config/aplicacion.php` y `src/Config/constantes_negocio.php`. El código vive versionado en `backend-api/config/database.php` (fuente única de verdad). No se pega aquí para evitar desfases: consultarlo/leerlo directamente del repo.
 
 - [ ] **Step 5: Verificar que el sistema sigue operando**
 
@@ -471,242 +191,27 @@ git commit -m "refactor(backend): kernel de autoload, errores, peticion/respuest
 
 - [ ] **Step 1: Crear `AutenticacionMiddleware.php`** (preserva EXACTAMENTE el comportamiento actual: rutas públicas y cierre de sesión selectivo)
 
-```php
-<?php
-declare(strict_types=1);
-
-namespace ZeaSys\Kernel;
-
-use ZeaSys\Kernel\Errores\NoAutorizadoException;
-
-final class AutenticacionMiddleware
-{
-    /** Rutas que requieren la sesión ABIERTA (no se llama session_write_close). Idéntico al index original. */
-    private const RUTAS_QUE_MANTIENEN_SESION = [
-        'api/auth/login',
-        'api/auth/register',
-        'api/auth/google-login',
-        'api/auth/logout',
-        'api/auth/update',
-        'api/auth/delete',
-        'api/auth/upload-avatar',
-        'api/auth/delete-avatar',
-    ];
-
-    /**
-     * @param array{publica?: bool} $definicion
-     */
-    public function procesar(string $ruta, array $definicion): void
-    {
-        if (!($definicion['publica'] ?? false) && !isset($_SESSION['usuario_id'])) {
-            throw new NoAutorizadoException();
-        }
-        if (!in_array($ruta, self::RUTAS_QUE_MANTIENEN_SESION, true)) {
-            session_write_close();
-        }
-    }
-}
-```
+El código vive versionado en `backend-api/src/Kernel/AutenticacionMiddleware.php` (fuente única de verdad; auth 401 + cierre selectivo según el flag `'sesion' => true` de la tabla de rutas). No se pega aquí para evitar desfases: consultarlo/leerlo directamente del repo.
 
 - [ ] **Step 2: Crear `Router.php`**
 
-```php
-<?php
-declare(strict_types=1);
-
-namespace ZeaSys\Kernel;
-
-use ZeaSys\Kernel\Errores\RecursoNoEncontradoException;
-
-final class Router
-{
-    /**
-     * @param array<string, array{controlador: string, accion?: string, acciones?: array<string, string>, publica?: bool}> $rutas
-     */
-    public function __construct(
-        private Container $contenedor,
-        private array $rutas,
-        private AutenticacionMiddleware $middleware,
-    ) {
-    }
-
-    /** Resolución de ruta IDÉNTICA a la del index.php original (action → PATH_INFO → URI). */
-    public function resolverRutaActual(): string
-    {
-        $route = $_GET['action'] ?? '';
-        if ($route === '') {
-            $route = $_SERVER['PATH_INFO'] ?? '';
-            if ($route === '') {
-                $uriPath = parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH) ?: '';
-                $pos = strpos($uriPath, 'index.php');
-                if ($pos !== false) {
-                    $route = substr($uriPath, $pos + 9);
-                } else {
-                    $posApi = strpos($uriPath, '/api/');
-                    if ($posApi !== false) {
-                        $route = substr($uriPath, $posApi);
-                    }
-                }
-            }
-        }
-        return trim($route, '/');
-    }
-
-    public function despachar(Peticion $peticion): void
-    {
-        $ruta = $this->resolverRutaActual();
-        if (!isset($this->rutas[$ruta])) {
-            throw new RecursoNoEncontradoException("Ruta no encontrada: {$ruta}");
-        }
-
-        $definicion = $this->rutas[$ruta];
-        $this->middleware->procesar($ruta, $definicion);
-
-        // Rutas con despacho por método HTTP (p. ej. api/cultivos) o de acción única.
-        if (isset($definicion['acciones'])) {
-            $accion = $definicion['acciones'][$peticion->metodo()] ?? null;
-            if ($accion === null) {
-                // Paridad con el switch original de api/cultivos.
-                RespuestaJson::enviar(['error' => 'Método no permitido.'], 405);
-                return;
-            }
-        } else {
-            $accion = $definicion['accion'];
-        }
-
-        $controlador = $this->contenedor->get($definicion['controlador']);
-        $controlador->{$accion}($peticion);
-    }
-}
-```
+El código vive versionado en `backend-api/src/Kernel/Router.php` (fuente única de verdad; resolución de ruta idéntica al original, `despachar(Peticion, ?ruta)` con guard de despacho dinámico). No se pega aquí para evitar desfases: consultarlo/leerlo directamente del repo.
 
 - [ ] **Step 3: Crear `src/Config/rutas.php`** (TODAS las rutas actuales; en F01 apuntan a los controladores legacy sin namespace)
 
-```php
-<?php
-// src/Config/rutas.php — Tabla declarativa de rutas del API.
-// F01: controladores legacy (id = nombre de clase global). F02–F05 los reemplazan dominio a dominio.
-
-return [
-    // --- Autenticación ---
-    'api/auth/login'               => ['controlador' => 'AuthController', 'accion' => 'login', 'publica' => true],
-    'api/auth/register'            => ['controlador' => 'AuthController', 'accion' => 'registro', 'publica' => true],
-    'api/auth/google-login'        => ['controlador' => 'AuthController', 'accion' => 'googleLogin', 'publica' => true],
-    'api/auth/me'                  => ['controlador' => 'AuthController', 'accion' => 'me', 'publica' => true],
-    'api/auth/logout'              => ['controlador' => 'AuthController', 'accion' => 'logout'],
-    'api/auth/update'              => ['controlador' => 'AuthController', 'accion' => 'update'],
-    'api/auth/upload-avatar'       => ['controlador' => 'AuthController', 'accion' => 'uploadAvatar'],
-    'api/auth/delete-avatar'       => ['controlador' => 'AuthController', 'accion' => 'deleteAvatar'],
-    'api/auth/sync-google-avatar'  => ['controlador' => 'AuthController', 'accion' => 'syncGoogleAvatar'],
-    'api/auth/delete'              => ['controlador' => 'AuthController', 'accion' => 'eliminar'],
-
-    // --- Cultivos / Parcelas ---
-    'api/cultivos'                 => ['controlador' => 'CultivoController', 'acciones' => ['GET' => 'listar', 'POST' => 'crear', 'PUT' => 'actualizar', 'DELETE' => 'eliminar']],
-    'api/cultivos/mapa'            => ['controlador' => 'CultivoController', 'accion' => 'mapa'],
-    'api/cultivos/valores-ubicacion' => ['controlador' => 'CultivoController', 'accion' => 'obtenerValoresUbicacion'],
-
-    // --- Simulaciones ---
-    'api/simulaciones/simular'     => ['controlador' => 'SimulacionController', 'accion' => 'simular'],
-    'api/simulaciones/historial'   => ['controlador' => 'SimulacionController', 'accion' => 'historial'],
-    'api/simulaciones/eliminar'    => ['controlador' => 'SimulacionController', 'accion' => 'eliminar'],
-    'api/simulaciones/ia-status'   => ['controlador' => 'SimulacionController', 'accion' => 'iaStatus', 'publica' => true],
-    'api/simulaciones/explain'     => ['controlador' => 'SimulacionController', 'accion' => 'explain'],
-
-    // --- DSS Dashboards ---
-    'api/scenarios'                => ['controlador' => 'ScenarioController', 'accion' => 'index'],
-    'api/climate'                  => ['controlador' => 'ClimateController', 'accion' => 'index'],
-    'api/yield'                    => ['controlador' => 'YieldController', 'accion' => 'index'],
-    'api/financial'                => ['controlador' => 'FinancialController', 'accion' => 'index'],
-];
-```
+La tabla vive versionada en `backend-api/src/Config/rutas.php` (fuente única de verdad; TODAS las rutas con los flags `'publica'`/`'sesion'`). No se pega aquí para evitar desfases: consultarla/leerla directamente del repo.
 
 NOTA IMPORTANTE (paridad exacta con el original): `api/cultivos` es la ÚNICA ruta con despacho por método (`GET → listar`, `POST → crear`, `PUT → actualizar`, `DELETE → eliminar`, cualquier otro método → `405 {"error":"Método no permitido."}`). El resto de rutas acepta cualquier método, igual que hoy. El orden original se conserva: middleware de autenticación (401) ANTES del gate de método (405). Verificar en Step 6 con la suite.
 
 - [ ] **Step 4: Crear `src/Config/contenedor.php`**
 
-```php
-<?php
-// src/Config/contenedor.php — Bindings del contenedor DI.
-// F01: controladores legacy. F02–F05 añaden los bindings de cada dominio nuevo.
-
-use ZeaSys\Kernel\Container;
-
-return static function (): Container {
-    $contenedor = new Container();
-
-    $legacy = [
-        'AuthController',
-        'CultivoController',
-        'SimulacionController',
-        'ScenarioController',
-        'ClimateController',
-        'YieldController',
-        'FinancialController',
-    ];
-    foreach ($legacy as $clase) {
-        $contenedor->registrar($clase, static fn (): object => new $clase());
-    }
-
-    return $contenedor;
-};
-```
+El código vive versionado en `backend-api/src/Config/contenedor.php` (fuente única de verdad; bindings de los controladores legacy). No se pega aquí para evitar desfases: consultarlo/leerlo directamente del repo.
 
 - [ ] **Step 5: Reemplazar `backend-api/public/index.php` por el nuevo bootstrap**
 
 Antes: copiar el actual a `backend-api/public/index.legacy.php.txt`.
 
-```php
-<?php
-// public/index.php — Front controller de ZeaSys (delgado).
-declare(strict_types=1);
-
-use ZeaSys\Kernel\AutenticacionMiddleware;
-use ZeaSys\Kernel\AutoloaderPsr4;
-use ZeaSys\Kernel\Cors;
-use ZeaSys\Kernel\Errores\ManejadorErrores;
-use ZeaSys\Kernel\Peticion;
-use ZeaSys\Kernel\Router;
-
-require __DIR__ . '/../src/Kernel/AutoloaderPsr4.php';
-AutoloaderPsr4::registrar(__DIR__ . '/../src');
-
-require_once __DIR__ . '/../src/Config/aplicacion.php';
-require_once __DIR__ . '/../src/Config/constantes_negocio.php';
-
-ManejadorErrores::registrar();
-Cors::aplicar();
-
-if (($_SERVER['REQUEST_METHOD'] ?? '') === 'OPTIONS') {
-    http_response_code(204);
-    exit;
-}
-
-session_name(SESSION_NAME);
-session_start([
-    'cookie_lifetime' => 0,
-    'cookie_secure'   => false, // desarrollo local
-    'cookie_httponly' => true,
-    'cookie_samesite' => 'Lax',
-]);
-
-error_reporting(E_ALL);
-ini_set('display_errors', '1');
-
-// F01: controladores legacy (globales, sin namespace). Se eliminan fase a fase (F02–F05) y en F06 no queda ninguno.
-require_once __DIR__ . '/../controllers/AuthController.php';
-require_once __DIR__ . '/../controllers/CultivoController.php';
-require_once __DIR__ . '/../controllers/SimulacionController.php';
-require_once __DIR__ . '/../controllers/ScenarioController.php';
-require_once __DIR__ . '/../controllers/ClimateController.php';
-require_once __DIR__ . '/../controllers/YieldController.php';
-require_once __DIR__ . '/../controllers/FinancialController.php';
-
-$contenedor = (require __DIR__ . '/../src/Config/contenedor.php')();
-$rutas      = require __DIR__ . '/../src/Config/rutas.php';
-
-$router = new Router($contenedor, $rutas, new AutenticacionMiddleware());
-$router->despachar(Peticion::desdeGlobal());
-```
+El bootstrap vive versionado en `backend-api/public/index.php` (fuente única de verdad; front controller delgado). No se pega aquí para evitar desfases: consultarlo/leerlo directamente del repo.
 
 NOTA sobre `SESSION_NAME`: el original usaba el literal `'AGROPREDICT_SESSION'` y `aplicacion.php` define `SESSION_NAME` con ese mismo valor — verificar que coincida antes de continuar.
 

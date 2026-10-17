@@ -1,4 +1,5 @@
 <?php
+// src/Kernel/Errores/AccesoDenegadoException.php — 403: acceso denegado.
 declare(strict_types=1);
 
 namespace ZeaSys\Kernel\Errores;

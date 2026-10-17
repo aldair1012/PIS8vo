@@ -12,10 +12,11 @@ use ZeaSys\Kernel\Router;
 require __DIR__ . '/../src/Kernel/AutoloaderPsr4.php';
 AutoloaderPsr4::registrar(__DIR__ . '/../src');
 
+ManejadorErrores::registrar();
+
 require_once __DIR__ . '/../src/Config/aplicacion.php';
 require_once __DIR__ . '/../src/Config/constantes_negocio.php';
 
-ManejadorErrores::registrar();
 Cors::aplicar();
 
 if (($_SERVER['REQUEST_METHOD'] ?? '') === 'OPTIONS') {

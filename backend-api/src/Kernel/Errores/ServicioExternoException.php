@@ -1,4 +1,5 @@
 <?php
+// src/Kernel/Errores/ServicioExternoException.php — 502: fallo de servicio externo.
 declare(strict_types=1);
 
 namespace ZeaSys\Kernel\Errores;

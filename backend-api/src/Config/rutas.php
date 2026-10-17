@@ -4,16 +4,16 @@
 
 return [
     // --- Autenticación ---
-    'api/auth/login'               => ['controlador' => 'AuthController', 'accion' => 'login', 'publica' => true],
-    'api/auth/register'            => ['controlador' => 'AuthController', 'accion' => 'registro', 'publica' => true],
-    'api/auth/google-login'        => ['controlador' => 'AuthController', 'accion' => 'googleLogin', 'publica' => true],
+    'api/auth/login'               => ['controlador' => 'AuthController', 'accion' => 'login', 'publica' => true, 'sesion' => true],
+    'api/auth/register'            => ['controlador' => 'AuthController', 'accion' => 'registro', 'publica' => true, 'sesion' => true],
+    'api/auth/google-login'        => ['controlador' => 'AuthController', 'accion' => 'googleLogin', 'publica' => true, 'sesion' => true],
     'api/auth/me'                  => ['controlador' => 'AuthController', 'accion' => 'me', 'publica' => true],
-    'api/auth/logout'              => ['controlador' => 'AuthController', 'accion' => 'logout'],
-    'api/auth/update'              => ['controlador' => 'AuthController', 'accion' => 'update'],
-    'api/auth/upload-avatar'       => ['controlador' => 'AuthController', 'accion' => 'uploadAvatar'],
-    'api/auth/delete-avatar'       => ['controlador' => 'AuthController', 'accion' => 'deleteAvatar'],
+    'api/auth/logout'              => ['controlador' => 'AuthController', 'accion' => 'logout', 'sesion' => true],
+    'api/auth/update'              => ['controlador' => 'AuthController', 'accion' => 'update', 'sesion' => true],
+    'api/auth/upload-avatar'       => ['controlador' => 'AuthController', 'accion' => 'uploadAvatar', 'sesion' => true],
+    'api/auth/delete-avatar'       => ['controlador' => 'AuthController', 'accion' => 'deleteAvatar', 'sesion' => true],
     'api/auth/sync-google-avatar'  => ['controlador' => 'AuthController', 'accion' => 'syncGoogleAvatar'],
-    'api/auth/delete'              => ['controlador' => 'AuthController', 'accion' => 'eliminar'],
+    'api/auth/delete'              => ['controlador' => 'AuthController', 'accion' => 'eliminar', 'sesion' => true],
 
     // --- Cultivos / Parcelas ---
     'api/cultivos'                 => ['controlador' => 'CultivoController', 'acciones' => ['GET' => 'listar', 'POST' => 'crear', 'PUT' => 'actualizar', 'DELETE' => 'eliminar']],

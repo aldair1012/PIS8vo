@@ -1,5 +1,6 @@
 <?php
 // src/Config/aplicacion.php — Infraestructura: base de datos, motor IA y sesión.
+// Sin declare(strict_types=1) a propósito: shim en contexto legacy (paridad bit a bit).
 
 define('DB_HOST', '127.0.0.1');
 define('DB_PORT', 3306);

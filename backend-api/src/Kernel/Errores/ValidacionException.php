@@ -1,4 +1,5 @@
 <?php
+// src/Kernel/Errores/ValidacionException.php — 400: entrada inválida (validación).
 declare(strict_types=1);
 
 namespace ZeaSys\Kernel\Errores;

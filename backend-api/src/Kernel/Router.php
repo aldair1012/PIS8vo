@@ -1,4 +1,5 @@
 <?php
+// src/Kernel/Router.php — Router declarativo: resolución de ruta, middleware de auth y despacho por tabla con guards.
 declare(strict_types=1);
 
 namespace ZeaSys\Kernel;
@@ -8,7 +9,7 @@ use ZeaSys\Kernel\Errores\RecursoNoEncontradoException;
 final class Router
 {
     /**
-     * @param array<string, array{controlador: string, accion?: string, acciones?: array<string, string>, publica?: bool}> $rutas
+     * @param array<string, array{controlador: string, accion?: string, acciones?: array<string, string>, publica?: bool, sesion?: bool}> $rutas
      */
     public function __construct(
         private Container $contenedor,
@@ -18,7 +19,7 @@ final class Router
     }
 
     /** Resolución de ruta IDÉNTICA a la del index.php original (action → PATH_INFO → URI). */
-    public function resolverRutaActual(): string
+    public static function resolverRutaActual(): string
     {
         $route = $_GET['action'] ?? '';
         if ($route === '') {
@@ -39,16 +40,16 @@ final class Router
         return trim($route, '/');
     }
 
-    public function despachar(Peticion $peticion): void
+    public function despachar(Peticion $peticion, ?string $ruta = null): void
     {
-        $ruta = $this->resolverRutaActual();
+        $ruta ??= self::resolverRutaActual();
         $definicion = $this->rutas[$ruta] ?? null;
 
         if ($definicion === null) {
             // Paridad exacta con el index.php legacy: la autenticación corría ANTES del
             // switch, así que una ruta inexistente sin sesión devolvía 401 (el 404 del
             // case default solo era alcanzable con la sesión ya abierta).
-            $this->middleware->procesar($ruta, ['publica' => false]);
+            $this->middleware->procesar($ruta, []);
             throw new RecursoNoEncontradoException("Ruta no encontrada: {$ruta}");
         }
 
@@ -63,10 +64,19 @@ final class Router
                 return;
             }
         } else {
-            $accion = $definicion['accion'];
+            $accion = $definicion['accion'] ?? null;
+        }
+
+        // Guard de despacho dinámico: nunca un fatal opaco, siempre RuntimeException con contexto.
+        if ($accion === null) {
+            throw new \RuntimeException("Ruta {$ruta} sin acción configurada (falta 'accion' o 'acciones').");
         }
 
         $controlador = $this->contenedor->get($definicion['controlador']);
+        if (!is_object($controlador) || !method_exists($controlador, $accion)) {
+            throw new \RuntimeException("Acción {$accion} inexistente en el controlador de la ruta {$ruta}.");
+        }
+
         $controlador->{$accion}($peticion);
     }
 }

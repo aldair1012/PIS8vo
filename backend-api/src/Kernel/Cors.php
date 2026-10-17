@@ -1,4 +1,5 @@
 <?php
+// src/Kernel/Cors.php — Cabeceras CORS (reflejo del Origin con credenciales), idénticas al index legacy.
 declare(strict_types=1);
 
 namespace ZeaSys\Kernel;
