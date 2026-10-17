@@ -13,7 +13,7 @@ import History from './views/History';
 import MapPage from './views/MapPage';
 import Configuracion from './views/Configuracion';
 
-import { authService, cultivosService, simulacionService } from './services/api';
+import ChatbotWidget from './components/ChatbotWidget';
 import './assets/styles.css';
 
 export default function App() {
@@ -442,6 +442,9 @@ export default function App() {
           </div>
         </div>
       )}
+
+      {/* Chatbot Widget */}
+      {user && <ChatbotWidget vistaActual={vistaActual} />}
     </div>
   );
 }
