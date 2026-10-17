@@ -23,7 +23,9 @@ interface CultivoRepositoryInterface
 
     public function eliminar(int $id): bool;
 
+    /** @used-by F04/F05: Climate (obtenerValoresUbicacion legacy) y Scenario (línea 39-40) migrarán a este repositorio. */
     public function contarPorUsuario(int $usuarioId): int;
 
+    /** @used-by F04/F05: Scenario (línea 39-40) migrará a este repositorio. */
     public function areaTotalPorUsuario(int $usuarioId): float;
 }

@@ -20,7 +20,7 @@ final class CacheArchivos implements CacheInterface
     {
         $this->asegurarDirectorio();
 
-        $archivoCache = $this->directorio . '/' . $clave . '.json';
+        $archivoCache = $this->rutaArchivo($clave);
 
         if (file_exists($archivoCache) && (time() - filemtime($archivoCache) < 86400)) {
             $contenido = file_get_contents($archivoCache);
@@ -40,7 +40,20 @@ final class CacheArchivos implements CacheInterface
 
         // Paridad: en el legacy (modo coercitivo) json_encode(false) se escribía como ''.
         $json = json_encode($valor);
-        @file_put_contents($this->directorio . '/' . $clave . '.json', $json === false ? '' : $json);
+        @file_put_contents($this->rutaArchivo($clave), $json === false ? '' : $json);
+    }
+
+    /**
+     * Las claves actuales son precision_data_{float}_{float} (seguras, construidas con round()).
+     * Se rechazan claves con separadores o '..' como defensa si un futuro caller pasa datos de
+     * la petición (traversal). Inalcanzable con los callers actuales → sin efecto observable.
+     */
+    private function rutaArchivo(string $clave): string
+    {
+        if (preg_match('#[/\\\\]|\\.\\.#', $clave) === 1) {
+            throw new \InvalidArgumentException("Clave de caché inválida: {$clave}");
+        }
+        return $this->directorio . '/' . $clave . '.json';
     }
 
     public function limpiarExpirados(): void

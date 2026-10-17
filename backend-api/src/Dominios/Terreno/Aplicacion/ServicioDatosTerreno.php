@@ -116,6 +116,10 @@ final class ServicioDatosTerreno
                 $datosClimaYSuelo['suelo'][$claveSuelo] = $valorSuelo;
             }
             $datosClimaYSuelo['success'] = true;
+            // Paridad (trampa legacy): la comparación con 'Open-Meteo API' es inalcanzable — la
+            // línea del merge de Open-Meteo siempre pone 'Open-Meteo Archive API (Promedio 30 dias)'.
+            // El original (ClimateController:216) tenía exactamente este mismo if muerto; NO "corregirlo"
+            // rompería la paridad (el source etiquetado se cachea 24h). Deuda D1, ADR pendiente.
             if ($datosClimaYSuelo['source'] === 'Open-Meteo API') {
                 $datosClimaYSuelo['source'] = 'Open-Meteo & SoilGrids APIs (Tiempo real)';
             } else {

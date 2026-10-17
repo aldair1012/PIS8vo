@@ -21,7 +21,12 @@ final class CultivoController
     public function mapa(Peticion $peticion): void { RespuestaJson::enviar($this->servicio->mapa()); }
     public function obtenerValoresUbicacion(Peticion $peticion): void { RespuestaJson::enviar($this->servicio->obtenerValoresUbicacion($this->usuarioId(), $peticion)); }
 
-    /** El middleware de sesión ya garantiza $_SESSION['usuario_id'] para estas rutas. */
+    /**
+     * El middleware de sesión ya garantiza $_SESSION['usuario_id'] para estas rutas.
+     * Lectura directa de superglobal deliberada: Http es la capa sancionada para superglobals
+     * (traducción Petición→servicio). GestorSesionInterface existe para las ESCRITURAS de sesión
+     * de Autenticación (login/logout) a nivel Aplicación; aquí solo se lee el id ya fijado.
+     */
     private function usuarioId(): int
     {
         return (int) $_SESSION['usuario_id'];
