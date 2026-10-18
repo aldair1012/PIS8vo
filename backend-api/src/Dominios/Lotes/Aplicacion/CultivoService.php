@@ -1,7 +1,6 @@
 <?php
 // src/Dominios/Lotes/Aplicacion/CultivoService.php — Casos de uso de cultivos (parcelas/lotes).
-// Port verbatim del CultivoController legacy (backend-api/controllers/CultivoController.php, líneas 25–281):
-// mismos strings, códigos y payloads; echo+exit → return y errores → excepciones tipadas.
+// Casos de uso de parcelas: validación, autorización y persistencia.
 declare(strict_types=1);
 
 namespace ZeaSys\Dominios\Lotes\Aplicacion;

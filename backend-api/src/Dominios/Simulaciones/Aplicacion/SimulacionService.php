@@ -1,9 +1,6 @@
 <?php
 // src/Dominios/Simulaciones/Aplicacion/SimulacionService.php — Casos de uso del dominio simulaciones (predicción ML + explicabilidad).
-// Port verbatim del SimulacionController legacy (backend-api/controllers/SimulacionController.php):
-// mismos strings, códigos y payloads; echo+exit → return y errores → excepciones tipadas.
-// IaServerHelper::ensureRunning()/getStatus() → GestorMotorIaInterface; Simulacion::predecir() → MotorPrediccionInterface;
-// la cadena if/elseif de explain() vive en ServicioExplicabilidad (catálogo Strategy de 46 explicadores, T13).
+// Orquesta simulaciones, disponibilidad del motor y explicabilidad.
 declare(strict_types=1);
 
 namespace ZeaSys\Dominios\Simulaciones\Aplicacion;

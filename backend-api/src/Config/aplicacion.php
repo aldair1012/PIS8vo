@@ -13,8 +13,7 @@ define('IA_SERVER_URL', getenv('ZEASYS_IA_SERVER_URL') ?: 'http://127.0.0.1:5000
 define('FLOWISE_URL', getenv('ZEASYS_FLOWISE_URL') ?: 'http://127.0.0.1:3000');
 // El ID del chatflow no es una credencial. Se conserva un valor local de
 // respaldo porque Apache/PHP no siempre hereda las variables de entorno
-// creadas con `setx` hasta reiniciar el proceso de Apache; sin este fallback
-// el chatbot funciona sólo con respuestas básicas y nunca intenta Flowise.
+// creadas con `setx` hasta reiniciar el proceso de Apache.
 define('FLOWISE_CHATFLOW_ID', getenv('ZEASYS_FLOWISE_CHATFLOW_ID') ?: '27d477e0-66b5-4a51-aba0-dcfaf80728c1');
 define('FLOWISE_API_KEY', getenv('ZEASYS_FLOWISE_API_KEY') ?: '');
 

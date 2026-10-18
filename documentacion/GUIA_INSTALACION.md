@@ -23,8 +23,10 @@ Instala en tu computadora los siguientes programas si no los tienes:
 ## 3. Backend PHP
 
 1. Copia toda la carpeta del proyecto en la ruta `c:\xampp\htdocs\ZeaSys`.
-2. Revisa la conexión en `c:\xampp\htdocs\ZeaSys\backend-api\config\database.php`:
-   *(usuario `root`, sin contraseña por defecto)*.
+2. La conexión se configura mediante variables de entorno. Si no defines ninguna,
+   se usan `127.0.0.1:3306`, base `agropredict_db`, usuario `root` y contraseña vacía.
+   Para una instalación distinta define `ZEASYS_DB_HOST`, `ZEASYS_DB_PORT`,
+   `ZEASYS_DB_NAME`, `ZEASYS_DB_USER` y `ZEASYS_DB_PASS` antes de iniciar Apache.
 
 ---
 
@@ -65,7 +67,22 @@ Instala en tu computadora los siguientes programas si no los tienes:
 
 ---
 
-## 6. Acceder a la Aplicación
+## 6. Chatbot Gemini mediante Flowise (opcional para el resto del sistema)
+
+1. Inicia Flowise con el script `iniciar_flowise.bat` y confirma que responde en
+   `http://127.0.0.1:3000`.
+2. En Flowise guarda el chatflow de ZeaSys con Gemini y `Buffer Window Memory`.
+3. PHP usa por defecto el chatflow configurado en `src/Config/aplicacion.php`.
+   Si cambias el ID o proteges Flowise, define `ZEASYS_FLOWISE_URL`,
+   `ZEASYS_FLOWISE_CHATFLOW_ID` y, si corresponde, `ZEASYS_FLOWISE_API_KEY`.
+4. La clave de Gemini se guarda sólo en Flowise; nunca en React, PHP ni Git.
+
+La arquitectura y el formato de respuestas están documentados en
+`documentacion/flowise-hibrido.md`.
+
+---
+
+## 7. Acceder a la Aplicación
 
 Abre tu navegador web e ingresa a:
 ```

@@ -16,7 +16,6 @@ import Configuracion from './views/Configuracion';
 import ChatbotWidget from './components/ChatbotWidget';
 import { AlertTriangle } from 'lucide-react';
 import { authService, cultivosService, simulacionService } from './services/api';
-import './assets/styles.css';
 
 export default function App() {
   const [user, setUser] = useState(null);

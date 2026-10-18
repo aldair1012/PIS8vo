@@ -3,7 +3,7 @@ import {
   Bot, Check, ChevronRight, Copy, Database, Info, Loader2, MessageCircle,
   RotateCcw, Send, Sparkles, Trash2, User, X,
 } from 'lucide-react';
-import { chatService } from '../services/chatService';
+import { chatService } from '../services/api';
 import { normalizarTextoChat } from '../utils/chatText';
 
 const VISTAS = {

@@ -23,7 +23,7 @@ Si Flowise o Gemini no responden, el backend devuelve un error 502 para que el u
 
 El nodo Google Gemini está conectado a `Conversation Chain`, y `Buffer Window Memory` también está conectado a esa cadena. La ventana conserva los últimos 6 intercambios de la misma conversación. Al pulsar **Limpiar conversación**, ZeaSys genera un nuevo identificador y no reutiliza el historial anterior. Streaming está desactivado para evitar respuestas parciales. Si se cambia el modelo o la credencial, guardar el chatflow y probar desde **Chat** en Flowise.
 
-El flujo sólo contiene `Google Gemini`, `Buffer Window Memory` y `Conversation Chain`. Chroma, Ollama, `Prompt Template`, `LLM Chain`, cadenas QA y documentos recuperados no se ejecutan. El backend ya no contiene catálogo agronómico ni reglas de intención.
+El flujo sólo contiene `Google Gemini`, `Buffer Window Memory` y `Conversation Chain`. Chroma, Ollama, `Prompt Template`, `LLM Chain`, cadenas QA y documentos recuperados no se ejecutan. El servicio de chat tampoco mantiene un catálogo de respuestas ni reglas de intención; los catálogos agronómicos que existen en el backend pertenecen a los dashboards y simulaciones.
 
 ## Variables del backend
 

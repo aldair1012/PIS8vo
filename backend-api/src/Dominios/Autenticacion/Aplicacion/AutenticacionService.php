@@ -1,7 +1,6 @@
 <?php
 // src/Dominios/Autenticacion/Aplicacion/AutenticacionService.php — Casos de uso de autenticación.
-// Port verbatim del AuthController legacy (e89067d:backend-api/controllers/AuthController.php):
-// mismos strings, códigos y payloads; echo+exit → return/return-payload y errores → excepciones tipadas.
+// Orquesta los casos de uso de autenticación y perfil.
 declare(strict_types=1);
 
 namespace ZeaSys\Dominios\Autenticacion\Aplicacion;

@@ -2,9 +2,8 @@
 /**
  * Repositorio: CultivoRepositoryMysql
  * ====================================
- * Port de models/Cultivo.php con los cambios mecánicos del plan F03 (Task 10 Step 3):
- * namespace, final + interface, PDO inyectada en el constructor y sin require_once de config.
- * Todo lo demás (métodos, SQL, mensajes) verbatim.
+ * Repositorio MySQL de parcelas y cultivos. Mantiene las consultas del
+ * contrato HTTP y recibe PDO por inyección para aislar la infraestructura.
  */
 
 declare(strict_types=1);

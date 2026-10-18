@@ -2,12 +2,8 @@
 /**
  * Adapter: ClienteMotorFlask
  * ==========================
- * Port verbatim de models/Simulacion.php::predecir() (líneas 16–68): mismo endpoint
- * IA_SERVER_URL . '/predict', mismos timeouts, mismo payload JSON y mismos mensajes
- * de error (cURL / HTTP / JSON inválido). Constructor sin dependencias: usa la
- * constante global IA_SERVER_URL (definida en src/Config/aplicacion.php).
- * El método vive aquí (puerto MotorPrediccionInterface) y NO en el repositorio:
- * así se rompe la violación DIP del modelo legacy.
+ * Cliente HTTP del motor de predicción Flask. Implementa el puerto
+ * MotorPrediccionInterface y mantiene aislada la comunicación externa.
  */
 
 declare(strict_types=1);

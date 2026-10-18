@@ -78,10 +78,6 @@ export const cultivosService = {
     const response = await API.get('/api/cultivos');
     return response.data;
   },
-  obtenerTodos: async () => {
-    const response = await API.get('/api/cultivos');
-    return response.data;
-  },
   crear: async (datos) => {
     const response = await API.post('/api/cultivos', datos);
     return response.data;

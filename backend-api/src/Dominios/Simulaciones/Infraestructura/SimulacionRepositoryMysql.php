@@ -2,12 +2,9 @@
 /**
  * Repositorio: SimulacionRepositoryMysql
  * ======================================
- * Port de models/Simulacion.php con los cambios mecánicos del plan F04 (Task 12 Step 2):
- * namespace, final + interface, PDO inyectada en el constructor (puente getConnection()
- * de deuda ADR-07, igual que UsuarioRepositoryMysql/CultivoRepositoryMysql) y sin
- * require_once de config. SQL, mensajes y firmas verbatim. El método predecir() NO se
- * portó aquí: vive en ClienteMotorFlask (puerto MotorPrediccionInterface) — así se rompe
- * la violación DIP del modelo legacy.
+ * Repositorio MySQL de simulaciones. La predicción vive en ClienteMotorFlask
+ * (puerto MotorPrediccionInterface), por lo que esta clase sólo persiste y
+ * consulta resultados.
  */
 
 declare(strict_types=1);

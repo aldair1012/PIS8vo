@@ -2,16 +2,8 @@
 /**
  * Adapter: GestorMotorIa
  * ======================
- * Port verbatim de helpers/IaServerHelper.php (líneas 8–114): mismos timeouts de cURL,
- * mismos mensajes y misma lógica de arranque vía auto_ia_server.bat.
- * Metamorfosis mecánica: los métodos estáticos pasan a ser de instancia (el puerto
- * GestorMotorIaInterface se inyecta por constructor) y las llamadas self:: pasan a $this->.
- * Único ajuste de ruta: el legacy resolvía la raíz del proyecto como
- * __DIR__ . '/../../' desde backend-api/helpers; aquí el archivo vive 4 niveles más
- * profundo, así que se usan 5 '..' (equivalente real de __DIR__.'/../../' del legacy).
- * Usa la global IA_SERVER_URL (src/Config/aplicacion.php, misma fuente que el legacy).
- * Deuda legacy preservada por paridad (ADR pendiente): sin lock de arranque (dos llamadas
- * concurrentes pueden lanzar el .bat dos veces) y poll síncrono de hasta ~60 s en la petición.
+ * Supervisa la salud del motor Flask y lo inicia con auto_ia_server.bat
+ * cuando una operación lo necesita.
  */
 
 declare(strict_types=1);

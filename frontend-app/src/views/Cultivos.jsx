@@ -124,7 +124,7 @@ export default function Cultivos({ onCultivoChanged, onboardingStep, onNextOnboa
     try {
       setLoading(true);
       setError(null);
-      const res = await cultivosService.obtenerTodos();
+      const res = await cultivosService.listar();
       const list = Array.isArray(res) ? res : (res?.cultivos || []);
       setCultivos(list);
     } catch (err) {
