@@ -9,10 +9,6 @@ import {
   History, 
   LogOut,
   MapPin,
-  Menu,
-  ChevronLeft,
-  ChevronRight,
-  Bot
 } from 'lucide-react';
 
 export default function Sidebar({ vistaActual, setVistaActual, cerrarSesion, menuColapsado, setMenuColapsado }) {

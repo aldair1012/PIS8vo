@@ -48,8 +48,8 @@ final class AutenticacionService
     {
         $data = $p->cuerpo();
 
-        $correo = trim($data['correo'] ?? '');
-        $contrasena = $data['contrasena'] ?? '';
+        $correo = $this->texto($data, 'correo');
+        $contrasena = $this->texto($data, 'contrasena');
 
         if (empty($correo) || empty($contrasena)) {
             throw new ValidacionException('Por favor complete todos los campos.');
@@ -80,7 +80,7 @@ final class AutenticacionService
     {
         $data = $p->cuerpo();
 
-        $idToken = trim($data['id_token'] ?? '');
+        $idToken = $this->texto($data, 'id_token');
         $remember = (bool) ($data['remember'] ?? false);
 
         if (empty($idToken)) {
@@ -112,10 +112,10 @@ final class AutenticacionService
     {
         $data = $p->cuerpo();
 
-        $nombre = trim($data['nombre'] ?? '');
-        $correo = trim($data['correo'] ?? '');
-        $contrasena = $data['contrasena'] ?? '';
-        $confirmar = $data['confirmar_contrasena'] ?? '';
+        $nombre = $this->texto($data, 'nombre');
+        $correo = $this->texto($data, 'correo');
+        $contrasena = $this->texto($data, 'contrasena');
+        $confirmar = $this->texto($data, 'confirmar_contrasena');
 
         if (empty($nombre) || empty($correo) || empty($contrasena)) {
             throw new ValidacionException('Todos los campos son obligatorios.');
@@ -125,8 +125,16 @@ final class AutenticacionService
             throw new ValidacionException('El formato del correo no es válido.');
         }
 
+        if (mb_strlen($nombre) > 100 || mb_strlen($correo) > 150) {
+            throw new ValidacionException('El nombre o el correo superan la longitud permitida.');
+        }
+
         if (strlen($contrasena) < 8) {
             throw new ValidacionException('La contraseña debe tener al menos 8 caracteres.');
+        }
+
+        if (strlen($contrasena) > 72) {
+            throw new ValidacionException('La contraseña no puede superar 72 caracteres.');
         }
 
         if (!preg_match('/[A-Z]/', $contrasena) || !preg_match('/[a-z]/', $contrasena) || !preg_match('/[0-9]/', $contrasena) || !preg_match('/[^A-Za-z0-9]/', $contrasena)) {
@@ -183,18 +191,28 @@ final class AutenticacionService
             throw new RecursoNoEncontradoException('Usuario no encontrado.');
         }
 
-        $nombre = trim($data['nombre'] ?? $userActual['nombre']);
-        $nuevaContrasena = $data['nueva_contrasena'] ?? '';
-        $confirmarNueva = $data['confirmar_nueva_contrasena'] ?? '';
+        $nombre = array_key_exists('nombre', $data)
+            ? $this->texto($data, 'nombre')
+            : (string) $userActual['nombre'];
+        $nuevaContrasena = $this->texto($data, 'nueva_contrasena');
+        $confirmarNueva = $this->texto($data, 'confirmar_nueva_contrasena');
 
         if (empty($nombre)) {
             throw new ValidacionException('El nombre completo es obligatorio.');
+        }
+
+        if (mb_strlen($nombre) > 100) {
+            throw new ValidacionException('El nombre no puede superar 100 caracteres.');
         }
 
         $contrasenaHash = null;
         if (!empty($nuevaContrasena)) {
             if (strlen($nuevaContrasena) < 8) {
                 throw new ValidacionException('La nueva contraseña debe tener al menos 8 caracteres.');
+            }
+
+            if (strlen($nuevaContrasena) > 72) {
+                throw new ValidacionException('La nueva contraseña no puede superar 72 caracteres.');
             }
 
             if (!preg_match('/[A-Z]/', $nuevaContrasena) || !preg_match('/[a-z]/', $nuevaContrasena) || !preg_match('/[0-9]/', $nuevaContrasena) || !preg_match('/[^A-Za-z0-9]/', $nuevaContrasena)) {
@@ -232,10 +250,18 @@ final class AutenticacionService
             throw new NoAutorizadoException();
         }
 
+        $usuarioAnterior = $this->usuarios->obtenerPorId($usuarioId);
+
         // La capa Http extrae $_FILES['foto']; la forma de $archivo la documenta
         // AlmacenAvatarInterface::guardar() (no se duplica aquí).
         $fotoUrl = $this->avatares->guardar($archivo, $usuarioId);
-        $this->usuarios->actualizarFotoPerfil($usuarioId, $fotoUrl, 0);
+        try {
+            $this->usuarios->actualizarFotoPerfil($usuarioId, $fotoUrl, 0);
+        } catch (\Throwable $e) {
+            $this->avatares->eliminar($fotoUrl);
+            throw $e;
+        }
+        $this->avatares->eliminar($usuarioAnterior['foto_perfil'] ?? null);
 
         $userDb = $this->usuarios->obtenerPorId($usuarioId);
 
@@ -253,8 +279,9 @@ final class AutenticacionService
             throw new NoAutorizadoException();
         }
 
-        // Paridad legacy: NO se borra el archivo físico, solo la referencia en BD.
+        $usuarioAnterior = $this->usuarios->obtenerPorId($usuarioId);
         $this->usuarios->actualizarFotoPerfil($usuarioId, null, 0);
+        $this->avatares->eliminar($usuarioAnterior['foto_perfil'] ?? null);
 
         $userDb = $this->usuarios->obtenerPorId($usuarioId);
 
@@ -274,13 +301,19 @@ final class AutenticacionService
 
         $data = $p->cuerpo();
 
-        $fotoUrl = trim($data['foto_url'] ?? '');
+        $fotoUrl = $this->texto($data, 'foto_url');
         if (!empty($fotoUrl)) {
             $fotoUrl = preg_replace('/=s\d+(-c)?$/i', '=s400', $fotoUrl);
         }
 
         if (empty($fotoUrl)) {
             throw new ValidacionException('URL de foto de Google es obligatoria.');
+        }
+
+        $host = strtolower((string) parse_url($fotoUrl, PHP_URL_HOST));
+        $scheme = strtolower((string) parse_url($fotoUrl, PHP_URL_SCHEME));
+        if ($scheme !== 'https' || ($host !== 'googleusercontent.com' && !str_ends_with($host, '.googleusercontent.com'))) {
+            throw new ValidacionException('La URL debe pertenecer a Google y usar HTTPS.');
         }
 
         $this->usuarios->actualizarFotoPerfil($usuarioId, $fotoUrl, 1);
@@ -301,7 +334,9 @@ final class AutenticacionService
         }
 
         try {
+            $usuario = $this->usuarios->obtenerPorId($usuarioId);
             $this->usuarios->eliminarUsuario($usuarioId);
+            $this->avatares->eliminar($usuario['foto_perfil'] ?? null);
             $this->sesion->cerrar();
             return [
                 'success' => true,
@@ -328,5 +363,14 @@ final class AutenticacionService
             'foto_perfil' => $userDb['foto_perfil'] ?? $fotoFallback,
             'es_google'   => $esGoogle ?? (int) ($userDb['es_google'] ?? 0),
         ];
+    }
+
+    private function texto(array $data, string $campo): string
+    {
+        $valor = $data[$campo] ?? '';
+        if (!is_string($valor) && !is_numeric($valor)) {
+            throw new ValidacionException("El campo {$campo} debe ser texto.");
+        }
+        return trim((string) $valor);
     }
 }

@@ -185,6 +185,7 @@ return static function (): Container {
                 $c->get(\ZeaSys\Dominios\Analitica\Dominio\CatalogoAgronomicoInterface::class),
                 $c->get(\ZeaSys\Dominios\Lotes\Dominio\CultivoRepositoryInterface::class),
                 $c->get(\ZeaSys\Dominios\Simulaciones\Dominio\SimulacionRepositoryInterface::class),
+                $c->get(\ZeaSys\Dominios\Terreno\Aplicacion\ServicioDatosTerreno::class),
             )
     );
     $contenedor->registrar(
@@ -243,16 +244,11 @@ return static function (): Container {
             )
     );
 
-    // --- Chat (Subproyecto 2): chatbot con memoria de sesion ---
+    // --- Chat: contexto autorizado → flujo único Gemini en Flowise ---
     $contenedor->registrar(
-        \ZeaSys\Dominios\Chat\Dominio\RouterChatInterface::class,
-        static fn (): \ZeaSys\Dominios\Chat\Infraestructura\RouterChat =>
-            new \ZeaSys\Dominios\Chat\Infraestructura\RouterChat()
-    );
-    $contenedor->registrar(
-        \ZeaSys\Dominios\Chat\Dominio\RedactorInterface::class,
-        static fn (): \ZeaSys\Dominios\Chat\Infraestructura\Redactor =>
-            new \ZeaSys\Dominios\Chat\Infraestructura\Redactor()
+        \ZeaSys\Dominios\Chat\Infraestructura\GeminiFlowise::class,
+        static fn (): \ZeaSys\Dominios\Chat\Infraestructura\GeminiFlowise =>
+            new \ZeaSys\Dominios\Chat\Infraestructura\GeminiFlowise()
     );
     $contenedor->registrar(
         \ZeaSys\Dominios\Chat\Dominio\MemoriaSesionInterface::class,
@@ -263,13 +259,10 @@ return static function (): Container {
         \ZeaSys\Dominios\Chat\Aplicacion\ChatService::class,
         static fn (Container $c): \ZeaSys\Dominios\Chat\Aplicacion\ChatService =>
             new \ZeaSys\Dominios\Chat\Aplicacion\ChatService(
-                $c->get(\ZeaSys\Dominios\Chat\Dominio\RouterChatInterface::class),
-                $c->get(\ZeaSys\Dominios\Chat\Dominio\RedactorInterface::class),
                 $c->get(\ZeaSys\Dominios\Chat\Dominio\MemoriaSesionInterface::class),
                 $c->get(\ZeaSys\Dominios\Lotes\Dominio\CultivoRepositoryInterface::class),
                 $c->get(\ZeaSys\Dominios\Simulaciones\Dominio\SimulacionRepositoryInterface::class),
-                $c->get(\ZeaSys\Dominios\Simulaciones\Explicacion\Aplicacion\ResolutorContextoExplicacion::class),
-                $c->get(\ZeaSys\Dominios\Simulaciones\Explicacion\Aplicacion\ServicioExplicabilidad::class),
+                $c->get(\ZeaSys\Dominios\Chat\Infraestructura\GeminiFlowise::class),
             )
     );
     $contenedor->registrar(

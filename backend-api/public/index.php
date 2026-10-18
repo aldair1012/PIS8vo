@@ -13,6 +13,7 @@ require __DIR__ . '/../src/Kernel/AutoloaderPsr4.php';
 AutoloaderPsr4::registrar(__DIR__ . '/../src');
 
 ManejadorErrores::registrar();
+header_remove('X-Powered-By');
 
 require_once __DIR__ . '/../src/Config/aplicacion.php';
 require_once __DIR__ . '/../src/Config/constantes_negocio.php';
@@ -25,15 +26,21 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'OPTIONS') {
 }
 
 session_name(SESSION_NAME);
+$esHttps = (!empty($_SERVER['HTTPS']) && strtolower((string) $_SERVER['HTTPS']) !== 'off')
+    || (string) ($_SERVER['SERVER_PORT'] ?? '') === '443';
+ini_set('session.use_strict_mode', '1');
+ini_set('session.use_only_cookies', '1');
+ini_set('session.gc_maxlifetime', (string) 2592000);
 session_start([
     'cookie_lifetime' => 0,
-    'cookie_secure'   => false, // desarrollo local
+    'cookie_secure'   => $esHttps,
     'cookie_httponly' => true,
     'cookie_samesite' => 'Lax',
 ]);
 
+$debug = getenv('ZEASYS_DEBUG') === '1';
 error_reporting(E_ALL);
-ini_set('display_errors', '1');
+ini_set('display_errors', $debug ? '1' : '0');
 
 // F01: controladores legacy (globales, sin namespace). Se eliminan fase a fase (F02–F05) y en F06 no queda ninguno.
 // F02: la autenticación ahora se enruta al dominio nuevo (src/Config/rutas.php, Fase F02 del plan).

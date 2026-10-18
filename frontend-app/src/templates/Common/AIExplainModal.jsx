@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, AlertTriangle, Lightbulb, Activity, Cpu, HelpCircle, AlertCircle, FileText, TrendingUp, CheckCircle } from 'lucide-react';
+import { X, AlertTriangle, Lightbulb, Activity, Cpu, HelpCircle, AlertCircle, CheckCircle } from 'lucide-react';
 
 export default function AIExplainModal({ isOpen, onClose, loading, data }) {
   if (!isOpen) return null;
@@ -140,9 +140,9 @@ export default function AIExplainModal({ isOpen, onClose, loading, data }) {
       .trim();
 
     // 2. CASO A: Lista numerada (1), 2), 3) o 1., 2., 3.) o viñetas (•) al inicio de línea
-    const numberPattern = /(?:^|\n)\s*(?:[1-9]\d*[\)\.]|•)\s+/;
+    const numberPattern = /(?:^|\n)\s*(?:[1-9]\d*[).]|•)\s+/;
     if (numberPattern.test(text)) {
-      const tokenRegex = /((?:^|\n)\s*(?:[1-9]\d*[\)\.]|•)\s+)/;
+      const tokenRegex = /((?:^|\n)\s*(?:[1-9]\d*[).]|•)\s+)/;
       const parts = text.split(tokenRegex);
       const intro = parts[0] ? parts[0].trim() : '';
       const items = [];
@@ -613,8 +613,8 @@ export default function AIExplainModal({ isOpen, onClose, loading, data }) {
 
               {/* Alerta de Riesgo / Alerta Clave */}
               {(data?.alerta_clave || data?.alerta) && 
-               (data?.alerta_clave || data?.alerta).toLowerCase() !== 'sin alerta' && 
-               (data?.alerta_clave || data?.alerta).toLowerCase() !== 'sin alertas' && (
+               String(data?.alerta_clave || data?.alerta || '').toLowerCase() !== 'sin alerta' &&
+               String(data?.alerta_clave || data?.alerta || '').toLowerCase() !== 'sin alertas' && (
                 <div style={{
                   display: 'flex',
                   alignItems: 'center',

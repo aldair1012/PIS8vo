@@ -1,4 +1,3 @@
-import React from 'react';
 import { Sprout, BarChart2, ArrowRight, FlaskConical, Leaf } from 'lucide-react';
 
 // Componente para cuando la base de datos está en blanco (ej. usuarios nuevos).

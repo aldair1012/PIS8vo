@@ -1,362 +1,219 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { MessageCircle, X, Send, Bot, User, Loader2 } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import {
+  Bot, Check, ChevronRight, Copy, Database, Info, Loader2, MessageCircle,
+  RotateCcw, Send, Sparkles, Trash2, User, X,
+} from 'lucide-react';
 import { chatService } from '../services/chatService';
+import { normalizarTextoChat } from '../utils/chatText';
 
-const CHIPS_POR_VISTA = {
-  yield: ['Qué significa mi ROI?', 'Cómo mejoro el rendimiento?', 'Cuál es el yield gap?'],
-  scenarios: ['Cuándo sembrar?', 'Qué variedad elegir?', 'Qué riesgo climático hay?'],
-  climate: ['Qué clima hace?', 'Qué plaga afecta mi cultivo?', 'Cuál es el ENSO?'],
-  finance: ['Cuál es mi margen?', 'Cuánto gano por hectárea?', 'Cuál es mi punto de equilibrio?'],
-  simular: ['Qué variables necesito?', 'Qué modelo usar?', 'Cómo interpretar el resultado?'],
-  cultivos: ['Dónde está mi parcela?', 'Qué variedad usar?', 'Cómo registrar un lote?'],
-  history: ['Qué simulaciones tengo?', 'Cuál fue mi mejor rendimiento?'],
-  map: ['Dónde está mi parcela?', 'Qué zona es mejor?'],
-  default: ['Qué significa mi ROI?', 'Cómo mejoro el rendimiento?', 'Qué clima hace?'],
+const VISTAS = {
+  yield: { nombre: 'Productividad', icono: '↗' },
+  scenarios: { nombre: 'Escenarios', icono: '◈' },
+  climate: { nombre: 'Clima', icono: '☼' },
+  finance: { nombre: 'Finanzas', icono: '$' },
+  simular: { nombre: 'Simulación', icono: '◇' },
+  cultivos: { nombre: 'Parcelas', icono: '⌖' },
+  history: { nombre: 'Historial', icono: '◷' },
+  map: { nombre: 'Mapa', icono: '⌖' },
 };
 
-const renderMarkdown = (text) => {
-  const lines = String(text ?? '').split('\n');
-  return lines.map((line, lineIndex) => (
-    <React.Fragment key={lineIndex}>
-      {line.split(/(\*\*[^*]+\*\*)/g).map((segment, segmentIndex) => (
-        segment.startsWith('**') && segment.endsWith('**')
-          ? <strong key={segmentIndex}>{segment.slice(2, -2)}</strong>
-          : segment
-      ))}
-      {lineIndex < lines.length - 1 && <br />}
-    </React.Fragment>
-  ));
+const resumirDashboard = (contextoDashboard, vistaActual, cultivoElegidoId, anioSeleccionado) => {
+  if (!contextoDashboard?.datos || typeof contextoDashboard.datos !== 'object') return null;
+  const mismaVista = String(contextoDashboard.vista ?? '') === String(vistaActual ?? '');
+  const mismaParcela = String(contextoDashboard.cultivoId ?? '') === String(cultivoElegidoId ?? '');
+  const mismoAnio = String(contextoDashboard.anio ?? '') === String(anioSeleccionado ?? '');
+  if (!mismaVista || !mismaParcela || !mismoAnio) return null;
+  const datos = contextoDashboard.datos;
+  const resumen = {
+    vista: contextoDashboard.vista,
+    kpis: datos.kpis || null,
+    datos_base_sistema: datos.datos_base_sistema || null,
+    cultivo_activo: datos.cultivo_activo || null,
+    percentiles: datos.percentiles || null,
+    simulaciones_count: datos.simulaciones_count ?? null,
+  };
+  if (Array.isArray(datos.recomendaciones)) resumen.recomendaciones = datos.recomendaciones.slice(0, 5);
+  if (Array.isArray(datos.ranking)) resumen.ranking = datos.ranking.slice(0, 5);
+  if (Array.isArray(datos.viabilidad_siembra)) resumen.viabilidad_siembra = datos.viabilidad_siembra.slice(0, 8);
+  if (datos.clima_actual) resumen.clima_actual = datos.clima_actual;
+  if (datos.api_source) resumen.api_source = datos.api_source;
+  return resumen;
 };
 
-const ChatbotWidget = ({ vistaActual }) => {
+const leerMensajes = (clave) => {
+  try {
+    const guardado = window.sessionStorage.getItem(clave);
+    return guardado ? JSON.parse(guardado) : [];
+  } catch {
+    return [];
+  }
+};
+
+const renderInline = (line, lineIndex) => String(line).split(/(\*\*[^*]+\*\*)/g).map((segment, segmentIndex) => (
+  segment.startsWith('**') && segment.endsWith('**')
+    ? <strong key={`${lineIndex}-${segmentIndex}`}>{segment.slice(2, -2)}</strong>
+    : segment
+));
+
+const renderMarkdown = (text) => normalizarTextoChat(text).split('\n').map((line, index) => {
+  const limpio = line.trim();
+  if (!limpio) return <div className="zeasys-chat-empty-line" key={index} />;
+  const esLista = /^[-•]\s/.test(limpio);
+  return (
+    <div className={esLista ? 'zeasys-chat-list-item' : 'zeasys-chat-line'} key={index}>
+      {renderInline(esLista ? limpio.replace(/^[-•]\s/, '') : limpio, index)}
+    </div>
+  );
+});
+
+const ChatbotWidget = ({
+  vistaActual,
+  usuarioId,
+  cultivoElegidoId,
+  anioSeleccionado,
+  contextoDashboard,
+  cultivoActivo,
+}) => {
   const [abierto, setAbierto] = useState(false);
-  const [mensajes, setMensajes] = useState([]);
+  const storageKey = `zeasys_chat_gemini_v2_${usuarioId || 'sesion'}_${cultivoElegidoId || 'sin-parcela'}_${anioSeleccionado || 'sin-anio'}`;
+  const [mensajes, setMensajes] = useState(() => leerMensajes(storageKey));
   const [input, setInput] = useState('');
   const [escribiendo, setEscribiendo] = useState(false);
+  const [estadoServicio, setEstadoServicio] = useState('listo');
+  const [mostrarFuente, setMostrarFuente] = useState(false);
+  const [copiado, setCopiado] = useState(false);
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
-
-  const chips = CHIPS_POR_VISTA[vistaActual] || CHIPS_POR_VISTA.default;
+  const vista = VISTAS[vistaActual] || { nombre: 'ZeaSys', icono: '✦' };
+  const dashboard = useMemo(() => resumirDashboard(contextoDashboard, vistaActual, cultivoElegidoId, anioSeleccionado), [contextoDashboard, vistaActual, cultivoElegidoId, anioSeleccionado]);
+  const nombreParcela = cultivoActivo?.nombre_parcela || 'Parcela seleccionada';
 
   useEffect(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
+    try { window.sessionStorage.setItem(storageKey, JSON.stringify(mensajes.slice(-40))); } catch { /* noop */ }
+  }, [mensajes, storageKey]);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }, [mensajes, escribiendo]);
 
   useEffect(() => {
-    if (abierto && inputRef.current) {
-      inputRef.current.focus();
-    }
+    if (abierto) inputRef.current?.focus();
   }, [abierto]);
 
   const enviarPregunta = async (pregunta) => {
-    if (!pregunta.trim() || escribiendo) return;
-
-    const nuevoMsg = { rol: 'usuario', texto: pregunta };
-    setMensajes(prev => [...prev, nuevoMsg]);
+    const preguntaTexto = normalizarTextoChat(pregunta).trim();
+    if (!preguntaTexto || escribiendo) return;
+    setMensajes((prev) => [...prev, { rol: 'usuario', texto: preguntaTexto }]);
     setInput('');
     setEscribiendo(true);
-
+    setEstadoServicio('consultando');
     try {
-      // Delay simulado para naturalidad
-      await new Promise(r => setTimeout(r, 300));
-      const data = await chatService.preguntar(pregunta, vistaActual);
-      setMensajes(prev => [...prev, {
+      await new Promise((resolve) => setTimeout(resolve, 220));
+      const data = await chatService.preguntar(preguntaTexto, vistaActual, cultivoElegidoId, anioSeleccionado, dashboard);
+      const texto = normalizarTextoChat(data?.texto ?? data?.respuesta ?? data?.answer);
+      setMensajes((prev) => [...prev, {
         rol: 'asistente',
-        texto: data.texto || 'No pude generar una respuesta.',
-        secciones: data.secciones || [],
-        accion: data.accion,
+        texto: texto || 'No pude generar una respuesta con los datos disponibles.',
+        fuente: data?.fuente_datos || null,
       }]);
-    } catch {
-      setMensajes(prev => [...prev, {
+      setEstadoServicio('conectado');
+    } catch (error) {
+      const codigo = error?.response?.status;
+      const sesionExpirada = codigo === 401;
+      setMensajes((prev) => [...prev, {
         rol: 'asistente',
-        texto: 'Ocurrió un error al procesar tu pregunta. Intenta de nuevo.',
+        texto: sesionExpirada
+          ? 'Tu sesión expiró. Vuelve a iniciar sesión para continuar usando el asistente.'
+          : codigo === 502
+            ? 'Gemini no está disponible en este momento. Verifica que Flowise esté iniciado y que la credencial de Gemini tenga cuota; no se mostrará una respuesta predeterminada.'
+            : 'No pude conectar con el flujo de Gemini. Revisa el estado de Flowise e inténtalo de nuevo.',
+        error: true,
+        pregunta: preguntaTexto,
       }]);
+      setEstadoServicio(sesionExpirada ? 'sesion' : 'error');
     } finally {
       setEscribiendo(false);
     }
   };
 
-  const handleKeyDown = (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      enviarPregunta(input);
-    }
+  const copiarUltimaRespuesta = async () => {
+    const ultima = [...mensajes].reverse().find((mensaje) => mensaje.rol === 'asistente' && !mensaje.error);
+    if (!ultima?.texto) return;
+    try {
+      await navigator.clipboard.writeText(ultima.texto);
+      setCopiado(true);
+      window.setTimeout(() => setCopiado(false), 1600);
+    } catch { setCopiado(false); }
   };
 
   const limpiarChat = () => {
     setMensajes([]);
+    setEstadoServicio('listo');
+    try { window.sessionStorage.removeItem(storageKey); } catch { /* noop */ }
+    chatService.limpiar().catch(() => { /* El historial local ya quedó limpio. */ });
   };
+
+  const estadoTexto = {
+    listo: 'Gemini listo para analizar',
+    consultando: 'Analizando tu pregunta…',
+    conectado: 'Respuesta directa de Gemini',
+    error: 'Flujo Gemini no disponible',
+    sesion: 'Sesión expirada',
+  }[estadoServicio] || 'Listo para analizar';
 
   return (
     <>
-      {/* Botón flotante */}
+      {abierto && <button type="button" className="zeasys-chat-backdrop" aria-label="Cerrar asistente" onClick={() => setAbierto(false)} />}
       <button
-        onClick={() => setAbierto(!abierto)}
-          type="button"
-          aria-expanded={abierto}
-          aria-controls="zeasys-chat-panel"
-        style={{
-          position: 'fixed',
-          bottom: '1.5rem',
-          right: '1.5rem',
-          width: '56px',
-          height: '56px',
-          borderRadius: '50%',
-          background: abierto
-            ? 'linear-gradient(135deg, #ef4444, #dc2626)'
-            : 'linear-gradient(135deg, #22c55e, #16a34a)',
-          color: 'white',
-          border: 'none',
-          cursor: 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
-          zIndex: 9999,
-          transition: 'all 0.3s ease',
-          transform: abierto ? 'rotate(90deg)' : 'rotate(0deg)',
-        }}
-        aria-label={abierto ? 'Cerrar chat' : 'Abrir asistente'}
+        type="button"
+        className={`zeasys-chat-tab ${abierto ? 'is-open' : ''}`}
+        onClick={() => setAbierto((estado) => !estado)}
+        aria-expanded={abierto}
+        aria-controls="zeasys-chat-panel"
+        aria-label={abierto ? 'Cerrar asistente ZeaSys' : 'Abrir asistente ZeaSys'}
       >
-        {abierto ? <X size={24} /> : <MessageCircle size={24} />}
+        {abierto ? <X size={18} /> : <MessageCircle size={18} />}<span>Asistente</span>
       </button>
 
-      {/* Panel de chat */}
-      {abierto && (
-        <div
-          id="zeasys-chat-panel"
-          role="region"
-          aria-label="Asistente ZeaSys"
-          style={{
-            position: 'fixed',
-            bottom: '5.5rem',
-            right: '1.5rem',
-            width: '380px',
-            maxWidth: 'calc(100vw - 3rem)',
-            height: '520px',
-            maxHeight: 'calc(100vh - 8rem)',
-            background: 'var(--card-bg, #1e293b)',
-            borderRadius: '16px',
-            boxShadow: '0 16px 48px rgba(0,0,0,0.4)',
-            display: 'flex',
-            flexDirection: 'column',
-            zIndex: 9998,
-            overflow: 'hidden',
-            border: '1px solid var(--border, rgba(255,255,255,0.1))',
-          }}
-        >
-          {/* Header */}
-          <div style={{
-            padding: '0.875rem 1rem',
-            background: 'linear-gradient(135deg, #22c55e, #16a34a)',
-            color: 'white',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            flexShrink: 0,
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <Bot size={20} />
-              <span style={{ fontWeight: 700, fontSize: '0.95rem' }}>Asistente ZeaSys</span>
-            </div>
-            <button
-              onClick={limpiarChat}
-                            type="button"
-                            aria-label="Limpiar conversación"
-              style={{
-                background: 'rgba(255,255,255,0.2)',
-                border: 'none',
-                color: 'white',
-                borderRadius: '6px',
-                padding: '0.25rem 0.5rem',
-                cursor: 'pointer',
-                fontSize: '0.7rem',
-              }}
-            >
-              Limpiar
-            </button>
+      <aside id="zeasys-chat-panel" className={`zeasys-chat-panel ${abierto ? 'is-open' : ''}`} role="dialog" aria-label="Asistente de ZeaSys" aria-hidden={!abierto}>
+        <header className="zeasys-chat-header">
+          <div className="zeasys-chat-brand">
+            <div className="zeasys-chat-avatar"><Bot size={20} /></div>
+            <div><div className="zeasys-chat-title">Asistente ZeaSys</div><div className={`zeasys-chat-status is-${estadoServicio}`}><span className="zeasys-chat-status-dot" /> {estadoTexto}</div></div>
           </div>
-
-          {/* Mensajes */}
-          <div style={{
-            flex: 1,
-            overflowY: 'auto',
-            padding: '1rem',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '0.75rem',
-          }} role="log" aria-label="Mensajes del asistente" aria-live="polite">
-            {mensajes.length === 0 && (
-              <div style={{ textAlign: 'center', color: 'var(--text-muted, #94a3b8)', padding: '2rem 1rem', fontSize: '0.85rem' }}>
-                <Bot size={40} style={{ margin: '0 auto 0.75rem', opacity: 0.5 }} />
-                <p style={{ margin: 0, fontWeight: 600 }}>Hola, soy el asistente de ZeaSys</p>
-                <p style={{ margin: '0.5rem 0 0', fontSize: '0.78rem', opacity: 0.8 }}>
-                  Pregúntame sobre indicadores, clima, costos, plagas o tu parcela.
-                </p>
-              </div>
-            )}
-
-            {mensajes.map((msg, idx) => (
-              <div
-                key={idx}
-                style={{
-                  display: 'flex',
-                  gap: '0.5rem',
-                  alignItems: 'flex-start',
-                  flexDirection: msg.rol === 'usuario' ? 'row-reverse' : 'row',
-                }}
-              >
-                <div style={{
-                  width: '28px',
-                  height: '28px',
-                  borderRadius: '50%',
-                  background: msg.rol === 'usuario' ? '#3b82f6' : '#22c55e',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0,
-                }}>
-                  {msg.rol === 'usuario' ? <User size={14} color="white" /> : <Bot size={14} color="white" />}
-                </div>
-                <div
-                  style={{
-                    maxWidth: '80%',
-                    padding: '0.625rem 0.875rem',
-                    borderRadius: '12px',
-                    fontSize: '0.82rem',
-                    lineHeight: 1.5,
-                    background: msg.rol === 'usuario'
-                      ? 'linear-gradient(135deg, #3b82f6, #2563eb)'
-                      : 'var(--card-bg-secondary, rgba(255,255,255,0.06))',
-                    color: msg.rol === 'usuario' ? 'white' : 'var(--text-primary, #e2e8f0)',
-                    borderBottomRightRadius: msg.rol === 'usuario' ? '4px' : '12px',
-                    borderBottomLeftRadius: msg.rol === 'usuario' ? '12px' : '4px',
-                  }}
-                  dangerouslySetInnerHTML={{ __html: renderMarkdown(msg.texto) }}
-                />
-              </div>
-            ))}
-
-            {escribiendo && (
-              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start' }}>
-                <div style={{
-                  width: '28px',
-                  height: '28px',
-                  borderRadius: '50%',
-                  background: '#22c55e',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0,
-                }}>
-                  <Bot size={14} color="white" />
-                </div>
-                <div style={{
-                  padding: '0.625rem 0.875rem',
-                  borderRadius: '12px',
-                  background: 'var(--card-bg-secondary, rgba(255,255,255,0.06))',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.25rem',
-                }}>
-                  <Loader2 size={14} style={{ animation: 'spin 1s linear infinite', color: '#22c55e' }} />
-                  <span style={{ fontSize: '0.78rem', color: 'var(--text-muted, #94a3b8)' }}>Escribiendo...</span>
-                </div>
-              </div>
-            )}
-
-            <div ref={messagesEndRef} />
+          <div className="zeasys-chat-header-actions">
+            <button type="button" onClick={copiarUltimaRespuesta} disabled={!mensajes.length} aria-label="Copiar última respuesta" title="Copiar última respuesta">{copiado ? <Check size={16} /> : <Copy size={16} />}</button>
+            <button type="button" onClick={limpiarChat} disabled={!mensajes.length} aria-label="Limpiar conversación" title="Limpiar conversación"><Trash2 size={16} /></button>
+            <button type="button" onClick={() => setAbierto(false)} aria-label="Cerrar asistente"><X size={18} /></button>
           </div>
+        </header>
 
-          {/* Chips contextuales */}
-          {mensajes.length === 0 && (
-            <div style={{
-              padding: '0 1rem 0.5rem',
-              display: 'flex',
-              flexWrap: 'wrap',
-              gap: '0.375rem',
-              flexShrink: 0,
-            }}>
-              {chips.map((chip, idx) => (
-                <button
-                  type="button"
-                  key={idx}
-                  onClick={() => enviarPregunta(chip)}
-                  disabled={escribiendo}
-                  style={{
-                    background: 'rgba(34, 197, 94, 0.12)',
-                    border: '1px solid rgba(34, 197, 94, 0.3)',
-                    color: '#22c55e',
-                    borderRadius: '16px',
-                    padding: '0.3rem 0.625rem',
-                    fontSize: '0.72rem',
-                    cursor: escribiendo ? 'not-allowed' : 'pointer',
-                    transition: 'all 0.2s',
-                    opacity: escribiendo ? 0.5 : 1,
-                  }}
-                >
-                  {chip}
-                </button>
-              ))}
-            </div>
-          )}
-
-          {/* Input */}
-          <div style={{
-            padding: '0.75rem 1rem',
-            borderTop: '1px solid var(--border, rgba(255,255,255,0.1))',
-            display: 'flex',
-            gap: '0.5rem',
-            flexShrink: 0,
-          }}>
-            <input
-              aria-label="Escribe tu pregunta al asistente"
-              ref={inputRef}
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Escribe tu pregunta..."
-              disabled={escribiendo}
-              style={{
-                flex: 1,
-                padding: '0.625rem 0.875rem',
-                borderRadius: '10px',
-                border: '1px solid var(--border, rgba(255,255,255,0.15))',
-                background: 'var(--input-bg, rgba(255,255,255,0.05))',
-                color: 'var(--text-primary, #e2e8f0)',
-                fontSize: '0.82rem',
-                outline: 'none',
-              }}
-            />
-            <button
-              onClick={() => enviarPregunta(input)}
-                            type="button"
-                            aria-label={escribiendo ? 'Enviando pregunta' : 'Enviar pregunta'}
-              disabled={escribiendo || !input.trim()}
-              style={{
-                width: '40px',
-                height: '40px',
-                borderRadius: '10px',
-                background: escribiendo || !input.trim()
-                  ? 'rgba(34, 197, 94, 0.3)'
-                  : 'linear-gradient(135deg, #22c55e, #16a34a)',
-                color: 'white',
-                border: 'none',
-                cursor: escribiendo || !input.trim() ? 'not-allowed' : 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0,
-              }}
-            >
-              {escribiendo ? <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> : <Send size={16} />}
-            </button>
+        <div className="zeasys-chat-context">
+          <div className="zeasys-chat-context-row">
+            <span className="zeasys-chat-context-icon">{vista.icono}</span>
+            <div><span className="zeasys-chat-context-label">Panel actual</span><strong>{vista.nombre}</strong></div>
+            <ChevronRight size={15} className="zeasys-chat-context-arrow" />
+            <div><span className="zeasys-chat-context-label">Parcela</span><strong>{nombreParcela}</strong></div>
           </div>
+          <button type="button" className="zeasys-chat-source-toggle" onClick={() => setMostrarFuente((estado) => !estado)}><Database size={13} /> {dashboard ? 'Dashboard enviado a Gemini' : 'Pregunta enviada a Gemini'} <Info size={13} /></button>
+          {mostrarFuente && <div className="zeasys-chat-source-detail"><strong>Contexto enviado al flujo</strong><span>{dashboard ? 'Gemini recibe la pregunta, la parcela, el año y las cifras visibles del dashboard para responder directamente con ese contexto.' : 'Gemini recibe la pregunta y los datos autorizados disponibles. Si falta una medición, debe indicarlo sin inventarla.'}</span></div>}
         </div>
-      )}
+
+        <div className="zeasys-chat-messages" role="log" aria-live="polite" aria-label="Conversación con el asistente">
+          {mensajes.length === 0 && <div className="zeasys-chat-welcome"><div className="zeasys-chat-welcome-icon"><Sparkles size={21} /></div><h2>¿Qué quieres analizar?</h2><p>Escribe cualquier pregunta con lenguaje natural. Gemini responderá usando la parcela, el panel y las cifras que tienes seleccionadas.</p></div>}
+
+          {mensajes.map((mensaje, index) => <div className={`zeasys-chat-message ${mensaje.rol === 'usuario' ? 'from-user' : 'from-assistant'}`} key={`${mensaje.rol}-${index}`}><div className="zeasys-chat-message-avatar">{mensaje.rol === 'usuario' ? <User size={14} /> : <Bot size={14} />}</div><div className="zeasys-chat-message-content"><div className="zeasys-chat-message-role">{mensaje.rol === 'usuario' ? 'Tú' : 'Gemini · ZeaSys'}</div><div className="zeasys-chat-bubble">{renderMarkdown(mensaje.texto)}</div>{mensaje.error && <button type="button" className="zeasys-chat-retry" onClick={() => enviarPregunta(mensaje.pregunta)}><RotateCcw size={13} /> Reintentar</button>}{mensaje.fuente && <div className="zeasys-chat-message-source"><Database size={12} /> Respuesta directa del flujo Gemini</div>}</div></div>)}
+
+          {escribiendo && <div className="zeasys-chat-message from-assistant"><div className="zeasys-chat-message-avatar"><Bot size={14} /></div><div className="zeasys-chat-message-content"><div className="zeasys-chat-message-role">Gemini · ZeaSys</div><div className="zeasys-chat-bubble zeasys-chat-typing"><Loader2 size={15} /><span>Analizando tus datos…</span></div></div></div>}
+          <div ref={messagesEndRef} />
+        </div>
+
+        <form className="zeasys-chat-composer" onSubmit={(evento) => { evento.preventDefault(); enviarPregunta(input); }}>
+          <textarea ref={inputRef} aria-label="Escribe tu pregunta al asistente" value={input} onChange={(evento) => setInput(evento.target.value)} onKeyDown={(evento) => { if (evento.key === 'Enter' && !evento.shiftKey) { evento.preventDefault(); enviarPregunta(input); } }} placeholder="Escribe una pregunta sobre tu parcela…" rows={1} disabled={escribiendo} />
+          <button type="submit" className="zeasys-chat-send" disabled={escribiendo || !input.trim()} aria-label="Enviar pregunta">{escribiendo ? <Loader2 size={17} /> : <Send size={17} />}</button>
+          <div className="zeasys-chat-composer-hint">Enter para enviar · Shift + Enter para una nueva línea</div>
+        </form>
+      </aside>
     </>
   );
 };

@@ -1,26 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { dssService, simulacionService } from '../services/api';
 import ClimateLine from '../templates/Charts/ClimateLine';
 import CalendarGrid from '../templates/Common/CalendarGrid';
 import InfoModal from '../templates/Common/InfoModal';
-import InteractiveKPI from '../templates/Common/InteractiveKPI';
 import AIExplainModal from '../templates/Common/AIExplainModal';
 import EmptyDashboard from '../templates/Common/EmptyDashboard';
-import usarExplicacionIA from '../hooks/usarExplicacionIA';
+import useExplicacionIA from '../hooks/usarExplicacionIA';
 import { 
-  CloudRain, 
-  Thermometer, 
-  Droplet, 
-  Activity, 
-  Compass,
-  Sparkles,
   CheckCircle,
   AlertTriangle,
-  Sprout,
-  Flame
 } from 'lucide-react';
 
-export default function DashboardClimate({ cultivoElegidoId, anioSeleccionado, onNavigate }) {
+export default function DashboardClimate({ cultivoElegidoId, anioSeleccionado, onNavigate, onDashboardData }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -33,7 +24,7 @@ export default function DashboardClimate({ cultivoElegidoId, anioSeleccionado, o
     datosIa,
     pedirExplicacionIa,
     setRespuestasIaGuardadas
-  } = usarExplicacionIA(cultivoElegidoId, anioSeleccionado);
+  } = useExplicacionIA(cultivoElegidoId, anioSeleccionado);
 
   useEffect(() => {
     if (data && data.kpis && data.kpis.indice_riesgo) {
@@ -65,7 +56,7 @@ export default function DashboardClimate({ cultivoElegidoId, anioSeleccionado, o
       };
       preload();
     }
-  }, [data, cultivoElegidoId]);
+  }, [data, cultivoElegidoId, setRespuestasIaGuardadas]);
 
   useEffect(() => {
     async function loadData() {
@@ -74,7 +65,7 @@ export default function DashboardClimate({ cultivoElegidoId, anioSeleccionado, o
       try {
         const res = await dssService.getClimateData(cultivoElegidoId, anioSeleccionado);
         setData(res);
-      } catch (err) {
+      } catch {
         setError('Error al cargar datos de riesgo climático.');
       } finally {
         setLoading(false);
@@ -82,6 +73,10 @@ export default function DashboardClimate({ cultivoElegidoId, anioSeleccionado, o
     }
     loadData();
   }, [cultivoElegidoId, anioSeleccionado]);
+
+  useEffect(() => {
+    if (data && !data.sin_datos && onDashboardData) onDashboardData(data);
+  }, [data, onDashboardData]);
 
   if (loading) {
     return <div className="flex-center" style={{ height: '70vh', color: 'var(--text-muted)' }}>Cargando DSS Climático...</div>;
@@ -95,7 +90,7 @@ export default function DashboardClimate({ cultivoElegidoId, anioSeleccionado, o
     return <EmptyDashboard tipo="climate" onGoToSimulation={() => onNavigate?.('simular')} />;
   }
 
-  const { kpis, api_source, clima_actual, timeline_anomalia, agua_estratos, timeline_fenologico, fecha_siembra } = data || {};
+  const { kpis, timeline_anomalia, agua_estratos, timeline_fenologico, fecha_siembra } = data || {};
 
   // Helper for safe date parsing across browsers
   const parseLocalDate = (dateStr) => {

@@ -1,17 +1,20 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from 'lucide-react';
 
-export default function CalendarGrid({ events = [], initialDate = new Date(), title = "", type = "fenologico" }) {
+export default function CalendarGrid({ events = [], initialDate = new Date(), title = "" }) {
   const [currentDate, setCurrentDate] = useState(initialDate);
   const [selectedCell, setSelectedCell] = useState(null);
   const [popoverData, setPopoverData] = useState(null);
   const calendarRef = useRef(null);
 
   useEffect(() => {
-    setCurrentDate(initialDate);
-    setPopoverData(null);
-    setSelectedCell(null);
+    const reset = setTimeout(() => {
+      setCurrentDate(initialDate);
+      setPopoverData(null);
+      setSelectedCell(null);
+    }, 0);
+    return () => clearTimeout(reset);
   }, [initialDate]);
 
   useEffect(() => {
@@ -101,58 +104,14 @@ export default function CalendarGrid({ events = [], initialDate = new Date(), ti
 
   const getEventsForDate = (date) => {
     const cellTime = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
-    
-    const matched = events.filter(event => {
-      const start = new Date(event.start.getFullYear(), event.start.getMonth(), event.start.getDate()).getTime();
-      const end = new Date(event.end.getFullYear(), event.end.getMonth(), event.end.getDate()).getTime();
-      return cellTime >= start && cellTime <= end;
+    return events.filter((event) => {
+      const start = new Date(event.start);
+      const end = new Date(event.end);
+      if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return false;
+      const startTime = new Date(start.getFullYear(), start.getMonth(), start.getDate()).getTime();
+      const endTime = new Date(end.getFullYear(), end.getMonth(), end.getDate()).getTime();
+      return cellTime >= startTime && cellTime <= endTime;
     });
-
-    if (matched.length > 0) return matched;
-
-    // Generador dinámico variado por día para evitar mostrar solo casillas verdes (bajo)
-    const day = date.getDate();
-    let color = 'success';
-    let title = 'Ventana Agroclimática Favorable';
-    let desc = 'Condiciones de temperatura y humedad en rango óptimo.';
-
-    if (type === 'siembra') {
-      if (day <= 10) {
-        color = 'success';
-        title = 'Siembra Temprana (Recomendada)';
-        desc = 'Humedad de germinación en nivel idóneo.';
-      } else if (day <= 20) {
-        color = 'warning';
-        title = 'Siembra Media (Viabilidad Moderada)';
-        desc = 'Requiere monitoreo de precipitación semanal.';
-      } else {
-        color = 'danger';
-        title = 'Siembra Tardía (Riesgo Alto)';
-        desc = 'Alto riesgo de estrés hídrico en fase crítica.';
-      }
-    } else {
-      if (day >= 26 || day === 14 || day === 15) {
-        color = 'danger';
-        title = 'Alerta de Riesgo Climático / Plaga';
-        desc = 'Exceso de humedad foliar con riesgo de fitopatologías.';
-      } else if (day >= 18 || day === 7 || day === 8) {
-        color = 'warning';
-        title = 'Ventana de Alerta Térmica';
-        desc = 'Monitorear estrés por temperatura diurna elevada.';
-      } else {
-        color = 'success';
-        title = 'Condición Favorable';
-        desc = 'Fase vegetativa en óptimo estado de crecimiento.';
-      }
-    }
-
-    return [{
-      title,
-      description: desc,
-      color,
-      start: date,
-      end: date
-    }];
   };
 
   const getEventBadgeStyle = (colorName, isLight) => {
@@ -186,51 +145,6 @@ export default function CalendarGrid({ events = [], initialDate = new Date(), ti
           bar: '#10b981'
         };
     }
-  };
-
-  const getPotentialDiseases = (evt, date) => {
-    const color = evt?.color || 'success';
-    const title = (evt?.title || '').toLowerCase();
-    const day = date ? date.getDate() : 15;
-
-    let riskLevel = 'BAJO';
-    let confidence = '92% (Favorable)';
-    let pests = '';
-    let action = '';
-
-    if (color === 'danger') {
-      riskLevel = 'ALTO';
-      confidence = '88% (Alerta Crítica)';
-      if (title.includes('humedad') || title.includes('lluvia') || title.includes('inundación') || day >= 25) {
-        pests = 'Tizón Foliar (Helminthosporium maydis) y Pudrición de Mazorca (Fusarium verticillioides).';
-        action = 'Monitoreo diario de manchas foliares y aplicación preventiva de fungicida triazol.';
-      } else {
-        pests = 'Gusano Cogollero (Spodoptera frugiperda) e Infestación de Mancha de Asfalto (Phyllachora maydis).';
-        action = 'Aplicación focalizada de Bacillus thuringiensis o spinosad antes de la etapa V8.';
-      }
-    } else if (color === 'warning') {
-      riskLevel = 'MEDIO';
-      confidence = '75% (Moderado)';
-      if (title.includes('térmic') || title.includes('calor') || title.includes('sequía')) {
-        pests = 'Chicharrita del Maíz (Dalbulus maidis - vector de Achaparramiento) y Ácaros (Tetranychus spp.).';
-        action = 'Instalación de trampas cromáticas amarillas e inspección del envés foliar.';
-      } else {
-        pests = 'Gusano Elotero (Helicoverpa zea) y Roya Común del Maíz (Puccinia sorghi).';
-        action = 'Monitoreo de oviposición en barbas de la mazorca e higienización de drenajes.';
-      }
-    } else {
-      riskLevel = 'BAJO';
-      confidence = '95% (Condición Óptima)';
-      pests = 'Gusano Trozador (Agrotis ipsilon - presencia mínima controlada) y Microfauna benéfica (Trichogramma spp.).';
-      action = 'Mantener monitoreo de rutina semanal y aplicación de nutrición foliar de mantenimiento.';
-    }
-
-    return {
-      riskLevel,
-      confidence,
-      pests,
-      action
-    };
   };
 
   useEffect(() => {
@@ -407,53 +321,6 @@ export default function CalendarGrid({ events = [], initialDate = new Date(), ti
     );
   };
 
-  const getRecommendedHybrids = (date, evtColor) => {
-    const month = date ? date.getMonth() : 0;
-    const isWetSeason = month >= 0 && month <= 4; // Enero - Mayo (Invierno/Lluvia)
-    const isDrySeason = month >= 5 && month <= 9; // Junio - Octubre (Verano/Seco/Riego)
-
-    if (isWetSeason) {
-      if (evtColor === 'success') {
-        return [
-          { name: 'DK-7088', tag: 'Alto Rendimiento en Lluvia', color: '#60a5fa', bg: 'rgba(59, 130, 246, 0.15)', border: 'rgba(59, 130, 246, 0.3)' },
-          { name: 'Pioneer P30F53', tag: 'Tolerante Humedad Foliar', color: '#c084fc', bg: 'rgba(168, 85, 247, 0.15)', border: 'rgba(168, 85, 247, 0.3)' }
-        ];
-      } else if (evtColor === 'warning') {
-        return [
-          { name: 'ADV-9313', tag: 'Tolerante Mancha de Asfalto', color: '#fbbf24', bg: 'rgba(245, 158, 11, 0.15)', border: 'rgba(245, 158, 11, 0.3)' },
-          { name: 'Iniap H-551', tag: 'Estabilidad en Suelo Húmedo', color: '#34d399', bg: 'rgba(52, 211, 153, 0.15)', border: 'rgba(52, 211, 153, 0.3)' }
-        ];
-      } else {
-        return [
-          { name: 'Iniap H-551', tag: 'Ciclo Precoz / Rápido', color: '#f87171', bg: 'rgba(239, 68, 68, 0.15)', border: 'rgba(239, 68, 68, 0.3)' },
-          { name: 'Pioneer P4082', tag: 'Resistente Encharcamiento', color: '#fb7185', bg: 'rgba(251, 113, 133, 0.15)', border: 'rgba(251, 113, 133, 0.3)' }
-        ];
-      }
-    } else if (isDrySeason) {
-      if (evtColor === 'success') {
-        return [
-          { name: 'Trueno', tag: 'Tolerante Sequía y Calor', color: '#38bdf8', bg: 'rgba(56, 189, 248, 0.15)', border: 'rgba(56, 189, 248, 0.3)' },
-          { name: 'Pioneer P4285W', tag: 'Alta Eficiencia de Riego', color: '#a78bfa', bg: 'rgba(167, 139, 250, 0.15)', border: 'rgba(167, 139, 250, 0.3)' }
-        ];
-      } else if (evtColor === 'warning') {
-        return [
-          { name: 'DK-7508', tag: 'Resistente Estrés Térmico', color: '#fbbf24', bg: 'rgba(245, 158, 11, 0.15)', border: 'rgba(245, 158, 11, 0.3)' },
-          { name: 'Morgan 704', tag: 'Buena Cobertura de Mazorca', color: '#34d399', bg: 'rgba(52, 211, 153, 0.15)', border: 'rgba(52, 211, 153, 0.3)' }
-        ];
-      } else {
-        return [
-          { name: 'Pioneer P4082', tag: 'Ciclo Corto en Riego', color: '#f87171', bg: 'rgba(239, 68, 68, 0.15)', border: 'rgba(239, 68, 68, 0.3)' },
-          { name: 'AG-8088', tag: 'Bajo Requerimiento Hídrico', color: '#fb7185', bg: 'rgba(251, 113, 133, 0.15)', border: 'rgba(251, 113, 133, 0.3)' }
-        ];
-      }
-    } else {
-      return [
-        { name: 'DK-7088', tag: 'Transición Temprana', color: '#60a5fa', bg: 'rgba(59, 130, 246, 0.15)', border: 'rgba(59, 130, 246, 0.3)' },
-        { name: 'Trueno', tag: 'Doble Propósito', color: '#34d399', bg: 'rgba(52, 211, 153, 0.15)', border: 'rgba(52, 211, 153, 0.3)' }
-      ];
-    }
-  };
-
   const isLight = typeof document !== 'undefined' && document.body.classList.contains('light-theme');
 
   return (
@@ -498,6 +365,7 @@ export default function CalendarGrid({ events = [], initialDate = new Date(), ti
               {monthNames[month]} <span style={{ fontWeight: 500, color: 'var(--text-subtle)' }}>{year}</span>
             </h3>
             {title && <p style={{ fontSize: '0.68rem', color: 'var(--text-muted)', margin: '0.1rem 0 0 0' }}>{title}</p>}
+            {events.length === 0 && <p role="status" style={{ fontSize: '0.68rem', color: 'var(--text-muted)', margin: '0.1rem 0 0 0' }}>Sin datos para este periodo.</p>}
           </div>
         </div>
 
@@ -654,26 +522,8 @@ export default function CalendarGrid({ events = [], initialDate = new Date(), ti
               {/* Status Badge Chip */}
               {hasEvents ? (
                 dateEvents.slice(0, 1).map((evt, idx) => {
-                  let label = 'bajo';
+                  const label = evt.color === 'danger' ? 'alerta' : (evt.color === 'warning' ? 'precaución' : 'evento');
                   const bStyle = getEventBadgeStyle(evt.color, isLight);
-                  
-                  if (type === 'siembra') {
-                    if (evt.color === 'success') {
-                      label = 'alta';
-                    } else if (evt.color === 'warning') {
-                      label = 'media';
-                    } else {
-                      label = 'baja';
-                    }
-                  } else {
-                    if (evt.color === 'danger') {
-                      label = 'alto';
-                    } else if (evt.color === 'warning') {
-                      label = 'medio';
-                    } else {
-                      label = 'bajo';
-                    }
-                  }
 
                   return (
                     <div 
@@ -789,15 +639,9 @@ export default function CalendarGrid({ events = [], initialDate = new Date(), ti
                   }} />
                   {(() => {
                     const cName = evt?.color;
-                    if (type === 'siembra') {
-                      if (cName === 'success') return 'Viabilidad Alta (Recomendada)';
-                      if (cName === 'warning') return 'Viabilidad Moderada';
-                      return 'Viabilidad Baja (Riesgosa)';
-                    } else {
-                      if (cName === 'danger') return 'Riesgo Fitosanitario Alto';
-                      if (cName === 'warning') return 'Riesgo Moderado';
-                      return 'Condición Favorable (Riesgo Bajo)';
-                    }
+                    if (cName === 'danger') return 'Alerta informada';
+                    if (cName === 'warning') return 'Precaución informada';
+                    return 'Evento informado';
                   })()}
                 </span>
               </div>
@@ -829,114 +673,11 @@ export default function CalendarGrid({ events = [], initialDate = new Date(), ti
             {/* Formatted Agronomic Description / Bullet Cards */}
             {renderCalendarDescription(evt?.description)}
 
-            {/* Structured Agronomic Content in 2 Compact Cards */}
-            {type === 'siembra' ? (
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: '1fr 1fr',
-                gap: '0.55rem',
-                paddingTop: '0.55rem',
-                borderTop: isLight ? '1px solid #e2e8f0' : '1px solid rgba(255,255,255,0.12)',
-                position: 'relative',
-                zIndex: 2
-              }}>
-                <div style={{
-                  background: isLight ? '#f8fafc' : 'rgba(255, 255, 255, 0.04)',
-                  padding: '0.45rem 0.6rem',
-                  borderRadius: '8px',
-                  border: isLight ? '1px solid #e2e8f0' : '1px solid rgba(255, 255, 255, 0.06)'
-                }}>
-                  <span style={{ color: isLight ? '#64748b' : 'rgba(255, 255, 255, 0.55)', fontSize: '0.66rem', fontWeight: 700, display: 'block', textTransform: 'uppercase', letterSpacing: '0.03em', marginBottom: '0.25rem' }}>
-                    Híbridos recomendados
-                  </span>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
-                    {getRecommendedHybrids(popoverData?.cell?.date, evt?.color).map((hyb) => (
-                      <span key={hyb.name} style={{ 
-                        background: hyb.bg, 
-                        color: hyb.color, 
-                        padding: '0.18rem 0.45rem', 
-                        borderRadius: '5px', 
-                        fontSize: '0.68rem', 
-                        fontWeight: 800,
-                        border: `1px solid ${hyb.border}`
-                      }} title={hyb.tag}>
-                        {hyb.name}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-
-                <div style={{
-                  background: isLight ? '#f8fafc' : 'rgba(255, 255, 255, 0.04)',
-                  padding: '0.45rem 0.6rem',
-                  borderRadius: '8px',
-                  border: isLight ? '1px solid #e2e8f0' : '1px solid rgba(255, 255, 255, 0.06)'
-                }}>
-                  <span style={{ color: isLight ? '#64748b' : 'rgba(255, 255, 255, 0.55)', fontSize: '0.66rem', fontWeight: 700, display: 'block', textTransform: 'uppercase', letterSpacing: '0.03em', marginBottom: '0.25rem' }}>
-                    Pronóstico DSSAT / IA
-                  </span>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', marginTop: '0.1rem' }}>
-                    <span style={{ 
-                      background: evt?.color === 'success' ? 'rgba(34, 197, 94, 0.15)' : (evt?.color === 'warning' ? 'rgba(245, 158, 11, 0.15)' : 'rgba(239, 68, 68, 0.15)'), 
-                      color: evt?.color === 'success' ? '#34d399' : (evt?.color === 'warning' ? '#fbbf24' : '#f87171'), 
-                      padding: '0.15rem 0.45rem', 
-                      borderRadius: '5px', 
-                      fontSize: '0.7rem', 
-                      fontWeight: 800,
-                      border: `1px solid ${bStyle.border}`
-                    }}>
-                      {evt?.color === 'success' ? 'Alta Estabilidad' : (evt?.color === 'warning' ? 'Estabilidad Media' : 'Riesgo Hídrico')}
-                    </span>
-                  </div>
-                </div>
+            {evt?.color && (
+              <div role="note" style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: '0.5rem', fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                Clasificación informada: {evt.color === 'danger' ? 'alerta' : (evt.color === 'warning' ? 'precaución' : 'evento')}
               </div>
-            ) : (() => {
-              const pData = getPotentialDiseases(evt, popoverData.cell?.date);
-              const colorHex = evt?.color === 'danger' ? '#ef4444' : (evt?.color === 'warning' ? '#f59e0b' : '#10b981');
-              return (
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.55rem', position: 'relative', zIndex: 2, alignItems: 'stretch' }}>
-                  {/* Left Column: Risk & Disease */}
-                  <div style={{
-                    background: isLight ? '#f8fafc' : 'rgba(255, 255, 255, 0.04)',
-                    padding: '0.45rem 0.6rem',
-                    borderRadius: '8px',
-                    border: isLight ? '1px solid #e2e8f0' : '1px solid rgba(255, 255, 255, 0.06)'
-                  }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.67rem', marginBottom: '0.2rem' }}>
-                      <span style={{ color: isLight ? '#64748b' : 'rgba(255,255,255,0.6)', fontWeight: 600 }}>Riesgo Fitosanitario:</span>
-                      <span style={{ fontWeight: 800, color: colorHex }}>
-                        {pData.riskLevel}
-                      </span>
-                    </div>
-
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.1rem', marginTop: '0.2rem' }}>
-                      <span style={{ color: isLight ? '#64748b' : 'rgba(255,255,255,0.55)', fontSize: '0.64rem', fontWeight: 700, textTransform: 'uppercase' }}>Plagas / Patógenos:</span>
-                      <span style={{ fontWeight: 700, color: colorHex, fontSize: '0.68rem', lineHeight: '1.25' }}>
-                        {pData.pests}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Right Column: DSS Action */}
-                  <div style={{ 
-                    background: isLight ? 'rgba(59, 130, 246, 0.05)' : 'rgba(59, 130, 246, 0.08)', 
-                    padding: '0.45rem 0.6rem', 
-                    borderRadius: '8px', 
-                    border: `1px solid ${colorHex}40`,
-                    display: 'flex', 
-                    flexDirection: 'column', 
-                    justifyContent: 'center' 
-                  }}>
-                    <span style={{ color: isLight ? '#334155' : 'rgba(255,255,255,0.7)', fontSize: '0.65rem', fontWeight: 800, textTransform: 'uppercase', marginBottom: '0.15rem' }}>
-                      Recomendación DSS:
-                    </span>
-                    <span style={{ color: isLight ? '#0f172a' : 'rgba(255,255,255,0.92)', fontSize: '0.68rem', lineHeight: '1.3', fontWeight: 600 }}>
-                      {pData.action}
-                    </span>
-                  </div>
-                </div>
-              );
-            })()}
+            )}
           </div>,
           document.body
         );
@@ -954,29 +695,16 @@ export default function CalendarGrid({ events = [], initialDate = new Date(), ti
         padding: '0.4rem 0.2rem 0 0.2rem',
         borderTop: '1px solid var(--border-subtle)'
       }}>
-        {type === 'siembra' ? (
-          [
-            { color: '#10b981', label: 'Viabilidad Alta / Recomendada' },
-            { color: '#f59e0b', label: 'Viabilidad Moderada' },
-            { color: '#ef4444', label: 'Viabilidad Baja / Riesgosa' }
-          ].map(item => (
-            <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-              <div style={{ width: '8px', height: '8px', background: item.color, borderRadius: '50%', boxShadow: `0 0 6px ${item.color}60` }}></div>
-              <span style={{ fontWeight: 600 }}>{item.label}</span>
-            </div>
-          ))
-        ) : (
-          [
-            { color: '#10b981', label: 'Riesgo Bajo / Favorable' },
-            { color: '#f59e0b', label: 'Riesgo Medio / Alerta' },
-            { color: '#ef4444', label: 'Riesgo Alto / Crítico' }
-          ].map(item => (
-            <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-              <div style={{ width: '8px', height: '8px', background: item.color, borderRadius: '50%', boxShadow: `0 0 6px ${item.color}60` }}></div>
-              <span style={{ fontWeight: 600 }}>{item.label}</span>
-            </div>
-          ))
-        )}
+        {[
+          { color: '#10b981', label: 'Evento favorable' },
+          { color: '#f59e0b', label: 'Precaución' },
+          { color: '#ef4444', label: 'Alerta' }
+        ].map(item => (
+          <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+            <div style={{ width: '8px', height: '8px', background: item.color, borderRadius: '50%', boxShadow: `0 0 6px ${item.color}60` }}></div>
+            <span style={{ fontWeight: 600 }}>{item.label}</span>
+          </div>
+        ))}
       </div>
     </div>
   );

@@ -3,8 +3,8 @@
  * Repositorio: UsuarioRepositoryMysql
  * ===================================
  * Port de models/Usuario.php (e89067d) con los cambios mecánicos del plan F02:
- * namespace, final + interface, PDO inyectada en el constructor (se conserva
- * $this->asegurarColumnasPerfil(); deuda ADR-07) y sin require_once de config.
+ * namespace, final + interface, PDO inyectada en el constructor y sin require_once de config.
+ * El esquema se gestiona con database/agropredict_db.sql; una petición HTTP nunca ejecuta DDL.
  */
 
 declare(strict_types=1);
@@ -17,17 +17,6 @@ final class UsuarioRepositoryMysql implements UsuarioRepositoryInterface
 {
     public function __construct(private \PDO $db)
     {
-        $this->asegurarColumnasPerfil();
-    }
-
-    private function asegurarColumnasPerfil(): void
-    {
-        try {
-            $this->db->exec("ALTER TABLE usuarios ADD COLUMN foto_perfil VARCHAR(500) DEFAULT NULL");
-        } catch (\Exception $e) {}
-        try {
-            $this->db->exec("ALTER TABLE usuarios ADD COLUMN es_google TINYINT(1) DEFAULT 0");
-        } catch (\Exception $e) {}
     }
 
     public function login(string $correo, string $contrasena)

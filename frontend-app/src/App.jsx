@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import Sidebar from './templates/Common/Sidebar';
 import Navbar from './templates/Common/Navbar';
 import Login from './views/Login';
@@ -14,6 +14,8 @@ import MapPage from './views/MapPage';
 import Configuracion from './views/Configuracion';
 
 import ChatbotWidget from './components/ChatbotWidget';
+import { AlertTriangle } from 'lucide-react';
+import { authService, cultivosService, simulacionService } from './services/api';
 import './assets/styles.css';
 
 export default function App() {
@@ -25,25 +27,24 @@ export default function App() {
   const [vistaActual, setVistaActual] = useState('yield');
   const [cultivos, setCultivos] = useState([]);
   const [cultivoElegidoId, setCultivoElegidoId] = useState(null);
-  const [anioSeleccionado, setAnioSeleccionado] = useState(2026);
+  const [anioSeleccionado, setAnioSeleccionado] = useState(() => new Date().getFullYear());
+  const [contextoDashboard, setContextoDashboard] = useState(null);
   const [iaEncendida, setIaEncendida] = useState(false);
   const [recargarDatos, setRecargarDatos] = useState(0);
   const [menuCerrado, setMenuCerrado] = useState(typeof window !== 'undefined' && window.innerWidth <= 1080);
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
-  const [showNotification, setShowNotification] = useState(false);
-  
-  // Mostrar notificación de ayuda de gráficos al entrar
-  useEffect(() => {
-    if (user && localStorage.getItem('hideChartInfoNotify') !== 'true') {
-      setShowNotification(true);
-    } else {
-      setShowNotification(false);
-    }
-  }, [user]);
-  const isMobileView = typeof window !== 'undefined' && window.innerWidth <= 768;
+  const [notificationDismissedFor, setNotificationDismissedFor] = useState(null);
+  const showNotification = Boolean(
+    user &&
+    notificationDismissedFor !== user.id &&
+    localStorage.getItem('hideChartInfoNotify') !== 'true'
+  );
+  const [isMobileView, setIsMobileView] = useState(() => typeof window !== 'undefined' && window.innerWidth <= 768);
 
   const cultivoActivo = cultivos.find(c => c.id === cultivoElegidoId);
-  const fueraDeEcuador = cultivoActivo && cultivoActivo.latitud && cultivoActivo.longitud && (
+  const tieneCoordenadas = cultivoActivo?.latitud !== null && cultivoActivo?.latitud !== undefined
+    && cultivoActivo?.longitud !== null && cultivoActivo?.longitud !== undefined;
+  const fueraDeEcuador = cultivoActivo && tieneCoordenadas && (
     Number(cultivoActivo.latitud) < -5.2 ||
     Number(cultivoActivo.latitud) > 1.6 ||
     Number(cultivoActivo.longitud) < -81.6 ||
@@ -59,6 +60,12 @@ export default function App() {
     }
     localStorage.setItem('theme', theme);
   }, [theme, user]);
+
+  useEffect(() => {
+    const actualizarViewport = () => setIsMobileView(window.innerWidth <= 768);
+    window.addEventListener('resize', actualizarViewport);
+    return () => window.removeEventListener('resize', actualizarViewport);
+  }, []);
 
   // Recalcular tamaño de gráficos y contenedores al abrir/cerrar barra lateral
   // Recalcular tamaño de gráficos al abrir/cerrar barra lateral (optimizado: solo 2 eventos)
@@ -91,51 +98,65 @@ export default function App() {
   const [onboardingStep, setOnboardingStep] = useState(0);
 
   // Obtener parcelas y verificar el servicio de IA cuando el usuario está logueado
-  useEffect(() => {
-    if (user) {
-      cargarCultivos();
-      revisarEstadoIa();
-      // Verificar periódicamente el estado del servicio de IA
-      const interval = setInterval(revisarEstadoIa, 60000);
-      return () => clearInterval(interval);
-    }
-  }, [user]);
-
-  const cargarCultivos = async () => {
+  const cargarCultivos = useCallback(async () => {
     try {
       const data = await cultivosService.listar();
       setCultivos(data);
       const isDone = user?.id ? localStorage.getItem(`onboarding_done_${user.id}`) === 'true' : false;
 
-      // Un usuario SOLO es principiante si NO tiene ninguna parcela registrada Y no ha completado el onboarding
       if (data.length === 0 && !isDone) {
         setVistaActual('cultivos');
         setOnboardingStep(1);
         setCultivoElegidoId(null);
       } else {
-        // Usuario recurrente / con datos existentes: Desactivar onboarding y cargar su primera parcela
         setOnboardingStep(0);
         if (data.length === 0) {
           setCultivoElegidoId(null);
         } else if (cultivoElegidoId && !data.some(c => c.id === cultivoElegidoId)) {
           setCultivoElegidoId(data[0].id);
-        } else if (data.length > 0 && !cultivoElegidoId) {
+        } else if (!cultivoElegidoId) {
           setCultivoElegidoId(data[0].id);
         }
       }
     } catch (err) {
       console.error('Error fetching crops:', err);
     }
-  };
+  }, [cultivoElegidoId, user]);
 
-  const revisarEstadoIa = async () => {
+  const revisarEstadoIa = useCallback(async () => {
     try {
-      const data = await simulacionService.iaStatus(true); // iniciar si no está corriendo
+      const data = await simulacionService.iaStatus();
       setIaEncendida(data.running);
-    } catch (err) {
+    } catch {
       setIaEncendida(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (user) {
+      const initialRefresh = setTimeout(() => {
+        cargarCultivos();
+        revisarEstadoIa();
+      }, 0);
+      // Verificar periódicamente el estado del servicio de IA
+      const interval = setInterval(revisarEstadoIa, 60000);
+      return () => {
+        clearTimeout(initialRefresh);
+        clearInterval(interval);
+      };
+    }
+  }, [cargarCultivos, revisarEstadoIa, user]);
+
+  // El asistente recibe exactamente el conjunto de datos que el usuario está
+  // viendo. La clave evita reutilizar un snapshot de otra parcela o año.
+  const registrarContextoDashboard = useCallback((vista, datos) => {
+    if (!datos || typeof datos !== 'object') return;
+    setContextoDashboard({ vista, datos, cultivoId: cultivoElegidoId, anio: anioSeleccionado });
+  }, [cultivoElegidoId, anioSeleccionado]);
+  const registrarScenario = useCallback((datos) => registrarContextoDashboard('scenarios', datos), [registrarContextoDashboard]);
+  const registrarClimate = useCallback((datos) => registrarContextoDashboard('climate', datos), [registrarContextoDashboard]);
+  const registrarYield = useCallback((datos) => registrarContextoDashboard('yield', datos), [registrarContextoDashboard]);
+  const registrarFinance = useCallback((datos) => registrarContextoDashboard('finance', datos), [registrarContextoDashboard]);
 
   const cerrarSesion = async () => {
     try {
@@ -305,6 +326,7 @@ export default function App() {
               cultivoElegidoId={cultivoElegidoId}
               anioSeleccionado={anioSeleccionado}
               onNavigate={setVistaActual}
+              onDashboardData={registrarScenario}
             />
           )}
           {vistaActual === 'climate' && (
@@ -312,6 +334,7 @@ export default function App() {
               cultivoElegidoId={cultivoElegidoId}
               anioSeleccionado={anioSeleccionado}
               onNavigate={setVistaActual}
+              onDashboardData={registrarClimate}
             />
           )}
           {vistaActual === 'yield' && (
@@ -319,6 +342,7 @@ export default function App() {
               cultivoElegidoId={cultivoElegidoId}
               anioSeleccionado={anioSeleccionado}
               onNavigate={setVistaActual}
+              onDashboardData={registrarYield}
             />
           )}
           {vistaActual === 'finance' && (
@@ -326,6 +350,7 @@ export default function App() {
               cultivoElegidoId={cultivoElegidoId}
               anioSeleccionado={anioSeleccionado}
               onNavigate={setVistaActual}
+              onDashboardData={registrarFinance}
             />
           )}
           {vistaActual === 'map' && (
@@ -405,7 +430,7 @@ export default function App() {
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', width: '100%', gap: '0.5rem', marginTop: '0.5rem' }}>
               <button 
-                onClick={() => setShowNotification(false)}
+                onClick={() => setNotificationDismissedFor(user?.id)}
                 className="btn-primary"
                 style={{ 
                   padding: '0.65rem', 
@@ -421,7 +446,7 @@ export default function App() {
               <button 
                 onClick={() => {
                   localStorage.setItem('hideChartInfoNotify', 'true');
-                  setShowNotification(false);
+                  setNotificationDismissedFor(user?.id);
                 }}
                 style={{ 
                   background: 'transparent', 
@@ -444,7 +469,17 @@ export default function App() {
       )}
 
       {/* Chatbot Widget */}
-      {user && <ChatbotWidget vistaActual={vistaActual} />}
+      {user && (
+        <ChatbotWidget
+          key={`chat-${vistaActual}-${cultivoElegidoId || 'sin-parcela'}-${anioSeleccionado || 'sin-anio'}`}
+          vistaActual={vistaActual}
+          usuarioId={user.id}
+          cultivoElegidoId={cultivoElegidoId}
+          anioSeleccionado={anioSeleccionado}
+          contextoDashboard={contextoDashboard}
+          cultivoActivo={cultivoActivo}
+        />
+      )}
     </div>
   );
 }

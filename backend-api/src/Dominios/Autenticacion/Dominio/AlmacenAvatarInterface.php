@@ -12,4 +12,7 @@ interface AlmacenAvatarInterface
      * @return string URL pública: /backend-api/public/uploads/avatars/...
      */
     public function guardar(array $archivo, int $usuarioId): string;
+
+    /** Elimina una foto local gestionada por el almacén; ignora URLs externas. */
+    public function eliminar(?string $fotoUrl): void;
 }

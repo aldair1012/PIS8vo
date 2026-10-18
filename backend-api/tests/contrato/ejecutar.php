@@ -81,7 +81,7 @@ function normalizarString(string $valor): string
     $valor = preg_replace('/Simulación \d{2}\/\d{2}\/\d{4} \d{2}:\d{2}/u', 'Simulación <fecha>', $valor);
     $valor = preg_replace('/\d{2}\/\d{2}\/\d{4}/', '<fecha>', $valor);
     $valor = preg_replace('/\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}(:\d{2})?/', '<fecha>', $valor);
-    $valor = preg_replace('/avatar_\d+_\d+\./', 'avatar_<ts>.', $valor);
+    $valor = preg_replace('/avatar_\d+_[a-f0-9]+\./i', 'avatar_<ts>.', $valor);
     return $valor;
 }
 
@@ -327,7 +327,7 @@ function ejecutarEscenario(string $modo, array &$temporales): array
     };
 
     // 1) Salud del sistema
-    $registrar('ia-status publico', 'GET', '/api/simulaciones/ia-status', null, 'tolerante');
+    $registrar('ia-status requiere autenticacion', 'GET', '/api/simulaciones/ia-status', null, 'exacto');
 
     // 2) Cuenta de prueba
     $registrar('registro', 'POST', '/api/auth/register', [

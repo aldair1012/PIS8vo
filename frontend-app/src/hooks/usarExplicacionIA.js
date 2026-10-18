@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { simulacionService } from '../services/api';
 
-export default function usarExplicacionIA(cultivoIdSeleccionado, anioSeleccionado) {
+export default function useExplicacionIA(cultivoIdSeleccionado, anioSeleccionado) {
   const [mostrarModalIa, setMostrarModalIa] = useState(false);
   const [cargandoIa, setCargandoIa] = useState(false);
   const [datosIa, setDatosIa] = useState(null);
@@ -26,7 +26,7 @@ export default function usarExplicacionIA(cultivoIdSeleccionado, anioSeleccionad
       });
       setRespuestasIaGuardadas(anteriores => ({ ...anteriores, [contexto.nombre]: respuesta }));
       setDatosIa(respuesta);
-    } catch (error) {
+    } catch {
       setDatosIa({
         titulo: contexto.nombre || 'Explicación del Indicador',
         explicacion_breve: 'No se pudo conectar con el motor de simulación local.',

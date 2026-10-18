@@ -7,6 +7,8 @@ namespace ZeaSys\Dominios\Analitica\Aplicacion;
 
 use ZeaSys\Dominios\Lotes\Dominio\CultivoRepositoryInterface;
 use ZeaSys\Dominios\Simulaciones\Dominio\SimulacionRepositoryInterface;
+use ZeaSys\Kernel\Errores\AccesoDenegadoException;
+use ZeaSys\Kernel\Errores\ValidacionException;
 use ZeaSys\Kernel\Peticion;
 
 class ServicioAnaliticaFinancial
@@ -18,9 +20,22 @@ class ServicioAnaliticaFinancial
 
     public function construir(int $usuarioId, ?int $cultivoId, ?int $anio, Peticion $p): array
     {
+        $parametrosFinancieros = ['precio_maiz_qq', 'rendimiento_qq', 'precio_maiz', 'costo_semilla', 'costo_fert', 'costo_riego', 'costo_proteccion', 'otros_var', 'costos_variables', 'costos_fijos'];
+        foreach ($parametrosFinancieros as $parametro) {
+            $valor = $p->query($parametro);
+            if ($valor !== null && $valor !== '' && (!is_numeric($valor) || !is_finite((float) $valor) || (float) $valor < 0)) {
+                throw new ValidacionException("El parámetro {$parametro} debe ser un número no negativo.");
+            }
+        }
+
         $recientes = $this->simulaciones->obtenerRecientes($usuarioId, 50, $anio);
 
+        $selectedCultivo = null;
         if ($cultivoId) {
+            $selectedCultivo = $this->cultivos->obtenerPorId($cultivoId);
+            if (!$selectedCultivo || (int) $selectedCultivo['usuario_id'] !== $usuarioId) {
+                throw new AccesoDenegadoException('Esta parcela no es válida o no está registrada a tu nombre.');
+            }
             $recientes = array_values(array_filter($recientes, fn($sim) => $sim['cultivo_id'] == $cultivoId));
         }
 
@@ -28,8 +43,13 @@ class ServicioAnaliticaFinancial
         $avgRend = 0; $avgFert = 0;
         $rendimientos = [];
 
-        $hasCustomOverrides = $p->query('precio_maiz_qq') !== null || $p->query('rendimiento_qq') !== null
-            || $p->query('costo_semilla') !== null || $p->query('costo_fert') !== null;
+        $hasCustomOverrides = false;
+        foreach ($parametrosFinancieros as $parametro) {
+            if ($p->query($parametro) !== null && $p->query($parametro) !== '') {
+                $hasCustomOverrides = true;
+                break;
+            }
+        }
 
         if ($simCount === 0 && !$hasCustomOverrides) {
             return [
@@ -54,10 +74,6 @@ class ServicioAnaliticaFinancial
             $simCount = 1;
         }
 
-        $selectedCultivo = null;
-        if ($cultivoId) {
-            $selectedCultivo = $this->cultivos->obtenerPorId($cultivoId);
-        }
         if (!$selectedCultivo) {
             $cultivos = $this->cultivos->obtenerPorUsuario($usuarioId);
             if (!empty($cultivos)) $selectedCultivo = $cultivos[0];

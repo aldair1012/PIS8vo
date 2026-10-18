@@ -11,9 +11,21 @@ final class ManejadorErrores
         set_exception_handler(static function (\Throwable $e): void {
             try {
                 $codigo  = $e instanceof ZeaSysException ? $e->codigoHttp() : 500;
-                $mensaje = $e instanceof ZeaSysException
-                    ? $e->getMessage()
-                    : 'Error interno del servidor: ' . $e->getMessage();
+                $debug = getenv('ZEASYS_DEBUG') === '1';
+                $esErrorInterno = $codigo >= 500;
+                $mensaje = $esErrorInterno && !$debug
+                    ? 'Error interno del servidor.'
+                    : $e->getMessage();
+
+                if ($esErrorInterno) {
+                    error_log(sprintf(
+                        '[ZeaSys] %s: %s en %s:%d',
+                        $e::class,
+                        $e->getMessage(),
+                        $e->getFile(),
+                        $e->getLine(),
+                    ));
+                }
 
                 if (!headers_sent()) {
                     http_response_code($codigo);

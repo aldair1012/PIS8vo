@@ -1,4 +1,3 @@
-import React from 'react';
 import logoFullUrl from '../../assets/logo-full.svg';
 import logoIconUrl from '../../assets/logo-icon.svg';
 

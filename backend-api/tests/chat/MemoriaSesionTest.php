@@ -53,3 +53,16 @@ test('MemoriaSesion: limpiar elimina todo', function (): void {
     assert_equals(0, count($memoria->temas()));
     assert_equals(0, count($memoria->contexto()));
 });
+
+test('MemoriaSesion: conserva el id de Flowise y lo renueva al limpiar', function (): void {
+    $memoria = new MemoriaSesion();
+    $memoria->limpiar();
+    $primera = $memoria->identificadorConversacion();
+    $segunda = $memoria->identificadorConversacion();
+    assert_true($primera !== '', 'El id de conversación no debe estar vacío');
+    assert_equals($primera, $segunda, 'La misma conversación debe conservar su id');
+
+    $memoria->limpiar();
+    $tercera = $memoria->identificadorConversacion();
+    assert_true($tercera !== $primera, 'Limpiar debe aislar la siguiente conversación');
+});

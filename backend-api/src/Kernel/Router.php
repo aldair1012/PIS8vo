@@ -9,7 +9,7 @@ use ZeaSys\Kernel\Errores\RecursoNoEncontradoException;
 final class Router
 {
     /**
-     * @param array<string, array{controlador: string, accion?: string, acciones?: array<string, string>, publica?: bool, sesion?: bool}> $rutas
+     * @param array<string, array{controlador: string, accion?: string, acciones?: array<string, string>, metodos?: list<string>, publica?: bool, sesion?: bool}> $rutas
      */
     public function __construct(
         private Container $contenedor,
@@ -53,16 +53,28 @@ final class Router
             throw new RecursoNoEncontradoException("Ruta no encontrada: {$ruta}");
         }
 
+        $metodosPermitidos = isset($definicion['acciones'])
+            ? array_keys($definicion['acciones'])
+            : ($definicion['metodos'] ?? []);
+        $metodoDespacho = $peticion->metodo() === 'HEAD' && in_array('GET', $metodosPermitidos, true)
+            ? 'GET'
+            : $peticion->metodo();
+        if ($metodosPermitidos !== [] && !in_array($metodoDespacho, $metodosPermitidos, true)) {
+            if (!headers_sent()) {
+                $allow = in_array('GET', $metodosPermitidos, true)
+                    ? array_values(array_unique([...$metodosPermitidos, 'HEAD']))
+                    : $metodosPermitidos;
+                header('Allow: ' . implode(', ', $allow));
+            }
+            RespuestaJson::enviar(['error' => 'Método no permitido.'], 405);
+            return;
+        }
+
         $this->middleware->procesar($ruta, $definicion);
 
         // Rutas con despacho por método HTTP (p. ej. api/cultivos) o de acción única.
         if (isset($definicion['acciones'])) {
-            $accion = $definicion['acciones'][$peticion->metodo()] ?? null;
-            if ($accion === null) {
-                // Paridad con el switch original de api/cultivos.
-                RespuestaJson::enviar(['error' => 'Método no permitido.'], 405);
-                return;
-            }
+            $accion = $definicion['acciones'][$metodoDespacho] ?? null;
         } else {
             $accion = $definicion['accion'] ?? null;
         }

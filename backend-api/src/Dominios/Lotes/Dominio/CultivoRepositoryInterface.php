@@ -16,7 +16,7 @@ interface CultivoRepositoryInterface
     public function obtenerPorId(int $id): ?array;
 
     /** @return array<int, array<string, mixed>> */
-    public function obtenerConCoordenadas(): array;
+    public function obtenerConCoordenadas(int $usuarioId): array;
 
     /** @param array<string, mixed> $datos */
     public function actualizar(int $id, array $datos): bool;

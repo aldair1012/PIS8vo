@@ -8,6 +8,7 @@ namespace ZeaSys\Dominios\Analitica\Aplicacion;
 use ZeaSys\Dominios\Analitica\Dominio\CatalogoAgronomicoInterface;
 use ZeaSys\Dominios\Lotes\Dominio\CultivoRepositoryInterface;
 use ZeaSys\Dominios\Simulaciones\Dominio\SimulacionRepositoryInterface;
+use ZeaSys\Kernel\Errores\AccesoDenegadoException;
 
 class ServicioAnaliticaScenario
 {
@@ -26,6 +27,10 @@ class ServicioAnaliticaScenario
         $areaTotal = $this->cultivos->areaTotalPorUsuario($usuarioId);
 
         if ($cultivoId) {
+            $seleccion = $this->cultivos->obtenerPorId($cultivoId);
+            if (!$seleccion || (int) $seleccion['usuario_id'] !== $usuarioId) {
+                throw new AccesoDenegadoException('Esta parcela no es válida o no está registrada a tu nombre.');
+            }
             $recientes = array_values(array_filter($recientes, fn($sim) => $sim['cultivo_id'] == $cultivoId));
         }
 

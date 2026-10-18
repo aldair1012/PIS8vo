@@ -18,7 +18,8 @@ ml-engine/flask_server.log
 backend-api/data/cache/
 
 # Datos subidos por usuarios (avatares) — datos personales, no versionar
-backend-api/public/uploads/
+backend-api/public/uploads/*
+!backend-api/public/uploads/.htaccess
 
 # Editor / sistema
 .idea/

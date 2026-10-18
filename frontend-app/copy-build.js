@@ -31,6 +31,13 @@ function copyRecursiveSync(src, dest) {
 }
 
 try {
+  // Vite puede conservar una copia previa de archivos públicos en algunos
+  // entornos de Windows; sincronizamos explícitamente el favicon fuente.
+  const faviconSource = './public/favicon.svg';
+  if (fs.existsSync(faviconSource)) {
+    fs.copyFileSync(faviconSource, path.join(srcDir, 'favicon.svg'));
+  }
+
   // Limpiamos los archivos .js y .css viejos de la carpeta assets en la raíz
   // para que no se acumulen versiones diferentes y rompan cosas.
   const rootAssetsDir = '../assets';

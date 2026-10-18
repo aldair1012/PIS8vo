@@ -1,7 +1,19 @@
-import React, { StrictMode, Component } from 'react';
+import { StrictMode, Component } from 'react';
 import { createRoot } from 'react-dom/client';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+import '@geoman-io/leaflet-geoman-free/dist/leaflet-geoman.css';
 import './index.css';
 import App from './App.jsx';
+
+// Exponer Leaflet en window y globalThis antes de que plugins dependientes se evalúen
+window.L = L;
+globalThis.L = L;
+
+// Importar Geoman dinámicamente garantizando que L ya existe en el ámbito global
+import('@geoman-io/leaflet-geoman-free').catch((err) => {
+  console.warn('Advertencia al cargar Geoman:', err);
+});
 
 class ErrorBoundary extends Component {
   constructor(props) {

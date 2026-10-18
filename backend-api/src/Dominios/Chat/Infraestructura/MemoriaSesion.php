@@ -41,6 +41,18 @@ final class MemoriaSesion implements MemoriaSesionInterface
         return $_SESSION[self::CLAVE]['temas'] ?? [];
     }
 
+    public function identificadorConversacion(): string
+    {
+        if (!isset($_SESSION[self::CLAVE])) {
+            $_SESSION[self::CLAVE] = ['historial' => [], 'contexto' => [], 'temas' => []];
+        }
+        if (!isset($_SESSION[self::CLAVE]['flowise_session_id'])) {
+            $_SESSION[self::CLAVE]['flowise_session_id'] = bin2hex(random_bytes(16));
+        }
+
+        return (string) $_SESSION[self::CLAVE]['flowise_session_id'];
+    }
+
     public function establecerContexto(array $contexto): void
     {
         $this->registrarContexto($contexto);

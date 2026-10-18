@@ -10,15 +10,36 @@ final class GestorSesion implements GestorSesionInterface
 {
     public function iniciar(array $usuario): void
     {
+        if (session_status() !== PHP_SESSION_ACTIVE) {
+            throw new \RuntimeException('No hay una sesión activa para autenticar al usuario.');
+        }
+        if (!session_regenerate_id(true)) {
+            throw new \RuntimeException('No se pudo renovar la sesión de usuario.');
+        }
         $_SESSION['usuario_id'] = (int) $usuario['id'];
         $_SESSION['nombre']     = $usuario['nombre'];
         $_SESSION['correo']     = $usuario['correo'];
+        $_SESSION['ultima_actividad'] = time();
+        $_SESSION['recordar'] = false;
     }
 
     public function cerrar(): void
     {
+        $_SESSION = [];
+
+        if (ini_get('session.use_cookies')) {
+            $params = session_get_cookie_params();
+            setcookie(session_name(), '', [
+                'expires'  => time() - 42000,
+                'path'     => $params['path'],
+                'domain'   => $params['domain'],
+                'secure'   => $params['secure'],
+                'httponly' => $params['httponly'],
+                'samesite' => $params['samesite'] ?? 'Lax',
+            ]);
+        }
+
         session_destroy();
-        session_start();
     }
 
     public function usuarioId(): ?int
@@ -33,19 +54,20 @@ final class GestorSesion implements GestorSesionInterface
 
     public function extenderCookie(bool $recordar): void
     {
+        $_SESSION['recordar'] = $recordar;
+        $_SESSION['ultima_actividad'] = time();
         $sessionName = session_name();
         $sessionId = session_id();
         $params = session_get_cookie_params();
         $lifetime = $recordar ? 2592000 : 0;
 
-        setcookie(
-            $sessionName,
-            $sessionId,
-            $lifetime > 0 ? time() + $lifetime : 0,
-            $params['path'],
-            $params['domain'],
-            $params['secure'],
-            $params['httponly']
-        );
+        setcookie($sessionName, $sessionId, [
+            'expires'  => $lifetime > 0 ? time() + $lifetime : 0,
+            'path'     => $params['path'],
+            'domain'   => $params['domain'],
+            'secure'   => $params['secure'],
+            'httponly' => $params['httponly'],
+            'samesite' => $params['samesite'] ?? 'Lax',
+        ]);
     }
 }

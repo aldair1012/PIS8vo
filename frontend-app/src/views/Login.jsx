@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { authService } from '../services/api';
 import { Lock, Mail, ArrowRight, ShieldCheck, Activity, Cpu, CloudSun, DollarSign, TrendingUp } from 'lucide-react';
 import PlatformLogo from '../templates/Common/PlatformLogo';
@@ -65,7 +65,6 @@ export default function Login({ onLoginSuccess, switchToRegister }) {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [remember, setRemember] = useState(false);
-
   const handleGoogleAuth = useCallback(async (idToken) => {
     if (!GOOGLE_CLIENT_ID) { setError('No hay Client ID de Google configurado.'); return; }
     setError(null);
@@ -80,6 +79,13 @@ export default function Login({ onLoginSuccess, switchToRegister }) {
       setGoogleLoading(false);
     }
   }, [remember, onLoginSuccess]);
+
+  const googleCallbackRef = useRef(handleGoogleAuth);
+  const googleInitializedRef = useRef(false);
+
+  useEffect(() => {
+    googleCallbackRef.current = handleGoogleAuth;
+  }, [handleGoogleAuth]);
 
   const triggerGoogleSignIn = useCallback(() => {
     if (!window.google?.accounts?.id) { 
@@ -103,11 +109,12 @@ export default function Login({ onLoginSuccess, switchToRegister }) {
   useEffect(() => {
     if (!GOOGLE_CLIENT_ID) return;
     const init = () => {
-      if (!window.google?.accounts?.id) return;
+      if (!window.google?.accounts?.id || googleInitializedRef.current) return;
+      googleInitializedRef.current = true;
       window.google.accounts.id.initialize({
         client_id: GOOGLE_CLIENT_ID,
         callback: async (response) => {
-          if (response.credential) { await handleGoogleAuth(response.credential); }
+          if (response.credential) { await googleCallbackRef.current(response.credential); }
           else { setError('Error al obtener credenciales de Google.'); }
         },
         ux_mode: 'popup',
@@ -131,7 +138,7 @@ export default function Login({ onLoginSuccess, switchToRegister }) {
       script.onload = init;
       document.body.appendChild(script);
     } else if (window.google?.accounts?.id) { init(); }
-  }, [handleGoogleAuth]);
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault(); setError(null); setLoading(true);
@@ -288,7 +295,7 @@ export default function Login({ onLoginSuccess, switchToRegister }) {
               </div>
               <div>
                 <div style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.04em' }}>Rendimiento Estimado</div>
-                <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#ffffff', marginTop: '1px' }}>9.7 <span style={{ fontSize: '0.72rem', color: '#4D7BFF', fontWeight: 600 }}>t/ha</span></div>
+                <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#ffffff', marginTop: '1px' }}>Por lote</div>
               </div>
             </div>
 
@@ -309,7 +316,7 @@ export default function Login({ onLoginSuccess, switchToRegister }) {
               </div>
               <div>
                 <div style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.04em' }}>Riesgo Climático</div>
-                <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#ffffff', marginTop: '1px' }}>Bajo <span style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.5)', fontWeight: 400 }}>(Monitoreado)</span></div>
+                <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#ffffff', marginTop: '1px' }}>Clima local</div>
               </div>
             </div>
 
@@ -330,7 +337,7 @@ export default function Login({ onLoginSuccess, switchToRegister }) {
               </div>
               <div>
                 <div style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.04em' }}>Estrés Hídrico</div>
-                <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#ffffff', marginTop: '1px' }}>12% <span style={{ fontSize: '0.72rem', color: '#4D7BFF', fontWeight: 600 }}>Óptimo</span></div>
+                <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#ffffff', marginTop: '1px' }}>Suelo y cultivo</div>
               </div>
             </div>
 
@@ -351,7 +358,7 @@ export default function Login({ onLoginSuccess, switchToRegister }) {
               </div>
               <div>
                 <div style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.04em' }}>Margen Neto Proyectado</div>
-                <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#ffffff', marginTop: '1px' }}>$319.48 <span style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.5)' }}>/ha</span></div>
+                <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#ffffff', marginTop: '1px' }}>Costos y retorno</div>
               </div>
             </div>
           </div>
@@ -374,16 +381,16 @@ export default function Login({ onLoginSuccess, switchToRegister }) {
             <div style={{ fontSize: '0.7rem', color: 'rgba(255, 255, 255, 0.7)', marginTop: '1px' }}>Modelos de simulación confiables</div>
           </div>
           <div>
-            <div style={{ fontSize: '1.35rem', fontWeight: 800, color: '#ffffff', fontFamily: 'var(--font-mono)' }}>1,240</div>
-            <div style={{ fontSize: '0.7rem', color: 'rgba(255, 255, 255, 0.5)', marginTop: '1px' }}>Parcelas simuladas</div>
-          </div>
-          <div>
-            <div style={{ fontSize: '1.35rem', fontWeight: 800, color: '#4D7BFF', fontFamily: 'var(--font-mono)' }}>+18%</div>
-            <div style={{ fontSize: '0.7rem', color: 'rgba(255, 255, 255, 0.5)', marginTop: '1px' }}>Incremento estimado</div>
-          </div>
-          <div>
-            <div style={{ fontSize: '1.35rem', fontWeight: 800, color: '#6A3FA0', fontFamily: 'var(--font-mono)' }}>IA</div>
+            <div style={{ fontSize: '1rem', fontWeight: 800, color: '#ffffff' }}>XGBoost + RF</div>
             <div style={{ fontSize: '0.7rem', color: 'rgba(255, 255, 255, 0.5)', marginTop: '1px' }}>Modelos predictivos</div>
+          </div>
+          <div>
+            <div style={{ fontSize: '1rem', fontWeight: 800, color: '#4D7BFF' }}>Clima + suelo</div>
+            <div style={{ fontSize: '0.7rem', color: 'rgba(255, 255, 255, 0.5)', marginTop: '1px' }}>Contexto del lote</div>
+          </div>
+          <div>
+            <div style={{ fontSize: '1rem', fontWeight: 800, color: '#6A3FA0' }}>DSS</div>
+            <div style={{ fontSize: '0.7rem', color: 'rgba(255, 255, 255, 0.5)', marginTop: '1px' }}>Apoyo a decisiones</div>
           </div>
         </div>
 
@@ -605,4 +612,3 @@ export default function Login({ onLoginSuccess, switchToRegister }) {
     </div>
   );
 }
-

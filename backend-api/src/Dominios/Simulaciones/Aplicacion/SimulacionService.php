@@ -37,6 +37,17 @@ final class SimulacionService
     {
         $data = $p->cuerpo();
 
+        foreach (['temperatura', 'humedad', 'precipitacion', 'fertilizante', 'ph_suelo', 'area_simulada'] as $campo) {
+            if (!array_key_exists($campo, $data)) {
+                throw new ValidacionException("El campo {$campo} es obligatorio.");
+            }
+            $this->validarNumero($data[$campo], $campo);
+        }
+
+        if (isset($data['cultivo_id']) && filter_var($data['cultivo_id'], FILTER_VALIDATE_INT) === false) {
+            throw new ValidacionException('ID de parcela inválido.');
+        }
+
         $datos = [
             'usuario_id'    => $usuarioId,
             'cultivo_id'    => !empty($data['cultivo_id']) ? intval($data['cultivo_id']) : null,
@@ -92,6 +103,18 @@ final class SimulacionService
             throw new ValidacionException('El área simulada debe ser mayor a 0.');
         }
 
+        if (!in_array($datos['modelo_usado'], ['random_forest', 'xgboost'], true)) {
+            throw new ValidacionException('El modelo seleccionado no está disponible.');
+        }
+
+        if (!in_array($datos['tipo_suelo'], ['franco', 'arcilloso', 'arenoso'], true)) {
+            throw new ValidacionException('El tipo de suelo no es válido.');
+        }
+
+        if ($datos['nombre'] === '' || mb_strlen($datos['nombre']) > 200) {
+            throw new ValidacionException('El nombre de la simulación debe contener entre 1 y 200 caracteres.');
+        }
+
         // Asegurar que el servidor de IA esté activo
         $iaStatus = $this->motorIa->asegurarActivo();
         if (!$iaStatus['running']) {
@@ -125,7 +148,16 @@ final class SimulacionService
         $this->cache->limpiarExpirados();
 
         $anioConsulta = $p->query('anio');
-        $year = isset($anioConsulta) && $anioConsulta !== '' ? intval($anioConsulta) : null;
+        $year = null;
+        if (isset($anioConsulta) && $anioConsulta !== '') {
+            if (filter_var($anioConsulta, FILTER_VALIDATE_INT) === false) {
+                throw new ValidacionException('El año consultado no es válido.');
+            }
+            $year = (int) $anioConsulta;
+            if ($year < 2000 || $year > 2100) {
+                throw new ValidacionException('El año consultado debe estar entre 2000 y 2100.');
+            }
+        }
         $simulaciones = $this->simulaciones->obtenerPorUsuario($usuarioId, 100, $year);
         $estadisticas = $this->simulaciones->obtenerEstadisticas($usuarioId, $year);
 
@@ -161,17 +193,14 @@ final class SimulacionService
     public function iaStatus(Peticion $p): array
     {
         $this->cache->limpiarExpirados();
-        $tryStart = $p->query('start') === '1';
-        return $this->motorIa->estado($tryStart);
+        return $this->motorIa->estado(false);
     }
 
     /**
      * explain() 223–929: validaciones 225–238 + delegación al catálogo Strategy.
      * El preprocesamiento (líneas 238–344) y la cadena if/elseif (354–911) viven en
      * ServicioExplicabilidad; el ensamblado final (913–929) es verbatim allí.
-     * TRAMPA DE PARIDAD: $usuarioId NO se usa — el legacy solo llamaba getAuthUserOrError()
-     * y NO validaba pertenencia del cultivo/simulación explicada (posible IDOR heredado).
-     * Se conserva igual por paridad; arreglarlo es decisión explícita fuera de esta fase (deuda F06/T19).
+     * El contexto solo puede referenciar parcelas pertenecientes al usuario autenticado.
      */
     public function explain(int $usuarioId, Peticion $p): array
     {
@@ -183,6 +212,26 @@ final class SimulacionService
             throw new ValidacionException('No se recibieron datos de contexto para interpretar.');
         }
 
+        if (isset($data['cultivo_id']) && $data['cultivo_id'] !== '' && $data['cultivo_id'] !== null) {
+            if (filter_var($data['cultivo_id'], FILTER_VALIDATE_INT) === false || (int) $data['cultivo_id'] <= 0) {
+                throw new ValidacionException('ID de parcela inválido.');
+            }
+            $cultivo = $this->cultivos->obtenerPorId((int) $data['cultivo_id']);
+            if (!$cultivo || (int) $cultivo['usuario_id'] !== $usuarioId) {
+                throw new AccesoDenegadoException('No tiene permisos para interpretar datos de esta parcela.');
+            }
+        }
+
         return $this->explicabilidad->explicar($data);
+    }
+
+    private function validarNumero(mixed $valor, string $campo): void
+    {
+        if (!is_int($valor) && !is_float($valor) && !(is_string($valor) && is_numeric(trim($valor)))) {
+            throw new ValidacionException("El campo {$campo} debe ser numérico.");
+        }
+        if (!is_finite((float) $valor)) {
+            throw new ValidacionException("El campo {$campo} debe ser un número finito.");
+        }
     }
 }

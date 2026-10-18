@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import { simulacionService } from '../services/api';
 import { Trash2, TrendingUp, Award, Activity, Database, Clock } from 'lucide-react';
 import InteractiveKPI from '../templates/Common/InteractiveKPI';
@@ -9,22 +9,23 @@ export default function History({ recargarDatos }) {
   const [error, setError] = useState(null);
   const [anioSeleccionado, setAnioSeleccionado] = useState('');
 
-  const loadHistory = async () => {
+  const loadHistory = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
       const res = await simulacionService.historial(anioSeleccionado);
       setData(res);
-    } catch (err) {
+    } catch {
       setError('Error al cargar el historial de simulaciones.');
     } finally {
       setLoading(false);
     }
-  };
+  }, [anioSeleccionado]);
 
   useEffect(() => {
-    loadHistory();
-  }, [anioSeleccionado, recargarDatos]);
+    const refresh = setTimeout(loadHistory, 0);
+    return () => clearTimeout(refresh);
+  }, [loadHistory, recargarDatos]);
 
   const handleDelete = async (id) => {
     if (!window.confirm('¿Está seguro de eliminar esta simulación del historial?')) return;
@@ -32,7 +33,7 @@ export default function History({ recargarDatos }) {
     try {
       await simulacionService.eliminar(id);
       loadHistory();
-    } catch (err) {
+    } catch {
       setError('Error al eliminar la simulación.');
     }
   };

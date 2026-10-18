@@ -30,7 +30,8 @@ final class ServicioDatosTerreno
     {
         $claveLat = round($latitud, 3);
         $claveLng = round($longitud, 3);
-        $clave = "precision_data_{$claveLat}_{$claveLng}";
+        // v2 fuerza la renovación de cachés creadas antes de incluir radiación PAR.
+        $clave = "precision_data_v2_{$claveLat}_{$claveLng}";
 
         $datosCache = $this->cache->obtener($clave);
         if ($datosCache !== null) {

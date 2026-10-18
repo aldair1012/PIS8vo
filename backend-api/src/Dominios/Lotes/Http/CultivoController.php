@@ -18,7 +18,7 @@ final class CultivoController
     public function crear(Peticion $peticion): void { RespuestaJson::enviar($this->servicio->crear($this->usuarioId(), $peticion)); }
     public function actualizar(Peticion $peticion): void { RespuestaJson::enviar($this->servicio->actualizar($this->usuarioId(), $peticion)); }
     public function eliminar(Peticion $peticion): void { RespuestaJson::enviar($this->servicio->eliminar($this->usuarioId(), $peticion)); }
-    public function mapa(Peticion $peticion): void { RespuestaJson::enviar($this->servicio->mapa()); }
+    public function mapa(Peticion $peticion): void { RespuestaJson::enviar($this->servicio->mapa($this->usuarioId())); }
     public function obtenerValoresUbicacion(Peticion $peticion): void { RespuestaJson::enviar($this->servicio->obtenerValoresUbicacion($this->usuarioId(), $peticion)); }
 
     /**

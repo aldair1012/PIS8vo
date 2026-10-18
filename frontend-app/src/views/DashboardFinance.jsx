@@ -1,25 +1,29 @@
-import React, { useState, useEffect } from 'react';
+import { useCallback, useRef, useState, useEffect } from 'react';
 import { dssService, simulacionService } from '../services/api';
-import { Bar, Doughnut } from 'react-chartjs-2';
+import { Doughnut } from 'react-chartjs-2';
 import { Chart as ChartJS, registerables } from 'chart.js';
 import FinancialROI from '../templates/Charts/FinancialROI';
 import InteractiveKPI from '../templates/Common/InteractiveKPI';
 import AIExplainModal from '../templates/Common/AIExplainModal';
 import EmptyDashboard from '../templates/Common/EmptyDashboard';
-import usarExplicacionIA from '../hooks/usarExplicacionIA';
+import useExplicacionIA from '../hooks/usarExplicacionIA';
 
 ChartJS.register(...registerables);
 import { 
   DollarSign, 
   Percent, 
   Scale, 
-  BarChart, 
-  HelpCircle,
   Sparkles,
   Info
 } from 'lucide-react';
 
-export default function DashboardFinance({ cultivoElegidoId, anioSeleccionado, onNavigate }) {
+const parseVal = (val, fallback) => {
+  if (val === '' || val === null || val === undefined || isNaN(val)) return fallback;
+  const num = Number(val);
+  return num < 0 ? 0 : num;
+};
+
+export default function DashboardFinance({ cultivoElegidoId, anioSeleccionado, onNavigate, onDashboardData }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -31,7 +35,7 @@ export default function DashboardFinance({ cultivoElegidoId, anioSeleccionado, o
     datosIa,
     pedirExplicacionIa,
     setRespuestasIaGuardadas
-  } = usarExplicacionIA(cultivoElegidoId, anioSeleccionado);
+  } = useExplicacionIA(cultivoElegidoId, anioSeleccionado);
 
   useEffect(() => {
     if (data && data.kpis) {
@@ -64,7 +68,7 @@ export default function DashboardFinance({ cultivoElegidoId, anioSeleccionado, o
       };
       preload();
     }
-  }, [data, cultivoElegidoId, anioSeleccionado]);
+  }, [data, cultivoElegidoId, anioSeleccionado, setRespuestasIaGuardadas]);
 
   const [precioMaizQq, setPrecioMaizQq] = useState('');
   const [rendimientoQq, setRendimientoQq] = useState('');
@@ -74,12 +78,6 @@ export default function DashboardFinance({ cultivoElegidoId, anioSeleccionado, o
   const [costoProteccion, setCostoProteccion] = useState('');
   const [otrosVar, setOtrosVar] = useState('');
   const [costosFijos, setCostosFijos] = useState('');
-
-  const parseVal = (val, fallback) => {
-    if (val === '' || val === null || val === undefined || isNaN(val)) return fallback;
-    const num = Number(val);
-    return num < 0 ? 0 : num;
-  };
 
   const handleInput = (setter) => (e) => {
     setActivePreset(null);
@@ -104,18 +102,18 @@ export default function DashboardFinance({ cultivoElegidoId, anioSeleccionado, o
     }
   };
 
-  const loadDataWithParams = async (overrideParams = {}) => {
+  const loadDataWithParams = useCallback(async (overrideParams = {}) => {
     setLoading(true);
     setError(null);
     try {
-      const pQq = overrideParams.hasOwnProperty('precioMaizQq') ? overrideParams.precioMaizQq : precioMaizQq;
-      const rQq = overrideParams.hasOwnProperty('rendimientoQq') ? overrideParams.rendimientoQq : rendimientoQq;
-      const cSem = overrideParams.hasOwnProperty('costoSemilla') ? overrideParams.costoSemilla : costoSemilla;
-      const cFert = overrideParams.hasOwnProperty('costoFert') ? overrideParams.costoFert : costoFert;
-      const cRiego = overrideParams.hasOwnProperty('costoRiego') ? overrideParams.costoRiego : costoRiego;
-      const cProt = overrideParams.hasOwnProperty('costoProteccion') ? overrideParams.costoProteccion : costoProteccion;
-      const cOtros = overrideParams.hasOwnProperty('otrosVar') ? overrideParams.otrosVar : otrosVar;
-      const cFijos = overrideParams.hasOwnProperty('costosFijos') ? overrideParams.costosFijos : costosFijos;
+      const pQq = Object.hasOwn(overrideParams, 'precioMaizQq') ? overrideParams.precioMaizQq : precioMaizQq;
+      const rQq = Object.hasOwn(overrideParams, 'rendimientoQq') ? overrideParams.rendimientoQq : rendimientoQq;
+      const cSem = Object.hasOwn(overrideParams, 'costoSemilla') ? overrideParams.costoSemilla : costoSemilla;
+      const cFert = Object.hasOwn(overrideParams, 'costoFert') ? overrideParams.costoFert : costoFert;
+      const cRiego = Object.hasOwn(overrideParams, 'costoRiego') ? overrideParams.costoRiego : costoRiego;
+      const cProt = Object.hasOwn(overrideParams, 'costoProteccion') ? overrideParams.costoProteccion : costoProteccion;
+      const cOtros = Object.hasOwn(overrideParams, 'otrosVar') ? overrideParams.otrosVar : otrosVar;
+      const cFijos = Object.hasOwn(overrideParams, 'costosFijos') ? overrideParams.costosFijos : costosFijos;
 
       const res = await dssService.getFinancialData({
         cultivoId: cultivoElegidoId,
@@ -143,24 +141,57 @@ export default function DashboardFinance({ cultivoElegidoId, anioSeleccionado, o
         if (!cOtros && cOtros !== 0) setOtrosVar(String(base.otros_var || 80));
         if (!cFijos && cFijos !== 0) setCostosFijos(String(base.costos_fijos || 120));
       }
-    } catch (err) {
+    } catch {
       setError('Error al cargar análisis financiero.');
     } finally {
       setLoading(false);
     }
-  };
+  }, [
+    anioSeleccionado,
+    costoFert,
+    costoProteccion,
+    costoRiego,
+    costoSemilla,
+    costosFijos,
+    cultivoElegidoId,
+    otrosVar,
+    precioMaizQq,
+    rendimientoQq,
+  ]);
+
+  const loadDataRef = useRef(loadDataWithParams);
 
   useEffect(() => {
-    // Al cambiar de parcela o año, resetear casillas para autorrelleno automático del sistema
-    setPrecioMaizQq('');
-    setRendimientoQq('');
-    setCostoSemilla('');
-    setCostoFert('');
-    setCostoRiego('');
-    setCostoProteccion('');
-    setOtrosVar('');
-    loadDataWithParams({});
+    loadDataRef.current = loadDataWithParams;
+  }, [loadDataWithParams]);
+
+  useEffect(() => {
+    const refresh = setTimeout(() => {
+      setPrecioMaizQq('');
+      setRendimientoQq('');
+      setCostoSemilla('');
+      setCostoFert('');
+      setCostoRiego('');
+      setCostoProteccion('');
+      setOtrosVar('');
+      setCostosFijos('');
+      loadDataRef.current({
+        precioMaizQq: '',
+        rendimientoQq: '',
+        costoSemilla: '',
+        costoFert: '',
+        costoRiego: '',
+        costoProteccion: '',
+        otrosVar: '',
+        costosFijos: '',
+      });
+    }, 0);
+    return () => clearTimeout(refresh);
   }, [cultivoElegidoId, anioSeleccionado]);
+
+  useEffect(() => {
+    if (data && !data.sin_datos && onDashboardData) onDashboardData(data);
+  }, [data, onDashboardData]);
 
   const handleRecalculate = (e) => {
     if (e && typeof e.preventDefault === 'function') {

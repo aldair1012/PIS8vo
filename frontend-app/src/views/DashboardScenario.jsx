@@ -1,20 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { dssService, simulacionService } from '../services/api';
 import GaussChart from '../templates/Charts/GaussChart';
 import CalendarGrid from '../templates/Common/CalendarGrid';
 import InfoModal from '../templates/Common/InfoModal';
-import InteractiveKPI from '../templates/Common/InteractiveKPI';
 import AIExplainModal from '../templates/Common/AIExplainModal';
 import EmptyDashboard from '../templates/Common/EmptyDashboard';
-import usarExplicacionIA from '../hooks/usarExplicacionIA';
+import useExplicacionIA from '../hooks/usarExplicacionIA';
 import { 
-  TrendingUp, 
-  HelpCircle, 
   AlertTriangle, 
-  Activity, 
-  Calendar,
-  ChevronRight,
-  Sparkles,
   Thermometer,
   Sprout,
   Flame,
@@ -22,7 +15,7 @@ import {
   CheckCircle
 } from 'lucide-react';
 
-export default function DashboardScenario({ cultivoElegidoId, anioSeleccionado, onNavigate }) {
+export default function DashboardScenario({ cultivoElegidoId, anioSeleccionado, onNavigate, onDashboardData }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -36,7 +29,7 @@ export default function DashboardScenario({ cultivoElegidoId, anioSeleccionado, 
     datosIa,
     pedirExplicacionIa,
     setRespuestasIaGuardadas
-  } = usarExplicacionIA(cultivoElegidoId, anioSeleccionado);
+  } = useExplicacionIA(cultivoElegidoId, anioSeleccionado);
 
   useEffect(() => {
     if (data && data.kpis) {
@@ -69,7 +62,7 @@ export default function DashboardScenario({ cultivoElegidoId, anioSeleccionado, 
       };
       preload();
     }
-  }, [data, cultivoElegidoId, anioSeleccionado]);
+  }, [data, cultivoElegidoId, anioSeleccionado, setRespuestasIaGuardadas]);
 
   useEffect(() => {
     async function loadData() {
@@ -78,7 +71,7 @@ export default function DashboardScenario({ cultivoElegidoId, anioSeleccionado, 
       try {
         const res = await dssService.getScenarioData(cultivoElegidoId, anioSeleccionado);
         setData(res);
-      } catch (err) {
+      } catch {
         setError('Error al cargar datos del planificador.');
       } finally {
         setLoading(false);
@@ -86,6 +79,10 @@ export default function DashboardScenario({ cultivoElegidoId, anioSeleccionado, 
     }
     loadData();
   }, [cultivoElegidoId, anioSeleccionado]);
+
+  useEffect(() => {
+    if (data && !data.sin_datos && onDashboardData) onDashboardData(data);
+  }, [data, onDashboardData]);
 
   if (loading) {
     return <div className="flex-center" style={{ height: '70vh', color: 'var(--text-muted)' }}>Cargando DSS Planificador...</div>;
@@ -234,9 +231,6 @@ export default function DashboardScenario({ cultivoElegidoId, anioSeleccionado, 
 
   // Calcular valores de progreso para mini barras de KPI
   const rendimientoProgress = Math.min(100, (kpis.rendimiento_esperado / 12) * 100);
-  const probabilidadProgress = kpis.prob_superar_objetivo;
-  const estabilidadProgress = kpis.estabilidad;
-
   return (
     <div>
       <div className="dashboard-title-row">

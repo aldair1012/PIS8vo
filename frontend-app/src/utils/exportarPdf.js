@@ -1,5 +1,13 @@
 // exportarPdf.js - Herramienta para abrir la ventana de impresión y crear el PDF en español
 
+const escaparHtml = (valor) => String(valor ?? '').replace(/[&<>"']/g, (caracter) => ({
+  '&': '&amp;',
+  '<': '&lt;',
+  '>': '&gt;',
+  '"': '&quot;',
+  "'": '&#039;'
+})[caracter]);
+
 export function exportarReporteAPdf(datosReporte) {
   const ventanaImpresion = window.open('', '_blank');
   if (!ventanaImpresion) {
@@ -125,9 +133,9 @@ export function exportarReporteAPdf(datosReporte) {
           <div class="subtitle">Reporte de Gestión Agrícola y Diagnóstico DSS</div>
         </div>
         <div class="meta-info">
-          <strong>Creado por:</strong> ${datosReporte.meta.exportado_por}<br>
+          <strong>Creado por:</strong> ${escaparHtml(datosReporte.meta.exportado_por)}<br>
           <strong>Fecha:</strong> ${fechaHoy}<br>
-          <strong>Versión:</strong> v${datosReporte.meta.version}
+          <strong>Versión:</strong> v${escaparHtml(datosReporte.meta.version)}
         </div>
       </div>
   `;
@@ -151,16 +159,18 @@ export function exportarReporteAPdf(datosReporte) {
           <tbody>
     `;
     datosReporte.lotes_gps.forEach(l => {
-      const coords = l.latitud && l.longitud ? `${l.latitud}, ${l.longitud}` : 'Sin GPS';
+      const tieneCoordenadas = l.latitud !== null && l.latitud !== undefined && l.latitud !== ''
+        && l.longitud !== null && l.longitud !== undefined && l.longitud !== '';
+      const coords = tieneCoordenadas ? `${l.latitud}, ${l.longitud}` : 'Sin GPS';
       html += `
         <tr>
-          <td><strong>${l.nombre_parcela}</strong></td>
-          <td>${l.variedad_maiz}</td>
-          <td>${l.tipo_maiz}</td>
-          <td>${l.ubicacion || 'No especificada'}</td>
-          <td>${l.area} ha</td>
-          <td>${l.ph || '—'}</td>
-          <td>${coords}</td>
+          <td><strong>${escaparHtml(l.nombre_parcela)}</strong></td>
+          <td>${escaparHtml(l.variedad_maiz)}</td>
+          <td>${escaparHtml(l.tipo_maiz)}</td>
+          <td>${escaparHtml(l.ubicacion || 'No especificada')}</td>
+          <td>${escaparHtml(l.area)} ha</td>
+          <td>${escaparHtml(l.ph || '—')}</td>
+          <td>${escaparHtml(coords)}</td>
         </tr>
       `;
     });
@@ -198,16 +208,16 @@ export function exportarReporteAPdf(datosReporte) {
       });
       html += `
         <tr>
-          <td>${fechaSim}</td>
-          <td><strong>${s.nombre}</strong></td>
-          <td><code style="background:#f1f5f9;padding:2px 4px;border-radius:4px;">${s.modelo_usado}</code></td>
-          <td>${s.temperatura}°C / ${s.humedad}% / ${s.precipitacion}mm</td>
-          <td>${s.fertilizante} kg</td>
-          <td>${s.ph_suelo} / ${s.tipo_suelo}</td>
-          <td>${s.area_simulada} ha</td>
+          <td>${escaparHtml(fechaSim)}</td>
+          <td><strong>${escaparHtml(s.nombre)}</strong></td>
+          <td><code style="background:#f1f5f9;padding:2px 4px;border-radius:4px;">${escaparHtml(s.modelo_usado)}</code></td>
+          <td>${escaparHtml(s.temperatura)}°C / ${escaparHtml(s.humedad)}% / ${escaparHtml(s.precipitacion)}mm</td>
+          <td>${escaparHtml(s.fertilizante)} kg</td>
+          <td>${escaparHtml(s.ph_suelo)} / ${escaparHtml(s.tipo_suelo)}</td>
+          <td>${escaparHtml(s.area_simulada)} ha</td>
           <td style="color:#15803d;font-weight:700;">${Number(s.rendimiento_estimado).toFixed(2)} t/ha</td>
-          <td>${s.produccion_total} t</td>
-          <td>${s.confianza}%</td>
+          <td>${escaparHtml(s.produccion_total)} t</td>
+          <td>${escaparHtml(s.confianza)}%</td>
         </tr>
       `;
     });
@@ -225,15 +235,15 @@ export function exportarReporteAPdf(datosReporte) {
         <div class="kpi-grid">
           <div class="kpi-card">
             <div class="kpi-label">Total Lotes Monitoreados</div>
-            <div class="kpi-value">${datosReporte.resumen_kpi.total_lotes}</div>
+            <div class="kpi-value">${escaparHtml(datosReporte.resumen_kpi.total_lotes)}</div>
           </div>
           <div class="kpi-card">
             <div class="kpi-label">Eficiencia Estimada</div>
-            <div class="kpi-value" style="color:#2563eb;">${datosReporte.resumen_kpi.porcentaje_eficiencia}</div>
+            <div class="kpi-value" style="color:#2563eb;">${escaparHtml(datosReporte.resumen_kpi.porcentaje_eficiencia)}</div>
           </div>
           <div class="kpi-card">
             <div class="kpi-label">Estado Clima</div>
-            <div class="kpi-value" style="color:#d97706;">${datosReporte.resumen_kpi.analisis_clima}</div>
+            <div class="kpi-value" style="color:#d97706;">${escaparHtml(datosReporte.resumen_kpi.analisis_clima)}</div>
           </div>
         </div>
       </div>

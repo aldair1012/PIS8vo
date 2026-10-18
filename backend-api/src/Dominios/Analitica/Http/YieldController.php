@@ -14,13 +14,10 @@ final class YieldController
 
     public function index(Peticion $peticion): void
     {
-        $cultivoId = $peticion->query('cultivo_id');
-        $anio      = $peticion->query('anio');
-
         RespuestaJson::enviar($this->servicio->construir(
             $this->usuarioId(),
-            ($cultivoId !== null && $cultivoId !== '') ? (int) $cultivoId : null,
-            ($anio !== null && $anio !== '') ? (int) $anio : null,
+            $peticion->queryEntero('cultivo_id', null, 1),
+            $peticion->queryEntero('anio', null, 2000, 2100),
         ));
     }
 

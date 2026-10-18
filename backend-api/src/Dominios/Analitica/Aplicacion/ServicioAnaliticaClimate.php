@@ -41,8 +41,12 @@ class ServicioAnaliticaClimate
         $fuenteApi = 'Simulado/Histórico';
         $sueloInfo = null;
 
-        if (!empty($cultivoSeleccionado['latitud']) && !empty($cultivoSeleccionado['longitud'])) {
-            $altitud = !empty($cultivoSeleccionado['altitud']) ? floatval($cultivoSeleccionado['altitud']) : null;
+        $tieneCoordenadas = isset($cultivoSeleccionado['latitud'], $cultivoSeleccionado['longitud'])
+            && $cultivoSeleccionado['latitud'] !== '' && $cultivoSeleccionado['longitud'] !== '';
+        if ($tieneCoordenadas) {
+            $altitud = isset($cultivoSeleccionado['altitud']) && $cultivoSeleccionado['altitud'] !== ''
+                ? (float) $cultivoSeleccionado['altitud']
+                : null;
             $informacionApi = $this->terreno->obtener(
                 floatval($cultivoSeleccionado['latitud']),
                 floatval($cultivoSeleccionado['longitud']),
@@ -57,21 +61,11 @@ class ServicioAnaliticaClimate
             }
         }
 
-        $year = $anio ?? 2026;
+        $year = $anio ?? (int) date('Y');
 
         $ensoEstado = 'Neutral';
-        $ensoColor = 'success';
-        $ensoDesc = 'Condiciones ENSO estables y neutrales en el Pacífico Ecuatorial';
-
-        if ($year === 2026) {
-            $ensoEstado = 'Niño (Activo)';
-            $ensoColor = 'danger';
-            $ensoDesc = 'Fenómeno global de El Niño activo para el período 2026 en todo el país';
-        } elseif ($year === 2025) {
-            $ensoEstado = 'Niña (Activo)';
-            $ensoColor = 'warning';
-            $ensoDesc = 'Fase activa global de La Niña registrada para el período 2025';
-        }
+        $ensoColor = 'info';
+        $ensoDesc = "Escenario neutral de referencia para {$year}; ZeaSys no tiene integrada una fuente ENSO en tiempo real.";
 
         $probLluviaBaja = $precipitacionPromedio < 700 ? round(max(20, min(85, 100 - ($precipitacionPromedio / 10))), 0) : round(max(10, 70 - ($precipitacionPromedio / 15)), 0);
         $probEstrTermico = $temperaturaPromedio > 30 ? round(min(90, ($temperaturaPromedio - 25) * 15), 0) : round(max(5, ($temperaturaPromedio - 20) * 5), 0);
@@ -98,7 +92,7 @@ class ServicioAnaliticaClimate
         $anomaliaTemp = [];
         $promedioHistLluvia = [];
 
-        if (!empty($cultivoSeleccionado['latitud'])) {
+        if ($tieneCoordenadas) {
             $latitud = floatval($cultivoSeleccionado['latitud']);
             $longitud = floatval($cultivoSeleccionado['longitud']);
             $altitud = floatval($cultivoSeleccionado['altitud'] ?? 45.0);
@@ -118,15 +112,17 @@ class ServicioAnaliticaClimate
                     $lluviaBase = ($i >= 0 && $i <= 3) ? (160.0 - $i * 35) : 12.0;
                 }
                 $promedioHistLluvia[] = round($lluviaBase, 1);
-                $anomaliaLluvia[] = round($lluviaBase + mt_rand(-10, 15), 1);
-                $anomaliaTemp[] = round($temperaturaBase + mt_rand(-8, 8) / 10, 1);
+                $semilla = implode('|', [$usuarioId, $cultivoId ?? 0, $year, $i]);
+                $anomaliaLluvia[] = round($lluviaBase + $this->variacionDeterminista($semilla . '|lluvia', -10, 15), 1);
+                $anomaliaTemp[] = round($temperaturaBase + $this->variacionDeterminista($semilla . '|temp', -8, 8) / 10, 1);
             }
         } else {
             for ($i = 0; $i < 12; $i++) {
                 $baseLluvia = 60 + sin(deg2rad($i * 30)) * 30;
-                $anomaliaLluvia[] = round($baseLluvia + mt_rand(-20, 15), 1);
+                $semilla = implode('|', [$usuarioId, $cultivoId ?? 0, $year, $i]);
+                $anomaliaLluvia[] = round($baseLluvia + $this->variacionDeterminista($semilla . '|lluvia', -20, 15), 1);
                 $promedioHistLluvia[] = round($baseLluvia, 1);
-                $anomaliaTemp[] = round($temperaturaPromedio + sin(deg2rad($i * 30 + 90)) * 3 + mt_rand(-10, 10) / 10, 1);
+                $anomaliaTemp[] = round($temperaturaPromedio + sin(deg2rad($i * 30 + 90)) * 3 + $this->variacionDeterminista($semilla . '|temp', -10, 10) / 10, 1);
             }
         }
 
@@ -293,5 +289,11 @@ class ServicioAnaliticaClimate
             'timeline_fenologico' => $lineaTiempoFenologica,
             'fecha_siembra' => $cultivoSeleccionado ? $cultivoSeleccionado['fecha_siembra'] : null
         ];
+    }
+
+    private function variacionDeterminista(string $semilla, int $minimo, int $maximo): int
+    {
+        $enteroSinSigno = (int) sprintf('%u', crc32($semilla));
+        return $minimo + ($enteroSinSigno % ($maximo - $minimo + 1));
     }
 }

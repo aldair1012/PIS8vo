@@ -54,11 +54,9 @@ export const authService = {
   uploadAvatar: async (file) => {
     const formData = new FormData();
     formData.append('foto', file);
-    const response = await API.post('/api/auth/upload-avatar', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      }
-    });
+    // El navegador debe generar el boundary multipart; fijarlo manualmente puede
+    // producir cargas vacías en algunos adaptadores/versiones de Axios.
+    const response = await API.post('/api/auth/upload-avatar', formData);
     return response.data;
   },
   deleteAvatar: async () => {
@@ -120,8 +118,8 @@ export const simulacionService = {
     const response = await API.delete(`/api/simulaciones/eliminar?id=${id}`);
     return response.data;
   },
-  iaStatus: async (start = false) => {
-    const response = await API.get(`/api/simulaciones/ia-status${start ? '?start=1' : ''}`);
+  iaStatus: async () => {
+    const response = await API.get('/api/simulaciones/ia-status');
     return response.data;
   },
   explainData: async (context) => {
@@ -131,51 +129,69 @@ export const simulacionService = {
 };
 
 export const chatService = {
-  preguntar: async (pregunta, vista = null) => {
-    const response = await API.post('/api/chat/preguntar', { pregunta, vista });
+  preguntar: async (pregunta, vista = null, cultivoId = null, anio = null, dashboard = null) => {
+    const response = await API.post('/api/chat/preguntar', {
+      pregunta,
+      vista,
+      cultivo_id: cultivoId,
+      anio,
+      dashboard,
+    });
     return response.data;
-  }
+  },
+  limpiar: async () => {
+    const response = await API.post('/api/chat/limpiar');
+    return response.data;
+  },
 };
 
 export const dssService = {
   getScenarioData: async (cultivoId = null, anio = null) => {
-    let query = [];
-    if (cultivoId) query.push(`cultivo_id=${cultivoId}`);
-    if (anio) query.push(`anio=${anio}`);
-    const qStr = query.length > 0 ? '?' + query.join('&') : '';
+    const query = new URLSearchParams();
+    if (cultivoId !== null && cultivoId !== '') query.set('cultivo_id', cultivoId);
+    if (anio !== null && anio !== '') query.set('anio', anio);
+    const qStr = query.size > 0 ? `?${query.toString()}` : '';
     const response = await API.get(`/api/scenarios${qStr}`);
     return response.data;
   },
   getClimateData: async (cultivoId = null, anio = null) => {
-    let query = [];
-    if (cultivoId) query.push(`cultivo_id=${cultivoId}`);
-    if (anio) query.push(`anio=${anio}`);
-    const qStr = query.length > 0 ? '?' + query.join('&') : '';
+    const query = new URLSearchParams();
+    if (cultivoId !== null && cultivoId !== '') query.set('cultivo_id', cultivoId);
+    if (anio !== null && anio !== '') query.set('anio', anio);
+    const qStr = query.size > 0 ? `?${query.toString()}` : '';
     const response = await API.get(`/api/climate${qStr}`);
     return response.data;
   },
   getYieldData: async (cultivoId = null, anio = null) => {
-    let query = [];
-    if (cultivoId) query.push(`cultivo_id=${cultivoId}`);
-    if (anio) query.push(`anio=${anio}`);
-    const qStr = query.length > 0 ? '?' + query.join('&') : '';
+    const query = new URLSearchParams();
+    if (cultivoId !== null && cultivoId !== '') query.set('cultivo_id', cultivoId);
+    if (anio !== null && anio !== '') query.set('anio', anio);
+    const qStr = query.size > 0 ? `?${query.toString()}` : '';
     const response = await API.get(`/api/yield${qStr}`);
     return response.data;
   },
   getFinancialData: async (params = {}) => {
-    let query = [];
-    if (params.cultivoId) query.push(`cultivo_id=${params.cultivoId}`);
-    if (params.anio) query.push(`anio=${params.anio}`);
-    if (params.precioMaizQq) query.push(`precio_maiz_qq=${params.precioMaizQq}`);
-    if (params.rendimientoQq) query.push(`rendimiento_qq=${params.rendimientoQq}`);
-    if (params.costoSemilla) query.push(`costo_semilla=${params.costoSemilla}`);
-    if (params.costoFert) query.push(`costo_fert=${params.costoFert}`);
-    if (params.costoRiego) query.push(`costo_riego=${params.costoRiego}`);
-    if (params.costoProteccion) query.push(`costo_proteccion=${params.costoProteccion}`);
-    if (params.otrosVar) query.push(`otros_var=${params.otrosVar}`);
-    if (params.costosFijos) query.push(`costos_fijos=${params.costosFijos}`);
-    
-    const qStr = query.length > 0 ? '?' + query.join('&') : '';
+    const query = new URLSearchParams();
+    const campos = {
+      cultivoId: 'cultivo_id',
+      anio: 'anio',
+      precioMaizQq: 'precio_maiz_qq',
+      rendimientoQq: 'rendimiento_qq',
+      costoSemilla: 'costo_semilla',
+      costoFert: 'costo_fert',
+      costoRiego: 'costo_riego',
+      costoProteccion: 'costo_proteccion',
+      otrosVar: 'otros_var',
+      costosFijos: 'costos_fijos',
+    };
+    Object.entries(campos).forEach(([propiedad, parametro]) => {
+      const valor = params[propiedad];
+      if (valor !== null && valor !== undefined && valor !== '') {
+        query.set(parametro, valor);
+      }
+    });
+
+    const qStr = query.size > 0 ? `?${query.toString()}` : '';
     const response = await API.get(`/api/financial${qStr}`);
     return response.data;
   }

@@ -1,4 +1,25 @@
-# ZeaSys Apache Cache Control Config
+# ZeaSys Apache Security + Cache Control
+Options -Indexes
+
+<IfModule mod_headers.c>
+    Header always unset X-Powered-By
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set Permissions-Policy "camera=(), microphone=(), geolocation=(self)"
+</IfModule>
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule (^|/)\. - [F,L]
+    # Solo el front controller y los avatares deben ser públicos dentro del backend.
+    RewriteRule ^(?:backend-api/(?:src|tests|data|models)|database|docs|documentacion|frontend-app|ml-engine)(?:/|$) - [F,L,NC]
+</IfModule>
+
+<FilesMatch "(?i)(^\.|\.(?:sql|joblib|py|pyc|csv|md|bat|log|ini|env|lock)$)">
+    Require all denied
+</FilesMatch>
+
 <FilesMatch "\.(html|htm)$">
     FileETag None
     <IfModule mod_headers.c>

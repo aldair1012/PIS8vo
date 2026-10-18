@@ -15,6 +15,7 @@ if %errorlevel%==0 (
 echo [ZeaSys] Iniciando servidor IA en segundo plano...
 
 REM Intentar con python
+where python >nul 2>&1
 if %errorlevel%==0 (
     start "" /B python app.py > flask_server.log 2>&1
     exit /b 0

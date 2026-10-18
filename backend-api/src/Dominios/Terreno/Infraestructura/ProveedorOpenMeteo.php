@@ -20,7 +20,7 @@ final class ProveedorOpenMeteo implements ProveedorClimaInterface
             . "?latitude={$latitud}&longitude={$longitud}"
             . "&start_date={$fechaInicio}&end_date={$fechaFin}"
             . "&daily=temperature_2m_mean,temperature_2m_min,temperature_2m_max"
-            .         ",precipitation_sum,relative_humidity_2m_mean,wind_speed_10m_max"
+            .         ",precipitation_sum,relative_humidity_2m_mean,wind_speed_10m_max,shortwave_radiation_sum"
             . "&timezone=auto";
 
         $ch = curl_init($urlClima);
@@ -75,6 +75,16 @@ final class ProveedorOpenMeteo implements ProveedorClimaInterface
         $valoresViento = array_filter($this->serie($datosDiarios, 'wind_speed_10m_max'), fn($v) => $v !== null);
         if (!empty($valoresViento)) {
             $actualizaciones['viento'] = round(array_sum($valoresViento) / count($valoresViento), 1);
+        }
+
+        // Open-Meteo entrega radiación solar de onda corta en MJ/m²/día.
+        // Aproximamos PAR con la fracción fotosintéticamente activa (0.45) y
+        // 4.57 µmol/J: 1 MJ/m² equivale aproximadamente a 2.06 mol PAR/m².
+        // La unidad queda explícita para que el dashboard no confunda PAR con W/m².
+        $radiacionSolar = array_filter($this->serie($datosDiarios, 'shortwave_radiation_sum'), fn($v) => $v !== null);
+        if (!empty($radiacionSolar)) {
+            $promedioRadiacionSolar = array_sum($radiacionSolar) / count($radiacionSolar);
+            $actualizaciones['radiacion_par'] = round(max(0.0, $promedioRadiacionSolar * 2.06), 1);
         }
 
         return $actualizaciones;

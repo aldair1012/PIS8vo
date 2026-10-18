@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { dssService, simulacionService } from '../services/api';
 import { Line, Bar } from 'react-chartjs-2';
 import { Chart as ChartJS, registerables } from 'chart.js';
@@ -6,7 +6,7 @@ import InfoModal from '../templates/Common/InfoModal';
 import InteractiveKPI from '../templates/Common/InteractiveKPI';
 import AIExplainModal from '../templates/Common/AIExplainModal';
 import EmptyDashboard from '../templates/Common/EmptyDashboard';
-import usarExplicacionIA from '../hooks/usarExplicacionIA';
+import useExplicacionIA from '../hooks/usarExplicacionIA';
 
 ChartJS.register(...registerables);
 
@@ -16,7 +16,6 @@ import {
   TrendingUp, 
   CheckCircle,
   HelpCircle,
-  Sparkles,
   Leaf,
   Droplets,
   Thermometer,
@@ -24,13 +23,11 @@ import {
   Gauge
 } from 'lucide-react';
 
-export default function DashboardYield({ cultivoElegidoId, anioSeleccionado, onNavigate }) {
+export default function DashboardYield({ cultivoElegidoId, anioSeleccionado, onNavigate, onDashboardData }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [modalData, setModalData] = useState(null);
-  const [hoveredIndex, setHoveredIndex] = useState(null);
-  const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
   
   const {
     mostrarModalIa,
@@ -39,20 +36,25 @@ export default function DashboardYield({ cultivoElegidoId, anioSeleccionado, onN
     datosIa,
     pedirExplicacionIa,
     setRespuestasIaGuardadas
-  } = usarExplicacionIA(cultivoElegidoId, anioSeleccionado);
+  } = useExplicacionIA(cultivoElegidoId, anioSeleccionado);
 
   useEffect(() => {
     if (data && data.kpis && typeof data.kpis.rendimiento_predicho === 'number') {
       const { kpis } = data;
       const preloadKey = "Rendimiento Predicho Final";
+      const rendimientoPredicho = Number(kpis.rendimiento_predicho);
+      const rendimientoAlcanzable = Number(kpis.rendimiento_alcanzable);
+      const proporcionPotencial = rendimientoAlcanzable > 0
+        ? rendimientoPredicho / rendimientoAlcanzable
+        : null;
       const preloadContext = {
         tipo_elemento: "tarjeta",
         nombre: preloadKey,
         cultivo: "maiz",
-        valor: parseFloat((kpis.rendimiento_predicho || 6.25).toFixed(2)),
+        valor: parseFloat(Number(kpis.rendimiento_predicho).toFixed(2)),
         unidad: "t/ha",
-        color: (kpis.rendimiento_predicho || 6.25) > 6.0 ? "success" : ((kpis.rendimiento_predicho || 6.25) > 4.5 ? "warning" : "danger"),
-        rango_ideal: "6.0 a 8.5 t/ha",
+        color: proporcionPotencial === null ? "neutral" : (proporcionPotencial >= 0.8 ? "success" : (proporcionPotencial >= 0.6 ? "warning" : "danger")),
+        rango_ideal: rendimientoAlcanzable > 0 ? `Comparar contra el alcanzable del escenario (${rendimientoAlcanzable.toFixed(2)} t/ha)` : "Depende del escenario",
         descripcion_tecnica: "El rendimiento de cosecha que la simulación estima que se obtendrá al final del ciclo basándose en las variables climáticas e insumos ingresados.",
         impacto_base: "Determina directamente la viabilidad del cultivo y el volumen total de toneladas que se podrán vender.",
         recomendacion_base: "Si el valor es inferior al rango óptimo, se sugiere revisar el balance de fertilizantes y el manejo de agua antes de iniciar la campaña."
@@ -72,7 +74,7 @@ export default function DashboardYield({ cultivoElegidoId, anioSeleccionado, onN
       };
       preload();
     }
-  }, [data, cultivoElegidoId, anioSeleccionado]);
+  }, [data, cultivoElegidoId, anioSeleccionado, setRespuestasIaGuardadas]);
 
   useEffect(() => {
     async function loadData() {
@@ -81,7 +83,7 @@ export default function DashboardYield({ cultivoElegidoId, anioSeleccionado, onN
       try {
         const res = await dssService.getYieldData(cultivoElegidoId, anioSeleccionado);
         setData(res);
-      } catch (err) {
+      } catch {
         setError('Error al cargar la brecha productiva.');
       } finally {
         setLoading(false);
@@ -89,6 +91,10 @@ export default function DashboardYield({ cultivoElegidoId, anioSeleccionado, onN
     }
     loadData();
   }, [cultivoElegidoId, anioSeleccionado]);
+
+  useEffect(() => {
+    if (data && !data.sin_datos && onDashboardData) onDashboardData(data);
+  }, [data, onDashboardData]);
 
   if (loading) {
     return <div className="flex-center" style={{ height: '70vh', color: 'var(--text-muted)' }}>Cargando DSS Productividad...</div>;
@@ -103,14 +109,38 @@ export default function DashboardYield({ cultivoElegidoId, anioSeleccionado, onN
   }
 
   const { waterfall_losses = [], fenologia_comparativa = {}, factores_contribucion = [], cultivo_activo = null } = data || {};
-  const kpis = {
-    rendimiento_potencial: 12.0,
-    rendimiento_alcanzable: 8.5,
-    rendimiento_predicho: 6.25,
-    yield_gap_total: 5.75,
-    principal_limitante: 'Fertilización',
-    ...(data?.kpis || {})
+  const kpis = data?.kpis || {};
+  const kpiFuentes = data?.kpi_fuentes || {};
+  const numeroOpcional = (valor) => (valor !== null && valor !== undefined && valor !== '' && Number.isFinite(Number(valor)) ? Number(valor) : null);
+  const fuenteCorta = (clave, fallback = 'Estimado') => {
+    const fuente = String(kpiFuentes[clave] || fallback);
+    const lower = fuente.toLowerCase();
+    if (lower.includes('open-meteo') || lower.includes('soilgrids') || lower.includes('api')) return 'Fuente API';
+    if (lower.includes('simulac')) return 'Simulaciones';
+    if (lower.includes('catálogo') || lower.includes('catalogo')) return 'Catálogo';
+    if (lower.includes('teórico') || lower.includes('teorico')) return 'Teórico';
+    if (lower.includes('modelo') || lower.includes('clasificador') || lower.includes('ml')) return 'Modelo';
+    if (lower.includes('estim')) return 'Estimado';
+    return fallback;
   };
+  const radiacionPar = numeroOpcional(kpis.radiacion_par) ?? numeroOpcional(kpis.radiacion);
+  const tipoSueloRaw = cultivo_activo?.tipo_suelo || kpis.tipo_suelo || null;
+  const tipoSuelo = tipoSueloRaw
+    ? String(tipoSueloRaw).toLowerCase().replace(/\b\w/g, (letra) => letra.toUpperCase())
+    : null;
+  const aguaUtil = numeroOpcional(kpis.agua_util);
+  const faseVulnerable = kpis.fase_vulnerable || null;
+  const riesgoFaseVulnerable = numeroOpcional(kpis.fase_vulnerable_riesgo);
+
+  const kpisEsenciales = ['rendimiento_potencial', 'rendimiento_alcanzable', 'rendimiento_predicho', 'yield_gap_total'];
+  const datosKpiCompletos = kpisEsenciales.every((clave) => Number.isFinite(Number(kpis[clave])));
+  if (!datosKpiCompletos) {
+    return (
+      <div className="bg-danger-alpha text-danger" style={{ padding: '1rem', borderRadius: '12px' }}>
+        El Dashboard Productividad recibió datos incompletos y no mostrará cifras estimadas. Ejecuta una simulación válida y vuelve a cargar el panel.
+      </div>
+    );
+  }
 
   const isLightTheme = document.body.classList.contains('light-theme');
   const textColor = isLightTheme ? '#020617' : '#ffffff';
@@ -207,7 +237,7 @@ export default function DashboardYield({ cultivoElegidoId, anioSeleccionado, onN
         pointHoverBorderWidth: 2
       },
       {
-        label: 'Mejor Año Histórico',
+        label: 'Mejor escenario registrado',
         data: fenologia_comparativa?.mejor_ano || [0, 0, 0, 0, 0, 0, 0],
         borderColor: '#1d4ed8',
         borderDash: [5, 5],
@@ -219,11 +249,11 @@ export default function DashboardYield({ cultivoElegidoId, anioSeleccionado, onN
         pointHoverBorderColor: isLightTheme ? '#0f172a' : '#fff'
       },
       {
-        label: 'Peor Año Histórico',
+        label: 'Peor escenario registrado',
         data: fenologia_comparativa?.peor_ano || [0, 0, 0, 0, 0, 0, 0],
         borderColor: '#dc2626',
         borderDash: [5, 5],
-        fill: 1, // Rellenar hasta el índice 1 del conjunto de datos ("Mejor Año Histórico")
+        fill: 1, // Rellenar hasta el índice 1 del conjunto de datos ("Mejor escenario registrado")
         backgroundColor: isLightTheme ? 'rgba(59, 130, 246, 0.08)' : 'rgba(59, 130, 246, 0.03)',
         tension: 0.3,
         pointRadius: 0,
@@ -234,7 +264,22 @@ export default function DashboardYield({ cultivoElegidoId, anioSeleccionado, onN
     ]
   };
 
-  const maxYieldVal = Math.max(...(fenologia_comparativa?.mejor_ano || [7]), kpis?.rendimiento_predicho || 6);
+  const maxYieldVal = Math.max(...(fenologia_comparativa?.mejor_ano || [0]), Number(kpis?.rendimiento_predicho) || 0, 1);
+  const perdidaPorFactor = (termino) => {
+    const fila = waterfall_losses.find((item) => String(item?.name || '').toLowerCase().includes(termino));
+    const valor = fila?.value;
+    return valor !== null && valor !== undefined && Number.isFinite(Number(valor)) ? Math.abs(Number(valor)) : null;
+  };
+  const perdidaAgua = perdidaPorFactor('agua');
+  const perdidaNitrogeno = perdidaPorFactor('nitrógeno') ?? perdidaPorFactor('nitrogeno');
+  const perdidaTemperatura = perdidaPorFactor('temperatura');
+  const perdidaFecha = perdidaPorFactor('fecha');
+  const perdidaSuelo = perdidaPorFactor('suelo');
+  const probabilidadCosecha = numeroOpcional(kpis.probabilidad_cosecha);
+  const indiceCosecha = numeroOpcional(kpis.indice_cosecha);
+  const factorMayor = factores_contribucion
+    .filter((item) => item && item.factor && Number.isFinite(Number(item.porcentaje)))
+    .reduce((mayor, item) => Number(item.porcentaje) > Number(mayor?.porcentaje ?? -Infinity) ? item : mayor, null);
 
   const lineOptions = {
     responsive: true,
@@ -296,10 +341,26 @@ export default function DashboardYield({ cultivoElegidoId, anioSeleccionado, onN
     }
   };
 
-  // Ayudantes de progreso
-  const potencialMax = 14;
+  // Ayudantes de progreso. La escala se calcula con los valores entregados por
+  // el backend; nunca se usa un máximo fijo que pueda falsear el porcentaje.
+  const potencialMax = Math.max(
+    Number(kpis.rendimiento_potencial) || 0,
+    Number(kpis.rendimiento_alcanzable) || 0,
+    Number(kpis.rendimiento_predicho) || 0,
+    1,
+  );
   const predichoProgress = Math.min(100, (kpis.rendimiento_predicho / potencialMax) * 100);
   const alcanzableProgress = Math.min(100, (kpis.rendimiento_alcanzable / potencialMax) * 100);
+  const proporcionPredichoAlcanzable = Number(kpis.rendimiento_alcanzable) > 0
+    ? Number(kpis.rendimiento_predicho) / Number(kpis.rendimiento_alcanzable)
+    : null;
+  const estadoPredicho = proporcionPredichoAlcanzable === null
+    ? { corto: "Sin referencia", largo: "Sin dato", color: "neutral" }
+    : proporcionPredichoAlcanzable >= 0.8
+      ? { corto: "Cercano al alcanzable", largo: "Cobertura alta", color: "success" }
+      : proporcionPredichoAlcanzable >= 0.6
+        ? { corto: "Intermedio", largo: "Cobertura media", color: "warning" }
+        : { corto: "Por debajo del alcanzable", largo: "Cobertura baja", color: "danger" };
   
   const potencialSlides = [
     {
@@ -310,7 +371,7 @@ export default function DashboardYield({ cultivoElegidoId, anioSeleccionado, onN
       progressColor: "linear-gradient(90deg, #863bff 0%, #a855f7 100%)",
       progressLabelLeft: "Estabilidad",
       progressLabelRight: "100%",
-      miniChart: { type: 'line', data: [kpis.rendimiento_potencial * 0.95, kpis.rendimiento_potencial * 0.98, kpis.rendimiento_potencial * 0.99, kpis.rendimiento_potencial], color: '#c084fc' },
+      miniChart: null,
       explanation: {
         tipo_elemento: "tarjeta",
         nombre: "Rendimiento Potencial Teórico",
@@ -318,7 +379,7 @@ export default function DashboardYield({ cultivoElegidoId, anioSeleccionado, onN
         valor: `${kpis.rendimiento_potencial} t/ha`,
         unidad: "t/ha",
         estado: "optimo",
-        rango_ideal: "12.0 a 14.5 t/ha",
+        rango_ideal: "Depende de la variedad y el escenario",
         descripcion_tecnica: "Rendimiento máximo genético de este híbrido de maíz en condiciones ideales de laboratorio o parcelas experimentales sin plagas ni deficiencias hídricas.",
         impacto_base: "Sirve como meta teórica para medir la brecha productiva total y planificar el potencial de la semilla.",
         recomendacion_base: "Es útil para calcular qué porcentaje del potencial genético real se está alcanzando en el lote."
@@ -326,46 +387,47 @@ export default function DashboardYield({ cultivoElegidoId, anioSeleccionado, onN
     },
     {
       title: "Radiación Fotosintética",
-      value: <>420 <span className="kpi-value-unit">cal/cm²</span></>,
-      trend: "Óptima C4",
-      progress: 95,
+      value: radiacionPar === null ? <>No disponible</> : <>{radiacionPar} <span className="kpi-value-unit">mol/m²/d</span></>,
+      trend: radiacionPar === null ? "Sin medición" : fuenteCorta('radiacion_par'),
+      progress: null,
       progressColor: "linear-gradient(90deg, #38bdf8 0%, #818cf8 100%)",
       progressLabelLeft: "Captura Luz",
-      progressLabelRight: "95%",
-      miniChart: { type: 'bar', data: [390, 405, 415, 420], color: '#38bdf8' },
+      progressLabelRight: radiacionPar === null ? "—" : "Dato disponible",
+      miniChart: null,
       explanation: {
         tipo_elemento: "tarjeta",
         nombre: "Radiación Fotosintéticamente Activa (PAR)",
         cultivo: "maiz",
-        valor: "420 cal/cm²",
-        unidad: "cal/cm²",
-        estado: "optimo",
-        rango_ideal: "380 a 450 cal/cm²",
-        descripcion_tecnica: "Nivel de radiación solar capturado por la canopia foliar para activar la fijación de carbono vía fotosíntesis C4 durante el llenado de grano.",
-        impacto_base: "Asegura la producción de carbohidratos necesarios para maximizar el peso del grano de maíz.",
-        recomendacion_base: "Mantener una densidad de siembra uniforme para maximizar la intercepción de luz solar por metro cuadrado."
+        valor: radiacionPar === null ? "No disponible" : `${radiacionPar} mol/m²/d`,
+        unidad: "",
+        estado: radiacionPar === null ? "sin_datos" : "disponible",
+        rango_ideal: "Requiere medición local",
+        descripcion_tecnica: "La radiación PAR representa la luz fotosintéticamente activa disponible, expresada como mol/m²/día. Puede proceder de una API climática o de una estimación zonal.",
+        impacto_base: "La radiación condiciona la fotosíntesis y la acumulación de biomasa; el valor estimado no sustituye un sensor instalado en el lote.",
+        recomendacion_base: "Instalar o registrar un sensor PAR para sustituir la estimación por una medición local.",
+        fuente: kpiFuentes.radiacion_par
       }
     },
     {
       title: "Límite Genético Híbrido",
-      value: <>14.5 <span className="kpi-value-unit">t/ha</span></>,
-      trend: "Teórico",
+      value: kpis.rendimiento_potencial == null ? <>No disponible</> : <>{kpis.rendimiento_potencial} <span className="kpi-value-unit">t/ha</span></>,
+      trend: kpis.rendimiento_potencial == null ? "Sin dato" : "Teórico",
       progress: 100,
       progressColor: "linear-gradient(90deg, #c084fc 0%, #e879f9 100%)",
       progressLabelLeft: "Teórico Absoluto",
       progressLabelRight: "Max",
-      miniChart: { type: 'ring', percent: 100, color: '#c084fc' },
+      miniChart: { type: 'ring', percent: kpis.rendimiento_potencial == null ? 0 : 100, color: '#c084fc' },
       explanation: {
         tipo_elemento: "tarjeta",
         nombre: "Límite Genético del Híbrido de Maíz",
         cultivo: "maiz",
-        valor: "14.5 t/ha",
+        valor: kpis.rendimiento_potencial == null ? "No disponible" : `${kpis.rendimiento_potencial} t/ha`,
         unidad: "t/ha",
         estado: "optimo",
-        rango_ideal: "14.0 a 15.0 t/ha",
-        descripcion_tecnica: "Techo biológico insuperable fijado por el mejoramiento genético de la semilla bajo nutrición y clima sin restricciones.",
-        impacto_base: "Representa el límite biológico absoluto que puede alcanzar la variedad en las mejores condiciones del mundo.",
-        recomendacion_base: "Utilizar semillas certificadas de alto rendimiento para garantizar un techo genético elevado."
+        rango_ideal: "Depende de la variedad y el escenario",
+        descripcion_tecnica: "Potencial productivo calculado para la variedad y el escenario seleccionado; no representa una garantía de cosecha.",
+        impacto_base: "Sirve como referencia para medir la brecha productiva del escenario, no como un límite universal de la semilla.",
+        recomendacion_base: "Comparar el potencial con el rendimiento predicho y revisar las limitantes identificadas por el modelo."
       }
     }
   ];
@@ -379,7 +441,7 @@ export default function DashboardYield({ cultivoElegidoId, anioSeleccionado, onN
       progressColor: "linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%)",
       progressLabelLeft: "Potencial Real",
       progressLabelRight: `${alcanzableProgress.toFixed(0)}%`,
-      miniChart: { type: 'line', data: [kpis.rendimiento_alcanzable * 0.88, kpis.rendimiento_alcanzable * 0.93, kpis.rendimiento_alcanzable * 0.97, kpis.rendimiento_alcanzable], color: '#60a5fa' },
+      miniChart: null,
       explanation: {
         tipo_elemento: "tarjeta",
         nombre: "Rendimiento Alcanzable",
@@ -387,7 +449,7 @@ export default function DashboardYield({ cultivoElegidoId, anioSeleccionado, onN
         valor: `${kpis.rendimiento_alcanzable} t/ha`,
         unidad: "t/ha",
         estado: "favorable",
-        rango_ideal: "8.0 a 11.0 t/ha",
+        rango_ideal: "Depende de la variedad y del escenario",
         descripcion_tecnica: "Rendimiento límite que se puede lograr en el lote con el clima y tipo de suelo reales, asumiendo un manejo perfecto de nutrientes sin pérdidas.",
         impacto_base: "Define la meta productiva realista del cultivo considerando las restricciones naturales e inamovibles del suelo.",
         recomendacion_base: "Ajustar la nutrición y riego para evitar pérdidas que reduzcan el rendimiento real por debajo de este límite alcanzable."
@@ -395,46 +457,48 @@ export default function DashboardYield({ cultivoElegidoId, anioSeleccionado, onN
     },
     {
       title: "Capacidad de Suelo",
-      value: "Franco-Arcilloso",
-      trend: "Cap. Campo",
-      progress: 80,
+      value: tipoSuelo || "No disponible",
+      trend: tipoSuelo ? fuenteCorta('tipo_suelo', 'Registrado') : "Sin dato",
+      progress: null,
       progressColor: "linear-gradient(90deg, #60a5fa 0%, #93c5fd 100%)",
       progressLabelLeft: "Retención Hídrica",
-      progressLabelRight: "Buena",
-      miniChart: { type: 'bar', data: [70, 75, 78, 80], color: '#60a5fa' },
+      progressLabelRight: tipoSuelo ? "Dato disponible" : "—",
+      miniChart: null,
       explanation: {
         tipo_elemento: "tarjeta",
         nombre: "Capacidad de Almacenamiento del Suelo",
         cultivo: "maiz",
-        valor: "Textura Franco-Arcillosa",
+        valor: tipoSuelo || "No disponible",
         unidad: "",
         estado: "favorable",
-        rango_ideal: "Franco o Franco-Arcilloso",
-        descripcion_tecnica: "Propiedad física del suelo que determina la capacidad de retención de humedad y nutrientes disponibles para el sistema radicular del maíz.",
-        impacto_base: "Los suelos franco-arcillosos mantienen el agua durante períodos secos cortos sin asfixiar las raíces.",
-        recomendacion_base: "Evitar el compacamiento por maquinaria pesada para mantener la porosidad del suelo."
+        rango_ideal: "Requiere análisis de textura",
+        descripcion_tecnica: "La textura del suelo determina la retención de humedad y nutrientes disponibles para las raíces. ZeaSys sólo debe mostrarla si existe en los datos de la parcela.",
+        impacto_base: tipoSuelo ? "La textura registrada ayuda a interpretar el balance hídrico, pero no reemplaza un análisis de suelo." : "No hay una textura registrada para esta parcela.",
+        recomendacion_base: "Completar el análisis de suelo antes de ajustar riego o fertilización.",
+        fuente: kpiFuentes.tipo_suelo
       }
     },
     {
       title: "Agua Útil Ciclo",
-      value: <>480 <span className="kpi-value-unit">mm</span></>,
-      trend: "Requerida",
-      progress: 88,
+      value: aguaUtil === null ? <>No disponible</> : <>{aguaUtil} <span className="kpi-value-unit">mm</span></>,
+      trend: aguaUtil === null ? "Sin dato" : fuenteCorta('agua_util', 'Calculada'),
+      progress: null,
       progressColor: "linear-gradient(90deg, #2563eb 0%, #3b82f6 100%)",
       progressLabelLeft: "Balance Hídrico",
-      progressLabelRight: "88%",
-      miniChart: { type: 'ring', percent: 88, color: '#3b82f6' },
+      progressLabelRight: aguaUtil === null ? "—" : "Dato disponible",
+      miniChart: null,
       explanation: {
         tipo_elemento: "tarjeta",
         nombre: "Balance de Agua Útil Requerido en Ciclo",
         cultivo: "maiz",
-        valor: "480 mm",
+        valor: aguaUtil === null ? "No disponible" : `${aguaUtil} mm`,
         unidad: "mm",
         estado: "favorable",
-        rango_ideal: "450 a 550 mm",
-        descripcion_tecnica: "Volumen de lámina de agua evapotranspirada requerida por la planta de maíz a lo largo de sus 120-130 días de ciclo vegetativo y reproductivo.",
-        impacto_base: "Un suministro hídrico cercano a 500 mm evita el aborto floral y asegura espigas bien llenas.",
-        recomendacion_base: "Monitorear la humedad del suelo en la fase crítica entre V8 y VT (floración)."
+        rango_ideal: "Depende del suelo, clima y etapa",
+        descripcion_tecnica: "El agua útil debe calcularse con humedad del suelo, demanda atmosférica, textura y lluvia; no se debe sustituir por una cifra fija.",
+        impacto_base: aguaUtil === null ? "El dashboard no tiene agua útil calculada para este escenario." : "La cifra describe el escenario seleccionado y debe interpretarse junto con la humedad del suelo.",
+        recomendacion_base: "Monitorear la humedad del suelo y comparar escenarios de riego antes de modificar la lámina.",
+        fuente: kpiFuentes.agua_util
       }
     }
   ];
@@ -443,22 +507,22 @@ export default function DashboardYield({ cultivoElegidoId, anioSeleccionado, onN
     {
       title: "Predicho Final",
       value: <>{kpis.rendimiento_predicho.toFixed(2)} <span className="kpi-value-unit">t/ha</span></>,
-      trend: kpis.rendimiento_predicho > 6.0 ? "Bueno" : "Bajo",
+      trend: estadoPredicho.corto,
       progress: predichoProgress,
       progressColor: kpis.rendimiento_predicho > 6.0 
         ? "linear-gradient(90deg, #10b981 0%, #34d399 100%)" 
         : "linear-gradient(90deg, #f59e0b 0%, #fbbf24 100%)",
-      progressLabelLeft: kpis.rendimiento_predicho > 6.0 ? "Saludable" : "Alerta de baja",
+      progressLabelLeft: estadoPredicho.largo,
       progressLabelRight: `${predichoProgress.toFixed(0)}%`,
-      miniChart: { type: 'line', data: [kpis.rendimiento_predicho * 0.82, kpis.rendimiento_predicho * 0.89, kpis.rendimiento_predicho * 0.95, kpis.rendimiento_predicho], color: '#34d399' },
+      miniChart: null,
       explanation: {
         tipo_elemento: "tarjeta",
         nombre: "Rendimiento Predicho Final",
         cultivo: "maiz",
         valor: `${parseFloat(kpis.rendimiento_predicho.toFixed(2))} t/ha`,
         unidad: "t/ha",
-        estado: kpis.rendimiento_predicho > 6.0 ? "bueno" : (kpis.rendimiento_predicho > 4.5 ? "regular" : "bajo"),
-        rango_ideal: "6.0 a 8.5 t/ha",
+        estado: estadoPredicho.color,
+        rango_ideal: kpis.rendimiento_alcanzable > 0 ? `Comparar contra el alcanzable del escenario (${Number(kpis.rendimiento_alcanzable).toFixed(2)} t/ha)` : "Depende del escenario",
         descripcion_tecnica: "El rendimiento de cosecha que la simulación estima que se obtendrá al final del ciclo basándose en las variables climáticas e insumos ingresados.",
         impacto_base: "Determina directamente la viabilidad del cultivo y el volumen total de toneladas que se podrán vender.",
         recomendacion_base: "Si el valor es inferior al rango óptimo, se sugiere revisar el balance de fertilizantes y el manejo de agua antes de iniciar la campaña."
@@ -466,46 +530,48 @@ export default function DashboardYield({ cultivoElegidoId, anioSeleccionado, onN
     },
     {
       title: "Probabilidad Cosecha",
-      value: <>87 <span className="kpi-value-unit">%</span></>,
-      trend: "Confianza Alta",
-      progress: 87,
+      value: probabilidadCosecha === null ? <>No disponible</> : <>{probabilidadCosecha} <span className="kpi-value-unit">%</span></>,
+      trend: probabilidadCosecha === null ? "Sin dato" : fuenteCorta('probabilidad_cosecha', 'Calculada'),
+      progress: probabilidadCosecha === null ? 0 : probabilidadCosecha,
       progressColor: "linear-gradient(90deg, #10b981 0%, #6ee7b7 100%)",
-      progressLabelLeft: "Modelo Biofísico",
-      progressLabelRight: "87%",
-      miniChart: { type: 'ring', percent: 87, color: '#34d399' },
+      progressLabelLeft: "Modelo ML",
+      progressLabelRight: probabilidadCosecha === null ? "—" : `${probabilidadCosecha}%`,
+      miniChart: { type: 'ring', percent: probabilidadCosecha || 0, color: '#34d399' },
       explanation: {
         tipo_elemento: "tarjeta",
         nombre: "Probabilidad de Éxito en Cosecha",
         cultivo: "maiz",
-        valor: "87 %",
+        valor: probabilidadCosecha === null ? "No disponible" : `${probabilidadCosecha} %`,
         unidad: "%",
-        estado: "bueno",
-        rango_ideal: "Mayor al 80%",
-        descripcion_tecnica: "Nivel de certeza estadística con el que el simulador valida que el cultivo alcanzará el rendimiento estimado sin colapso hídrico.",
-        impacto_base: "Otorga seguridad técnica al productor sobre la efectividad de sus decisiones agronómicas.",
-        recomendacion_base: "Mantener el monitoreo de plagas para preservar la alta certeza de cosecha."
+        estado: probabilidadCosecha === null ? "sin_datos" : "disponible",
+        rango_ideal: "Se interpreta junto con el rendimiento predicho y sus limitantes",
+        descripcion_tecnica: "Probabilidad de cosecha comercial calculada por el clasificador ML a partir de la distribución Alta, Media, Baja y Muy Baja. En simulaciones antiguas puede mostrarse el puntaje de su categoría porque no guardaban probabilidades.",
+        impacto_base: probabilidadCosecha === null ? "El backend no entrega una probabilidad de cosecha para este escenario." : "Es una estimación de escenario, no una garantía de producción.",
+        recomendacion_base: "Validar el valor con monitoreo de campo y actualizar la simulación cuando cambien clima, suelo o manejo.",
+        fuente: kpiFuentes.probabilidad_cosecha
       }
     },
     {
       title: "Índice de Cosecha",
-      value: <>0.48 <span className="kpi-value-unit">HI</span></>,
-      trend: "Eficiente",
-      progress: 78,
+      value: indiceCosecha === null ? <>No disponible</> : <>{indiceCosecha} <span className="kpi-value-unit">HI</span></>,
+      trend: indiceCosecha === null ? "Sin dato" : fuenteCorta('indice_cosecha', 'Calculado'),
+      progress: indiceCosecha === null ? 0 : Math.min(100, indiceCosecha * 100),
       progressColor: "linear-gradient(90deg, #059669 0%, #10b981 100%)",
       progressLabelLeft: "Biomasa a Grano",
-      progressLabelRight: "0.48",
-      miniChart: { type: 'ring', percent: 78, color: '#059669' },
+      progressLabelRight: indiceCosecha === null ? "—" : indiceCosecha.toFixed(2),
+      miniChart: { type: 'ring', percent: indiceCosecha === null ? 0 : Math.min(100, indiceCosecha * 100), color: '#059669' },
       explanation: {
         tipo_elemento: "tarjeta",
         nombre: "Índice de Cosecha (Harvest Index - HI)",
         cultivo: "maiz",
-        valor: "0.48 HI",
+        valor: indiceCosecha === null ? "No disponible" : `${indiceCosecha} HI`,
         unidad: "HI",
-        estado: "bueno",
-        rango_ideal: "0.45 a 0.52",
-        descripcion_tecnica: "Proporción de la biomasa total de la planta que se transforma en grano de maíz comercializable.",
-        impacto_base: "Un valor de 0.48 indica que casi la mitad de todo el peso seco producido por la planta se convirtió en grano.",
-        recomendacion_base: "Garantizar suficiente nitrógeno durante el llenado para no perder fotosíntesis foliar."
+        estado: indiceCosecha === null ? "sin_datos" : "disponible",
+        rango_ideal: "Depende de la variedad y del modelo",
+        descripcion_tecnica: "El índice de cosecha expresa la proporción de biomasa que termina como grano. Mientras no exista biomasa medida, ZeaSys entrega una estimación agronómica basada en la cobertura del rendimiento.",
+        impacto_base: indiceCosecha === null ? "El backend no entrega un índice de cosecha para este escenario." : "Ayuda a interpretar la eficiencia de conversión a grano, pero no sustituye mediciones de biomasa.",
+        recomendacion_base: "Registrar biomasa y producción de grano para reemplazar esta estimación por un índice observado.",
+        fuente: kpiFuentes.indice_cosecha
       }
     }
   ];
@@ -519,7 +585,7 @@ export default function DashboardYield({ cultivoElegidoId, anioSeleccionado, onN
       progressColor: "linear-gradient(90deg, #ef4444 0%, #f87171 100%)",
       progressLabelLeft: "Brecha Pérdida",
       progressLabelRight: `${((kpis.yield_gap_total / kpis.rendimiento_potencial) * 100).toFixed(0)}%`,
-      miniChart: { type: 'bar', data: [kpis.yield_gap_total * 1.25, kpis.yield_gap_total * 1.12, kpis.yield_gap_total * 1.04, kpis.yield_gap_total], color: '#f87171' },
+      miniChart: { type: 'bar', data: [kpis.yield_gap_total], color: '#f87171' },
       explanation: {
         tipo_elemento: "tarjeta",
         nombre: "Yield Gap Total (Brecha de Rendimiento)",
@@ -535,46 +601,46 @@ export default function DashboardYield({ cultivoElegidoId, anioSeleccionado, onN
     },
     {
       title: "Pérdida por Agua",
-      value: <>-2.4 <span className="kpi-value-unit">t/ha</span></>,
-      trend: "Alerta Seca",
-      progress: 55,
+      value: perdidaAgua === null ? <>No disponible</> : <>-{perdidaAgua.toFixed(2)} <span className="kpi-value-unit">t/ha</span></>,
+      trend: perdidaAgua === null ? "Sin dato" : "Escenario actual",
+      progress: perdidaAgua === null ? 0 : Math.min(100, (perdidaAgua / Math.max(0.1, Number(kpis.yield_gap_total))) * 100),
       progressColor: "linear-gradient(90deg, #f87171 0%, #fca5a5 100%)",
       progressLabelLeft: "Estrés Hídrico",
-      progressLabelRight: "55%",
-      miniChart: { type: 'bar', data: [3.0, 2.8, 2.6, 2.4], color: '#f87171' },
+      progressLabelRight: perdidaAgua === null ? "—" : `${Math.min(100, (perdidaAgua / Math.max(0.1, Number(kpis.yield_gap_total))) * 100).toFixed(0)}%`,
+      miniChart: perdidaAgua === null ? null : { type: 'bar', data: [perdidaAgua], color: '#f87171' },
       explanation: {
         tipo_elemento: "tarjeta",
         nombre: "Pérdida de Rendimiento por Estrés Hídrico",
         cultivo: "maiz",
-        valor: "-2.4 t/ha",
+        valor: perdidaAgua === null ? "No disponible" : `-${perdidaAgua.toFixed(2)} t/ha`,
         unidad: "t/ha",
-        estado: "riesgoso",
-        rango_ideal: "Menor a 0.8 t/ha",
-        descripcion_tecnica: "Reducción directa en toneladas causada por déficit de agua durante las etapas vegetativas y reproductivas críticas del maíz.",
-        impacto_base: "Es el factor que más recorte causa en la cosecha esperada del lote.",
-        recomendacion_base: "Aplicar riegos complementarios en la etapa V6-VT para recuperar hasta 1.8 t/ha."
+        estado: perdidaAgua === null ? "sin_datos" : "riesgoso",
+        rango_ideal: "Comparar contra el escenario sin estrés",
+        descripcion_tecnica: "Pérdida estimada por agua según la cascada calculada por el backend para la simulación seleccionada.",
+        impacto_base: perdidaAgua === null ? "El backend no entregó una pérdida hídrica para esta simulación." : "La cifra pertenece al escenario calculado y no demuestra causalidad fuera de sus entradas.",
+        recomendacion_base: "Comparar una nueva simulación cambiando sólo la variable de agua."
       }
     },
     {
       title: "Pérdida por Nitrógeno",
-      value: <>-1.9 <span className="kpi-value-unit">t/ha</span></>,
-      trend: "Nutricional",
-      progress: 45,
+      value: perdidaNitrogeno === null ? <>No disponible</> : <>-{perdidaNitrogeno.toFixed(2)} <span className="kpi-value-unit">t/ha</span></>,
+      trend: perdidaNitrogeno === null ? "Sin dato" : "Escenario actual",
+      progress: perdidaNitrogeno === null ? 0 : Math.min(100, (perdidaNitrogeno / Math.max(0.1, Number(kpis.yield_gap_total))) * 100),
       progressColor: "linear-gradient(90deg, #dc2626 0%, #ef4444 100%)",
       progressLabelLeft: "Déficit N",
-      progressLabelRight: "45%",
-      miniChart: { type: 'bar', data: [2.5, 2.2, 2.0, 1.9], color: '#dc2626' },
+      progressLabelRight: perdidaNitrogeno === null ? "—" : `${Math.min(100, (perdidaNitrogeno / Math.max(0.1, Number(kpis.yield_gap_total))) * 100).toFixed(0)}%`,
+      miniChart: perdidaNitrogeno === null ? null : { type: 'bar', data: [perdidaNitrogeno], color: '#dc2626' },
       explanation: {
         tipo_elemento: "tarjeta",
         nombre: "Pérdida de Rendimiento por Déficit de Nitrógeno",
         cultivo: "maiz",
-        valor: "-1.9 t/ha",
+        valor: perdidaNitrogeno === null ? "No disponible" : `-${perdidaNitrogeno.toFixed(2)} t/ha`,
         unidad: "t/ha",
-        estado: "riesgoso",
-        rango_ideal: "Menor a 0.5 t/ha",
-        descripcion_tecnica: "Toneladas dejadas de cosechar debido a una dosis insuficiente de nitrógeno o mala sincronización en su aplicación.",
-        impacto_base: "El nitrógeno es el motor del crecimiento del maíz; su escasez amarillea las hojas e impide el desarrollo completo de las mazorcas.",
-        recomendacion_base: "Dividir la aplicación de nitrógeno en dos fracciones (siembra y V6) para elevar la eficiencia de absorción."
+        estado: perdidaNitrogeno === null ? "sin_datos" : "riesgoso",
+        rango_ideal: "Comparar contra el escenario con nutrición ajustada",
+        descripcion_tecnica: "Pérdida estimada por nitrógeno según la cascada calculada por el backend para la simulación seleccionada.",
+        impacto_base: perdidaNitrogeno === null ? "El backend no entregó una pérdida de nitrógeno para esta simulación." : "La cifra pertenece al escenario calculado y no sustituye un análisis de suelo o tejido.",
+        recomendacion_base: "Confirmar el diagnóstico con análisis y comparar una simulación modificando sólo la fertilización."
       }
     }
   ];
@@ -582,22 +648,22 @@ export default function DashboardYield({ cultivoElegidoId, anioSeleccionado, onN
   const limitanteSlides = [
     {
       title: "Limitante Principal",
-      value: kpis.principal_limitante,
-      trend: kpis.yield_gap_total > 3.0 ? "Crítico" : "Moderado",
-      progress: kpis.yield_gap_total > 3.0 ? 85 : 45,
+      value: kpis.principal_limitante || "No disponible",
+      trend: kpis.principal_limitante ? (kpis.yield_gap_total > 3.0 ? "Crítico" : "Moderado") : "Sin dato",
+      progress: null,
       progressColor: kpis.yield_gap_total > 3.0 
         ? "linear-gradient(90deg, #f97316 0%, #ef4444 100%)" 
         : "linear-gradient(90deg, #f59e0b 0%, #f97316 100%)",
       progressLabelLeft: "Severidad",
-      progressLabelRight: kpis.yield_gap_total > 3.0 ? "Alta" : "Media",
-      miniChart: { type: 'ring', percent: kpis.yield_gap_total > 3.0 ? 85 : 45, color: '#f97316' },
+      progressLabelRight: kpis.principal_limitante ? "Requiere comparación" : "—",
+      miniChart: null,
       explanation: {
         tipo_elemento: "tarjeta",
         nombre: "Limitante Principal del Cultivo",
         cultivo: "maiz",
-        valor: kpis.principal_limitante,
+        valor: kpis.principal_limitante || "No disponible",
         unidad: "",
-        estado: "regular",
+        estado: kpis.principal_limitante ? "regular" : "sin_datos",
         rango_ideal: "Ninguno",
         descripcion_tecnica: "El insumo o factor agroclimático que causa la mayor caída en la curva de acumulación de rendimiento simulado.",
         impacto_base: "Actúa como cuello de botella del rendimiento. Si este factor no se corrige, otros esfuerzos agrícolas tendrán un impacto muy limitado.",
@@ -606,46 +672,47 @@ export default function DashboardYield({ cultivoElegidoId, anioSeleccionado, onN
     },
     {
       title: "Acción Prioritaria",
-      value: "Riego V8",
-      trend: "Urgente",
-      progress: 90,
+      value: kpis.principal_limitante || "No disponible",
+      trend: kpis.principal_limitante ? "Revisar" : "Sin dato",
+      progress: null,
       progressColor: "linear-gradient(90deg, #f97316 0%, #fbbf24 100%)",
       progressLabelLeft: "Recuperación",
-      progressLabelRight: "+1.8 t/ha",
-      miniChart: { type: 'bar', data: [0.5, 1.0, 1.4, 1.8], color: '#fbbf24' },
+      progressLabelRight: kpis.principal_limitante ? "Comparar" : "—",
+      miniChart: null,
       explanation: {
         tipo_elemento: "tarjeta",
         nombre: "Acción Correctora Prioritaria Recomenda por DSS",
         cultivo: "maiz",
-        valor: "Riego Complementario V8",
+        valor: kpis.principal_limitante || "No disponible",
         unidad: "",
-        estado: "regular",
-        rango_ideal: "Ejecución oportuna",
-        descripcion_tecnica: "Práctica agronómica inmediata que genera la mayor recuperación de rendimiento por cada dólar invertido.",
-        impacto_base: "Aplicar riego en V8 evita el aborto foliar y recupera hasta 1.8 toneladas por hectárea.",
-        recomendacion_base: "Programar la maquinaria de riego antes de que el cultivo entre en la fase floral V8-VT."
+        estado: kpis.principal_limitante ? "regular" : "sin_datos",
+        rango_ideal: "Cambiar una variable por simulación",
+        descripcion_tecnica: "La acción prioritaria debe derivarse de la limitante principal y validarse con una simulación comparativa.",
+        impacto_base: kpis.principal_limitante ? `La limitante indicada es ${kpis.principal_limitante}; no implica por sí sola una recuperación cuantificada.` : "No hay una limitante calculada para proponer una acción.",
+        recomendacion_base: "Atender la limitante identificada y volver a simular cambiando una variable a la vez."
       }
     },
     {
       title: "Fase Vulnerable",
-      value: "Floración",
-      trend: "Sensible",
-      progress: 95,
+      value: faseVulnerable || "Floración y polinización (VT–R1)",
+      trend: faseVulnerable ? fuenteCorta('fase_vulnerable', 'Teórico') : "Teórico",
+      progress: riesgoFaseVulnerable ?? 65,
       progressColor: "linear-gradient(90deg, #ef4444 0%, #f87171 100%)",
       progressLabelLeft: "Riesgo Aborto",
-      progressLabelRight: "Alto",
-      miniChart: { type: 'ring', percent: 95, color: '#ef4444' },
+      progressLabelRight: `${riesgoFaseVulnerable ?? 65}%`,
+      miniChart: { type: 'ring', percent: riesgoFaseVulnerable ?? 65, color: '#ef4444' },
       explanation: {
         tipo_elemento: "tarjeta",
         nombre: "Fase Fenológica Más Vulnerable",
         cultivo: "maiz",
-        valor: "Floración (VT - R1)",
+        valor: faseVulnerable || "Floración y polinización (VT–R1)",
         unidad: "",
-        estado: "riesgoso",
-        rango_ideal: "Sin estrés hídrico",
-        descripcion_tecnica: "Etapa del desarrollo donde la planta de maíz es extremadamente sensible a la sequía o temperaturas superiores a 35°C.",
-        impacto_base: "El estrés hídrico en floración causa secado de estigmas y aborto masivo de granos.",
-        recomendacion_base: "Asegurar que el suelo mantenga buena humedad durante los 10 días previos y posteriores a la emisión de estigmas."
+        estado: "teorico",
+        rango_ideal: "La fase crítica depende de la limitante principal",
+        descripcion_tecnica: "Ventana fenológica teórica donde la limitante calculada puede producir el mayor impacto sobre el rendimiento.",
+        impacto_base: `Riesgo teórico de aborto o pérdida de rendimiento: ${riesgoFaseVulnerable ?? 65}%. Validar con la fecha de siembra y monitoreo de campo.`,
+        recomendacion_base: "Registrar la fecha de siembra y verificar humedad, temperatura y estado reproductivo durante esta ventana.",
+        fuente: kpiFuentes.fase_vulnerable
       }
     }
   ];
@@ -680,7 +747,7 @@ export default function DashboardYield({ cultivoElegidoId, anioSeleccionado, onN
           icon={<CheckCircle size={22} />}
           iconClass="text-success"
           slides={predichoSlides}
-          tooltip="Rendimiento final estimado por el modelo biofísico para las condiciones actuales de la campaña."
+          tooltip="Rendimiento final estimado por el modelo ML para las condiciones actuales de la campaña."
           delay={2}
           onClick={(payload) => pedirExplicacionIa(payload)}
         />
@@ -725,22 +792,22 @@ export default function DashboardYield({ cultivoElegidoId, anioSeleccionado, onN
           </div>
           <div className="glass-card-body" style={{ padding: '0.85rem 1.25rem 1.25rem 1.25rem' }}>
             {(() => {
-              const potVal = kpis.rendimiento_potencial || 7.0;
-              const predVal = kpis.rendimiento_predicho || 2.72;
+              const potVal = Number(kpis.rendimiento_potencial);
+              const predVal = Number(kpis.rendimiento_predicho);
 
               // Posiciones flotantes escalonadas de la cascada
-              const pNitrogeno = 1.10;
-              const pAgua = 1.30;
-              const pTemp = 1.10;
-              const aSiembra = 0.60;
-              const aSuelo = 0.20;
+              const pNitrogeno = perdidaNitrogeno ?? 0;
+              const pAgua = perdidaAgua ?? 0;
+              const pTemp = perdidaTemperatura ?? 0;
+              const aSiembra = perdidaFecha ?? 0;
+              const aSuelo = perdidaSuelo ?? 0;
 
               const step1 = potVal;
               const step2 = step1 - pNitrogeno;
               const step3 = step2 - pAgua;
               const step4 = step3 - pTemp;
-              const step5 = step4 + aSiembra;
-              const step6 = step5 + aSuelo;
+              const step5 = step4 - aSiembra;
+              const step6 = step5 - aSuelo;
 
               const chartData = {
                 labels: [
@@ -748,8 +815,8 @@ export default function DashboardYield({ cultivoElegidoId, anioSeleccionado, onN
                   'Déficit Nitrógeno',
                   'Estrés Hídrico (Agua)',
                   'Estrés Térmico (Temp)',
-                  'Ventana de Siembra',
-                  'Acidez / Suelo (pH)',
+                  'Fecha de Siembra',
+                  'Suelo (pH)',
                   'Rendimiento Predicho'
                 ],
                 datasets: [{
@@ -857,15 +924,15 @@ export default function DashboardYield({ cultivoElegidoId, anioSeleccionado, onN
                   }}>
                     <div>
                       <span style={{ color: 'var(--text-subtle)', display: 'block', fontSize: '0.66rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Brecha Total Acumulada</span>
-                      <span style={{ fontWeight: 800, color: '#ef4444' }}>-4.28 t/ha <small style={{ opacity: 0.8 }}>(61.1%)</small></span>
+                      <span style={{ fontWeight: 800, color: '#ef4444' }}>-{Number(kpis.yield_gap_total).toFixed(2)} t/ha</span>
                     </div>
                     <div>
                       <span style={{ color: 'var(--text-subtle)', display: 'block', fontSize: '0.66rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Mayor Factor Limítrofe</span>
-                      <span style={{ fontWeight: 800, color: '#3b82f6' }}>Estrés Hídrico (-1.30 t/ha)</span>
+                      <span style={{ fontWeight: 800, color: '#3b82f6' }}>{factorMayor ? `${factorMayor.factor} (${Number(factorMayor.porcentaje).toFixed(1)}%)` : 'No disponible'}</span>
                     </div>
                     <div>
                       <span style={{ color: 'var(--text-subtle)', display: 'block', fontSize: '0.66rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Acción Correctiva DSS</span>
-                      <span style={{ fontWeight: 700, color: '#10b981' }}>Riego Complementario V6-VT</span>
+                      <span style={{ fontWeight: 700, color: '#10b981' }}>{kpis.principal_limitante ? `Revisar ${kpis.principal_limitante}` : 'No disponible'}</span>
                     </div>
                   </div>
                 </div>
@@ -931,7 +998,7 @@ export default function DashboardYield({ cultivoElegidoId, anioSeleccionado, onN
             <div style={{ padding: '0.45rem 0.75rem', background: 'rgba(34, 197, 94, 0.05)', borderRadius: '8px', border: '1px solid rgba(34, 197, 94, 0.15)', fontSize: '0.72rem', marginTop: '0.35rem' }}>
               <span style={{ fontWeight: 700, color: '#10b981', marginRight: '0.4rem' }}>Resumen Fenológico:</span>
               <span style={{ color: 'var(--text-muted)', lineHeight: '1.3' }}>
-                La curva proyectada (verde) estima alcanzar <strong>{kpis.rendimiento_predicho.toFixed(2)} t/ha</strong> al final del ciclo (semana 14), manteniéndose holgadamente por encima del escenario crítico histórico.
+                La curva proyectada (verde) estima alcanzar <strong>{kpis.rendimiento_predicho.toFixed(2)} t/ha</strong> al final del ciclo (semana 14), comparada con los escenarios mejor y peor registrados en tus simulaciones.
               </span>
             </div>
           </div>

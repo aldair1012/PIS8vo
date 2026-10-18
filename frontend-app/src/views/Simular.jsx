@@ -1,15 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { simulacionService, cultivosService } from '../services/api';
-import { Sprout, Cpu, FileText, CheckCircle, HelpCircle, AlertTriangle, TrendingUp, Zap, Award, CloudRain, Sun, Thermometer } from 'lucide-react';
+import { Cpu, FileText, CheckCircle, AlertTriangle, TrendingUp, Zap, Award, CloudRain, Sun, Thermometer } from 'lucide-react';
 
 // Funciones auxiliares para validar inputs numéricos
 const limpiarTextoNumerico = (valor, permiteNegativo = false) => {
   if (!valor || typeof valor !== 'string') return valor;
-  let limpio = valor.replace(/[\/\*\+eE]/g, '');
+  let limpio = valor.replace(/[/*+eE]/g, '');
   if (permiteNegativo) {
-    return limpio.replace(/[^0-9.,\-]/g, '');
+    return limpio.replace(/[^0-9.,-]/g, '');
   }
-  return limpio.replace(/[\-]/g, '').replace(/[^0-9.,]/g, '');
+  return limpio.replace(/[-]/g, '').replace(/[^0-9.,]/g, '');
 };
 
 const evitarOperadores = (e, permiteNegativo = false) => {
@@ -22,7 +22,7 @@ const evitarOperadores = (e, permiteNegativo = false) => {
   }
 };
 
-export default function Simular({ cultivos, onSimulationCompleted, onboardingStep, onNextOnboardingStep, onNavigate }) {
+export default function Simular({ cultivos, onSimulationCompleted, onboardingStep, onNextOnboardingStep }) {
   const [cultivoId, setCultivoId] = useState('');
   const [modelo, setModelo] = useState('xgboost');
   const [temp, setTemp] = useState('');

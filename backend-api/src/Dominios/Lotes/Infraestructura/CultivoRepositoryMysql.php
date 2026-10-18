@@ -66,17 +66,19 @@ final class CultivoRepositoryMysql implements CultivoRepositoryInterface
         return $stmt->fetch() ?: null;
     }
 
-    public function obtenerConCoordenadas(): array
+    public function obtenerConCoordenadas(int $usuarioId): array
     {
-        $stmt = $this->db->query(
+        $stmt = $this->db->prepare(
             'SELECT c.*, u.nombre as nombre_usuario
              FROM cultivos c
              JOIN usuarios u ON c.usuario_id = u.id
-             WHERE c.latitud IS NOT NULL
+             WHERE c.usuario_id = :usuario_id
+               AND c.latitud IS NOT NULL
                AND c.longitud IS NOT NULL
                AND c.activo = 1
              ORDER BY c.fecha_registro DESC'
         );
+        $stmt->execute(['usuario_id' => $usuarioId]);
         return $stmt->fetchAll();
     }
 

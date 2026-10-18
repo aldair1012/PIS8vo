@@ -24,6 +24,22 @@ final class SimulacionRepositoryMysql implements SimulacionRepositoryInterface
 
     public function guardar(array $datos, array $resultado): int
     {
+        // Conservamos la salida probabilística del clasificador junto a los
+        // escenarios sin cambiar el esquema existente de MySQL. Así, el
+        // dashboard puede usar la probabilidad real incluso después de
+        // cerrar la simulación.
+        $escenarios = $resultado['escenarios'] ?? null;
+        if (!is_array($escenarios)) {
+            $escenarios = [];
+        }
+        $kpisModelo = [
+            'probabilidad_cosecha' => $resultado['probabilidad_cosecha'] ?? null,
+            'probabilidades_cosecha' => $resultado['probabilidades_cosecha'] ?? [],
+        ];
+        if ($kpisModelo['probabilidad_cosecha'] !== null || !empty($kpisModelo['probabilidades_cosecha'])) {
+            $escenarios['_zeasys_modelo'] = $kpisModelo;
+        }
+
         $stmt = $this->db->prepare(
             'INSERT INTO simulaciones
                 (usuario_id, cultivo_id, nombre, modelo_usado,
@@ -57,7 +73,9 @@ final class SimulacionRepositoryMysql implements SimulacionRepositoryInterface
             'shap_json'           => json_encode($resultado['shap_values'] ?? []),
             'recomendaciones_json'=> json_encode($resultado['recomendaciones'] ?? []),
             'categoria_cosecha'   => $resultado['categoria_cosecha'] ?? null,
-            'escenarios_json'     => json_encode($resultado['escenarios'] ?? null)
+            'escenarios_json'     => empty($escenarios)
+                ? null
+                : json_encode($escenarios, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
         ]);
 
         return (int) $this->db->lastInsertId();

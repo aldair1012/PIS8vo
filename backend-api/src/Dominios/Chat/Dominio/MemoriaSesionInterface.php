@@ -17,5 +17,11 @@ interface MemoriaSesionInterface
     /** @return array<string> */
     public function temas(): array;
 
+    /**
+     * Identificador estable del chat actual para la memoria de Flowise.
+     * Se renueva al limpiar la conversación.
+     */
+    public function identificadorConversacion(): string;
+
     public function limpiar(): void;
 }

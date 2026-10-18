@@ -1,24 +1,30 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Sprout, Navigation, Globe, Thermometer, CloudRain, Shield, Mountain } from 'lucide-react';
+import { useMemo, useState, useEffect, useRef } from 'react';
+import { Sprout } from 'lucide-react';
+
+const DEFAULT_LAT = -1.8312;
+const DEFAULT_LNG = -78.1834;
+const DEFAULT_ZOOM = 6;
+const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (character) => ({
+  '&': '&amp;',
+  '<': '&lt;',
+  '>': '&gt;',
+  '"': '&quot;',
+  "'": '&#039;'
+})[character]);
 
 export default function MapPage({ cultivos, setCultivoElegidoId, setVistaActual }) {
   const [mapMode, setMapMode] = useState('general'); // 'general' | 'weather_live' | 'productivity' | 'terrain'
-  const [weatherSubMode, setWeatherSubMode] = useState('temp_new'); // 'temp_new' | 'precipitation_new' | 'clouds_new' | 'wind_new'
 
   const mapContainerRef = useRef(null);
   const mapRef = useRef(null);
   const markerGroupRef = useRef(null);
-  const specialLayerRef = useRef(null);
   const baseLayerRef = useRef(null);
   const labelsLayerRef = useRef(null);
-
-  const OWM_KEY = '439d4b804bc8187953eb36d2a8c26a02';
-  const defaultLat = -1.8312;
-  const defaultLng = -78.1834;
-  const defaultZoom = 6;
-
   // Filtrar parcelas de cultivos geolocalizadas
-  const geolocated = (cultivos || []).filter(c => c.latitud && c.longitud);
+  const geolocated = useMemo(() => (cultivos || []).filter((cultivo) =>
+    cultivo.latitud !== null && cultivo.latitud !== '' && cultivo.longitud !== null && cultivo.longitud !== '' &&
+    Number.isFinite(Number(cultivo.latitud)) && Number.isFinite(Number(cultivo.longitud))
+  ), [cultivos]);
 
   // Inicializar Mapa Leaflet
   useEffect(() => {
@@ -29,7 +35,7 @@ export default function MapPage({ cultivos, setCultivoElegidoId, setVistaActual 
     const map = L.map(mapContainerRef.current, {
       zoomControl: true,
       scrollWheelZoom: true
-    }).setView([defaultLat, defaultLng], defaultZoom);
+    }).setView([DEFAULT_LAT, DEFAULT_LNG], DEFAULT_ZOOM);
 
     mapRef.current = map;
 
@@ -49,14 +55,6 @@ export default function MapPage({ cultivos, setCultivoElegidoId, setVistaActual 
     // Grupo de características (FeatureGroup) para marcadores y polígonos de cultivos
     const markerGroup = L.featureGroup().addTo(map);
     markerGroupRef.current = markerGroup;
-
-    // Establecer los límites del mapa para ajustar los marcadores inicialmente
-    if (geolocated.length > 0) {
-      const bounds = geolocated.map(c => [parseFloat(c.latitud), parseFloat(c.longitud)]);
-      try {
-        map.fitBounds(bounds, { padding: [50, 50] });
-      } catch (e) { }
-    }
 
     // Manejador de clics para clima en vivo en modo temperatura
     const onMapClick = (e) => {
@@ -84,7 +82,7 @@ export default function MapPage({ cultivos, setCultivoElegidoId, setVistaActual 
     window.activeMapModeRef = activeMapModeRef;
   }, [mapMode]);
 
-  // Manejar el renderizado de marcadores y capas cuando cambia mapMode, weatherSubMode o la lista de cultivos
+  // Manejar el renderizado de marcadores y capas cuando cambia el modo o la lista de cultivos.
   useEffect(() => {
     if (!mapRef.current || !markerGroupRef.current || !window.L) return;
     const L = window.L;
@@ -93,10 +91,6 @@ export default function MapPage({ cultivos, setCultivoElegidoId, setVistaActual 
 
     // 1. Limpiar capas previas, marcadores y capas base
     markerGroup.clearLayers();
-    if (specialLayerRef.current) {
-      map.removeLayer(specialLayerRef.current);
-      specialLayerRef.current = null;
-    }
 
     // Eliminar capas base antiguas para permitir el intercambio
     if (baseLayerRef.current) map.removeLayer(baseLayerRef.current);
@@ -145,12 +139,12 @@ export default function MapPage({ cultivos, setCultivoElegidoId, setVistaActual 
 
         const popupHtml = `
           <div style="min-width:180px;font-family:var(--font-sans);color:#fff;background:#090f1d;padding:8px;border-radius:8px;">
-            <h6 style="color:#3b82f6;font-weight:700;margin:0 0 6px 0;font-size:14px;">${c.nombre_parcela}</h6>
+            <h6 style="color:#3b82f6;font-weight:700;margin:0 0 6px 0;font-size:14px;">${escapeHtml(c.nombre_parcela)}</h6>
             <div style="font-size:12px;color:#94a3b8;line-height:1.6;">
-              <div><strong>Variedad:</strong> ${c.variedad_maiz}</div>
-              <div><strong>Área:</strong> ${c.area} ha</div>
-              <div><strong>pH:</strong> ${c.ph || '6.2'}</div>
-              <div><strong>Altitud:</strong> ${c.altitud || '—'} msnm</div>
+              <div><strong>Variedad:</strong> ${escapeHtml(c.variedad_maiz)}</div>
+              <div><strong>Área:</strong> ${escapeHtml(c.area)} ha</div>
+              <div><strong>pH:</strong> ${escapeHtml(c.ph || '6.2')}</div>
+              <div><strong>Altitud:</strong> ${escapeHtml(c.altitud || '—')} msnm</div>
             </div>
           </div>
         `;
@@ -179,18 +173,13 @@ export default function MapPage({ cultivos, setCultivoElegidoId, setVistaActual 
 
     }
     else if (mapMode === 'weather_live') {
-      // Clima en vivo: Dark map background to highlight climate tiles
+      // Clima en vivo sin credenciales expuestas: el usuario consulta datos
+      // puntuales de Open-Meteo al pulsar el mapa o una parcela.
       baseLayerRef.current = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
         attribution: '© CARTO',
         subdomains: 'abcd',
         maxZoom: 19
       }).addTo(map);
-
-      // Mosaicos de clima de OpenWeatherMap
-      specialLayerRef.current = L.tileLayer(
-        `https://tile.openweathermap.org/map/${weatherSubMode}/{z}/{x}/{y}.png?appid=${OWM_KEY}`,
-        { opacity: 0.75, attribution: '© OpenWeatherMap', zIndex: 6 }
-      ).addTo(map);
 
       // Agregar marcadores de información simple sobre los cultivos
       geolocated.forEach(c => {
@@ -270,7 +259,7 @@ export default function MapPage({ cultivos, setCultivoElegidoId, setVistaActual 
 
         const popupHtml = `
           <div style="min-width:220px;font-family:var(--font-sans);color:var(--text-primary);background:var(--modal-bg);border:1px solid var(--border-subtle);box-shadow: 0 10px 25px rgba(0,0,0,0.15);padding:12px;border-radius:10px;">
-            <h6 style="color:#3b82f6;font-weight:700;margin:0 0 8px 0;border-bottom:1px solid var(--border-subtle);padding-bottom:6px;font-size:14px;">📈 ${c.nombre_parcela}</h6>
+            <h6 style="color:#3b82f6;font-weight:700;margin:0 0 8px 0;border-bottom:1px solid var(--border-subtle);padding-bottom:6px;font-size:14px;">📈 ${escapeHtml(c.nombre_parcela)}</h6>
             <div style="font-size:12px;color:var(--text-muted);display:flex;flex-direction:column;gap:5px;">
               <div><strong style="color:var(--text-primary);">Estado General:</strong> <span style="color:${markerColor};font-weight:600;">${statusText}</span></div>
               <div style="display:flex;justify-content:space-between;">
@@ -283,7 +272,7 @@ export default function MapPage({ cultivos, setCultivoElegidoId, setVistaActual 
               </div>
               <div style="display:flex;justify-content:space-between;">
                 <span style="color:var(--text-subtle);">Área:</span>
-                <strong style="color:var(--text-primary);">${c.area} ha</strong>
+                <strong style="color:var(--text-primary);">${escapeHtml(c.area)} ha</strong>
               </div>
             </div>
           </div>
@@ -333,9 +322,9 @@ export default function MapPage({ cultivos, setCultivoElegidoId, setVistaActual 
 
         const popupHtml = `
           <div style="min-width:180px;font-family:var(--font-sans);color:#fff;background:#090f1d;padding:8px;border-radius:8px;">
-            <h6 style="color:#84cc16;font-weight:700;margin:0 0 6px 0;font-size:14px;">⛰️ Topografía: ${c.nombre_parcela}</h6>
+            <h6 style="color:#84cc16;font-weight:700;margin:0 0 6px 0;font-size:14px;">⛰️ Topografía: ${escapeHtml(c.nombre_parcela)}</h6>
             <div style="font-size:12px;color:#cbd5e1;line-height:1.6;">
-              <div><strong>Altitud:</strong> ${c.altitud || '45'} msnm</div>
+              <div><strong>Altitud:</strong> ${escapeHtml(c.altitud || '45')} msnm</div>
               <div><strong>Drenaje Lote:</strong> Franco-Limoso</div>
               <div style="margin-top:4px;color:#94a3b8;font-size:11px;line-height:1.3;">* El mapa topográfico detalla las curvas de nivel para el análisis de escorrentía.</div>
             </div>
@@ -358,18 +347,18 @@ export default function MapPage({ cultivos, setCultivoElegidoId, setVistaActual 
               }
             }).bindPopup(popupHtml);
             markerGroup.addLayer(polygonLayer);
-          } catch (err) { }
+          } catch {
+            console.warn(`Geometría inválida para la parcela ${c.id}`);
+          }
         }
       });
     }
 
     // Establecer los límites de la vista del mapa a los marcadores
     if (geolocated.length > 0 && mapMode !== 'weather_live') {
-      try {
-        map.fitBounds(markerGroup.getBounds().pad(0.25));
-      } catch (e) { }
+      map.fitBounds(markerGroup.getBounds().pad(0.25));
     }
-  }, [mapMode, weatherSubMode, cultivos]);
+  }, [geolocated, mapMode]);
 
   // Volar al marcador seleccionado
   const handleSelectPlot = (c) => {
@@ -433,13 +422,7 @@ export default function MapPage({ cultivos, setCultivoElegidoId, setVistaActual 
             </div>
           </div>
         );
-      case 'weather_live':
-        let weatherLayerDesc = 'Capa de Clima';
-        if (weatherSubMode === 'temp_new') weatherLayerDesc = 'Termografía (Temperatura)';
-        else if (weatherSubMode === 'precipitation_new') weatherLayerDesc = 'Radar de Lluvia (Precipitación)';
-        else if (weatherSubMode === 'clouds_new') weatherLayerDesc = 'Niveles de Nubosidad';
-        else if (weatherSubMode === 'wind_new') weatherLayerDesc = 'Velocidad de Corrientes de Viento';
-
+      case 'weather_live': {
         return (
           <div style={legendStyle}>
             <div style={legendTitleStyle}> Leyenda: Clima en Vivo</div>
@@ -447,12 +430,10 @@ export default function MapPage({ cultivos, setCultivoElegidoId, setVistaActual 
               <span style={{ marginRight: '8px', fontSize: '14px', flexShrink: 0 }}></span>
               <span>Lote (Clic para reporte en vivo)</span>
             </div>
-            <div style={legendItemStyle}>
-              <span style={{ display: 'inline-block', width: '16px', height: '12px', background: 'linear-gradient(to right, #3b82f6, #10b981, #f59e0b, #ef4444)', borderRadius: '2px', marginRight: '8px', flexShrink: 0 }}></span>
-              <span>{weatherLayerDesc}</span>
-            </div>
+            <div style={legendItemStyle}><span>Datos puntuales de Open-Meteo</span></div>
           </div>
         );
+      }
       case 'productivity':
         return (
           <div style={legendStyle}>
@@ -497,7 +478,7 @@ export default function MapPage({ cultivos, setCultivoElegidoId, setVistaActual 
   const getModeDescription = () => {
     switch (mapMode) {
       case 'general': return ' Modo General: Vista de satélite e híbrido de carreteras, optimizada para ubicar parcelas.';
-      case 'weather_live': return ' Modo Clima en Vivo: Capas meteorológicas globales de OpenWeatherMap de nubes, lluvias, temperatura o viento en tiempo real.';
+      case 'weather_live': return ' Modo Clima en Vivo: consulta temperatura, lluvia, humedad y viento en cualquier punto mediante Open-Meteo.';
       case 'productivity': return ' Modo Riesgo y Productividad: Capa calculada por tu sistema en base a los modelos de rendimiento biofísico.';
       case 'terrain': return ' Modo Relieve y Terreno: Topografía detallada y curvas de nivel para interpretar drenaje y escorrentía.';
       default: return '';
@@ -532,29 +513,12 @@ export default function MapPage({ cultivos, setCultivoElegidoId, setVistaActual 
       <div className="map-page-description-bar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--surface-elevated)', border: '1px solid var(--border-subtle)', padding: '0.5rem 1rem', borderRadius: '8px', marginBottom: '0.5rem', fontSize: '0.85rem', color: 'var(--text-muted)', flexWrap: 'wrap', gap: '1rem', flexShrink: 0 }}>
         <div>{getModeDescription()}</div>
 
-        {/* Weather Sub-modes selection (Visible only when weather_live is active) */}
-        {mapMode === 'weather_live' && (
-          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-subtle)', fontWeight: 600 }}>Capa Climática:</span>
-            <select
-              className="form-select"
-              style={{ width: '150px', padding: '0.25rem 0.5rem', fontSize: '0.8rem' }}
-              value={weatherSubMode}
-              onChange={(e) => setWeatherSubMode(e.target.value)}
-            >
-              <option value="temp_new"> Temperatura</option>
-              <option value="precipitation_new"> Precipitación</option>
-              <option value="clouds_new"> Nubes</option>
-              <option value="wind_new"> Viento</option>
-            </select>
-          </div>
-        )}
       </div>
 
       {/* Weather Map Guide */}
       {mapMode === 'weather_live' && (
         <div style={{ background: 'rgba(59, 130, 246, 0.05)', border: '1px solid rgba(59, 130, 246, 0.1)', padding: '0.6rem 1rem', borderRadius: '10px', marginBottom: '0.5rem', fontSize: '0.8rem', color: '#93c5fd', lineHeight: '1.4', flexShrink: 0 }}>
-          <strong>Guía de Clima:</strong> La capa climática elegida se renderizará de fondo en todo el mapa de forma interactiva. Puedes pulsar en cualquier punto del mapa o parcela para consultar los valores exactos (temperatura, viento, humedad, etc.) provistos en vivo.
+          <strong>Guía de Clima:</strong> Pulsa cualquier punto del mapa o una parcela para consultar temperatura, viento, humedad y precipitación en vivo sin exponer claves privadas en el navegador.
         </div>
       )}
 
@@ -633,6 +597,8 @@ const showWeatherPopup = async (L, map, lat, lng, title, latlng) => {
     const addr = geo.address || {};
     const place = title || addr.city || addr.town || addr.village || addr.county || addr.state || addr.country || 'Ubicación';
     const country = addr.country || '';
+    const safePlace = escapeHtml(place);
+    const safeCountry = escapeHtml(country || 'Parcela');
 
     const wmoDesc = { 0: 'Despejado', 1: 'Mayormente despejado', 2: 'Parcialmente nublado', 3: 'Nublado', 45: 'Niebla', 51: 'Llovizna leve', 61: 'Lluvia leve', 63: 'Lluvia moderada', 65: 'Lluvia intensa', 80: 'Aguaceros', 95: 'Tormenta', 99: 'Tormenta fuerte' };
     const desc = wmoDesc[c.weather_code] || 'Condición climática';
@@ -643,8 +609,8 @@ const showWeatherPopup = async (L, map, lat, lng, title, latlng) => {
       <div style="min-width:240px;font-family:var(--font-sans);color:var(--text-primary);">
         <div style="background:var(--modal-bg);border-radius:10px;overflow:hidden;border:1px solid var(--border-subtle);box-shadow:0 10px 25px rgba(0,0,0,0.15);">
           <div style="padding:12px 14px 8px;border-bottom:1px solid var(--border-subtle);">
-            <div style="font-size:10px;color:var(--text-subtle);text-transform:uppercase;">📍 ${country || 'Parcela'}</div>
-            <div style="font-size:16px;color:var(--text-primary);font-weight:700;">${place}</div>
+            <div style="font-size:10px;color:var(--text-subtle);text-transform:uppercase;">📍 ${safeCountry}</div>
+            <div style="font-size:16px;color:var(--text-primary);font-weight:700;">${safePlace}</div>
             <div style="font-size:10px;color:var(--text-subtle);">${lat.toFixed(3)}°, ${lng.toFixed(3)}°</div>
           </div>
           <div style="padding:12px 14px;">
@@ -666,7 +632,7 @@ const showWeatherPopup = async (L, map, lat, lng, title, latlng) => {
         </div>
       </div>
     `);
-  } catch (err) {
+  } catch {
     loadPopup.setContent('<div style="color:#e2e8f0;padding:8px;font-family:\'Inter\',sans-serif;">⚠️ Error cargando datos del clima.</div>');
   }
 };

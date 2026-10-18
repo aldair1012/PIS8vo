@@ -35,6 +35,44 @@ xgb_explainer = shap.TreeExplainer(xgb_model)
 MODELOS_DISPONIBLES = ["random_forest", "xgboost"]
 
 
+def _probabilidad_cosecha(clf_model, df_encoded):
+    """Devuelve la probabilidad de cosecha comercial del clasificador.
+
+    El modelo clasifica cuatro estados (Alta, Media, Baja y Muy Baja). La
+    probabilidad del KPI es la suma de Alta + Media; no se usa la confianza de
+    la regresión, porque el R² no es una probabilidad de cosecha.
+    """
+    if not hasattr(clf_model, "predict_proba"):
+        return None, {}
+
+    try:
+        probabilidades = np.asarray(clf_model.predict_proba(df_encoded)[0], dtype=float)
+        clases_codificadas = np.asarray(
+            getattr(clf_model, "classes_", np.arange(len(probabilidades))),
+            dtype=int,
+        )
+        clases = target_encoder.inverse_transform(clases_codificadas)
+    except (AttributeError, TypeError, ValueError, IndexError):
+        # Un modelo sin probabilidades compatibles no debe romper una
+        # simulación; el backend mostrará que el KPI no está disponible.
+        return None, {}
+
+    distribucion = {}
+    probabilidad_comercial = 0.0
+    encontro_clase_comercial = False
+    for clase, probabilidad in zip(clases, probabilidades):
+        etiqueta = str(clase)
+        valor = max(0.0, min(1.0, float(probabilidad)))
+        distribucion[etiqueta] = round(valor * 100.0, 1)
+        if etiqueta.strip().lower() in {"alta", "media"}:
+            probabilidad_comercial += valor
+            encontro_clase_comercial = True
+
+    if not encontro_clase_comercial:
+        return None, distribucion
+    return round(max(0.0, min(100.0, probabilidad_comercial * 100.0)), 1), distribucion
+
+
 def predict(df_features, modelo_nombre="xgboost", area=1.0):
     """
     Recibe el DataFrame crudo (sin encodear), lo prepara, predice y calcula SHAP.
@@ -63,6 +101,7 @@ def predict(df_features, modelo_nombre="xgboost", area=1.0):
 
     prediccion_clf_encoded = int(clf_model.predict(df_encoded)[0])
     prediccion_clf = str(target_encoder.inverse_transform([prediccion_clf_encoded])[0])
+    probabilidad_cosecha, probabilidades_cosecha = _probabilidad_cosecha(clf_model, df_encoded)
 
     # SHAP - qué variable influyó más en la predicción
     shap_values = explainer.shap_values(df_encoded)[0]
@@ -122,6 +161,8 @@ def predict(df_features, modelo_nombre="xgboost", area=1.0):
         "rendimiento_estimado": round(prediccion_reg, 4),
         "produccion_total": produccion_total,
         "categoria_cosecha": prediccion_clf,
+        "probabilidad_cosecha": probabilidad_cosecha,
+        "probabilidades_cosecha": probabilidades_cosecha,
         "area": area,
         "confianza": confianza,
         "shap_values": shap_dict,

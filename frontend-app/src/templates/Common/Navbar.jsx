@@ -1,5 +1,4 @@
-import React from 'react';
-import { User, Cpu, Menu, Settings, ChevronDown, ChevronLeft } from 'lucide-react';
+import { User, Cpu, Menu, ChevronDown, ChevronLeft } from 'lucide-react';
 import LoteSelector from './LoteSelector';
 
 export default function Navbar({ 

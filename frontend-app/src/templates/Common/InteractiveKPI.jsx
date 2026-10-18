@@ -24,6 +24,7 @@ export default function InteractiveKPI({
   slides: propSlides,
   style = {}
 }) {
+  const componentId = React.useId().replace(/:/g, '');
   const [activeIndex, setActiveIndex] = React.useState(0);
   const [isHovered, setIsHovered] = React.useState(false);
   const [popoverSide, setPopoverSide] = React.useState('right');
@@ -57,18 +58,19 @@ export default function InteractiveKPI({
   }));
 
   const activeSlide = slides[activeIndex] || slides[0];
+  const slideCount = slides.length;
 
   // Auto-slide transition effect con pausa al pasar el mouse y reanudación sincronizada en el siguiente ciclo
   React.useEffect(() => {
-    if (slides && slides.length > 1) {
+    if (slideCount > 1) {
       const timer = setInterval(() => {
         if (typeof document !== 'undefined' && !document.hidden && !isHoveredRef.current) {
-          setActiveIndex((prev) => (prev + 1) % slides.length);
+          setActiveIndex((prev) => (prev + 1) % slideCount);
         }
       }, 5500);
       return () => clearInterval(timer);
     }
-  }, [slides.length]);
+  }, [slideCount]);
 
   // Generador inteligente de explicaciones concisas para el popover flotante
   const getPopoverContent = (slide) => {
@@ -80,7 +82,8 @@ export default function InteractiveKPI({
         title: exp.nombre || slideTitle,
         description: exp.descripcion_tecnica || `Medición agroclimática de ${slideTitle.toLowerCase()} para el seguimiento del lote.`,
         impact: exp.impacto_base || `Incide directamente en el desarrollo fisiológico y rendimiento esperado del cultivo.`,
-        recommendation: exp.recomendacion_base || null
+        recommendation: exp.recomendacion_base || null,
+        source: exp.fuente || null
       };
     }
 
@@ -138,7 +141,7 @@ export default function InteractiveKPI({
       else strokeColor = '#60a5fa';
     }
 
-    const gradId = `kpi-mini-grad-${String(strokeColor).replace(/[^a-zA-Z0-9]/g, '')}-${Math.floor(Math.random()*1000)}`;
+    const gradId = `kpi-mini-grad-${componentId}-${String(strokeColor).replace(/[^a-zA-Z0-9]/g, '')}`;
 
     // TYPE 1: DONUT / CIRCULAR RING (For ROI %, Efficiency, Probability)
     if (chartType === 'donut' || chartType === 'ring') {
@@ -269,7 +272,7 @@ export default function InteractiveKPI({
     };
   }, []);
 
-  const handleMouseEnter = (e) => {
+  const handleMouseEnter = () => {
     if (typeof document !== 'undefined' && (document.querySelector('.ia-modal-backdrop') || document.querySelector('.modal-overlay') || document.body.classList.contains('modal-open'))) {
       setIsHovered(false);
       isHoveredRef.current = false;
@@ -351,6 +354,8 @@ export default function InteractiveKPI({
     <div
       ref={cardRef}
       className={`glass-panel kpi-card ${isHovered && !hasModalOpen ? 'kpi-card-hovered' : ''}`}
+      title={tooltip}
+      aria-label={tooltip || activeSlide.title}
       style={{
         animationDelay: `${delay * 60}ms`,
         cursor: (onClick || onExplain || activeSlide.onClick || activeSlide.explanation) ? 'pointer' : 'default',
@@ -402,6 +407,13 @@ export default function InteractiveKPI({
               <div className="kpi-popover-section">
                 <span className="kpi-popover-label" style={{ color: '#fbbf24' }}>RECOMENDACIÓN:</span>
                 <span className="kpi-popover-text" style={{ fontStyle: 'italic' }}>{popoverData.recommendation}</span>
+              </div>
+            )}
+
+            {popoverData.source && (
+              <div className="kpi-popover-section">
+                <span className="kpi-popover-label" style={{ color: '#93c5fd' }}>PROCEDENCIA:</span>
+                <span className="kpi-popover-text">{popoverData.source}</span>
               </div>
             )}
           </div>
@@ -500,4 +512,3 @@ export default function InteractiveKPI({
     </div>
   );
 }
-

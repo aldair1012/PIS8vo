@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { authService } from '../services/api';
 import { Lock, Mail, User, ArrowRight, ShieldCheck, Sprout, Leaf, BarChart3 } from 'lucide-react';
 import PlatformLogo from '../templates/Common/PlatformLogo';
@@ -88,6 +88,13 @@ export default function Register({ onRegisterSuccess, switchToLogin }) {
     }
   }, [onRegisterSuccess]);
 
+  const googleCallbackRef = useRef(handleGoogleAuth);
+  const googleInitializedRef = useRef(false);
+
+  useEffect(() => {
+    googleCallbackRef.current = handleGoogleAuth;
+  }, [handleGoogleAuth]);
+
   const triggerGoogleSignIn = useCallback(() => {
     if (!window.google?.accounts?.id) { 
       setError('Google Sign-In no está disponible aún. Recarga la página.'); 
@@ -110,11 +117,12 @@ export default function Register({ onRegisterSuccess, switchToLogin }) {
   useEffect(() => {
     if (!GOOGLE_CLIENT_ID) return;
     const init = () => {
-      if (!window.google?.accounts?.id) return;
+      if (!window.google?.accounts?.id || googleInitializedRef.current) return;
+      googleInitializedRef.current = true;
       window.google.accounts.id.initialize({
         client_id: GOOGLE_CLIENT_ID,
         callback: async (response) => {
-          if (response.credential) { await handleGoogleAuth(response.credential); }
+          if (response.credential) { await googleCallbackRef.current(response.credential); }
           else { setError('Error al obtener credenciales de Google.'); }
         },
         ux_mode: 'popup',
@@ -138,7 +146,7 @@ export default function Register({ onRegisterSuccess, switchToLogin }) {
       script.onload = init;
       document.body.appendChild(script);
     } else if (window.google?.accounts?.id) { init(); }
-  }, [handleGoogleAuth]);
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault(); setError(null); setLoading(true);

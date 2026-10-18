@@ -1,7 +1,6 @@
-import React, { useState, useRef } from 'react';
+import { useState, useRef } from 'react';
 import { 
   User, 
-  Lock, 
   Sun, 
   Moon, 
   Download, 
@@ -10,8 +9,6 @@ import {
   AlertTriangle,
   Camera,
   Trash2,
-  Upload,
-  Image as ImageIcon
 } from 'lucide-react';
 import { authService, simulacionService } from '../services/api';
 import { exportarReporteAPdf } from '../utils/exportarPdf';
@@ -19,7 +16,7 @@ import { exportarReporteAPdf } from '../utils/exportarPdf';
 export default function Configuracion({ user, setUser, theme, setTheme, cerrarSesion, cultivos }) {
   // Datos del perfil en variables simples en español
   const [nombre, setNombre] = useState(user?.nombre || '');
-  const [correo, setCorreo] = useState(user?.correo || '');
+  const correo = user?.correo || '';
 
   // Claves para el formulario de contraseña
   const [nuevaClave, setNuevaClave] = useState('');
@@ -128,7 +125,7 @@ export default function Configuracion({ user, setUser, theme, setTheme, cerrarSe
             } else {
               setErrorMsj('Tu cuenta de Google no posee una foto de perfil personalizada.');
             }
-          } catch (e) {
+          } catch {
             setErrorMsj('Error al obtener la foto de perfil desde Google.');
           } finally {
             setSubiendoFoto(false);
@@ -452,6 +449,18 @@ export default function Configuracion({ user, setUser, theme, setTheme, cerrarSe
                     <Camera size={14} />
                     {subiendoFoto ? 'Cargando...' : (user?.foto_perfil ? 'Cambiar Foto' : 'Subir Foto')}
                   </button>
+
+                  {window.google?.accounts?.oauth2 && (
+                    <button
+                      type="button"
+                      onClick={sincronizarFotoGoogle}
+                      className="btn btn-secondary"
+                      disabled={subiendoFoto}
+                      title="Sincronizar la foto de perfil de Google"
+                    >
+                      <User size={14} /> Sincronizar Google
+                    </button>
+                  )}
 
                   {user?.foto_perfil && (
                     <button 

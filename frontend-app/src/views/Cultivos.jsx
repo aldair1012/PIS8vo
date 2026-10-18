@@ -1,8 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { cultivosService } from '../services/api';
 import { 
   Plus, 
-  Trash2, 
   MapPin, 
   Sprout, 
   Info, 
@@ -11,10 +10,9 @@ import {
   Droplet, 
   Mountain, 
   Calendar, 
-  Copy, 
+  Copy,
   Check,
   Map,
-  ArrowUpDown,
   Maximize2,
   Minimize2
 } from 'lucide-react';
@@ -22,11 +20,11 @@ import {
 // Funciones auxiliares para validar inputs numéricos
 const limpiarTextoNumerico = (valor, permiteNegativo = false) => {
   if (!valor || typeof valor !== 'string') return valor;
-  let limpio = valor.replace(/[\/\*\+eE]/g, '');
+  let limpio = valor.replace(/[/*+eE]/g, '');
   if (permiteNegativo) {
-    return limpio.replace(/[^0-9.,\-]/g, '');
+    return limpio.replace(/[^0-9.,-]/g, '');
   }
-  return limpio.replace(/[\-]/g, '').replace(/[^0-9.,]/g, '');
+  return limpio.replace(/[-]/g, '').replace(/[^0-9.,]/g, '');
 };
 
 const evitarOperadores = (e, permiteNegativo = false) => {
@@ -45,7 +43,6 @@ export default function Cultivos({ onCultivoChanged, onboardingStep, onNextOnboa
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
   const [copiedId, setCopiedId] = useState(null);
-  const [sortOrder, setSortOrder] = useState('desc');
 
   const VARIEDADES_POR_TIPO = {
     'Duro Amarillo': [
@@ -117,6 +114,7 @@ export default function Cultivos({ onCultivoChanged, onboardingStep, onNextOnboa
   const geomanLayersRef = useRef(null);
   const soilLayerGroupRef = useRef(null);
   const currentMarkerRef = useRef(null);
+  const mapActionsRef = useRef(null);
 
   const [isMapExpanded, setIsMapExpanded] = useState(false);
   const [mapLayerOption, setMapLayerOption] = useState('satellite');
@@ -138,7 +136,8 @@ export default function Cultivos({ onCultivoChanged, onboardingStep, onNextOnboa
   };
 
   useEffect(() => {
-    cargarCultivos();
+    const refresh = setTimeout(cargarCultivos, 0);
+    return () => clearTimeout(refresh);
   }, []);
 
   useEffect(() => {
@@ -185,6 +184,8 @@ export default function Cultivos({ onCultivoChanged, onboardingStep, onNextOnboa
       });
 
       map.on('pm:create', (e) => {
+        const actions = mapActionsRef.current;
+        if (!actions) return;
         const layer = e.layer;
         geomanLayers.clearLayers();
         if (currentMarkerRef.current) {
@@ -198,14 +199,14 @@ export default function Cultivos({ onCultivoChanged, onboardingStep, onNextOnboa
           const latlng = layer.getLatLng();
           setLatitud(latlng.lat.toFixed(7));
           setLongitud(latlng.lng.toFixed(7));
-          fetchAltitude(latlng.lat, latlng.lng);
-          fetchAddress(latlng.lat, latlng.lng);
-          fetchSoilPh(latlng.lat, latlng.lng);
+          actions.fetchAltitude(latlng.lat, latlng.lng);
+          actions.fetchAddress(latlng.lat, latlng.lng);
+          actions.fetchSoilPh(latlng.lat, latlng.lng);
           setGeojson(JSON.stringify(layer.toGeoJSON()));
         } else if (e.shape === 'Polygon' || e.shape === 'Rectangle') {
           const latlngs = layer.getLatLngs()[0];
           if (latlngs && latlngs.length > 0) {
-            const calculatedArea = calculatePolygonAreaHectares(latlngs);
+            const calculatedArea = actions.calculatePolygonAreaHectares(latlngs);
             setArea(calculatedArea.toString());
 
             let sumLat = 0, sumLng = 0;
@@ -215,12 +216,12 @@ export default function Cultivos({ onCultivoChanged, onboardingStep, onNextOnboa
 
             setLatitud(centerLat.toFixed(7));
             setLongitud(centerLng.toFixed(7));
-            fetchAltitude(centerLat, centerLng);
-            fetchAddress(centerLat, centerLng);
-            fetchSoilPh(centerLat, centerLng);
+            actions.fetchAltitude(centerLat, centerLng);
+            actions.fetchAddress(centerLat, centerLng);
+            actions.fetchSoilPh(centerLat, centerLng);
 
             if (window.activeMapLayerRef?.current === 'soil') {
-              drawSoilGrid(L, map, centerLat, centerLng);
+              actions.drawSoilGrid(L, map, centerLat, centerLng);
             }
           }
           setGeojson(JSON.stringify(layer.toGeoJSON()));
@@ -229,6 +230,8 @@ export default function Cultivos({ onCultivoChanged, onboardingStep, onNextOnboa
     }
 
     map.on('click', (e) => {
+      const actions = mapActionsRef.current;
+      if (!actions) return;
       const lat = e.latlng.lat;
       const lng = e.latlng.lng;
 
@@ -241,12 +244,12 @@ export default function Cultivos({ onCultivoChanged, onboardingStep, onNextOnboa
 
       setLatitud(lat.toFixed(7));
       setLongitud(lng.toFixed(7));
-      fetchAltitude(lat, lng);
-      fetchAddress(lat, lng);
-      fetchSoilPh(lat, lng);
+      actions.fetchAltitude(lat, lng);
+      actions.fetchAddress(lat, lng);
+      actions.fetchSoilPh(lat, lng);
 
       if (window.activeMapLayerRef?.current === 'soil') {
-        drawSoilGrid(L, map, lat, lng);
+        actions.drawSoilGrid(L, map, lat, lng);
       }
     });
 
@@ -282,7 +285,7 @@ export default function Cultivos({ onCultivoChanged, onboardingStep, onNextOnboa
       soilLayerGroup.clearLayers();
     } else {
       const c = map.getCenter();
-      drawSoilGrid(L, map, c.lat, c.lng);
+      mapActionsRef.current?.drawSoilGrid(L, map, c.lat, c.lng);
     }
   }, [mapLayerOption]);
 
@@ -316,12 +319,12 @@ export default function Cultivos({ onCultivoChanged, onboardingStep, onNextOnboa
     }
   };
 
-  const getSimulatedSoilPh = (lat, lng) => {
+  function getSimulatedSoilPh(lat, lng) {
     const factor = Math.abs(Math.sin(lat * 80) + Math.cos(lng * 80)) / 2;
     return (5.5 + factor * 2.3).toFixed(1);
-  };
+  }
 
-  const calculatePolygonAreaHectares = (latlngs) => {
+  function calculatePolygonAreaHectares(latlngs) {
     if (!latlngs || latlngs.length < 3) return 0;
     let areaVal = 0;
     const numPoints = latlngs.length;
@@ -336,9 +339,9 @@ export default function Cultivos({ onCultivoChanged, onboardingStep, onNextOnboa
     }
     areaVal = Math.abs(areaVal / 2);
     return parseFloat((areaVal / 10000).toFixed(2));
-  };
+  }
 
-  const fetchAltitude = async (lat, lng) => {
+  async function fetchAltitude(lat, lng) {
     try {
       const res = await fetch(`https://api.open-meteo.com/v1/elevation?latitude=${lat}&longitude=${lng}`);
       const data = await res.json();
@@ -347,12 +350,12 @@ export default function Cultivos({ onCultivoChanged, onboardingStep, onNextOnboa
       } else {
         setAltitud('45.0');
       }
-    } catch (e) {
+    } catch {
       setAltitud('45.0');
     }
-  };
+  }
 
-  const fetchAddress = async (lat, lng) => {
+  async function fetchAddress(lat, lng) {
     try {
       setUbicacion('Obteniendo ubicación...');
       const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat.toFixed(4)}&lon=${lng.toFixed(4)}&format=json&accept-language=es`);
@@ -372,12 +375,12 @@ export default function Cultivos({ onCultivoChanged, onboardingStep, onNextOnboa
       } else {
         setUbicacion(`${lat.toFixed(4)}, ${lng.toFixed(4)}`);
       }
-    } catch (e) {
+    } catch {
       setUbicacion(`${lat.toFixed(4)}, ${lng.toFixed(4)}`);
     }
-  };
+  }
 
-  const fetchSoilPh = async (lat, lng) => {
+  async function fetchSoilPh(lat, lng) {
     try {
       const basePh = getSimulatedSoilPh(lat, lng);
       setPh(basePh);
@@ -393,12 +396,12 @@ export default function Cultivos({ onCultivoChanged, onboardingStep, onNextOnboa
           }
         }
       }
-    } catch (e) {
+    } catch {
       setPh(getSimulatedSoilPh(lat, lng));
     }
-  };
+  }
 
-  const drawSoilGrid = (L, map, centerLat, centerLng) => {
+  function drawSoilGrid(L, map, centerLat, centerLng) {
     const soilLayerGroup = soilLayerGroupRef.current;
     if (!soilLayerGroup) return;
     soilLayerGroup.clearLayers();
@@ -430,7 +433,20 @@ export default function Cultivos({ onCultivoChanged, onboardingStep, onNextOnboa
         }).addTo(soilLayerGroup);
       }
     }
-  };
+  }
+
+  useEffect(() => {
+    mapActionsRef.current = {
+      calculatePolygonAreaHectares,
+      drawSoilGrid,
+      fetchAddress,
+      fetchAltitude,
+      fetchSoilPh,
+    };
+    return () => {
+      mapActionsRef.current = null;
+    };
+  });
 
   const parseNum = (val) => {
     if (val === null || val === undefined || val === '') return null;
@@ -514,58 +530,17 @@ export default function Cultivos({ onCultivoChanged, onboardingStep, onNextOnboa
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('¿Está seguro de eliminar esta parcela? Se perderán las simulaciones asociadas.')) return;
-    setError(null);
-    setSuccess(null);
-    try {
-      await cultivosService.eliminar(id);
-      setSuccess('Lote eliminado correctamente.');
-      cargarCultivos();
-      onCultivoChanged();
-    } catch (err) {
-      setError('Error al eliminar la parcela.');
-    }
-  };
-
-  const handleCopyCoords = (lat, lng, id) => {
+  const handleCopyCoords = async (lat, lng) => {
     if (!lat || !lng) return;
     const text = `${Number(lat).toFixed(7)}, ${Number(lng).toFixed(7)}`;
-    navigator.clipboard.writeText(text).then(() => {
-      setCopiedId(id);
-      setTimeout(() => setCopiedId(null), 2000);
-    });
-  };
-
-  const getPhCategory = (phVal) => {
-    if (!phVal) return 'optimal';
-    const val = Number(phVal);
-    if (val < 5.5) return 'acidic';
-    if (val > 7.5) return 'alkaline';
-    return 'optimal';
-  };
-
-  const formatDateString = (dateStr) => {
-    if (!dateStr) return '—';
     try {
-      const parts = dateStr.split('-');
-      if (parts.length === 3) {
-        const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-        return `${parts[2]} ${months[parseInt(parts[1], 10) - 1]}`;
-      }
-      return dateStr;
-    } catch (e) {
-      return dateStr;
+      await navigator.clipboard.writeText(text);
+      setCopiedId('coordinates');
+      setTimeout(() => setCopiedId(null), 2000);
+    } catch {
+      setError('No se pudieron copiar las coordenadas.');
     }
   };
-
-  const sortedCultivos = [...cultivos].sort((a, b) => {
-    if (sortOrder === 'desc') {
-      return b.id - a.id;
-    } else {
-      return a.id - b.id;
-    }
-  });
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 110px)', overflow: 'hidden' }}>
@@ -575,6 +550,9 @@ export default function Cultivos({ onCultivoChanged, onboardingStep, onNextOnboa
           <p className='dashboard-title-desc' style={{ margin: '0.15rem 0 0 0', fontSize: '0.78rem' }}>
             Registra tus lotes de producción mediante linderos satelitales o posicionamiento manual.
           </p>
+          <span role="status" style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+            {loading ? 'Actualizando parcelas...' : `${cultivos.length} parcelas registradas`}
+          </span>
         </div>
       </div>
 
@@ -629,15 +607,38 @@ export default function Cultivos({ onCultivoChanged, onboardingStep, onNextOnboa
               <label className='form-label' style={{ marginBottom: 0, fontSize: '0.78rem', display: 'flex', alignItems: 'center', gap: '0.35rem', fontWeight: 700 }}>
                 <Map size={13} color='#3b82f6' /> Trazado Satelital y Selección de Terreno
               </label>
+              <button
+                type="button"
+                onClick={() => handleCopyCoords(latitud, longitud)}
+                disabled={!latitud || !longitud}
+                aria-label={copiedId === 'coordinates' ? 'Coordenadas copiadas' : 'Copiar coordenadas'}
+                title={copiedId === 'coordinates' ? 'Coordenadas copiadas' : 'Copiar coordenadas'}
+                style={{ border: 0, background: 'transparent', color: 'var(--text-muted)', cursor: latitud && longitud ? 'pointer' : 'not-allowed', padding: '0.25rem' }}
+              >
+                {copiedId === 'coordinates' ? <Check size={16} /> : <Copy size={16} />}
+              </button>
             </div>
 
-            <div className='cultivos-map-shell' style={{ position: 'relative', flex: 1, minHeight: 0, borderRadius: '10px', overflow: 'hidden', border: '1px solid var(--border-subtle)' }}>
+            <div className='cultivos-map-shell' style={isMapExpanded ? {
+              position: 'fixed', inset: '12px', zIndex: 10000, borderRadius: '10px', overflow: 'hidden', border: '1px solid var(--border-subtle)'
+            } : {
+              position: 'relative', flex: 1, minHeight: 0, borderRadius: '10px', overflow: 'hidden', border: '1px solid var(--border-subtle)'
+            }}>
               <div style={{ position: 'absolute', top: '8px', right: '50px', zIndex: 1000, background: 'rgba(15, 23, 42, 0.75)', backdropFilter: 'blur(12px)', padding: '3px 6px', borderRadius: '6px', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
                 <select value={mapLayerOption} onChange={(e) => setMapLayerOption(e.target.value)} style={{ background: 'transparent', border: 'none', color: '#fff', fontSize: '0.7rem', fontWeight: 600, outline: 'none', cursor: 'pointer' }}>
                   <option value='satellite'>Vista Satelital</option>
                   <option value='soil'>Mapa de Suelo (pH)</option>
                 </select>
               </div>
+              <button
+                type="button"
+                onClick={() => setIsMapExpanded(expanded => !expanded)}
+                aria-label={isMapExpanded ? 'Reducir mapa' : 'Expandir mapa'}
+                title={isMapExpanded ? 'Reducir mapa' : 'Expandir mapa'}
+                style={{ position: 'absolute', top: '8px', right: '8px', zIndex: 1001, width: '30px', height: '30px', display: 'grid', placeItems: 'center', border: '1px solid rgba(255,255,255,0.2)', borderRadius: '6px', color: '#fff', background: 'rgba(15, 23, 42, 0.8)', cursor: 'pointer' }}
+              >
+                {isMapExpanded ? <Minimize2 size={15} /> : <Maximize2 size={15} />}
+              </button>
 
               <div style={{ position: 'absolute', top: '8px', left: '8px', zIndex: 1000, width: 'calc(100% - 110px)', maxWidth: '260px', display: 'flex', gap: '0.3rem', background: 'rgba(15, 23, 42, 0.75)', backdropFilter: 'blur(12px)', padding: '3px', borderRadius: '6px', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
                 <input
