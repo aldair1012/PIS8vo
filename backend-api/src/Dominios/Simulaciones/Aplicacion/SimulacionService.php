@@ -100,8 +100,8 @@ final class SimulacionService
             throw new ValidacionException('El área simulada debe ser mayor a 0.');
         }
 
-        if (!in_array($datos['modelo_usado'], ['random_forest', 'xgboost'], true)) {
-            throw new ValidacionException('El modelo seleccionado no está disponible.');
+        if ($datos['modelo_usado'] !== 'xgboost') {
+            throw new ValidacionException('El único modelo de simulación disponible es XGBoost.');
         }
 
         if (!in_array($datos['tipo_suelo'], ['franco', 'arcilloso', 'arenoso'], true)) {

@@ -14,7 +14,7 @@ const CONFIG = {
     pasos: [
       { num: '01', text: 'Registra tu parcela con datos de suelo y ubicación GPS' },
       { num: '02', text: 'Ejecuta una simulación con variables climáticas e insumos' },
-      { num: '03', text: 'XGBoost y Random Forest generarán la predicción de rendimiento' },
+      { num: '03', text: 'XGBoost generará la predicción de rendimiento' },
     ],
     accentColor: '#8b5cf6',
     bgGlow: 'rgba(34,197,94,0.06)',

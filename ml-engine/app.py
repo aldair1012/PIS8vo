@@ -91,7 +91,9 @@ def health():
     return jsonify({
         "status": "ok",
         "modelos_cargados": predictor.MODELOS_DISPONIBLES,
-        "version": "2.1.0"
+        "modelo_principal": predictor.model_metrics.get("modelo_principal", "xgboost"),
+        "validacion": predictor.model_metrics.get("validacion_agrupada", {}).get("estrategia", "no_disponible"),
+        "version": "2.2.0"
     })
 
 
@@ -109,7 +111,10 @@ def predict_route():
         data = request.get_json(silent=True)
         _validar_entrada(data)
 
-        modelo_nombre = data.get("modelo", "xgboost")
+        modelo_por_defecto = predictor.model_metrics.get("modelo_principal", "xgboost")
+        if modelo_por_defecto not in predictor.MODELOS_DISPONIBLES:
+            modelo_por_defecto = "xgboost"
+        modelo_nombre = data.get("modelo", modelo_por_defecto)
         if not isinstance(modelo_nombre, str):
             return jsonify({
                 "error": "Modelo no disponible",
@@ -175,7 +180,7 @@ def stats():
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     print("\n" + "=" * 50)
-    print("   ZeaSys ML Engine v2.1")
-    print("   http://localhost:5000")
+    print("   ZeaSys ML Engine v2.2.0 - XGBoost")
+    print("   http://127.0.0.1:5000")
     print("=" * 50 + "\n")
     app.run(host="0.0.0.0", port=5000, debug=False)

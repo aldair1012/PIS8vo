@@ -1,0 +1,370 @@
+/* ZeaSys internal workspace. Landing tokens are intentionally not imported here.
+   Layer 1: primitives; layer 2: theme semantics; layer 3: component aliases. */
+html:has(.zeasys-workspace) { font-size: 16px; }
+
+.zeasys-workspace {
+  /* Primitives shared visually with the public landing palette. */
+  --zi-forest-950: #031109;
+  --zi-forest-900: #061a0f;
+  --zi-forest-850: #0b2417;
+  --zi-forest-800: #103221;
+  --zi-forest-700: #1d5f3b;
+  --zi-forest-600: #27784a;
+  --zi-leaf-400: #9fc862;
+  --zi-lime-300: #c4e477;
+  --zi-maize-400: #d8a83f;
+  --zi-sky-300: #9ed1ff;
+  --zi-paper-50: #f6f9f4;
+  --zi-paper-100: #edf4eb;
+  --zi-paper-200: #dfeade;
+  --zi-radius-sm: 10px;
+  --zi-radius-md: 16px;
+  --zi-radius-lg: 22px;
+
+  /* Semantic theme tokens. */
+  --zs-page: #071710;
+  --zs-sidebar: #0b2118;
+  --zs-surface: #10291d;
+  --zs-inset-surface: #0a1c14;
+  --zs-raised: #153326;
+  --zs-text: #f4f8f1;
+  --zs-muted: #c1d2c2;
+  --zs-faint: #9db5a0;
+  --zs-border: rgba(196, 228, 197, .17);
+  --zs-border-strong: rgba(196, 228, 197, .29);
+  --zs-accent: var(--zi-lime-300);
+  --zs-accent-contrast: #102416;
+  --zs-focus: var(--zi-sky-300);
+  --zs-shadow-raised: 0 12px 30px rgba(0, 0, 0, .18), inset 0 1px 0 rgba(245, 255, 244, .055);
+  --zs-shadow-inset: inset 3px 3px 8px rgba(0, 0, 0, .2), inset -2px -2px 7px rgba(202, 244, 190, .035);
+
+  /* Component aliases and legacy bridge. */
+  --zi-panel-bg: var(--zs-surface);
+  --zi-panel-border: var(--zs-border);
+  --zi-nav-bg: var(--zs-sidebar);
+  --zi-kpi-bg: var(--zs-raised);
+  --bg-base: var(--zs-page);
+  --bg-secondary: var(--zs-sidebar);
+  --bg-card: var(--zs-surface);
+  --bg-card-hover: var(--zs-raised);
+  --bg-input: var(--zs-inset-surface);
+  --bg-sidebar: var(--zs-sidebar);
+  --text-primary: var(--zs-text);
+  --text-secondary: var(--zs-muted);
+  --text-muted: var(--zs-muted);
+  --text-subtle: var(--zs-faint);
+  --text-unit: var(--zs-faint);
+  --accent-primary: var(--zs-accent);
+  --accent-primary-hover: var(--zi-leaf-400);
+  --accent-secondary: var(--zi-sky-300);
+  --accent-warning: var(--zi-maize-400);
+  --border: var(--zs-border);
+  --border-hover: var(--zs-border-strong);
+  --border-focus: var(--zs-focus);
+  --border-subtle: var(--zs-border);
+  --border-strong: var(--zs-border-strong);
+  --surface-elevated: var(--zs-surface);
+  --surface-hover: var(--zs-raised);
+  --background: 151 45% 6%;
+  --foreground: 105 42% 96%;
+  --primary: 82 65% 67%;
+  --secondary: 207 100% 81%;
+  --muted-foreground: 138 15% 77%;
+  --chart-grid: rgba(202, 229, 201, .09);
+  --chart-tick: #b8cdbb;
+  color: var(--zs-text);
+  background: var(--zs-page);
+}
+
+.light-theme .zeasys-workspace {
+  --zs-page: #edf4eb;
+  --zs-sidebar: #f8fbf6;
+  --zs-surface: #ffffff;
+  --zs-inset-surface: #e9f1e7;
+  --zs-raised: #f1f7ef;
+  --zs-text: #173b28;
+  --zs-muted: #405f49;
+  --zs-faint: #58735e;
+  --zs-border: rgba(30, 78, 47, .16);
+  --zs-border-strong: rgba(30, 78, 47, .29);
+  --zs-accent: #27784a;
+  --zs-accent-contrast: #fff;
+  --zs-focus: #165f9c;
+  --zs-shadow-raised: 0 12px 28px rgba(27, 67, 41, .08), inset 0 1px 0 #fff;
+  --zs-shadow-inset: inset 3px 3px 8px rgba(40, 92, 49, .075), inset -2px -2px 6px rgba(255, 255, 255, .9);
+  --background: 110 31% 94%;
+  --foreground: 146 43% 16%;
+  --primary: 144 51% 31%;
+  --secondary: 203 73% 35%;
+  --muted-foreground: 141 19% 34%;
+  --chart-grid: rgba(30, 78, 47, .1);
+  --chart-tick: #405f49;
+}
+
+.zeasys-workspace .ambient-glow-1,
+.zeasys-workspace .ambient-glow-2,
+.zeasys-workspace .ambient-glow-3 { display: none; }
+
+.zeasys-workspace .sidebar {
+  width: 246px;
+  background: var(--zi-nav-bg) !important; /* legacy styles.css boundary */
+  border-right: 1px solid var(--zs-border);
+  box-shadow: 4px 0 28px rgba(0, 0, 0, .08);
+}
+.zeasys-workspace .sidebar.collapsed { width: 0 !important; }
+.zeasys-workspace .sidebar-logo {
+  align-items: flex-start;
+  gap: .4rem;
+  padding: 1.45rem 1.2rem 1rem;
+  margin-bottom: .2rem;
+  border-color: var(--zs-border);
+}
+.zeasys-workspace .sidebar-brand-caption {
+  color: var(--zs-faint);
+  font-size: .7rem;
+  letter-spacing: .035em;
+}
+.zeasys-workspace .sidebar-navigation { flex: 1; min-height: 0; overflow: auto; padding: .35rem .7rem 1rem; }
+.zeasys-workspace .sidebar-section + .sidebar-section { margin-top: 1rem; }
+.zeasys-workspace .sidebar-section-title {
+  margin: .5rem .8rem .35rem;
+  color: var(--zs-faint);
+  font-size: .65rem;
+  font-weight: 800;
+  letter-spacing: .13em;
+  text-transform: uppercase;
+}
+.zeasys-workspace .sidebar-menu {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: .18rem;
+  padding: 0;
+  margin: 0;
+  overflow: visible;
+  list-style: none;
+}
+.zeasys-workspace .sidebar-item-btn,
+.zeasys-workspace .sidebar-logout {
+  width: 100%;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  padding: .65rem .8rem;
+  border: 1px solid transparent;
+  border-radius: var(--zi-radius-sm);
+  background: transparent;
+  color: var(--zs-muted);
+  cursor: pointer;
+  font-size: .86rem;
+  font-weight: 600;
+  text-align: left;
+  box-shadow: none;
+  transition: background 180ms ease, color 180ms ease, border-color 180ms ease;
+}
+.zeasys-workspace .sidebar-item-btn svg { color: currentColor; }
+.zeasys-workspace .sidebar-item-btn:hover,
+.zeasys-workspace .sidebar-logout:hover { background: var(--zs-raised); color: var(--zs-text); border-color: var(--zs-border); }
+.zeasys-workspace .sidebar-item-btn.active {
+  background: var(--zs-raised);
+  border-color: var(--zs-border-strong);
+  color: var(--zs-accent);
+  box-shadow: var(--zs-shadow-inset);
+}
+.zeasys-workspace .sidebar-item-btn.active svg { color: currentColor; }
+.zeasys-workspace .sidebar-bottom { padding: .9rem .7rem 1.1rem; border-top: 1px solid var(--zs-border); }
+.zeasys-workspace .sidebar-bottom-caption { display: block; padding: 0 .8rem .55rem; color: var(--zs-faint); font-size: .67rem; }
+.zeasys-workspace .sidebar-logout { color: var(--zs-faint); }
+
+.zeasys-workspace .main-content { background: var(--zs-page); }
+.zeasys-workspace .navbar {
+  min-height: 70px;
+  padding: .65rem clamp(.9rem, 2vw, 2rem);
+  background: var(--zs-page);
+  border-color: var(--zs-border);
+  overflow: visible;
+}
+.zeasys-workspace .navbar-title { color: var(--zs-text); font-size: 1rem; letter-spacing: -.025em; }
+.zeasys-workspace .content-body:has(.dashboard-view) { padding: clamp(.9rem, 2vw, 2rem) !important; }
+.zeasys-workspace .dashboard-view { width: 100%; min-width: 0; padding-bottom: 2rem; }
+
+.zeasys-workspace .dashboard-intro {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(260px, .75fr);
+  gap: clamp(1rem, 2vw, 2rem);
+  align-items: stretch;
+  margin-bottom: 1.35rem;
+  padding: clamp(1.2rem, 2.4vw, 2rem);
+  border: 1px solid var(--zs-border);
+  border-radius: var(--zi-radius-lg);
+  background: linear-gradient(135deg, var(--zs-raised), var(--zs-surface));
+  box-shadow: var(--zs-shadow-raised);
+}
+.zeasys-workspace .dashboard-intro-main { display: flex; flex-direction: column; justify-content: center; min-width: 0; }
+.zeasys-workspace .dashboard-intro-eyebrow,
+.zeasys-workspace .dashboard-section-index,
+.zeasys-workspace .dashboard-intro-aside-label {
+  color: var(--zs-accent);
+  font-size: .7rem;
+  font-weight: 800;
+  letter-spacing: .11em;
+  text-transform: uppercase;
+}
+.zeasys-workspace .dashboard-intro h1 { margin: .6rem 0 .55rem; color: var(--zs-text); font-size: clamp(1.55rem, 2.65vw, 2.6rem); letter-spacing: -.045em; line-height: 1.08; }
+.zeasys-workspace .dashboard-intro-main > p { max-width: 62ch; margin: 0; color: var(--zs-muted); font-size: .92rem; line-height: 1.6; }
+.zeasys-workspace .dashboard-intro-aside {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: .5rem;
+  padding: 1rem 1.2rem;
+  border: 1px solid var(--zs-border);
+  border-radius: var(--zi-radius-md);
+  background: var(--zs-inset-surface);
+  box-shadow: var(--zs-shadow-inset);
+}
+.zeasys-workspace .dashboard-intro-aside p { margin: 0; color: var(--zs-text); font-size: .82rem; line-height: 1.55; }
+.zeasys-workspace .dashboard-intro-source { color: var(--zs-faint); font-size: .68rem; line-height: 1.4; }
+.zeasys-workspace .dashboard-intro-assistant {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .45rem;
+  min-height: 44px;
+  margin-top: .3rem;
+  padding: .55rem .8rem;
+  border: 1px solid var(--zs-border-strong);
+  border-radius: var(--zi-radius-sm);
+  background: var(--zs-raised);
+  color: var(--zs-accent);
+  font-size: .78rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.zeasys-workspace .dashboard-intro-assistant:hover { border-color: var(--zs-accent); }
+.zeasys-workspace .dashboard-section-heading { display: flex; align-items: end; justify-content: space-between; gap: 1rem; margin: 1.55rem 0 .8rem; }
+.zeasys-workspace .dashboard-section-heading h2 { margin: .2rem 0 .2rem; color: var(--zs-text); font-size: clamp(1.1rem, 1.55vw, 1.4rem); line-height: 1.2; letter-spacing: -.035em; }
+.zeasys-workspace .dashboard-section-heading p { max-width: 78ch; margin: 0; color: var(--zs-muted); font-size: .77rem; line-height: 1.45; }
+
+.zeasys-workspace .dashboard-view .glass-panel,
+.zeasys-workspace .dashboard-view .dss-unified-card {
+  background: var(--zi-panel-bg) !important; /* legacy styles.css boundary */
+  border: 1px solid var(--zi-panel-border) !important;
+  border-radius: var(--zi-radius-md) !important;
+  box-shadow: var(--zs-shadow-raised) !important;
+  backdrop-filter: none;
+}
+.zeasys-workspace .dashboard-view .glass-panel:hover { border-color: var(--zs-border-strong) !important; background: var(--zi-panel-bg) !important; }
+.zeasys-workspace .dashboard-view .glass-card-header { border-color: var(--zs-border); }
+.zeasys-workspace .dashboard-view .glass-card-header h3 { color: var(--zs-text); letter-spacing: -.025em; }
+.zeasys-workspace .dashboard-view .chart-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+.zeasys-workspace .dashboard-view .chart-panel-interactive { min-width: 0; }
+.zeasys-workspace .dashboard-view .chart-panel-interactive:hover { box-shadow: 0 14px 34px rgba(0, 0, 0, .18) !important; }
+.zeasys-workspace .scenario-comparison-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); align-items: stretch; gap: 1rem; margin-bottom: 1.25rem; }
+
+.zeasys-workspace .kpi-row { grid-template-columns: repeat(auto-fit, minmax(205px, 1fr)); gap: .85rem; }
+.zeasys-workspace .kpi-card {
+  --kpi-accent: var(--zs-accent);
+  --kpi-accent-soft: rgba(196, 228, 119, .12);
+  --kpi-border: var(--zs-border);
+  min-height: 175px !important;
+  padding: 1rem 1.05rem .85rem !important;
+  background: var(--zi-kpi-bg) !important;
+  border-color: var(--zs-border) !important;
+  border-radius: var(--zi-radius-md) !important;
+  box-shadow: var(--zs-shadow-raised) !important;
+  transform: none;
+}
+.zeasys-workspace .kpi-card::before { width: 0; }
+.zeasys-workspace .kpi-card-state-success { --kpi-accent: var(--zi-leaf-400); }
+.zeasys-workspace .kpi-card-state-warning { --kpi-accent: var(--zi-maize-400); }
+.zeasys-workspace .kpi-card-state-danger { --kpi-accent: #e5a379; }
+.zeasys-workspace .kpi-card:hover { border-color: var(--zs-border-strong) !important; transform: translateY(-2px); }
+.zeasys-workspace .kpi-title { color: var(--zs-muted) !important; font-size: .72rem !important; letter-spacing: .02em !important; }
+.zeasys-workspace .kpi-value { color: var(--zs-text) !important; }
+.zeasys-workspace .kpi-value-unit { color: var(--zs-faint) !important; }
+.zeasys-workspace .kpi-dot {
+  width: 12px;
+  height: 12px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--zs-border-strong);
+  cursor: pointer;
+}
+.zeasys-workspace .kpi-dot.active { background: var(--zs-accent); }
+.zeasys-workspace .kpi-explain-action {
+  display: inline-flex;
+  align-items: center;
+  gap: .25rem;
+  align-self: flex-start;
+  min-height: 44px;
+  margin-top: .05rem;
+  padding: .3rem 0;
+  border: 0;
+  background: transparent;
+  color: var(--zs-accent);
+  font-size: .72rem;
+  font-weight: 750;
+  cursor: pointer;
+}
+.zeasys-workspace .kpi-side-popover { border-color: var(--zs-border-strong); background: var(--zs-surface); color: var(--zs-text); }
+.zeasys-workspace .dss-metric-col,
+.zeasys-workspace .dss-risk-badge-box { background: var(--zs-raised) !important; border-color: var(--zs-border) !important; box-shadow: var(--zs-shadow-inset); }
+.zeasys-workspace .dss-metric-col::before { background: var(--zs-accent); }
+.zeasys-workspace .dss-metric-col:hover { background: var(--zs-raised) !important; border-color: var(--zs-border-strong) !important; }
+.zeasys-workspace .dss-metric-value { color: var(--zs-text) !important; }
+.zeasys-workspace .dss-metric-title,
+.zeasys-workspace .dss-metric-trend { color: var(--zs-muted) !important; }
+.zeasys-workspace .dashboard-chart-caption { margin: .75rem 0 0; color: var(--zs-muted); font-size: .73rem; line-height: 1.5; }
+.zeasys-workspace .chart-empty-state { min-height: 180px; display: grid; place-items: center; padding: 1rem; border: 1px dashed var(--zs-border-strong); border-radius: var(--zi-radius-sm); background: var(--zs-inset-surface); color: var(--zs-muted); text-align: center; font-size: .8rem; }
+.zeasys-workspace .dashboard-view--finance .glass-panel form { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)) !important; }
+.zeasys-workspace .dashboard-view--finance .glass-panel input,
+.zeasys-workspace .dashboard-view--finance .glass-panel button { min-height: 44px; }
+
+.zeasys-workspace .zeasys-chat-tab { background: var(--zi-forest-700); border-color: var(--zs-border-strong) !important; color: #fff; }
+.zeasys-workspace .zeasys-chat-panel { background: var(--zs-surface); color: var(--zs-text); border-color: var(--zs-border); }
+.zeasys-workspace .zeasys-chat-header { background: var(--zi-forest-700); }
+.zeasys-workspace .zeasys-chat-context,
+.zeasys-workspace .zeasys-chat-composer { background: var(--zs-inset-surface); border-color: var(--zs-border); }
+.zeasys-workspace .zeasys-chat-bubble { background: var(--zs-raised); border-color: var(--zs-border); color: var(--zs-text); }
+.zeasys-workspace .zeasys-chat-send { min-width: 44px; min-height: 44px; background: var(--zs-accent); color: var(--zs-accent-contrast); }
+.zeasys-workspace .zeasys-chat-chips button { min-height: 44px; color: var(--zs-text); background: var(--zs-raised); border-color: var(--zs-border-strong); }
+.zeasys-workspace .zeasys-chat-header-actions button { min-width: 44px; min-height: 44px; }
+.zeasys-workspace .zeasys-chat-source-toggle { min-height: 44px; color: var(--zs-accent); }
+
+.zeasys-workspace button:focus-visible,
+.zeasys-workspace [role="button"]:focus-visible,
+.zeasys-workspace input:focus-visible,
+.zeasys-workspace select:focus-visible,
+.zeasys-workspace textarea:focus-visible { outline: 2px solid var(--zs-focus); outline-offset: 2px; }
+
+@media (max-width: 1200px) {
+  .zeasys-workspace .dashboard-view .chart-grid,
+  .zeasys-workspace .scenario-comparison-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 1080px) {
+  .zeasys-workspace .sidebar { width: 260px !important; }
+  .zeasys-workspace .sidebar.collapsed { width: 260px !important; }
+}
+@media (max-width: 760px) {
+  .zeasys-workspace .navbar { min-height: 60px; padding: .45rem .75rem; }
+  .zeasys-workspace .navbar-title { font-size: .82rem; }
+  .zeasys-workspace .dashboard-intro { grid-template-columns: 1fr; padding: 1rem; }
+  .zeasys-workspace .dashboard-intro-aside { padding: .8rem .95rem; }
+  .zeasys-workspace .dashboard-section-heading { margin-top: 1.25rem; }
+  .zeasys-workspace .kpi-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .zeasys-workspace .kpi-card { min-height: 175px !important; }
+}
+@media (max-width: 480px) {
+  .zeasys-workspace .content-body:has(.dashboard-view) { padding: .85rem !important; }
+  .zeasys-workspace .kpi-row { grid-template-columns: 1fr; }
+  .zeasys-workspace .dashboard-view .glass-card-header,
+  .zeasys-workspace .dashboard-view .glass-card-body { padding-inline: .9rem; }
+  .zeasys-workspace .zeasys-chat-panel { width: 100vw; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .zeasys-workspace *, .zeasys-workspace *::before, .zeasys-workspace *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+}

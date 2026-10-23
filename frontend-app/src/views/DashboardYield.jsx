@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
-import { dssService, simulacionService } from '../services/api';
+import { dssService } from '../services/api';
 import { Line, Bar } from 'react-chartjs-2';
 import { Chart as ChartJS, registerables } from 'chart.js';
 import InfoModal from '../templates/Common/InfoModal';
 import InteractiveKPI from '../templates/Common/InteractiveKPI';
 import AIExplainModal from '../templates/Common/AIExplainModal';
 import EmptyDashboard from '../templates/Common/EmptyDashboard';
+import DashboardIntro, { DashboardSectionHeading } from '../templates/Common/DashboardIntro';
 import useExplicacionIA from '../hooks/usarExplicacionIA';
+import { getDashboardChartColors, getDashboardChartAnimation } from '../utils/chartConfig';
 
 ChartJS.register(...registerables);
 
@@ -34,47 +36,8 @@ export default function DashboardYield({ cultivoElegidoId, anioSeleccionado, onN
     setMostrarModalIa,
     cargandoIa,
     datosIa,
-    pedirExplicacionIa,
-    setRespuestasIaGuardadas
+    pedirExplicacionIa
   } = useExplicacionIA(cultivoElegidoId, anioSeleccionado);
-
-  useEffect(() => {
-    if (data && data.kpis && typeof data.kpis.rendimiento_predicho === 'number') {
-      const { kpis } = data;
-      const preloadKey = "Rendimiento Predicho Final";
-      const rendimientoPredicho = Number(kpis.rendimiento_predicho);
-      const rendimientoAlcanzable = Number(kpis.rendimiento_alcanzable);
-      const proporcionPotencial = rendimientoAlcanzable > 0
-        ? rendimientoPredicho / rendimientoAlcanzable
-        : null;
-      const preloadContext = {
-        tipo_elemento: "tarjeta",
-        nombre: preloadKey,
-        cultivo: "maiz",
-        valor: parseFloat(Number(kpis.rendimiento_predicho).toFixed(2)),
-        unidad: "t/ha",
-        color: proporcionPotencial === null ? "neutral" : (proporcionPotencial >= 0.8 ? "success" : (proporcionPotencial >= 0.6 ? "warning" : "danger")),
-        rango_ideal: rendimientoAlcanzable > 0 ? `Comparar contra el alcanzable del escenario (${rendimientoAlcanzable.toFixed(2)} t/ha)` : "Depende del escenario",
-        descripcion_tecnica: "El rendimiento de cosecha que la simulación estima que se obtendrá al final del ciclo basándose en las variables climáticas e insumos ingresados.",
-        impacto_base: "Determina directamente la viabilidad del cultivo y el volumen total de toneladas que se podrán vender.",
-        recomendacion_base: "Si el valor es inferior al rango óptimo, se sugiere revisar el balance de fertilizantes y el manejo de agua antes de iniciar la campaña."
-      };
-      
-      const preload = async () => {
-        try {
-          const res = await simulacionService.explainData({
-            ...preloadContext,
-            cultivo_id: cultivoElegidoId,
-            anio: anioSeleccionado
-          });
-          setRespuestasIaGuardadas(prev => ({ ...prev, [preloadKey]: res }));
-        } catch (err) {
-          console.warn("Error pre-cargando explicación:", err);
-        }
-      };
-      preload();
-    }
-  }, [data, cultivoElegidoId, anioSeleccionado, setRespuestasIaGuardadas]);
 
   useEffect(() => {
     async function loadData() {
@@ -143,14 +106,15 @@ export default function DashboardYield({ cultivoElegidoId, anioSeleccionado, onN
   }
 
   const isLightTheme = document.body.classList.contains('light-theme');
-  const textColor = isLightTheme ? '#020617' : '#ffffff';
-  const tickColor = isLightTheme ? '#0f172a' : '#ffffff';
-  const gridColor = isLightTheme ? 'rgba(51, 65, 85, 0.35)' : 'rgba(255, 255, 255, 0.28)';
-  const borderColor = isLightTheme ? '#1e293b' : 'rgba(255, 255, 255, 0.6)';
-  const tooltipBg = isLightTheme ? 'rgba(255, 255, 255, 0.98)' : 'rgba(15, 23, 42, 0.95)';
-  const tooltipBorder = isLightTheme ? 'rgba(15, 23, 42, 0.15)' : 'rgba(255, 255, 255, 0.1)';
-  const tooltipTitle = isLightTheme ? '#0f172a' : '#f8fafc';
-  const tooltipBody = isLightTheme ? '#334155' : 'rgba(255, 255, 255, 0.8)';
+  const chartTheme = getDashboardChartColors(isLightTheme);
+  const textColor = chartTheme.text;
+  const tickColor = chartTheme.muted;
+  const gridColor = chartTheme.grid;
+  const borderColor = chartTheme.border;
+  const tooltipBg = chartTheme.tooltipBg;
+  const tooltipBorder = chartTheme.tooltipBorder;
+  const tooltipTitle = chartTheme.text;
+  const tooltipBody = chartTheme.muted;
 
   // Calcular estado de crecimiento actual si la fecha de siembra está disponible
   const getGrowthStatus = () => {
@@ -193,14 +157,14 @@ export default function DashboardYield({ cultivoElegidoId, anioSeleccionado, onN
         
         ctx.save();
         ctx.beginPath();
-        ctx.strokeStyle = '#f59e0b';
+        ctx.strokeStyle = chartTheme.maize;
         ctx.lineWidth = 1.5;
         ctx.setLineDash([4, 4]);
         ctx.moveTo(xPos, top);
         ctx.lineTo(xPos, bottom);
         ctx.stroke();
         
-        ctx.fillStyle = '#f59e0b';
+        ctx.fillStyle = chartTheme.maize;
         ctx.font = 'bold 9px Plus Jakarta Sans, sans-serif';
         ctx.textAlign = 'center';
         ctx.fillText(`SEMANA ${growthStatus.week} (HOY)`, xPos, top - 6);
@@ -213,6 +177,8 @@ export default function DashboardYield({ cultivoElegidoId, anioSeleccionado, onN
     "V2 (Emergencia)", "V6 (Vegetativo)", "V10 (Crecimiento)", "VT (Floración)",
     "R1 (Polinización)", "R3 (Llenado)", "R6 (Madurez)"
   ];
+  const hasFenologiaSeries = Array.isArray(fenologia_comparativa?.proyeccion_actual)
+    && fenologia_comparativa.proyeccion_actual.some((value) => Number.isFinite(Number(value)));
 
   const lineChartData = {
     labels: rawLabels.map(lbl => {
@@ -224,22 +190,22 @@ export default function DashboardYield({ cultivoElegidoId, anioSeleccionado, onN
     datasets: [
       {
         label: 'Campaña Actual Proyectada',
-        data: fenologia_comparativa?.proyeccion_actual || [0, 0, 0, 0, 0, 0, 0],
-        borderColor: '#16a34a',
-        backgroundColor: isLightTheme ? 'rgba(22, 163, 74, 0.28)' : 'rgba(22, 163, 74, 0.1)',
+        data: fenologia_comparativa?.proyeccion_actual || [],
+        borderColor: chartTheme.leaf,
+        backgroundColor: isLightTheme ? 'rgba(39, 120, 74, .22)' : 'rgba(159, 200, 98, .14)',
         fill: false,
         tension: 0.3,
         borderWidth: 2.5,
         pointRadius: 3,
         pointHoverRadius: 6,
-        pointHoverBackgroundColor: '#16a34a',
+        pointHoverBackgroundColor: chartTheme.leaf,
         pointHoverBorderColor: isLightTheme ? '#0f172a' : '#fff',
         pointHoverBorderWidth: 2
       },
       {
         label: 'Mejor escenario registrado',
-        data: fenologia_comparativa?.mejor_ano || [0, 0, 0, 0, 0, 0, 0],
-        borderColor: '#1d4ed8',
+        data: fenologia_comparativa?.mejor_ano || [],
+        borderColor: chartTheme.sky,
         borderDash: [5, 5],
         fill: false,
         tension: 0.3,
@@ -250,11 +216,11 @@ export default function DashboardYield({ cultivoElegidoId, anioSeleccionado, onN
       },
       {
         label: 'Peor escenario registrado',
-        data: fenologia_comparativa?.peor_ano || [0, 0, 0, 0, 0, 0, 0],
-        borderColor: '#dc2626',
+        data: fenologia_comparativa?.peor_ano || [],
+        borderColor: chartTheme.risk,
         borderDash: [5, 5],
         fill: 1, // Rellenar hasta el índice 1 del conjunto de datos ("Mejor escenario registrado")
-        backgroundColor: isLightTheme ? 'rgba(59, 130, 246, 0.08)' : 'rgba(59, 130, 246, 0.03)',
+        backgroundColor: isLightTheme ? 'rgba(39, 120, 74, .09)' : 'rgba(159, 200, 98, .06)',
         tension: 0.3,
         pointRadius: 0,
         pointHoverRadius: 4,
@@ -284,6 +250,7 @@ export default function DashboardYield({ cultivoElegidoId, anioSeleccionado, onN
   const lineOptions = {
     responsive: true,
     maintainAspectRatio: false,
+    animation: getDashboardChartAnimation(),
     font: {
       family: 'Plus Jakarta Sans, sans-serif'
     },
@@ -718,12 +685,16 @@ export default function DashboardYield({ cultivoElegidoId, anioSeleccionado, onN
   ];
 
   return (
-    <div>
-      <div className="dashboard-title-row">
-        <div>
-          <p className="dashboard-title-desc">Mira cómo va tu cultivo comparado con su máximo genético e identifica qué le está frenando.</p>
-        </div>
-      </div>
+    <div className="dashboard-view dashboard-view--yield">
+      <DashboardIntro
+        step="01 / Productividad"
+        title="Del potencial a la cosecha"
+        description="Compara lo que el cultivo podría producir con lo que la simulación estima para este lote y esta campaña."
+        interpretation="Empieza por el rendimiento predicho; después revisa la brecha y el factor que más la explica. Las cifras son estimaciones, no una cosecha observada."
+        source="Modelo de rendimiento · t/ha · parcela y año seleccionados"
+      />
+
+      <DashboardSectionHeading label="01 · Indicadores" title="Lectura rápida del lote" description="Selecciona los puntos de cada tarjeta para consultar otra métrica; abre la explicación para conocer su procedencia." />
 
       {/* KPI Cards */}
       <div className="kpi-row">
@@ -768,6 +739,8 @@ export default function DashboardYield({ cultivoElegidoId, anioSeleccionado, onN
           onClick={(payload) => pedirExplicacionIa(payload)}
         />
       </div>
+
+      <DashboardSectionHeading label="02 · Evolución" title="Dónde se forma la brecha" description="La cascada separa las pérdidas estimadas por factor; la curva muestra la evolución proyectada durante el ciclo." />
 
       {/* Charts */}
       <div className="chart-grid">
@@ -831,13 +804,13 @@ export default function DashboardYield({ cultivoElegidoId, anioSeleccionado, onN
                     [0, predVal]
                   ],
                   backgroundColor: [
-                    '#3b82f6',
-                    '#ef4444',
-                    '#ef4444',
-                    '#ef4444',
-                    '#10b981',
-                    '#38bdf8',
-                    '#10b981'
+                    chartTheme.sky,
+                    chartTheme.risk,
+                    chartTheme.risk,
+                    chartTheme.risk,
+                    chartTheme.maize,
+                    chartTheme.maize,
+                    chartTheme.leaf
                   ],
                   borderRadius: 5,
                   borderSkipped: false,
@@ -850,6 +823,7 @@ export default function DashboardYield({ cultivoElegidoId, anioSeleccionado, onN
                 indexAxis: 'y',
                 responsive: true,
                 maintainAspectRatio: false,
+                animation: getDashboardChartAnimation(),
                 plugins: {
                   legend: { display: false },
                   tooltip: {
@@ -870,17 +844,17 @@ export default function DashboardYield({ cultivoElegidoId, anioSeleccionado, onN
                 scales: {
                   x: {
                     grid: {
-                      color: isLightTheme ? 'rgba(51, 65, 85, 0.35)' : 'rgba(255, 255, 255, 0.28)',
-                      lineWidth: 1.5,
+                      color: chartTheme.grid,
+                      lineWidth: 1,
                       drawBorder: true
                     },
                     border: {
                       display: true,
-                      color: isLightTheme ? '#1e293b' : 'rgba(255, 255, 255, 0.6)',
-                      width: 2
+                      color: chartTheme.border,
+                      width: 1
                     },
                     ticks: {
-                      color: isLightTheme ? '#0f172a' : '#ffffff',
+                      color: chartTheme.muted,
                       font: { family: 'var(--font-sans)', size: 13, weight: '800' },
                       callback: (value) => `${value} t/ha`
                     }
@@ -888,17 +862,17 @@ export default function DashboardYield({ cultivoElegidoId, anioSeleccionado, onN
                   y: {
                     grid: {
                       display: true,
-                      color: isLightTheme ? 'rgba(51, 65, 85, 0.25)' : 'rgba(255, 255, 255, 0.18)',
-                      lineWidth: 1.5,
+                      color: chartTheme.grid,
+                      lineWidth: 1,
                       drawBorder: true
                     },
                     border: {
                       display: true,
-                      color: isLightTheme ? '#1e293b' : 'rgba(255, 255, 255, 0.6)',
-                      width: 2
+                      color: chartTheme.border,
+                      width: 1
                     },
                     ticks: {
-                      color: isLightTheme ? '#0f172a' : '#ffffff',
+                      color: chartTheme.muted,
                       font: { family: 'var(--font-sans)', size: 14, weight: '800' }
                     }
                   }
@@ -908,7 +882,7 @@ export default function DashboardYield({ cultivoElegidoId, anioSeleccionado, onN
               return (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
                   <div style={{ width: '100%', height: '410px', position: 'relative' }}>
-                    <Bar data={chartData} options={chartOptions} />
+                    <Bar data={chartData} options={chartOptions} aria-label="Cascada estimada de brecha productiva en toneladas por hectárea" role="img" />
                   </div>
 
                   {/* Agronomic Insight Bar (Elimina espacio negativo y añade métricas clave) */}
@@ -991,9 +965,11 @@ export default function DashboardYield({ cultivoElegidoId, anioSeleccionado, onN
                 </div>
               </div>
             )}
-            <div style={{ height: '280px', position: 'relative' }}>
-              <Line data={lineChartData} options={lineOptions} plugins={[currentWeekPlugin]} />
-            </div>
+            {hasFenologiaSeries ? (
+              <div style={{ height: '280px', position: 'relative' }}>
+                <Line data={lineChartData} options={lineOptions} plugins={[currentWeekPlugin]} aria-label="Proyección de rendimiento durante las etapas del cultivo" role="img" />
+              </div>
+            ) : <div className="chart-empty-state">No hay una serie fenológica para esta parcela y campaña.</div>}
 
             <div style={{ padding: '0.45rem 0.75rem', background: 'rgba(34, 197, 94, 0.05)', borderRadius: '8px', border: '1px solid rgba(34, 197, 94, 0.15)', fontSize: '0.72rem', marginTop: '0.35rem' }}>
               <span style={{ fontWeight: 700, color: '#10b981', marginRight: '0.4rem' }}>Resumen Fenológico:</span>

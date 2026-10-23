@@ -60,6 +60,11 @@ class MlApiTest(unittest.TestCase):
         self.assertGreaterEqual(resultado["probabilidad_cosecha"], 0)
         self.assertLessEqual(resultado["probabilidad_cosecha"], 100)
         self.assertIn("Alta", resultado["probabilidades_cosecha"])
+        self.assertEqual(resultado["confianza_tipo"], "calidad_global_r2")
+        self.assertIn("intervalo_rendimiento", resultado)
+        intervalo = resultado["intervalo_rendimiento"]
+        self.assertLessEqual(intervalo["min"], resultado["rendimiento_estimado"])
+        self.assertGreaterEqual(intervalo["max"], resultado["rendimiento_estimado"])
 
     def test_predict_normalizes_model_name(self):
         response = self.client.post("/predict", json={
@@ -74,6 +79,20 @@ class MlApiTest(unittest.TestCase):
         })
         self.assertEqual(200, response.status_code)
         self.assertEqual("xgboost", response.get_json()["modelo"])
+
+    def test_predict_rejects_unsupported_model(self):
+        response = self.client.post("/predict", json={
+            "temperatura": 24.5,
+            "humedad": 70,
+            "precipitacion": 800,
+            "fertilizante": 150,
+            "phSuelo": 6.2,
+            "area": 2.5,
+            "tipoSuelo": "franco",
+            "modelo": "modelo_no_disponible",
+        })
+        self.assertEqual(400, response.status_code)
+        self.assertEqual(["xgboost"], response.get_json()["modelos_disponibles"])
 
 
 if __name__ == "__main__":

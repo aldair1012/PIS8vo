@@ -117,12 +117,24 @@ class ServicioAnaliticaFinancial
         $margenNetoParcela = round($margenNeto * $areaParcela, 2);
         $produccionTotalQq = round($rendimientoQq * $areaParcela, 1);
 
-        $probBreakEven = 88.0;
+        // No presentar una probabilidad fija como si proviniera del modelo.
+        // Con al menos cinco simulaciones del lote, se muestra la frecuencia
+        // empírica de escenarios cuyo ingreso cubre el costo configurado.
+        $probBreakEven = null;
+        $rendimientosValidos = array_values(array_filter($rendimientos, static fn (float $rendimiento): bool => $rendimiento > 0));
+        if (count($rendimientosValidos) >= 5 && $precioQq > 0) {
+            $escenariosRentables = count(array_filter(
+                $rendimientosValidos,
+                static fn (float $rendimiento): bool => ($rendimiento * 22.0462 * $precioQq) >= $costoTotal,
+            ));
+            $probBreakEven = round(100 * $escenariosRentables / count($rendimientosValidos), 1);
+        }
         $roiEsperado = $costoTotal > 0 ? round(($margenNeto / $costoTotal) * 100, 1) : 0;
         $gananciaPorDolar = $costoTotal > 0 ? round($margenNeto / $costoTotal, 2) : 0;
 
-        $preciosRange = [12.0, 14.5, 16.5, 18.5, 21.0];
-        $rendRange = [70, 90, 110, 130, 150];
+        $factoresSensibilidad = [0.75, 0.9, 1.0, 1.1, 1.25];
+        $preciosRange = array_map(static fn (float $factor): float => round($precioQq * $factor, 2), $factoresSensibilidad);
+        $rendRange = array_map(static fn (float $factor): float => round($rendimientoQq * $factor, 1), $factoresSensibilidad);
 
         $sensibilidadData = [];
         foreach ($preciosRange as $p) {
@@ -133,12 +145,24 @@ class ServicioAnaliticaFinancial
             }
         }
 
-        $roiEstrategias = [
-            ['nombre' => 'Manejo Convencional (Base)','roi' => $roiEsperado,'margen' => $margenNeto,'rendimiento' => round($avgRend, 2)],
-            ['nombre' => 'Biofertilizante INIAP (Ahorro 40% Fert.)','roi' => round((($ingresoBruto - ($costoTotal - ($costoFertilizacion * 0.4))) / ($costoTotal - ($costoFertilizacion * 0.4))) * 100, 1),'margen' => round($margenNeto + ($costoFertilizacion * 0.4), 2),'rendimiento' => round($avgRend, 2)],
-            ['nombre' => 'Fertirriego por Goteo (Alta Precisión)','roi' => round((($ingresoBruto * 1.15 - ($costoTotal + 40)) / ($costoTotal + 40)) * 100, 1),'margen' => round(($ingresoBruto * 1.15) - ($costoTotal + 40), 2),'rendimiento' => round($avgRend * 1.15, 2)],
-            ['nombre' => 'Materia Orgánica (Compost/Enmienda)','roi' => round((($ingresoBruto * 1.06 - ($costoTotal + 25)) / ($costoTotal + 25)) * 100, 1),'margen' => round(($ingresoBruto * 1.06) - ($costoTotal + 25), 2),'rendimiento' => round($avgRend * 1.06, 2)]
+        $estrategiasHipoteticas = [
+            ['nombre' => 'Escenario base', 'factor_ingreso' => 1.0, 'costo_ajuste' => 0.0, 'factor_rendimiento' => 1.0],
+            ['nombre' => 'Supuesto: 40% menos costo de fertilización', 'factor_ingreso' => 1.0, 'costo_ajuste' => -$costoFertilizacion * 0.4, 'factor_rendimiento' => 1.0],
+            ['nombre' => 'Supuesto: 15% más producción y USD 40 más de costo', 'factor_ingreso' => 1.15, 'costo_ajuste' => 40.0, 'factor_rendimiento' => 1.15],
+            ['nombre' => 'Supuesto: 6% más producción y USD 25 más de costo', 'factor_ingreso' => 1.06, 'costo_ajuste' => 25.0, 'factor_rendimiento' => 1.06],
         ];
+        $roiEstrategias = array_map(static function (array $estrategia) use ($ingresoBruto, $costoTotal, $avgRend): array {
+            $ingreso = $ingresoBruto * $estrategia['factor_ingreso'];
+            $costo = max(0.0, $costoTotal + $estrategia['costo_ajuste']);
+            $margen = $ingreso - $costo;
+            return [
+                'nombre' => $estrategia['nombre'],
+                'roi' => $costo > 0 ? round(100 * $margen / $costo, 1) : null,
+                'costo' => round($costo, 2),
+                'margen' => round($margen, 2),
+                'rendimiento' => round($avgRend * $estrategia['factor_rendimiento'], 2),
+            ];
+        }, $estrategiasHipoteticas);
 
         $waterfallCosts = [
             ['label' => 'Ingreso Bruto','amount' => $ingresoBruto,'is_total' => true],

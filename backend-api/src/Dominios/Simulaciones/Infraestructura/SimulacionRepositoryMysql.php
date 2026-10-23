@@ -115,11 +115,11 @@ final class SimulacionRepositoryMysql implements SimulacionRepositoryInterface
     {
         $sql = 'SELECT
                     COUNT(*) as total_simulaciones,
-                    COALESCE(AVG(rendimiento_estimado), 0) as rendimiento_promedio,
-                    COALESCE(MAX(rendimiento_estimado), 0) as rendimiento_maximo,
-                    COALESCE(MIN(rendimiento_estimado), 0) as rendimiento_minimo,
-                    COALESCE(AVG(confianza), 0) as confianza_promedio,
-                    COALESCE(SUM(produccion_total), 0) as produccion_total
+                    AVG(rendimiento_estimado) as rendimiento_promedio,
+                    MAX(rendimiento_estimado) as rendimiento_maximo,
+                    MIN(rendimiento_estimado) as rendimiento_minimo,
+                    AVG(confianza) as confianza_promedio,
+                    SUM(produccion_total) as produccion_total
                  FROM simulaciones
                  WHERE usuario_id = :usuario_id';
         if ($year !== null) {

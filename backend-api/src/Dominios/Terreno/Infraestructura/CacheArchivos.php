@@ -16,13 +16,13 @@ final class CacheArchivos implements CacheInterface
         $this->directorio = $directorio ?? __DIR__ . '/../../../../data/cache';
     }
 
-    public function obtener(string $clave): ?array
+    public function obtener(string $clave, int $ttlSegundos = 86400): ?array
     {
         $this->asegurarDirectorio();
 
         $archivoCache = $this->rutaArchivo($clave);
 
-        if (file_exists($archivoCache) && (time() - filemtime($archivoCache) < 86400)) {
+        if (file_exists($archivoCache) && (time() - filemtime($archivoCache) < $ttlSegundos)) {
             $contenido = file_get_contents($archivoCache);
             $datosCache = $contenido !== false ? json_decode($contenido, true) : null;
             if ($datosCache) {
@@ -64,8 +64,11 @@ final class CacheArchivos implements CacheInterface
             return;
         }
 
-        $files = glob($cacheDir . '/precision_data_*.json');
-        if (!$files) {
+        $files = array_merge(
+            glob($cacheDir . '/precision_data_*.json') ?: [],
+            glob($cacheDir . '/clima_actual_*.json') ?: [],
+        );
+        if ($files === []) {
             return;
         }
 

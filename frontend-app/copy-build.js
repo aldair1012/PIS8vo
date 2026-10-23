@@ -1,66 +1,68 @@
-import fs from 'fs';
-import path from 'path';
+import fs from 'node:fs';
+import path from 'node:path';
+import process from 'node:process';
+import { fileURLToPath } from 'node:url';
 
-// Script casero para mover el build a la raíz para que corra directo en XAMPP.
-// La verdad me cansé de copiar y pegar a mano cada vez que hago build, así que
-// le pedí ayuda a la IA para hacer esta automatización recursiva que limpia los
-// archivos viejos y clona lo nuevo del dist a la raíz. ¡Ahorra muchísimo tiempo!
+// Resolve paths independently of the shell's working directory.
+const frontendDir = path.dirname(fileURLToPath(import.meta.url));
+const sourceDir = path.join(frontendDir, 'dist');
+const projectDir = path.dirname(frontendDir);
+const assetsDir = path.join(projectDir, 'assets');
+const manifestPath = path.join(assetsDir, 'zeasys-build-manifest.json');
+const generatedName = /^(?:app|estilo|iconos|http|react|graficos|mapas|modelo-3d|terceros|rolldown-runtime|logo-full|logo-icon|yield|climate-soil|field-decisions|maize-hero)-[\w-]+\.(?:js|css|svg|jpg|png)$/;
 
-const srcDir = './dist';
-const destDir = '../';
+function assetPath(name) {
+  if (typeof name !== 'string' || path.basename(name) !== name) {
+    throw new Error('Invalid generated asset name.');
+  }
+  const resolved = path.resolve(assetsDir, name);
+  if (path.dirname(resolved) !== assetsDir) {
+    throw new Error('Generated asset is outside the deployment assets directory.');
+  }
+  return resolved;
+}
 
-function copyRecursiveSync(src, dest) {
-  const exists = fs.existsSync(src);
-  const stats = exists && fs.statSync(src);
-  const isDirectory = exists && stats.isDirectory();
-
-  if (isDirectory) {
-    if (!fs.existsSync(dest)) {
-      fs.mkdirSync(dest, { recursive: true });
-    }
-    fs.readdirSync(src).forEach((childItemName) => {
-      copyRecursiveSync(
-        path.join(src, childItemName),
-        path.join(dest, childItemName)
-      );
-    });
-  } else {
-    // Copia el archivo directamente. Sobreescribe lo que encuentre en la raíz.
-    fs.copyFileSync(src, dest);
+function copyBuild(source, destination) {
+  for (const entry of fs.readdirSync(source, { withFileTypes: true })) {
+    // Replace the entry point only after its resources are installed.
+    if (source === sourceDir && entry.name === 'index.html') continue;
+    const from = path.join(source, entry.name);
+    const to = path.join(destination, entry.name);
+    if (entry.isSymbolicLink()) throw new Error('Build must not contain symbolic links.');
+    if (entry.isDirectory()) {
+      fs.mkdirSync(to, { recursive: true });
+      copyBuild(from, to);
+    } else if (entry.isFile()) fs.copyFileSync(from, to);
   }
 }
 
 try {
-  // Vite puede conservar una copia previa de archivos públicos en algunos
-  // entornos de Windows; sincronizamos explícitamente el favicon fuente.
-  const faviconSource = './public/favicon.svg';
-  if (fs.existsSync(faviconSource)) {
-    fs.copyFileSync(faviconSource, path.join(srcDir, 'favicon.svg'));
+  if (!fs.existsSync(path.join(sourceDir, 'index.html'))) {
+    throw new Error('No build found. Run Vite before copying the deployment.');
   }
+  fs.mkdirSync(assetsDir, { recursive: true });
+  const currentAssets = fs.readdirSync(path.join(sourceDir, 'assets'))
+    .filter(name => fs.lstatSync(path.join(sourceDir, 'assets', name)).isFile());
+  // On the first run, recognize only known Vite names. Keep unrelated files.
+  const previousAssets = fs.existsSync(manifestPath)
+    ? JSON.parse(fs.readFileSync(manifestPath, 'utf8'))
+    : fs.readdirSync(assetsDir).filter(name => generatedName.test(name));
+  if (!Array.isArray(previousAssets)) throw new Error('Invalid deployment asset manifest.');
+  previousAssets.forEach(assetPath);
 
-  // Limpiamos los archivos .js y .css viejos de la carpeta assets en la raíz
-  // para que no se acumulen versiones diferentes y rompan cosas.
-  const rootAssetsDir = '../assets';
-  if (fs.existsSync(rootAssetsDir)) {
-    fs.readdirSync(rootAssetsDir).forEach((file) => {
-      fs.unlinkSync(path.join(rootAssetsDir, file));
-    });
+  copyBuild(sourceDir, projectDir);
+  fs.copyFileSync(path.join(sourceDir, 'index.html'), path.join(projectDir, 'index.html'));
+  let removed = 0;
+  for (const name of previousAssets) {
+    const target = assetPath(name);
+    if (!currentAssets.includes(name) && fs.existsSync(target) && fs.lstatSync(target).isFile()) {
+      fs.unlinkSync(target);
+      removed++;
+    }
   }
-
-  // Limpiamos los archivos .svg antiguos del directorio raíz (excepto favicon.svg e icons.svg)
-  // para que no se queden versiones obsoletas huérfanas en la carpeta de producción.
-  const rootDir = '../';
-  if (fs.existsSync(rootDir)) {
-    fs.readdirSync(rootDir).forEach((file) => {
-      if (file.endsWith('.svg') && file !== 'favicon.svg' && file !== 'icons.svg') {
-        fs.unlinkSync(path.join(rootDir, file));
-      }
-    });
-  }
-
-  // Copiamos el nuevo build
-  copyRecursiveSync(srcDir, destDir);
-  console.log('¡Éxito! El build ha sido copiado a la raíz correctamente para XAMPP.');
-} catch (err) {
-  console.error('Error al copiar el build a la raíz:', err);
+  fs.writeFileSync(manifestPath, JSON.stringify(currentAssets, null, 2) + '\n');
+  console.log(`Build copiado a XAMPP. ${removed} recursos generados obsoletos retirados.`);
+} catch (error) {
+  console.error('Error al copiar el build:', error);
+  process.exitCode = 1;
 }

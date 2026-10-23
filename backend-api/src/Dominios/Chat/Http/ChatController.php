@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace ZeaSys\Dominios\Chat\Http;
 
 use ZeaSys\Dominios\Chat\Aplicacion\ChatService;
+use ZeaSys\Kernel\Errores\NoAutorizadoException;
 use ZeaSys\Kernel\Errores\ValidacionException;
 use ZeaSys\Kernel\Peticion;
 use ZeaSys\Kernel\RespuestaJson;
@@ -49,9 +50,21 @@ final class ChatController
             throw new ValidacionException('El contexto del dashboard es demasiado grande.');
         }
 
+        // Borrador del formulario de Nueva Simulación. No sustituye a la
+        // parcela autorizada: sólo aporta los valores que el usuario ve antes
+        // de ejecutar el modelo. El servicio valida cada campo y descarta los
+        // que no correspondan a la vista "simular".
+        $simulacion = $cuerpo['simulacion'] ?? null;
+        if ($simulacion !== null && !is_array($simulacion)) {
+            throw new ValidacionException('El borrador de simulación no es válido.');
+        }
+        if (is_array($simulacion) && strlen((string) json_encode($simulacion, JSON_UNESCAPED_UNICODE)) > 8000) {
+            throw new ValidacionException('El borrador de simulación es demasiado grande.');
+        }
+
         $usuarioId = (int) ($_SESSION['usuario_id'] ?? 0);
 
-        $respuesta = $this->servicio->preguntar($pregunta, $vista, $usuarioId, $cultivoId, $anio, $dashboard);
+        $respuesta = $this->servicio->preguntar($pregunta, $vista, $usuarioId, $cultivoId, $anio, $dashboard, $simulacion);
 
         RespuestaJson::enviar($respuesta);
     }
@@ -60,6 +73,39 @@ final class ChatController
     {
         $this->servicio->limpiarMemoria();
         RespuestaJson::enviar(['ok' => true]);
+    }
+
+    /**
+     * Guarda la conversación visible como favorita del usuario. El cuerpo
+     * incluye conversacion_id, vista, cultivo_id, anio y mensajes; el servicio
+     * valida la propiedad de la parcela y normaliza los mensajes.
+     */
+    public function guardarFavorito(Peticion $peticion): void
+    {
+        $respuesta = $this->servicio->guardarFavorito($this->usuarioId(), $peticion->cuerpo());
+        RespuestaJson::enviar($respuesta, 201);
+    }
+
+    public function eliminarFavorito(Peticion $peticion): void
+    {
+        $cuerpo = $peticion->cuerpo();
+        $conversacionId = $cuerpo['conversacion_id'] ?? $peticion->query('conversacion_id');
+        if (!is_string($conversacionId) || trim($conversacionId) === '') {
+            throw new ValidacionException('El identificador de la conversación es obligatorio.');
+        }
+
+        $this->servicio->eliminarFavorito($this->usuarioId(), trim($conversacionId));
+        RespuestaJson::enviar(['ok' => true]);
+    }
+
+    private function usuarioId(): int
+    {
+        $usuarioId = (int) ($_SESSION['usuario_id'] ?? 0);
+        if ($usuarioId <= 0) {
+            throw new NoAutorizadoException('Inicia sesión para usar el asistente.');
+        }
+
+        return $usuarioId;
     }
 
     private function enteroOpcional(mixed $valor, string $campo, int $minimo, int $maximo): ?int

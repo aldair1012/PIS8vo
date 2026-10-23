@@ -2,7 +2,7 @@
 
 ## 1. Visión general
 
-ZeaSys es un DSS (Sistema de Apoyo a la Decisión) para cultivo de maíz en Ecuador. El backend está organizado en **5 dominios lógicos** sobre XAMPP (Apache + PHP + MySQL + Python/Flask), sin microservicios físicos ni framework.
+ZeaSys es un DSS (Sistema de Apoyo a la Decisión) para cultivo de maíz en Ecuador. El backend está organizado en **6 dominios lógicos** sobre XAMPP (Apache + PHP + MySQL + Python/Flask + Flowise), sin microservicios físicos ni framework.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
@@ -21,10 +21,10 @@ ZeaSys es un DSS (Sistema de Apoyo a la Decisión) para cultivo de maíz en Ecua
 │  └───────────────────────────────────────────────────────────────┘  │
 │                              │                                      │
 │  ┌───────────────────────────┼───────────────────────────────────┐  │
-│  │              src/Dominios/  (5 dominios lógicos)               │  │
+│  │              src/Dominios/  (6 dominios lógicos)               │  │
 │  │                                                               │  │
 │  │  Autenticacion/    Lotes/    Terreno/    Simulaciones/        │  │
-│  │  Analitica/                                                   │  │
+│  │  Analitica/        Chat/                                      │  │
 │  │                                                               │  │
 │  │  Cada dominio:  Dominio/  Infraestructura/  Aplicacion/  Http/│  │
 │  │  (interfaces)    (impl PDO/cURL)  (servicios)     (ctrls)    │  │
@@ -40,6 +40,11 @@ ZeaSys es un DSS (Sistema de Apoyo a la Decisión) para cultivo de maíz en Ecua
     │  MySQL  │                          │  Flask  │
     │ (XAMPP) │                          │  :5000  │
     └─────────┘                          │ motor ML│
+                                         └────┬────┘
+                                              │
+                                         ┌────┴────┐
+                                         │ Flowise │
+                                         │  :3000  │
                                          └─────────┘
 ```
 
@@ -79,8 +84,12 @@ Http/  →  Aplicacion/  →  Dominio/  ←  Infraestructura/
 | `api/simulaciones/explain` | `SimulacionController` | `SimulacionService` | `ServicioExplicabilidad` (46 estrategias) |
 | `api/yield` | `Analitica\Http\YieldController` | `ServicioAnaliticaYield` | `CultivoRepositoryInterface` + `SimulacionRepositoryInterface` + `CatalogoAgronomicoInterface` |
 | `api/scenarios` | `Analitica\Http\ScenarioController` | `ServicioAnaliticaScenario` | idem |
-| `api/climate` | `Analitica\Http\ClimateController` | `ServicioAnaliticaClimate` | `CultivoRepositoryInterface` + `ServicioDatosTerreno` + `CatalogoAgronomicoInterface` |
+| `api/climate` | `Analitica\Http\ClimateController` | `ServicioAnaliticaClimate` | `CultivoRepositoryInterface` + `ServicioDatosTerreno` + `CatalogoAgronomicoInterface` + `ServicioClimaActual` |
 | `api/financial` | `Analitica\Http\FinancialController` | `ServicioAnaliticaFinancial` | `CultivoRepositoryInterface` + `SimulacionRepositoryInterface` |
+| `api/chat/preguntar` | `Chat\Http\ChatController` | `ChatService` | `MemoriaSesionInterface` + `CultivoRepositoryInterface` + `SimulacionRepositoryInterface` + `GeminiFlowise` + `ContextoAgricolaService` + `FavoritoService` |
+| `api/chat/limpiar` | `ChatController` | `ChatService` | `MemoriaSesionInterface` |
+| `api/chat/favorito` | `ChatController` | `FavoritoService` | `FavoritoRepositoryInterface` + `CultivoRepositoryInterface` |
+| `api/chat/favorito/eliminar` | `ChatController` | `FavoritoService` | `FavoritoRepositoryInterface` |
 
 ## 4. Flujo de una petición
 
@@ -156,9 +165,11 @@ La suite ejecuta 29 pasos reales (registro→login→lotes→simulación→expla
 | `AutenticacionService` | — | 4 interfaces |
 | `CacheInterface` | `CacheArchivos` | — |
 | `ProveedorClimaInterface` | `ProveedorOpenMeteo` | — |
+| `ProveedorClimaActualInterface` | `ProveedorOpenMeteoForecast` | — |
 | `ProveedorSueloInterface` | `ProveedorSoilGrids` | — |
 | `AltitudPorCultivoInterface` | `AltitudMysql` | `getConnection()` |
 | `ServicioDatosTerreno` | — | 4 interfaces |
+| `ServicioClimaActual` | — | `CacheInterface` + `ProveedorClimaActualInterface` |
 | `CultivoRepositoryInterface` | `CultivoRepositoryMysql` | `getConnection()` |
 | `ValidadorLimitesEcuador` | — | — |
 | `CultivoService` | — | 3 interfaces |
@@ -173,9 +184,15 @@ La suite ejecuta 29 pasos reales (registro→login→lotes→simulación→expla
 | `CatalogoAgronomicoInterface` | `RepositorioCatalogoAgronomico` | — |
 | `ServicioAnaliticaYield` | — | 3 interfaces |
 | `ServicioAnaliticaScenario` | — | 3 interfaces |
-| `ServicioAnaliticaClimate` | — | 3 interfaces |
+| `ServicioAnaliticaClimate` | — | 4 interfaces |
 | `ServicioAnaliticaFinancial` | — | 2 interfaces |
-| 4 controladores Http | — | 1 servicio c/u |
+| `ServicioPrecioMaiz` | — | — |
+| `FavoritoRepositoryInterface` | `FavoritoRepositoryMysql` | `getConnection()` |
+| `FavoritoService` | — | `FavoritoRepositoryInterface` + `CultivoRepositoryInterface` |
+| `ContextoAgricolaService` | — | 4 servicios de analítica |
+| `ChatService` | — | 6 dependencias |
+| `ChatController` | — | `ChatService` |
+| Controladores Http | — | 1 servicio c/u |
 
 ## 9. Estructura final
 
@@ -191,6 +208,10 @@ backend-api/
 │       ├── Lotes/
 │       ├── Terreno/
 │       ├── Simulaciones/       ← + Explicacion/ (46 explicadores)
-│       └── Analitica/
-├── data/ · uploads/ · tests/   ← sin cambios
+│       ├── Analitica/          ← dashboards, clima actual y precio de referencia
+│       └── Chat/               ← contexto autorizado, memoria y favoritos
+├── data/ · uploads/ · tests/   ← datos y pruebas del backend
 ```
+
+Las migraciones incrementales de MySQL viven fuera del backend, en
+`database/migraciones/`, y se aplican una sola vez sobre bases ya instaladas.

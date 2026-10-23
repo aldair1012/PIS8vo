@@ -1,5 +1,6 @@
 import { Chart } from 'react-chartjs-2';
 import { Chart as ChartJS, registerables } from 'chart.js';
+import { getDashboardChartColors, getDashboardChartAnimation } from '../../utils/chartConfig';
 
 ChartJS.register(...registerables);
 
@@ -20,7 +21,7 @@ const crosshairPlugin = {
       ctx.moveTo(x, topY);
       ctx.lineTo(x, bottomY);
       ctx.lineWidth = 1;
-      ctx.strokeStyle = isLight ? 'rgba(15, 23, 42, 0.15)' : 'rgba(255, 255, 255, 0.12)';
+      ctx.strokeStyle = getDashboardChartColors(isLight).border;
       ctx.setLineDash([4, 4]);
       ctx.stroke();
       ctx.restore();
@@ -30,58 +31,51 @@ const crosshairPlugin = {
 
 export default function ClimateLine({ labels, lluviaHistorica, lluviaAnomala, temperaturaAnomala }) {
   const isLightTheme = document.body.classList.contains('light-theme');
-  const textColor = isLightTheme ? '#020617' : '#ffffff';
-  const tickColor = isLightTheme ? '#0f172a' : '#ffffff';
-  const gridColor = isLightTheme ? 'rgba(51, 65, 85, 0.35)' : 'rgba(255, 255, 255, 0.28)';
-  const borderColor = isLightTheme ? '#1e293b' : 'rgba(255, 255, 255, 0.6)';
-  const tooltipBg = isLightTheme ? 'rgba(255, 255, 255, 0.98)' : 'rgba(15, 23, 42, 0.95)';
-  const tooltipBorder = isLightTheme ? 'rgba(15, 23, 42, 0.18)' : 'rgba(255, 255, 255, 0.1)';
-  const tooltipTitle = isLightTheme ? '#0f172a' : '#f8fafc';
-  const tooltipBody = isLightTheme ? '#334155' : 'rgba(255, 255, 255, 0.8)';
+  const theme = getDashboardChartColors(isLightTheme);
 
   const chartData = {
     labels: labels || ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'],
     datasets: [
       {
         type: 'bar',
-        label: 'Lluvia Histórica (mm)',
+        label: 'Lluvia de referencia · modelo (mm)',
         data: lluviaHistorica || [],
-        backgroundColor: isLightTheme ? 'rgba(59, 130, 246, 0.30)' : 'rgba(59, 130, 246, 0.22)',
-        borderColor: isLightTheme ? 'rgba(59, 130, 246, 0.85)' : 'rgba(59, 130, 246, 0.65)',
+        backgroundColor: isLightTheme ? 'rgba(40, 111, 155, .3)' : 'rgba(158, 209, 255, .3)',
+        borderColor: theme.sky,
         borderWidth: 1.5,
         borderRadius: 10,
         maxBarThickness: 32,
         yAxisID: 'yRain',
         order: 2,
-        hoverBackgroundColor: 'rgba(59, 130, 246, 0.55)',
-        hoverBorderColor: '#3b82f6'
+        hoverBackgroundColor: theme.sky,
+        hoverBorderColor: theme.sky
       },
       {
         type: 'bar',
-        label: 'Pronóstico Lluvia (mm)',
+        label: 'Lluvia del escenario · modelo (mm)',
         data: lluviaAnomala || [],
-        backgroundColor: isLightTheme ? 'rgba(22, 163, 74, 0.48)' : 'rgba(22, 163, 74, 0.4)',
-        borderColor: isLightTheme ? 'rgb(22, 163, 74)' : 'rgb(22, 163, 74)',
+        backgroundColor: isLightTheme ? 'rgba(39, 120, 74, .48)' : 'rgba(159, 200, 98, .45)',
+        borderColor: theme.leaf,
         borderWidth: 1.8,
         borderRadius: 10,
         maxBarThickness: 32,
         yAxisID: 'yRain',
         order: 1,
-        hoverBackgroundColor: 'rgba(22, 163, 74, 0.65)',
-        hoverBorderColor: '#16a34a'
+        hoverBackgroundColor: theme.leaf,
+        hoverBorderColor: theme.leaf
       },
       {
         type: 'line',
-        label: 'Temp. Anómala (°C)',
+        label: 'Temperatura del escenario (°C)',
         data: temperaturaAnomala || [],
-        borderColor: '#ef4444',
-        backgroundColor: '#ef4444',
+        borderColor: theme.maize,
+        backgroundColor: theme.maize,
         borderWidth: 2.5,
         fill: false,
         tension: 0.35,
         pointRadius: 3,
         pointHoverRadius: 6,
-        pointHoverBackgroundColor: '#ef4444',
+        pointHoverBackgroundColor: theme.maize,
         pointHoverBorderColor: '#fff',
         pointHoverBorderWidth: 2,
         yAxisID: 'yTemp',
@@ -93,6 +87,7 @@ export default function ClimateLine({ labels, lluviaHistorica, lluviaAnomala, te
   const options = {
     responsive: true,
     maintainAspectRatio: false,
+    animation: getDashboardChartAnimation(),
     font: {
       family: 'Plus Jakarta Sans, sans-serif'
     },
@@ -107,18 +102,18 @@ export default function ClimateLine({ labels, lluviaHistorica, lluviaAnomala, te
       legend: {
         position: 'top',
         labels: {
-          color: textColor,
+          color: theme.text,
           font: { size: 14, weight: '800' },
           boxWidth: 18,
           padding: 16
         }
       },
       tooltip: {
-        backgroundColor: tooltipBg,
-        borderColor: tooltipBorder,
+        backgroundColor: theme.tooltipBg,
+        borderColor: theme.tooltipBorder,
         borderWidth: 1.5,
-        titleColor: tooltipTitle,
-        bodyColor: tooltipBody,
+        titleColor: theme.text,
+        bodyColor: theme.muted,
         titleFont: { size: 14, weight: '800' },
         bodyFont: { size: 13, weight: '600' },
         cornerRadius: 8,
@@ -129,9 +124,9 @@ export default function ClimateLine({ labels, lluviaHistorica, lluviaAnomala, te
     },
     scales: {
       x: {
-        grid: { color: gridColor, lineWidth: 1.5 },
-        border: { display: true, color: borderColor, width: 2 },
-        ticks: { color: tickColor, font: { size: 13, weight: '800' } }
+        grid: { color: theme.grid, lineWidth: 1 },
+        border: { display: true, color: theme.border, width: 1 },
+        ticks: { color: theme.muted, font: { size: 12, weight: '700' } }
       },
       yRain: {
         type: 'linear',
@@ -139,12 +134,12 @@ export default function ClimateLine({ labels, lluviaHistorica, lluviaAnomala, te
         title: {
           display: true,
           text: 'Precipitación (mm)',
-          color: textColor,
+          color: theme.text,
           font: { size: 14, weight: '800' }
         },
-        grid: { color: gridColor, lineWidth: 1.5 },
-        border: { display: true, color: borderColor, width: 2 },
-        ticks: { color: tickColor, font: { size: 13, weight: '800' } }
+        grid: { color: theme.grid, lineWidth: 1 },
+        border: { display: true, color: theme.border, width: 1 },
+        ticks: { color: theme.muted, font: { size: 12, weight: '700' } }
       },
       yTemp: {
         type: 'linear',
@@ -152,19 +147,19 @@ export default function ClimateLine({ labels, lluviaHistorica, lluviaAnomala, te
         title: {
           display: true,
           text: 'Temperatura (°C)',
-          color: '#ef4444',
+          color: theme.maize,
           font: { size: 14, weight: '800' }
         },
         grid: { drawOnChartArea: false },
-        border: { display: true, color: '#ef4444', width: 2 },
-        ticks: { color: isLightTheme ? '#dc2626' : '#f87171', font: { size: 13, weight: '800' } }
+        border: { display: true, color: theme.maize, width: 1 },
+        ticks: { color: theme.maize, font: { size: 12, weight: '700' } }
       }
     }
   };
 
   return (
     <div className="chart-wrapper aspect-ratio-chart" style={{ position: 'relative', height: '300px', minHeight: '300px' }}>
-      <Chart type="bar" data={chartData} options={options} plugins={[crosshairPlugin]} />
+      <Chart type="bar" data={chartData} options={options} plugins={[crosshairPlugin]} aria-label="Escenario mensual modelado de lluvia y temperatura" role="img" />
     </div>
   );
 }

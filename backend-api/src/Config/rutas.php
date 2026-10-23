@@ -30,6 +30,8 @@ return [
     // --- Chat (Subproyecto 2): chatbot con memoria de sesion ---
     'api/chat/preguntar'           => ['controlador' => \ZeaSys\Dominios\Chat\Http\ChatController::class, 'accion' => 'preguntar', 'metodos' => ['POST'], 'sesion' => true],
     'api/chat/limpiar'             => ['controlador' => \ZeaSys\Dominios\Chat\Http\ChatController::class, 'accion' => 'limpiar', 'metodos' => ['POST'], 'sesion' => true],
+    'api/chat/favorito'            => ['controlador' => \ZeaSys\Dominios\Chat\Http\ChatController::class, 'accion' => 'guardarFavorito', 'metodos' => ['POST'], 'sesion' => true],
+    'api/chat/favorito/eliminar'   => ['controlador' => \ZeaSys\Dominios\Chat\Http\ChatController::class, 'accion' => 'eliminarFavorito', 'metodos' => ['POST'], 'sesion' => true],
 
     // --- DSS Dashboards (F05: dominio ZeaSys\Dominios\Analitica) ---
     'api/scenarios'                => ['controlador' => \ZeaSys\Dominios\Analitica\Http\ScenarioController::class, 'accion' => 'index', 'metodos' => ['GET']],

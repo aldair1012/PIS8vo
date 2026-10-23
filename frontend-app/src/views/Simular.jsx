@@ -22,9 +22,8 @@ const evitarOperadores = (e, permiteNegativo = false) => {
   }
 };
 
-export default function Simular({ cultivos, onSimulationCompleted, onboardingStep, onNextOnboardingStep }) {
+export default function Simular({ cultivos, onSimulationCompleted, onboardingStep, onNextOnboardingStep, onSimulationContextChange }) {
   const [cultivoId, setCultivoId] = useState('');
-  const [modelo, setModelo] = useState('xgboost');
   const [temp, setTemp] = useState('');
   const [hum, setHum] = useState('');
   const [prec, setPrec] = useState('');
@@ -70,6 +69,33 @@ export default function Simular({ cultivos, onSimulationCompleted, onboardingSte
     }
   }, [cultivoId, cultivos]);
 
+  // El asistente debe leer la parcela y los parámetros de este formulario, no
+  // la parcela que quedó seleccionada en el navbar para los dashboards. Se
+  // publica el borrador cada vez que cambia un campo; el id de la parcela se
+  // usa aparte para reiniciar la conversación cuando cambia el sujeto.
+  useEffect(() => {
+    if (typeof onSimulationContextChange !== 'function') return;
+    const seleccionado = cultivos.find((cultivo) => cultivo.id === Number(cultivoId)) || null;
+    if (!seleccionado) {
+      onSimulationContextChange(null);
+      return;
+    }
+    onSimulationContextChange({
+      cultivoId: seleccionado.id,
+      cultivoActivo: seleccionado,
+      datos: {
+        temperatura: temp,
+        humedad: hum,
+        precipitacion: prec,
+        fertilizante: fert,
+        ph_suelo: ph,
+        tipo_suelo: suelo,
+        area_simulada: area,
+        cargando_ubicacion: fetchingLocation,
+      },
+    });
+  }, [cultivoId, temp, hum, prec, fert, ph, suelo, area, fetchingLocation, cultivos, onSimulationContextChange]);
+
   const parseNum = (val) => {
     if (val === null || val === undefined || val === '') return 0;
     const clean = String(val).replace(',', '.');
@@ -108,7 +134,7 @@ export default function Simular({ cultivos, onSimulationCompleted, onboardingSte
 
     const payload = {
       cultivo_id: Number(cultivoId),
-      modelo_usado: modelo,
+      modelo_usado: 'xgboost',
       temperatura: tempVal,
       humedad: humVal,
       precipitacion: precVal,
@@ -271,26 +297,17 @@ export default function Simular({ cultivos, onSimulationCompleted, onboardingSte
                   )}
                 </div>
 
-                <div className="simulacion-grid-2">
-                  <div className="form-group">
-                    <label className="form-label">Motor de Simulación *</label>
-                    <select className="form-select" value={modelo} onChange={e => setModelo(e.target.value)}>
-                      <option value="xgboost">XGBoost</option>
-                      <option value="random_forest">Random Forest</option>
-                    </select>
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Área a Simular (ha) *</label>
-                    <input 
-                      type="text" 
-                      inputMode="decimal" 
-                      className="form-input" 
-                      value={area} 
-                      onChange={e => setArea(limpiarTextoNumerico(e.target.value))} 
-                      onKeyDown={evitarOperadores}
-                      required 
-                    />
-                  </div>
+                <div className="form-group">
+                  <label className="form-label">Área a Simular (ha) *</label>
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    className="form-input"
+                    value={area}
+                    onChange={e => setArea(limpiarTextoNumerico(e.target.value))}
+                    onKeyDown={evitarOperadores}
+                    required
+                  />
                 </div>
 
                 <div className="simulacion-grid-2">
@@ -535,6 +552,29 @@ export default function Simular({ cultivos, onSimulationCompleted, onboardingSte
                   </div>
                 </div>
               </div>
+
+              {result.intervalo_rendimiento && (
+                <div style={{
+                  marginBottom: '2rem',
+                  padding: '0.9rem 1.1rem',
+                  borderRadius: '12px',
+                  border: '1px solid rgba(59, 130, 246, 0.25)',
+                  background: 'rgba(59, 130, 246, 0.06)',
+                  color: 'var(--text-primary)'
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', alignItems: 'baseline', flexWrap: 'wrap' }}>
+                    <strong style={{ fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                      Rango esperado del rendimiento
+                    </strong>
+                    <span style={{ fontSize: '0.95rem', fontWeight: 800, color: '#60a5fa' }}>
+                      {Number(result.intervalo_rendimiento.min).toFixed(2)}–{Number(result.intervalo_rendimiento.max).toFixed(2)} t/ha
+                    </span>
+                  </div>
+                  <div style={{ marginTop: '0.35rem', fontSize: '0.72rem', color: 'var(--text-muted)', lineHeight: 1.4 }}>
+                    Intervalo aproximado calculado con el error de validación agrupada; no es una garantía ni sustituye mediciones de campo.
+                  </div>
+                </div>
+              )}
 
               {/* Recommendations */}
               <div style={{ marginBottom: '2rem' }}>

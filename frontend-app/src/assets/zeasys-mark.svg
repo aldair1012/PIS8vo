@@ -1,0 +1,23 @@
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Marca ZeaSys</title>
+  <desc id="desc">Hoja de maíz combinada con una señal de datos ascendente</desc>
+  <defs>
+    <linearGradient id="bg" x1="8" y1="4" x2="56" y2="60" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1D7A4D"/>
+      <stop offset="1" stop-color="#0B3E2A"/>
+    </linearGradient>
+    <linearGradient id="leaf" x1="19" y1="15" x2="45" y2="46" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#B5F4C8"/>
+      <stop offset="1" stop-color="#55D98B"/>
+    </linearGradient>
+  </defs>
+  <rect x="2" y="2" width="60" height="60" rx="18" fill="url(#bg)"/>
+  <rect x="2.75" y="2.75" width="58.5" height="58.5" rx="17.25" stroke="#A6F3C1" stroke-opacity=".32" stroke-width="1.5"/>
+  <path d="M31.9 47.3C31.1 38.1 29.9 28 26.2 18.1C33.1 20.3 39 24.8 40.7 31.1C42.6 38.4 37.1 44.1 31.9 47.3Z" fill="url(#leaf)"/>
+  <path d="M31.4 47.2C28.5 37.1 25.1 29.7 19.1 24.2C18.1 31.4 20.9 37.4 26 41.1C27.8 42.4 29.6 43.4 31.4 47.2Z" fill="#55D98B" fill-opacity=".72"/>
+  <path d="M31.6 48.2C32.9 39.1 35.6 31.5 40.8 25.1" stroke="#E4FFEB" stroke-width="1.8" stroke-linecap="round"/>
+  <path d="M18.4 49.2H46" stroke="#E4FFEB" stroke-opacity=".55" stroke-width="1.8" stroke-linecap="round"/>
+  <path d="M18.4 45.1L24.2 40.3L29.3 42.5L36.1 34.8L40.2 37.1L46 30.8" stroke="#7FC6FF" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="18.4" cy="45.1" r="2" fill="#E4FFEB"/>
+  <circle cx="46" cy="30.8" r="2" fill="#7FC6FF"/>
+</svg>

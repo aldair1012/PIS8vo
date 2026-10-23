@@ -21,8 +21,8 @@ final class ServicioDatosTerreno
     }
 
     /**
-     * Puerto literal de ClimateController::consultarDatosApiPrecision() (líneas 28–230).
-     * Misma estructura exacta (success, source, clima, suelo) y mismos valores de fallback.
+     * Combina proveedores con respaldo local e identifica qué bloque procede
+     * realmente de una API para no presentar el respaldo como observación.
      *
      * @return array<string, mixed>
      */
@@ -30,8 +30,9 @@ final class ServicioDatosTerreno
     {
         $claveLat = round($latitud, 3);
         $claveLng = round($longitud, 3);
-        // v2 fuerza la renovación de cachés creadas antes de incluir radiación PAR.
-        $clave = "precision_data_v2_{$claveLat}_{$claveLng}";
+        // v4 agrega precipitacion_30d sin reutilizar entradas v3 que sólo
+        // guardaban la proyección anual en el campo precipitacion.
+        $clave = "precision_data_v4_{$claveLat}_{$claveLng}";
 
         $datosCache = $this->cache->obtener($clave);
         if ($datosCache !== null) {
@@ -77,7 +78,9 @@ final class ServicioDatosTerreno
 
         $datosClimaYSuelo = [
             'success' => false,
-            'source' => 'Simulado/Por Defecto',
+            'source' => 'Contexto agronómico estimado',
+            'clima_disponible_api' => false,
+            'suelo_disponible_api' => false,
             'clima' => [
                 'temperatura' => $tempDefecto,
                 'humedad' => $humDefecto,
@@ -104,8 +107,10 @@ final class ServicioDatosTerreno
             if (!array_key_exists('temperatura_suelo', $bloqueClima)) {
                 $datosClimaYSuelo['clima']['temperatura_suelo'] = $datosClimaYSuelo['clima']['temperatura'] - 1.5;
             }
-            $datosClimaYSuelo['success'] = true;
-            $datosClimaYSuelo['source']  = 'Open-Meteo Archive API (Promedio 30 dias)';
+            if ($bloqueClima !== []) {
+                $datosClimaYSuelo['success'] = true;
+                $datosClimaYSuelo['clima_disponible_api'] = true;
+            }
         } catch (ServicioExternoException) {
             // Fallback: se conservan los valores por defecto, exactamente como en el original.
         }
@@ -116,19 +121,22 @@ final class ServicioDatosTerreno
             foreach ($bloqueSuelo as $claveSuelo => $valorSuelo) {
                 $datosClimaYSuelo['suelo'][$claveSuelo] = $valorSuelo;
             }
-            $datosClimaYSuelo['success'] = true;
-            // Paridad (trampa legacy): la comparación con 'Open-Meteo API' es inalcanzable — la
-            // línea del merge de Open-Meteo siempre pone 'Open-Meteo Archive API (Promedio 30 dias)'.
-            // El original (ClimateController:216) tenía exactamente este mismo if muerto; NO "corregirlo"
-            // rompería la paridad (el source etiquetado se cachea 24h). Deuda D1, ADR pendiente.
-            if ($datosClimaYSuelo['source'] === 'Open-Meteo API') {
-                $datosClimaYSuelo['source'] = 'Open-Meteo & SoilGrids APIs (Tiempo real)';
-            } else {
-                $datosClimaYSuelo['source'] = 'SoilGrids API (Tiempo real)';
+            if ($bloqueSuelo !== []) {
+                $datosClimaYSuelo['success'] = true;
+                $datosClimaYSuelo['suelo_disponible_api'] = true;
             }
         } catch (ServicioExternoException) {
             // Fallback: se conservan los valores por defecto, exactamente como en el original.
         }
+
+        $fuentes = [];
+        $fuentes[] = $datosClimaYSuelo['clima_disponible_api']
+            ? 'Open-Meteo Archive (promedio 30 días)'
+            : 'clima estimado';
+        $fuentes[] = $datosClimaYSuelo['suelo_disponible_api']
+            ? 'SoilGrids (suelo estimado por modelo)'
+            : 'suelo de respaldo';
+        $datosClimaYSuelo['source'] = implode(' + ', $fuentes);
 
         if ($datosClimaYSuelo['success']) {
             $this->cache->guardar($clave, $datosClimaYSuelo);

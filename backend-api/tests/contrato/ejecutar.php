@@ -12,7 +12,7 @@
 
 const BASE_URL  = 'http://localhost/ZeaSys/backend-api/public/index.php';
 const IA_HEALTH = 'http://127.0.0.1:5000/health';
-const BAT_IA    = __DIR__ . '/../../../auto_ia_server.bat';
+const BAT_IA    = __DIR__ . '/../../../scripts/auto_ia_server.bat';
 
 // Temporales de la corrida (cookies, PNG): se borran siempre, incluso con exit().
 $temporalesSuite = [];
@@ -64,7 +64,7 @@ function asegurarFlask(): bool
 {
     if (saludarMotor()) { return true; }
 
-    say('[*] Motor IA apagado; intentando arrancar con auto_ia_server.bat ...');
+    say('[*] Motor IA apagado; intentando arrancar con scripts/auto_ia_server.bat ...');
     if (PHP_OS_FAMILY === 'Windows' && file_exists(BAT_IA)) {
         pclose(popen('start /B "" "' . BAT_IA . '"', 'r'));
     }

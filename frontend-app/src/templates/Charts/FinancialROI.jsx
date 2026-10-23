@@ -1,4 +1,5 @@
 import { Bar } from 'react-chartjs-2';
+import { chartPalette, getDashboardChartColors, getDashboardChartAnimation } from '../../utils/chartConfig';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -20,17 +21,17 @@ ChartJS.register(
 
 export default function FinancialROI({ strategies }) {
   const isLightTheme = document.body.classList.contains('light-theme');
-  const textColor = isLightTheme ? '#020617' : '#ffffff';
-  const tickColor = isLightTheme ? '#0f172a' : '#ffffff';
-  const gridColor = isLightTheme ? 'rgba(51, 65, 85, 0.35)' : 'rgba(255, 255, 255, 0.28)';
-  const borderColor = isLightTheme ? '#1e293b' : 'rgba(255, 255, 255, 0.6)';
-  const tooltipBg = isLightTheme ? 'rgba(255, 255, 255, 0.98)' : 'rgba(15, 23, 42, 0.95)';
-  const tooltipBorder = isLightTheme ? 'rgba(15, 23, 42, 0.18)' : 'rgba(255, 255, 255, 0.1)';
-  const tooltipTitle = isLightTheme ? '#0f172a' : '#f8fafc';
-  const tooltipBody = isLightTheme ? '#334155' : 'rgba(255, 255, 255, 0.8)';
+  const theme = getDashboardChartColors(isLightTheme);
+  const comparableStrategies = Array.isArray(strategies)
+    ? strategies.filter((strategy) => strategy.roi !== null && strategy.roi !== undefined && Number.isFinite(Number(strategy.roi)))
+    : [];
 
-  const labels = (strategies || []).map(s => s.nombre);
-  const roiData = (strategies || []).map(s => s.roi);
+  if (comparableStrategies.length === 0) {
+    return <div className="chart-empty-state">No se puede calcular ROI sin costos positivos en este escenario.</div>;
+  }
+
+  const labels = comparableStrategies.map((strategy) => strategy.nombre);
+  const roiData = comparableStrategies.map((strategy) => strategy.roi);
 
   const chartData = {
     labels: labels,
@@ -38,29 +39,14 @@ export default function FinancialROI({ strategies }) {
       {
         label: 'ROI %',
         data: roiData,
-        backgroundColor: [
-          'rgba(59, 130, 246, 0.48)',
-          'rgba(234, 179, 8, 0.45)',
-          'rgba(22, 163, 74, 0.45)',
-          'rgba(142, 68, 173, 0.45)'
-        ],
-        borderColor: [
-          '#2563eb',
-          '#ca8a04',
-          '#15803d',
-          '#6d28d9'
-        ],
+        backgroundColor: comparableStrategies.map((_, index) => chartPalette[index % chartPalette.length]),
+        borderColor: comparableStrategies.map((_, index) => chartPalette[index % chartPalette.length]),
         borderWidth: 1.8,
         borderRadius: 10,
         maxBarThickness: 34,
         barPercentage: 0.88,
         categoryPercentage: 0.88,
-        hoverBackgroundColor: [
-          'rgba(59, 130, 246, 0.70)',
-          'rgba(234, 179, 8, 0.70)',
-          'rgba(22, 163, 74, 0.70)',
-          'rgba(142, 68, 173, 0.70)'
-        ],
+        hoverBackgroundColor: comparableStrategies.map((_, index) => chartPalette[index % chartPalette.length]),
         xAxisID: 'xROI',
       }
     ]
@@ -76,20 +62,17 @@ export default function FinancialROI({ strategies }) {
     font: {
       family: 'Plus Jakarta Sans, sans-serif'
     },
-    animation: {
-      duration: 800,
-      easing: 'easeOutQuart'
-    },
+    animation: getDashboardChartAnimation(),
     plugins: {
       legend: {
         display: false
       },
       tooltip: {
-        backgroundColor: tooltipBg,
-        borderColor: tooltipBorder,
+        backgroundColor: theme.tooltipBg,
+        borderColor: theme.tooltipBorder,
         borderWidth: 1.5,
-        titleColor: tooltipTitle,
-        bodyColor: tooltipBody,
+        titleColor: theme.text,
+        bodyColor: theme.muted,
         titleFont: { size: 14, weight: '800' },
         bodyFont: { size: 13, weight: '600' },
         cornerRadius: 8,
@@ -97,7 +80,7 @@ export default function FinancialROI({ strategies }) {
         displayColors: false,
         callbacks: {
           label: (item) => {
-            const strategy = strategies[item.dataIndex];
+            const strategy = comparableStrategies[item.dataIndex];
             return [
               `ROI: ${item.formattedValue}%`,
               `Margen: $${strategy?.margen || 0}/ha`,
@@ -111,12 +94,12 @@ export default function FinancialROI({ strategies }) {
       y: {
         grid: { 
           display: true,
-          color: isLightTheme ? 'rgba(51, 65, 85, 0.25)' : 'rgba(255, 255, 255, 0.18)',
-          lineWidth: 1.5
+          color: theme.grid,
+          lineWidth: 1
         },
-        border: { display: true, color: borderColor, width: 2 },
+        border: { display: true, color: theme.border, width: 1 },
         ticks: {
-          color: textColor,
+          color: theme.text,
           font: { size: 14, weight: '800' }
         }
       },
@@ -126,19 +109,19 @@ export default function FinancialROI({ strategies }) {
         title: {
           display: true,
           text: 'ROI (%)',
-          color: textColor,
+          color: theme.text,
           font: { size: 14, weight: '800' }
         },
-        grid: { color: gridColor, lineWidth: 1.5 },
-        border: { display: true, color: borderColor, width: 2 },
-        ticks: { color: tickColor, font: { size: 13, weight: '800' } }
+        grid: { color: theme.grid, lineWidth: 1 },
+        border: { display: true, color: theme.border, width: 1 },
+        ticks: { color: theme.muted, font: { size: 12, weight: '700' } }
       }
     }
   };
 
   return (
     <div className="financial-roi chart-wrapper" style={{ height: '100%', minHeight: '340px', width: '100%' }}>
-      <Bar data={chartData} options={options} />
+      <Bar data={chartData} options={options} aria-label="Comparación del retorno de inversión por estrategia" role="img" />
     </div>
   );
 }

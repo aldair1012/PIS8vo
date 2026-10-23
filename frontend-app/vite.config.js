@@ -39,6 +39,9 @@ export default defineConfig({
         },
         manualChunks(id) {
           if (id.includes('node_modules')) {
+            if (id.includes('/three/') || id.includes('\\three\\')) {
+              return 'modelo-3d';
+            }
             if (id.includes('chart.js') || id.includes('react-chartjs-2')) {
               return 'graficos';
             }

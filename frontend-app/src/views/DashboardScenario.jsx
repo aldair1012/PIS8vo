@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
-import { dssService, simulacionService } from '../services/api';
+import { dssService } from '../services/api';
 import GaussChart from '../templates/Charts/GaussChart';
 import CalendarGrid from '../templates/Common/CalendarGrid';
 import InfoModal from '../templates/Common/InfoModal';
 import AIExplainModal from '../templates/Common/AIExplainModal';
 import EmptyDashboard from '../templates/Common/EmptyDashboard';
+import DashboardIntro, { DashboardSectionHeading } from '../templates/Common/DashboardIntro';
 import useExplicacionIA from '../hooks/usarExplicacionIA';
-import { 
+import {
   AlertTriangle, 
   Thermometer,
   Sprout,
@@ -14,6 +15,16 @@ import {
   CloudRain,
   CheckCircle
 } from 'lucide-react';
+
+const toFiniteNumber = (value) => {
+  if (value === null || value === undefined || value === '') return null;
+  const number = Number(value);
+  return Number.isFinite(number) ? number : null;
+};
+
+const formatMetricNumber = (value, maximumFractionDigits = 2) => (
+  value === null ? 'Sin datos' : value.toLocaleString('es-EC', { maximumFractionDigits })
+);
 
 export default function DashboardScenario({ cultivoElegidoId, anioSeleccionado, onNavigate, onDashboardData }) {
   const [data, setData] = useState(null);
@@ -27,42 +38,8 @@ export default function DashboardScenario({ cultivoElegidoId, anioSeleccionado, 
     setMostrarModalIa,
     cargandoIa,
     datosIa,
-    pedirExplicacionIa,
-    setRespuestasIaGuardadas
+    pedirExplicacionIa
   } = useExplicacionIA(cultivoElegidoId, anioSeleccionado);
-
-  useEffect(() => {
-    if (data && data.kpis) {
-      const { kpis } = data;
-      const preloadKey = "Rendimiento Central Esperado";
-      const preloadContext = {
-        tipo_elemento: "tarjeta",
-        nombre: preloadKey,
-        cultivo: "maiz",
-        valor: kpis.rendimiento_esperado,
-        unidad: "t/ha",
-        estado: kpis.rendimiento_esperado > 6.0 ? "favorable" : (kpis.rendimiento_esperado > 4.5 ? "regular" : "riesgoso"),
-        rango_ideal: "6.0 a 9.0 t/ha",
-        descripcion_tecnica: "Rendimiento de maíz promedio (mediana) proyectado al simular el ciclo del cultivo bajo 30 escenarios climáticos diferentes de los últimos años.",
-        impacto_base: "Representa el valor más probable de cosecha que obtrictor si se siembra en la fecha indicada con el manejo propuesto.",
-        recomendacion_base: "Utilizar este valor como la estimación base para el presupuesto financiero y el cálculo de compra de insumos."
-      };
-      
-      const preload = async () => {
-        try {
-          const res = await simulacionService.explainData({
-            ...preloadContext,
-            cultivo_id: cultivoElegidoId,
-            anio: anioSeleccionado
-          });
-          setRespuestasIaGuardadas(prev => ({ ...prev, [preloadKey]: res }));
-        } catch (err) {
-          console.warn("Error pre-cargando explicación de escenario:", err);
-        }
-      };
-      preload();
-    }
-  }, [data, cultivoElegidoId, anioSeleccionado, setRespuestasIaGuardadas]);
 
   useEffect(() => {
     async function loadData() {
@@ -97,6 +74,13 @@ export default function DashboardScenario({ cultivoElegidoId, anioSeleccionado, 
   }
 
   const { kpis, percentiles, heatmap, ranking, viabilidad_siembra, recomendaciones } = data;
+  const rendimientoEsperado = toFiniteNumber(kpis.rendimiento_esperado);
+  const probSuperarObjetivo = toFiniteNumber(kpis.prob_superar_objetivo);
+  const estabilidadHistorica = toFiniteNumber(kpis.estabilidad);
+  const riesgoAgronomico = typeof kpis.riesgo_agronomico === 'string'
+    ? { texto: kpis.riesgo_agronomico }
+    : (kpis.riesgo_agronomico && typeof kpis.riesgo_agronomico === 'object' ? kpis.riesgo_agronomico : {});
+  const riesgoTexto = String(riesgoAgronomico.texto || '').trim();
 
   const getIcon = (name) => {
     switch(name) {
@@ -195,9 +179,9 @@ export default function DashboardScenario({ cultivoElegidoId, anioSeleccionado, 
   const initialCalendarDate = new Date(baseYearNum, today.getMonth(), today.getDate());
 
   // Dynamic relative scale calculation for the heatmap cells
-  const allValues = heatmap && heatmap.length > 0 ? heatmap.map(h => h.valor) : [8.5, 9.2, 7.8];
-  const maxVal = Math.max(...allValues);
-  const minVal = Math.min(...allValues);
+  const allValues = Array.isArray(heatmap) ? heatmap.map((item) => Number(item.valor)).filter(Number.isFinite) : [];
+  const maxVal = allValues.length ? Math.max(...allValues) : 0;
+  const minVal = allValues.length ? Math.min(...allValues) : 0;
   const valRange = maxVal - minVal === 0 ? 1 : maxVal - minVal;
 
   const getHeatmapStyle = (val) => {
@@ -230,14 +214,20 @@ export default function DashboardScenario({ cultivoElegidoId, anioSeleccionado, 
   };
 
   // Calcular valores de progreso para mini barras de KPI
-  const rendimientoProgress = Math.min(100, (kpis.rendimiento_esperado / 12) * 100);
+  const rendimientoProgress = rendimientoEsperado === null
+    ? 0
+    : Math.min(100, (rendimientoEsperado / 12) * 100);
   return (
-    <div>
-      <div className="dashboard-title-row">
-        <div>
-          <p className="dashboard-title-desc">Descubre cuál es el mejor momento para sembrar según el clima histórico de tu zona y la probabilidad real de éxito.</p>
-        </div>
-      </div>
+    <div className="dashboard-view dashboard-view--scenario">
+      <DashboardIntro
+        step="02 / Planificación"
+        title="Elegir cuándo sembrar"
+        description="Compara fechas e híbridos con el clima histórico de la zona para identificar ventanas de siembra más favorables."
+        interpretation="Primero mira el riesgo y la estabilidad; después compara las combinaciones. Una probabilidad estimada no garantiza el resultado en campo."
+        source="Escenarios simulados · clima histórico · parcela seleccionada"
+      />
+
+      <DashboardSectionHeading label="01 · Resumen" title="Viabilidad del escenario" description="Rendimiento, probabilidad de superar el objetivo y estabilidad cuentan partes distintas de la misma decisión." />
       {/* Unified Recommended Sowing Window Dashboard Card (Image 3 layout) */}
       <div className="glass-panel dss-unified-card" style={{ animation: 'fadeIn 0.5s ease' }}>
         
@@ -248,15 +238,15 @@ export default function DashboardScenario({ cultivoElegidoId, anioSeleccionado, 
           <div className="dss-metrics-left-grid">
             
             {/* Metric 1: Rendimiento Central */}
-            <div 
-              className="dss-metric-col" 
+            <div
+              className={`dss-metric-col ${rendimientoEsperado === null ? 'dss-metric-empty' : ''}`}
               onClick={() => pedirExplicacionIa({
                 tipo_elemento: "tarjeta",
                 nombre: "Rendimiento Central Esperado",
                 cultivo: "maiz",
-                valor: kpis.rendimiento_esperado,
+                valor: rendimientoEsperado,
                 unidad: "t/ha",
-                estado: kpis.rendimiento_esperado > 6.0 ? "favorable" : (kpis.rendimiento_esperado > 4.5 ? "regular" : "riesgoso"),
+                estado: rendimientoEsperado === null ? "sin_datos" : (rendimientoEsperado > 6.0 ? "favorable" : (rendimientoEsperado > 4.5 ? "regular" : "riesgoso")),
                 rango_ideal: "6.0 a 9.0 t/ha",
                 descripcion_tecnica: "Rendimiento de maíz promedio (mediana) proyectado al simular el ciclo del cultivo bajo 30 escenarios climáticos diferentes de los últimos años."
               })}
@@ -264,24 +254,24 @@ export default function DashboardScenario({ cultivoElegidoId, anioSeleccionado, 
               title="Clic para ver detalle"
             >
               <div className="dss-metric-value">
-                {kpis.rendimiento_esperado} <span>t/ha</span>
+                {formatMetricNumber(rendimientoEsperado)} {rendimientoEsperado !== null && <span>t/ha</span>}
               </div>
               <div className="dss-metric-title">Rendimiento Central</div>
-              <div className="dss-metric-trend up">
-                ▲ +4.8% • esperado {rendimientoProgress.toFixed(0)}%
+              <div className={`dss-metric-trend ${rendimientoEsperado === null ? '' : 'up'}`}>
+                {rendimientoEsperado === null ? 'Dato no disponible' : `Mediana del escenario • ${rendimientoProgress.toFixed(0)}% del techo`}
               </div>
             </div>
 
             {/* Metric 2: Superar Objetivo */}
             <div 
-              className="dss-metric-col" 
+              className={`dss-metric-col ${probSuperarObjetivo === null ? 'dss-metric-empty' : ''}`}
               onClick={() => pedirExplicacionIa({
                 tipo_elemento: "tarjeta",
                 nombre: "Probabilidad de Superar el Objetivo",
                 cultivo: "maiz",
-                valor: kpis.prob_superar_objetivo,
+                valor: probSuperarObjetivo,
                 unidad: "%",
-                estado: kpis.prob_superar_objetivo > 75 ? "favorable" : (kpis.prob_superar_objetivo > 45 ? "regular" : "riesgoso"),
+                estado: probSuperarObjetivo === null ? "sin_datos" : (probSuperarObjetivo > 75 ? "favorable" : (probSuperarObjetivo > 45 ? "regular" : "riesgoso")),
                 rango_ideal: "Mayor a 70%",
                 descripcion_tecnica: "Porcentaje de los 30 años históricos simulados donde el rendimiento estimado superó el umbral de rentabilidad mínima fijado en 5.4 t/ha."
               })}
@@ -289,24 +279,24 @@ export default function DashboardScenario({ cultivoElegidoId, anioSeleccionado, 
               title="Clic para ver detalle"
             >
               <div className="dss-metric-value">
-                {kpis.prob_superar_objetivo} <span>%</span>
+                {formatMetricNumber(probSuperarObjetivo, 1)} {probSuperarObjetivo !== null && <span>%</span>}
               </div>
               <div className="dss-metric-title">Superar Objetivo (5.4 t/ha)</div>
-              <div className="dss-metric-trend up">
-                ▲ +8.0% probabilidad
+              <div className={`dss-metric-trend ${probSuperarObjetivo === null ? '' : 'up'}`}>
+                {probSuperarObjetivo === null ? 'Dato no disponible' : 'Probabilidad del escenario'}
               </div>
             </div>
 
             {/* Metric 3: Estabilidad Histórica */}
             <div 
-              className="dss-metric-col" 
+              className={`dss-metric-col ${estabilidadHistorica === null ? 'dss-metric-empty' : ''}`}
               onClick={() => pedirExplicacionIa({
                 tipo_elemento: "tarjeta",
                 nombre: "Estabilidad de Rendimiento Histórica",
                 cultivo: "maiz",
-                valor: kpis.estabilidad,
+                valor: estabilidadHistorica,
                 unidad: "%",
-                estado: kpis.estabilidad > 70 ? "favorable" : (kpis.estabilidad > 45 ? "regular" : "riesgoso"),
+                estado: estabilidadHistorica === null ? "sin_datos" : (estabilidadHistorica > 70 ? "favorable" : (estabilidadHistorica > 45 ? "regular" : "riesgoso")),
                 rango_ideal: "Mayor a 75%",
                 descripcion_tecnica: "Porcentaje de consistencia del rendimiento de maíz en la serie temporal. Mide qué tan sensible es el lote y el manejo a las variaciones del clima año tras año."
               })}
@@ -314,11 +304,11 @@ export default function DashboardScenario({ cultivoElegidoId, anioSeleccionado, 
               title="Clic para ver detalle"
             >
               <div className="dss-metric-value">
-                {kpis.estabilidad} <span>%</span>
+                {formatMetricNumber(estabilidadHistorica, 1)} {estabilidadHistorica !== null && <span>%</span>}
               </div>
               <div className="dss-metric-title">Estabilidad Histórica</div>
-              <div className="dss-metric-trend up">
-                ▲ +1.2% consistencia
+              <div className={`dss-metric-trend ${estabilidadHistorica === null ? '' : 'up'}`}>
+                {estabilidadHistorica === null ? 'Dato no disponible' : 'Serie histórica del lote'}
               </div>
             </div>
 
@@ -326,9 +316,9 @@ export default function DashboardScenario({ cultivoElegidoId, anioSeleccionado, 
 
           {/* Right: Risk Badge */}
           {(() => {
-            const riskText = String(kpis.riesgo_agronomico.texto || '').toLowerCase();
-            const riskColor = kpis.riesgo_agronomico.color || '';
-            let levelClass = 'level-danger'; // default
+            const riskText = riesgoTexto.toLowerCase();
+            const riskColor = riesgoAgronomico.color || '';
+            let levelClass = riesgoTexto ? 'level-danger' : 'level-empty';
             if (riskColor === 'success' || riskText.includes('bajo')) {
               levelClass = 'level-success';
             } else if (riskColor === 'warning' || riskText.includes('medio') || riskText.includes('moderad') || riskText.includes('regular')) {
@@ -341,9 +331,9 @@ export default function DashboardScenario({ cultivoElegidoId, anioSeleccionado, 
                   tipo_elemento: "tarjeta",
                   nombre: "Riesgo Agronómico Compuesto",
                   cultivo: "maiz",
-                  valor: kpis.riesgo_agronomico.texto,
+                  valor: riesgoTexto || null,
                   unidad: "",
-                  estado: levelClass === 'level-danger' ? 'riesgoso' : (levelClass === 'level-warning' ? 'regular' : 'favorable'),
+                  estado: levelClass === 'level-empty' ? 'sin_datos' : (levelClass === 'level-danger' ? 'riesgoso' : (levelClass === 'level-warning' ? 'regular' : 'favorable')),
                   rango_ideal: "Bajo",
                   descripcion_tecnica: "Calificación combinada del riesgo de pérdida del cultivo debido a factores biológicos y abióticos del lote simulado en la ventana seleccionada."
                 })}
@@ -355,8 +345,8 @@ export default function DashboardScenario({ cultivoElegidoId, anioSeleccionado, 
                 </div>
                 <div className="dss-risk-text-info">
                   <span className="dss-risk-label">Riesgo Agronómico</span>
-                  <span className="dss-risk-value">{kpis.riesgo_agronomico.texto}</span>
-                  <span className="dss-risk-sub">Riesgo agrario - {kpis.riesgo_agronomico.texto}</span>
+                  <span className="dss-risk-value">{riesgoTexto || 'Sin datos'}</span>
+                  <span className="dss-risk-sub">{riesgoTexto ? `Riesgo agrario · ${riesgoTexto}` : 'Se requiere una evaluación del escenario'}</span>
                 </div>
               </div>
             );
@@ -422,8 +412,9 @@ export default function DashboardScenario({ cultivoElegidoId, anioSeleccionado, 
 
       </div>
 
+      <DashboardSectionHeading label="02 · Comparación" title="Fechas, híbridos y resultados" description="Usa la tabla y la distribución para comparar alternativas, no sólo el valor promedio." />
       {/* Primary Grid: Comparador de Fechas (Arriba Izq) + Distribución Probabilística (Arriba Der) */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 41%) minmax(0, 59%)', gap: '1.25rem', marginBottom: '1.25rem', alignItems: 'stretch' }}>
+      <div className="scenario-comparison-grid">
         {/* Comparador de Fechas e Híbridos */}
         <div 
           className="glass-panel chart-panel-interactive"
@@ -542,7 +533,7 @@ export default function DashboardScenario({ cultivoElegidoId, anioSeleccionado, 
             <h3 style={{ fontSize: '0.98rem', fontWeight: 600, margin: 0 }}>Distribución Probabilística</h3>
           </div>
           <div className="glass-card-body" style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-            <GaussChart p10={percentiles.p10} p50={percentiles.p50} p90={percentiles.p90} />
+            <GaussChart p10={percentiles?.p10} p50={percentiles?.p50} p90={percentiles?.p90} />
           </div>
         </div>
       </div>

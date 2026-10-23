@@ -16,6 +16,9 @@ define('FLOWISE_URL', getenv('ZEASYS_FLOWISE_URL') ?: 'http://127.0.0.1:3000');
 // creadas con `setx` hasta reiniciar el proceso de Apache.
 define('FLOWISE_CHATFLOW_ID', getenv('ZEASYS_FLOWISE_CHATFLOW_ID') ?: '27d477e0-66b5-4a51-aba0-dcfaf80728c1');
 define('FLOWISE_API_KEY', getenv('ZEASYS_FLOWISE_API_KEY') ?: '');
+// Gemini Flash Lite responde r?pido; el l?mite evita cortar respuestas
+// v?lidas sin dejar la petici?n bloqueada demasiado.
+define('FLOWISE_TIMEOUT', max(5, (int) (getenv('ZEASYS_FLOWISE_TIMEOUT') ?: 30)));
 
 // Configuración de Sesión
 define('SESSION_NAME', 'AGROPREDICT_SESSION');

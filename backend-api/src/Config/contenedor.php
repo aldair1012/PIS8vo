@@ -66,6 +66,11 @@ return static function (): Container {
             new \ZeaSys\Dominios\Terreno\Infraestructura\ProveedorSoilGrids()
     );
     $contenedor->registrar(
+        \ZeaSys\Dominios\Terreno\Dominio\ProveedorClimaActualInterface::class,
+        static fn (): \ZeaSys\Dominios\Terreno\Infraestructura\ProveedorOpenMeteoForecast =>
+            new \ZeaSys\Dominios\Terreno\Infraestructura\ProveedorOpenMeteoForecast()
+    );
+    $contenedor->registrar(
         \ZeaSys\Dominios\Terreno\Dominio\AltitudPorCultivoInterface::class,
         static fn (): \ZeaSys\Dominios\Terreno\Infraestructura\AltitudMysql =>
             new \ZeaSys\Dominios\Terreno\Infraestructura\AltitudMysql(getConnection())
@@ -78,6 +83,14 @@ return static function (): Container {
                 $c->get(\ZeaSys\Dominios\Terreno\Dominio\ProveedorClimaInterface::class),
                 $c->get(\ZeaSys\Dominios\Terreno\Dominio\ProveedorSueloInterface::class),
                 $c->get(\ZeaSys\Dominios\Terreno\Dominio\AltitudPorCultivoInterface::class),
+            )
+    );
+    $contenedor->registrar(
+        \ZeaSys\Dominios\Terreno\Aplicacion\ServicioClimaActual::class,
+        static fn (Container $c): \ZeaSys\Dominios\Terreno\Aplicacion\ServicioClimaActual =>
+            new \ZeaSys\Dominios\Terreno\Aplicacion\ServicioClimaActual(
+                $c->get(\ZeaSys\Dominios\Terreno\Dominio\CacheInterface::class),
+                $c->get(\ZeaSys\Dominios\Terreno\Dominio\ProveedorClimaActualInterface::class),
             )
     );
 
@@ -179,6 +192,11 @@ return static function (): Container {
             new \ZeaSys\Dominios\Analitica\Infraestructura\RepositorioCatalogoAgronomico()
     );
     $contenedor->registrar(
+        \ZeaSys\Dominios\Analitica\Aplicacion\ServicioPrecioMaiz::class,
+        static fn (): \ZeaSys\Dominios\Analitica\Aplicacion\ServicioPrecioMaiz =>
+            new \ZeaSys\Dominios\Analitica\Aplicacion\ServicioPrecioMaiz()
+    );
+    $contenedor->registrar(
         \ZeaSys\Dominios\Analitica\Aplicacion\ServicioAnaliticaYield::class,
         static fn (Container $c): \ZeaSys\Dominios\Analitica\Aplicacion\ServicioAnaliticaYield =>
             new \ZeaSys\Dominios\Analitica\Aplicacion\ServicioAnaliticaYield(
@@ -234,6 +252,7 @@ return static function (): Container {
                 $c->get(\ZeaSys\Dominios\Analitica\Dominio\CatalogoAgronomicoInterface::class),
                 $c->get(\ZeaSys\Dominios\Lotes\Dominio\CultivoRepositoryInterface::class),
                 $c->get(\ZeaSys\Dominios\Terreno\Aplicacion\ServicioDatosTerreno::class),
+                $c->get(\ZeaSys\Dominios\Terreno\Aplicacion\ServicioClimaActual::class),
             )
     );
     $contenedor->registrar(
@@ -244,7 +263,7 @@ return static function (): Container {
             )
     );
 
-    // --- Chat: contexto autorizado → flujo único Gemini en Flowise ---
+    // --- Chat: contexto autorizado → flujo único de Flowise (Gemini) ---
     $contenedor->registrar(
         \ZeaSys\Dominios\Chat\Infraestructura\GeminiFlowise::class,
         static fn (): \ZeaSys\Dominios\Chat\Infraestructura\GeminiFlowise =>
@@ -256,6 +275,29 @@ return static function (): Container {
             new \ZeaSys\Dominios\Chat\Infraestructura\MemoriaSesion()
     );
     $contenedor->registrar(
+        \ZeaSys\Dominios\Chat\Dominio\FavoritoRepositoryInterface::class,
+        static fn (): \ZeaSys\Dominios\Chat\Infraestructura\FavoritoRepositoryMysql =>
+            new \ZeaSys\Dominios\Chat\Infraestructura\FavoritoRepositoryMysql(getConnection())
+    );
+    $contenedor->registrar(
+        \ZeaSys\Dominios\Chat\Aplicacion\FavoritoService::class,
+        static fn (Container $c): \ZeaSys\Dominios\Chat\Aplicacion\FavoritoService =>
+            new \ZeaSys\Dominios\Chat\Aplicacion\FavoritoService(
+                $c->get(\ZeaSys\Dominios\Chat\Dominio\FavoritoRepositoryInterface::class),
+                $c->get(\ZeaSys\Dominios\Lotes\Dominio\CultivoRepositoryInterface::class),
+            )
+    );
+    $contenedor->registrar(
+        \ZeaSys\Dominios\Chat\Aplicacion\ContextoAgricolaService::class,
+        static fn (Container $c): \ZeaSys\Dominios\Chat\Aplicacion\ContextoAgricolaService =>
+            new \ZeaSys\Dominios\Chat\Aplicacion\ContextoAgricolaService(
+                $c->get(\ZeaSys\Dominios\Analitica\Aplicacion\ServicioAnaliticaClimate::class),
+                $c->get(\ZeaSys\Dominios\Analitica\Aplicacion\ServicioAnaliticaYield::class),
+                $c->get(\ZeaSys\Dominios\Analitica\Aplicacion\ServicioAnaliticaFinancial::class),
+                $c->get(\ZeaSys\Dominios\Analitica\Aplicacion\ServicioPrecioMaiz::class),
+            )
+    );
+    $contenedor->registrar(
         \ZeaSys\Dominios\Chat\Aplicacion\ChatService::class,
         static fn (Container $c): \ZeaSys\Dominios\Chat\Aplicacion\ChatService =>
             new \ZeaSys\Dominios\Chat\Aplicacion\ChatService(
@@ -263,6 +305,8 @@ return static function (): Container {
                 $c->get(\ZeaSys\Dominios\Lotes\Dominio\CultivoRepositoryInterface::class),
                 $c->get(\ZeaSys\Dominios\Simulaciones\Dominio\SimulacionRepositoryInterface::class),
                 $c->get(\ZeaSys\Dominios\Chat\Infraestructura\GeminiFlowise::class),
+                $c->get(\ZeaSys\Dominios\Chat\Aplicacion\ContextoAgricolaService::class),
+                $c->get(\ZeaSys\Dominios\Chat\Aplicacion\FavoritoService::class),
             )
     );
     $contenedor->registrar(

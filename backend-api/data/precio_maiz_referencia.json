@@ -1,0 +1,15 @@
+{
+  "pais": "Ecuador",
+  "producto": "Maíz amarillo duro",
+  "unidad": "USD por quintal (qq)",
+  "calidad": "Grano limpio y seco, 13 % de humedad y 1 % de impurezas, en bodega del vendedor",
+  "piso": 17.45,
+  "techo": 19.61,
+  "promedio": 18.53,
+  "vigencia": "Campaña productiva 2026",
+  "fuente": "MAGP — Consejo Consultivo de la Cadena del Maíz Amarillo",
+  "fecha_fuente": "2026-03-27",
+  "url_fuente": "https://www.agricultura.gob.ec/establecido-el-precio-minimo-de-sustentacion-del-quintal-de-maiz-amarillo-duro-para-la-cosecha-de-2026/",
+  "tipo": "Franja oficial de referencia; no es una cotización de mercado en tiempo real",
+  "nota": "El precio efectivo puede variar por calidad, humedad, impurezas, intermediarios y mercado local."
+}

@@ -20,7 +20,9 @@ C:\xampp\php\php.exe tests\contrato\ejecutar.php --modo=comparar
 - La comparación estructural une integer y float en la familia "number" (json_encode emite floats enteros sin decimal: 15.0 → 15).
 
 ## Requisitos
-Apache + MySQL de XAMPP corriendo. El motor IA se verifica y se arranca solo (auto_ia_server.bat).
+Apache + MySQL de XAMPP corriendo. El motor IA se verifica y se arranca solo
+(`scripts/auto_ia_server.bat`). También puede iniciarse todo con
+`scripts/iniciar_sistemas.bat`.
 
 ## Limpieza manual (opcional, si una corrida se interrumpe)
 

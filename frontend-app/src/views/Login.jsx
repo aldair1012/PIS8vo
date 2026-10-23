@@ -1,614 +1,698 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  Activity,
+  ArrowRight,
+  BarChart3,
+  CheckCircle2,
+  ClipboardCheck,
+  CloudSun,
+  Leaf,
+  Lock,
+  MapPin,
+  Mail,
+  Menu,
+  Moon,
+  Sun,
+  TrendingUp,
+  User,
+  X,
+} from 'lucide-react';
 import { authService } from '../services/api';
-import { Lock, Mail, ArrowRight, ShieldCheck, Activity, Cpu, CloudSun, DollarSign, TrendingUp } from 'lucide-react';
+import CornCobModel from '../templates/Common/CornCobModel';
 import PlatformLogo from '../templates/Common/PlatformLogo';
+import useSectionSnap from './landing/useSectionSnap';
+import heroPhoto from '../assets/landing/maize-hero.png';
+import yieldPhoto from '../assets/landing/yield.jpg';
+import climateSoilPhoto from '../assets/landing/climate-soil.jpg';
+import decisionsPhoto from '../assets/landing/field-decisions.jpg';
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '200107748008-3j1itt8eobnbec6ur1n4vguj4r999k3d.apps.googleusercontent.com';
+const HERO_FLIP_DURATION_MS = 1020;
+const HERO_FLIP_REDUCED_DURATION_MS = 420;
 
-// Botón de Google personalizado que sigue la estética de la marca (#6A3FA0 -> #4D7BFF)
-function GoogleBtn({ onClick, loading, label = 'Continuar con Google' }) {
+function CapabilityFlipCard({ icon, tone, title, summary, details, href, linkLabel, image, imagePosition = 'center' }) {
+  const [flipped, setFlipped] = useState(false);
+
+  const handlePointerUp = (event) => {
+    if (event.pointerType === 'mouse' || event.target.closest('a')) return;
+    setFlipped((current) => !current);
+    if (document.activeElement === event.currentTarget) event.currentTarget.blur();
+  };
+
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={loading}
-      style={{
-        width: '100%',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: '0.75rem',
-        padding: '0.8rem 1.2rem',
-        background: loading ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.05)',
-        border: '1px solid rgba(77, 123, 255, 0.25)',
-        borderRadius: '16px',
-        color: '#ffffff',
-        fontSize: '0.9rem',
-        fontWeight: 600,
-        cursor: loading ? 'not-allowed' : 'pointer',
-        transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
-        opacity: loading ? 0.6 : 1,
-        fontFamily: 'inherit',
-        backdropFilter: 'blur(12px)',
-        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.25)',
-      }}
-      onMouseEnter={e => {
-        if (!loading) {
-          e.currentTarget.style.background = 'rgba(77, 123, 255, 0.12)';
-          e.currentTarget.style.borderColor = 'rgba(77, 123, 255, 0.5)';
-          e.currentTarget.style.transform = 'translateY(-2px)';
-          e.currentTarget.style.boxShadow = '0 6px 24px rgba(77, 123, 255, 0.2)';
-        }
-      }}
-      onMouseLeave={e => {
-        e.currentTarget.style.background = 'rgba(255,255,255,0.05)';
-        e.currentTarget.style.borderColor = 'rgba(77, 123, 255, 0.25)';
-        e.currentTarget.style.transform = 'translateY(0)';
-        e.currentTarget.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.25)';
-      }}
+    <article
+      className={`zeasys-capability-flip is-${tone}${flipped ? ' is-flipped' : ''}`}
+      tabIndex={0}
+      aria-label={`${title}. Pasa el cursor, enfoca o toca la tarjeta para conocer más.`}
+      onPointerUp={handlePointerUp}
     >
-      <svg width="18" height="18" viewBox="0 0 24 24">
-        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-      </svg>
-      {loading ? 'Conectando...' : label}
-    </button>
+      <div className="zeasys-capability-flip-inner">
+        <div className="zeasys-capability-face zeasys-capability-front">
+          <img className="zeasys-capability-image" src={image} alt="" style={{ objectPosition: imagePosition }} aria-hidden="true" />
+          <div className={`zeasys-capability-icon is-${tone}`}>{icon}</div>
+          <h3>{title}</h3>
+          <p>{summary}</p>
+          <span className="zeasys-capability-hint">Ver detalles <ArrowRight size={14} /></span>
+        </div>
+        <div className="zeasys-capability-face zeasys-capability-back">
+          <span className="zeasys-capability-back-kicker">Lectura por parcela</span>
+          <h3>{title}</h3>
+          <ul>{details.map((detail) => <li key={detail}><CheckCircle2 size={15} /> {detail}</li>)}</ul>
+          <a href={href}>{linkLabel} <ArrowRight size={14} /></a>
+        </div>
+      </div>
+    </article>
   );
 }
 
-export default function Login({ onLoginSuccess, switchToRegister }) {
+function AgriculturalPattern({ variant }) {
+  return (
+    <svg
+      className={`zeasys-agro-pattern zeasys-agro-pattern--${variant}`}
+      viewBox="0 0 1440 720"
+      preserveAspectRatio="none"
+      aria-hidden="true"
+    >
+      <g className="zeasys-field-furrows">
+        <path d="M-120 704C190 510 485 492 835 716" />
+        <path d="M35 716C285 548 520 543 790 716" />
+        <path d="M228 720C404 592 570 590 754 720" />
+        <path d="M735 720C958 520 1195 508 1535 688" />
+        <path d="M864 720C1050 570 1242 558 1498 704" />
+        <path d="M1016 720C1155 616 1304 608 1467 715" />
+      </g>
+      <g className="zeasys-maize-stalk">
+        <path className="zeasys-maize-stem" d="M1211 603C1208 482 1217 330 1207 132" />
+        <path d="M1209 405C1128 368 1094 316 1085 248C1152 270 1205 320 1209 405Z" />
+        <path d="M1211 481C1296 435 1333 375 1332 303C1261 333 1215 392 1211 481Z" />
+        <path d="M1208 302C1148 270 1122 226 1118 178C1170 195 1205 235 1208 302Z" />
+        <path d="M1209 247C1263 216 1287 173 1284 127C1238 147 1211 188 1209 247Z" />
+        <path className="zeasys-maize-cob" d="M1214 314C1250 297 1274 304 1285 329C1282 382 1256 414 1213 424C1207 383 1207 347 1214 314Z" />
+        <path className="zeasys-maize-grain" d="M1226 324L1273 367M1220 342L1263 388M1243 316L1280 351M1217 365L1247 400" />
+        <path className="zeasys-maize-tassel" d="M1207 133L1179 88M1207 133L1205 75M1207 133L1232 84M1207 133L1251 107M1207 133L1162 111" />
+      </g>
+    </svg>
+  );
+}
+
+function AccessCard({
+  registering,
+  error,
+  googleLoading,
+  googleStatus,
+  googleButtonRef,
+  handleSubmit,
+  handleRegisterSubmit,
+  correo,
+  setCorreo,
+  contrasena,
+  setContrasena,
+  nombre,
+  setNombre,
+  confirmar,
+  setConfirmar,
+  remember,
+  setRemember,
+  loading,
+  switchToRegister,
+  switchToLogin,
+  containerRef,
+  className = '',
+  modeAnimating = false,
+  onClose,
+  ariaHidden = false,
+}) {
+  return (
+    <div ref={containerRef} id="zeasys-login-card" className={`zeasys-login-card${registering ? ' zeasys-login-card--register' : ''}${className ? ` ${className}` : ''}`} aria-hidden={ariaHidden}>
+      {onClose && <button type="button" className="zeasys-auth-close" onClick={onClose} aria-label="Volver a la vista de parcela"><X size={18} /></button>}
+      <div className={`zeasys-auth-mode-card${modeAnimating ? ' is-switching' : ''}`}>
+        <div className="zeasys-login-card-head">
+          <div className="zeasys-login-mark"><PlatformLogo variant="mark" size={44} /></div>
+          <div>
+            <span className="zeasys-login-overline">{registering ? 'Registro seguro' : 'Acceso seguro'}</span>
+            <h2 id="access-title">{registering ? 'Crear cuenta' : 'Bienvenido a ZeaSys'}</h2>
+            <p>{registering ? 'Guarda tus parcelas y consulta sus datos.' : 'Continúa al centro de decisiones de tu parcela.'}</p>
+          </div>
+        </div>
+        {error && <div className="zeasys-login-error" role="alert">{error}</div>}
+        <div className={`zeasys-google-signin${googleLoading ? ' is-loading' : ''}`} aria-busy={googleLoading}>
+          {googleStatus === 'ready' ? (
+            <div ref={googleButtonRef} className="zeasys-google-button-host" />
+          ) : (
+            <div className="zeasys-google-status" role={googleStatus === 'error' ? 'alert' : 'status'}>
+              {googleStatus === 'error'
+                ? 'No se pudo cargar Google. Revisa la conexión o la configuración del sitio.'
+                : 'Preparando acceso con Google…'}
+            </div>
+          )}
+          {googleLoading && <span className="zeasys-google-progress" role="status">Conectando…</span>}
+        </div>
+        <div className="zeasys-login-divider"><span /> <em>o con correo</em> <span /></div>
+        {registering ? (
+          <form onSubmit={handleRegisterSubmit} className="zeasys-login-form zeasys-register-form">
+            <label><span><User size={14} /> Nombre completo</span><input type="text" placeholder="Juan Pérez" value={nombre} onChange={(event) => setNombre(event.target.value)} required /></label>
+            <label><span><Mail size={14} /> Correo electrónico</span><input type="email" placeholder="tu-correo@ejemplo.com" value={correo} onChange={(event) => setCorreo(event.target.value)} required /></label>
+            <div className="zeasys-register-password-grid">
+              <label><span><Lock size={14} /> Contraseña</span><input type="password" placeholder="••••••••" value={contrasena} onChange={(event) => setContrasena(event.target.value)} required /></label>
+              <label><span><Lock size={14} /> Confirmar</span><input type="password" placeholder="Repetir" value={confirmar} onChange={(event) => setConfirmar(event.target.value)} required /></label>
+            </div>
+            <button type="submit" className="zeasys-submit-btn" disabled={loading}>{loading ? 'Creando cuenta...' : <>Crear cuenta <ArrowRight size={17} /></>}</button>
+          </form>
+        ) : (
+          <form onSubmit={handleSubmit} className="zeasys-login-form">
+            <label><span><Mail size={14} /> Correo electrónico</span><input type="email" placeholder="tu-correo@ejemplo.com" value={correo} onChange={(event) => setCorreo(event.target.value)} required /></label>
+            <label><span><Lock size={14} /> Contraseña</span><input type="password" placeholder="••••••••••••" value={contrasena} onChange={(event) => setContrasena(event.target.value)} required /></label>
+            <div className="zeasys-login-options"><label className="zeasys-check-label"><input type="checkbox" checked={remember} onChange={(event) => setRemember(event.target.checked)} /> Recordar sesión</label><button type="button" onClick={() => alert('Para restablecer su contraseña, contacte al administrador de ZeaSys.')}>¿Olvidaste tu contraseña?</button></div>
+            <button type="submit" className="zeasys-submit-btn" disabled={loading}>{loading ? 'Ingresando...' : <>Iniciar sesión <ArrowRight size={17} /></>}</button>
+          </form>
+        )}
+        <p className="zeasys-register-prompt">{registering ? '¿Ya tienes una cuenta?' : '¿No tienes una cuenta?'} <button type="button" onClick={registering ? switchToLogin : switchToRegister}>{registering ? 'Inicia sesión' : 'Crear cuenta'}</button></p>
+      </div>
+    </div>
+  );
+}
+
+export default function Login({ onLoginSuccess, switchToRegister, switchToLogin, registering = false, theme = 'dark', onToggleTheme }) {
   const [correo, setCorreo] = useState('');
+  const [nombre, setNombre] = useState('');
   const [contrasena, setContrasena] = useState('');
+  const [confirmar, setConfirmar] = useState('');
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [googleStatus, setGoogleStatus] = useState(GOOGLE_CLIENT_ID ? 'loading' : 'error');
   const [remember, setRemember] = useState(false);
+  const [navVisible, setNavVisible] = useState(true);
+  const [activeSection, setActiveSection] = useState('inicio');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [authCardOpen, setAuthCardOpen] = useState(false);
+  const [authModeAnimating, setAuthModeAnimating] = useState(false);
+  const googleCallbackRef = useRef(null);
+  const googleInitializedRef = useRef(false);
+  const googleButtonRef = useRef(null);
+  const authPanelRef = useRef(null);
+  const heroAccessButtonRef = useRef(null);
+  const authModeSwapTimerRef = useRef(null);
+  const authModeEndTimerRef = useRef(null);
+  const authFocusTimerRef = useRef(null);
+  const authOpenTimerRef = useRef(null);
+  const lastScrollYRef = useRef(0);
+  const scrollDirectionRef = useRef('idle');
+  const scrollDistanceRef = useRef(0);
+  const scrollFrameRef = useRef(null);
+
+  useSectionSnap(!authCardOpen && !mobileMenuOpen);
+
+  useEffect(() => {
+    lastScrollYRef.current = window.scrollY;
+    const handlePageScroll = () => {
+      if (scrollFrameRef.current !== null) return;
+      scrollFrameRef.current = window.requestAnimationFrame(() => {
+        const currentScrollY = Math.max(window.scrollY, 0);
+        const delta = currentScrollY - lastScrollYRef.current;
+        const direction = delta > 0 ? 'down' : delta < 0 ? 'up' : scrollDirectionRef.current;
+
+        if (direction !== scrollDirectionRef.current) {
+          scrollDirectionRef.current = direction;
+          scrollDistanceRef.current = 0;
+        }
+        scrollDistanceRef.current += Math.abs(delta);
+
+        if (currentScrollY <= 20 || mobileMenuOpen) {
+          setNavVisible(true);
+        } else if (direction === 'up' && scrollDistanceRef.current >= 8) {
+          setNavVisible(true);
+          scrollDistanceRef.current = 0;
+        } else if (direction === 'down' && scrollDistanceRef.current >= 36) {
+          setNavVisible(false);
+          scrollDistanceRef.current = 0;
+        }
+
+        lastScrollYRef.current = currentScrollY;
+        scrollFrameRef.current = null;
+      });
+    };
+
+    window.addEventListener('scroll', handlePageScroll, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', handlePageScroll);
+      if (scrollFrameRef.current !== null) {
+        window.cancelAnimationFrame(scrollFrameRef.current);
+        scrollFrameRef.current = null;
+      }
+    };
+  }, [mobileMenuOpen]);
+
+  useEffect(() => {
+    const closeMobileMenu = (event) => {
+      if (event.type === 'keydown' && event.key !== 'Escape') return;
+      if (event.type === 'resize' && window.innerWidth <= 960) return;
+      setMobileMenuOpen(false);
+    };
+    window.addEventListener('resize', closeMobileMenu);
+    document.addEventListener('keydown', closeMobileMenu);
+    return () => {
+      window.removeEventListener('resize', closeMobileMenu);
+      document.removeEventListener('keydown', closeMobileMenu);
+    };
+  }, []);
+
+  useEffect(() => {
+    const sectionIds = ['inicio', 'capacidades', 'datos', 'contacto'];
+    const sections = sectionIds.map((id) => document.getElementById(id)).filter(Boolean);
+    let frameId = 0;
+
+    const updateActiveSection = () => {
+      if (frameId) return;
+      frameId = window.requestAnimationFrame(() => {
+        const readingLine = window.scrollY + window.innerHeight * 0.34;
+        const currentSection = sections.reduce((current, section) => (
+          section.offsetTop <= readingLine ? section.id : current
+        ), sections[0]?.id || 'inicio');
+        setActiveSection(currentSection);
+        frameId = 0;
+      });
+    };
+
+    updateActiveSection();
+    window.addEventListener('scroll', updateActiveSection, { passive: true });
+    window.addEventListener('resize', updateActiveSection);
+    window.addEventListener('hashchange', updateActiveSection);
+    return () => {
+      window.removeEventListener('scroll', updateActiveSection);
+      window.removeEventListener('resize', updateActiveSection);
+      window.removeEventListener('hashchange', updateActiveSection);
+      window.cancelAnimationFrame(frameId);
+    };
+  }, []);
+
   const handleGoogleAuth = useCallback(async (idToken) => {
-    if (!GOOGLE_CLIENT_ID) { setError('No hay Client ID de Google configurado.'); return; }
+    if (!GOOGLE_CLIENT_ID) {
+      setError('No hay Client ID de Google configurado.');
+      return;
+    }
     setError(null);
     setGoogleLoading(true);
     try {
       const data = await authService.googleLogin(idToken, remember);
       onLoginSuccess(data.user);
     } catch (err) {
-      const msg = err.response?.data?.message || (typeof err.response?.data?.error === 'string' ? err.response?.data?.error : 'Error al conectar con el servidor.');
+      const msg = err.response?.data?.message
+        || (typeof err.response?.data?.error === 'string' ? err.response.data.error : 'Error al conectar con el servidor.');
       setError(msg);
     } finally {
       setGoogleLoading(false);
     }
-  }, [remember, onLoginSuccess]);
-
-  const googleCallbackRef = useRef(handleGoogleAuth);
-  const googleInitializedRef = useRef(false);
+  }, [onLoginSuccess, remember]);
 
   useEffect(() => {
     googleCallbackRef.current = handleGoogleAuth;
   }, [handleGoogleAuth]);
 
-  const triggerGoogleSignIn = useCallback(() => {
-    if (!window.google?.accounts?.id) { 
-      setError('Google Sign-In no está disponible aún. Recarga la página.'); 
-      return; 
+  useEffect(() => {
+    if (!GOOGLE_CLIENT_ID) {
+      return undefined;
     }
-    try {
-      window.google.accounts.id.prompt((notification) => {
-        if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-          const hiddenBtn = document.querySelector('#google-hidden-btn div[role="button"]');
-          if (hiddenBtn) {
-            hiddenBtn.click();
-          }
+    let active = true;
+    const init = () => {
+      if (!active) return;
+      if (!window.google?.accounts?.id) {
+        setGoogleStatus('error');
+        return;
+      }
+      try {
+        if (!googleInitializedRef.current) {
+          window.google.accounts.id.initialize({
+            client_id: GOOGLE_CLIENT_ID,
+            callback: async (response) => {
+              if (response.credential) await googleCallbackRef.current?.(response.credential);
+              else setError('Error al obtener credenciales de Google.');
+            },
+            ux_mode: 'popup',
+            auto_select: false,
+          });
+          googleInitializedRef.current = true;
         }
-      });
-    } catch (e) {
-      console.warn("Google prompt error", e);
+        setGoogleStatus('ready');
+      } catch {
+        setGoogleStatus('error');
+      }
+    };
+    const fail = () => {
+      if (active) setGoogleStatus('error');
+    };
+    let script = document.querySelector('script[data-google-gsi]');
+    if (!script) {
+      script = document.createElement('script');
+      script.src = 'https://accounts.google.com/gsi/client?hl=es';
+      script.async = true;
+      script.setAttribute('data-google-gsi', 'true');
+      script.addEventListener('load', init);
+      script.addEventListener('error', fail);
+      document.body.appendChild(script);
+    } else if (window.google?.accounts?.id) {
+      init();
+    } else {
+      script.addEventListener('load', init);
+      script.addEventListener('error', fail);
     }
+    const timeout = window.setTimeout(() => {
+      if (!window.google?.accounts?.id) fail();
+    }, 10000);
+    return () => {
+      active = false;
+      window.clearTimeout(timeout);
+      script.removeEventListener('load', init);
+      script.removeEventListener('error', fail);
+    };
   }, []);
 
   useEffect(() => {
-    if (!GOOGLE_CLIENT_ID) return;
-    const init = () => {
-      if (!window.google?.accounts?.id || googleInitializedRef.current) return;
-      googleInitializedRef.current = true;
-      window.google.accounts.id.initialize({
-        client_id: GOOGLE_CLIENT_ID,
-        callback: async (response) => {
-          if (response.credential) { await googleCallbackRef.current(response.credential); }
-          else { setError('Error al obtener credenciales de Google.'); }
-        },
-        ux_mode: 'popup',
-        auto_select: false
-      });
+    if (!authCardOpen || googleStatus !== 'ready') return undefined;
+    const host = googleButtonRef.current;
+    if (!host || !window.google?.accounts?.id) return undefined;
 
-      const hiddenContainer = document.getElementById('google-hidden-btn');
-      if (hiddenContainer) {
-        hiddenContainer.innerHTML = '';
-        window.google.accounts.id.renderButton(
-          hiddenContainer,
-          { theme: 'outline', size: 'large', type: 'standard' }
-        );
+    let renderedWidth = 0;
+    const render = () => {
+      const width = Math.min(400, Math.floor(host.clientWidth));
+      if (width < 100 || (width === renderedWidth && host.hasChildNodes())) return;
+      try {
+        host.replaceChildren();
+        window.google.accounts.id.renderButton(host, {
+          type: 'standard',
+          theme: theme === 'dark' ? 'outline_dark' : 'outline',
+          size: 'large',
+          text: registering ? 'signup_with' : 'continue_with',
+          shape: 'rectangular',
+          width,
+          locale: 'es',
+        });
+        renderedWidth = width;
+      } catch {
+        setGoogleStatus('error');
       }
     };
-    if (!document.querySelector('script[data-google-gsi]')) {
-      const script = document.createElement('script');
-      script.src = 'https://accounts.google.com/gsi/client';
-      script.async = true; script.defer = true;
-      script.setAttribute('data-google-gsi', 'true');
-      script.onload = init;
-      document.body.appendChild(script);
-    } else if (window.google?.accounts?.id) { init(); }
-  }, []);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault(); setError(null); setLoading(true);
+    const frame = window.requestAnimationFrame(render);
+    window.addEventListener('resize', render);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.removeEventListener('resize', render);
+    };
+  }, [authCardOpen, googleStatus, registering, theme]);
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setError(null);
+    setLoading(true);
     try {
       const data = await authService.login(correo, contrasena, remember);
       onLoginSuccess(data.user);
     } catch (err) {
-      const msg = err.response?.data?.message || (typeof err.response?.data?.error === 'string' ? err.response?.data?.error : null) || 'Error al conectar con el servidor.';
+      const msg = err.response?.data?.message
+        || (typeof err.response?.data?.error === 'string' ? err.response.data.error : null)
+        || 'Error al conectar con el servidor.';
       setError(msg);
-    } finally { setLoading(false); }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRegisterSubmit = async (event) => {
+    event.preventDefault();
+    setError(null);
+    if (contrasena !== confirmar) {
+      setError('Las contraseñas no coinciden.');
+      return;
+    }
+    setLoading(true);
+    try {
+      const data = await authService.register(nombre, correo, contrasena, confirmar);
+      onLoginSuccess(data.user);
+    } catch (err) {
+      const msg = err.response?.data?.message
+        || (typeof err.response?.data?.error === 'string' ? err.response.data.error : null)
+        || 'Error al conectar con el servidor.';
+      setError(msg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const openRegister = () => {
+    setError(null);
+    setLoading(false);
+    switchToRegister?.();
+  };
+
+  const openLogin = () => {
+    setError(null);
+    setLoading(false);
+    switchToLogin?.();
+  };
+
+  const clearAuthTimers = useCallback(() => {
+    [authModeSwapTimerRef, authModeEndTimerRef, authFocusTimerRef, authOpenTimerRef].forEach((timerRef) => {
+      if (timerRef.current !== null) {
+        window.clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
+    });
+  }, []);
+
+  const closeAccess = useCallback(() => {
+    clearAuthTimers();
+    setAuthModeAnimating(false);
+    setAuthCardOpen(false);
+    setError(null);
+    setLoading(false);
+    switchToLogin?.();
+    const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+    authFocusTimerRef.current = window.setTimeout(() => {
+      heroAccessButtonRef.current?.focus({ preventScroll: true });
+      authFocusTimerRef.current = null;
+    }, reducedMotion ? HERO_FLIP_REDUCED_DURATION_MS : HERO_FLIP_DURATION_MS);
+  }, [clearAuthTimers, switchToLogin]);
+
+  useEffect(() => clearAuthTimers, [clearAuthTimers]);
+
+  useEffect(() => {
+    if (!authCardOpen) return undefined;
+    const closeOnEscape = (event) => {
+      if (event.key === 'Escape') closeAccess();
+    };
+    document.addEventListener('keydown', closeOnEscape);
+    return () => document.removeEventListener('keydown', closeOnEscape);
+  }, [authCardOpen, closeAccess]);
+
+  const focusAuthForm = useCallback((delay = 0) => {
+    if (authFocusTimerRef.current !== null) window.clearTimeout(authFocusTimerRef.current);
+    authFocusTimerRef.current = window.setTimeout(() => {
+      authPanelRef.current?.querySelector('input:not([type="checkbox"])')?.focus({ preventScroll: true });
+      authFocusTimerRef.current = null;
+    }, delay);
+  }, []);
+
+  const switchAuthMode = (nextMode) => {
+    const wantsRegister = nextMode === 'register';
+    if (authModeAnimating || registering === wantsRegister) return;
+
+    const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+    const modeDuration = reducedMotion ? 380 : 760;
+    const contentSwapDelay = Math.round(modeDuration * 0.48);
+
+    setAuthModeAnimating(true);
+    setError(null);
+    authModeSwapTimerRef.current = window.setTimeout(() => {
+      if (wantsRegister) openRegister();
+      else openLogin();
+      authModeSwapTimerRef.current = null;
+    }, contentSwapDelay);
+    authModeEndTimerRef.current = window.setTimeout(() => {
+      setAuthModeAnimating(false);
+      authModeEndTimerRef.current = null;
+      focusAuthForm();
+    }, modeDuration);
+  };
+
+  const irAlAcceso = () => {
+    clearAuthTimers();
+    setAuthModeAnimating(false);
+    openLogin();
+    const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+    const heroSection = document.getElementById('inicio');
+    const heroBounds = heroSection?.getBoundingClientRect();
+    const needsScroll = Boolean(heroBounds && (heroBounds.bottom < 160 || heroBounds.top > window.innerHeight - 160));
+    const revealDelay = needsScroll ? (reducedMotion ? 140 : 460) : 34;
+    const flipDuration = reducedMotion ? HERO_FLIP_REDUCED_DURATION_MS : HERO_FLIP_DURATION_MS;
+
+    if (authCardOpen) {
+      focusAuthForm();
+      return;
+    }
+
+    setAuthCardOpen(false);
+    if (needsScroll) heroSection?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    // A short two-frame pause guarantees that the browser paints the front face
+    // before applying the 180-degree state, so the transition is always visible.
+    authOpenTimerRef.current = window.setTimeout(() => {
+      setAuthCardOpen(true);
+      authOpenTimerRef.current = null;
+    }, revealDelay);
+    focusAuthForm(revealDelay + flipDuration);
+  };
+
+  const closeMenu = () => setMobileMenuOpen(false);
+  const openAccessFromMenu = () => {
+    closeMenu();
+    irAlAcceso();
   };
 
   return (
-    <div style={{
-      display: 'flex',
-      width: '100vw',
-      height: '100vh',
-      maxHeight: '100vh',
-      overflow: 'hidden',
-      background: '#10191C',
-      color: '#ffffff',
-      fontFamily: "'Plus Jakarta Sans', sans-serif"
-    }}>
-      
-      {/* ==========================================
-          LEFT HERO SECTION (60% Desktop Split)
-         ========================================== */}
-      <div className="auth-side-panel" style={{
-        width: '60%',
-        height: '100vh',
-        maxHeight: '100vh',
-        position: 'relative',
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'space-between',
-        padding: '2rem 3rem 1.75rem 3rem',
-        overflow: 'hidden',
-        borderRight: '1px solid rgba(77, 123, 255, 0.15)',
-        background: '#10191C',
-        boxSizing: 'border-box'
-      }}>
-        {/* Background Aerial Drone Image with Overlay */}
-        <div style={{
-          position: 'absolute',
-          inset: 0,
-          backgroundImage: `url('/images/corn_field_tech.png')`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          opacity: 0.38,
-          filter: 'brightness(0.7) contrast(1.15)',
-          zIndex: 0
-        }} />
+    <div className={`zeasys-home zeasys-home--${theme}`}>
+      <a className="zeasys-skip-link" href="#contenido-principal">Saltar al contenido principal</a>
+      <header className={`zeasys-home-nav ${navVisible || mobileMenuOpen ? 'is-visible' : 'is-hidden'}${mobileMenuOpen ? ' has-open-menu' : ''}`}>
+        <a className="zeasys-home-brand" href="#inicio" aria-label="ZeaSys, inicio"><PlatformLogo variant="wordmark" size={36} /></a>
+        <nav id="zeasys-mobile-navigation" className={`zeasys-home-links${mobileMenuOpen ? ' is-open' : ''}`} aria-label="Navegación principal">
+          <a className={activeSection === 'inicio' ? 'is-active' : undefined} aria-current={activeSection === 'inicio' ? 'page' : undefined} href="#inicio" onClick={closeMenu}>Inicio</a><a className={activeSection === 'capacidades' ? 'is-active' : undefined} aria-current={activeSection === 'capacidades' ? 'page' : undefined} href="#capacidades" onClick={closeMenu}>Capacidades</a><a className={activeSection === 'datos' ? 'is-active' : undefined} aria-current={activeSection === 'datos' ? 'page' : undefined} href="#datos" onClick={closeMenu}>Datos y modelos</a><a className={activeSection === 'contacto' ? 'is-active' : undefined} aria-current={activeSection === 'contacto' ? 'page' : undefined} href="#contacto" onClick={closeMenu}>Contacto</a>
+          <button type="button" className="zeasys-mobile-login" onClick={openAccessFromMenu} aria-controls="zeasys-login-card" aria-expanded={authCardOpen}>Ingresar <ArrowRight size={16} /></button>
+        </nav>
+        <div className="zeasys-home-nav-actions"><button type="button" className="zeasys-theme-toggle" onClick={onToggleTheme} aria-label={theme === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'} title={theme === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}>{theme === 'dark' ? <Sun size={17} /> : <Moon size={17} />}</button><button type="button" className="zeasys-nav-login" onClick={irAlAcceso} aria-controls="zeasys-login-card" aria-expanded={authCardOpen}>Ingresar <ArrowRight size={15} /></button><button type="button" className="zeasys-mobile-menu-toggle" onClick={() => setMobileMenuOpen((open) => !open)} aria-expanded={mobileMenuOpen} aria-controls="zeasys-mobile-navigation" aria-label={mobileMenuOpen ? 'Cerrar menú' : 'Abrir menú'}>{mobileMenuOpen ? <X size={19} /> : <Menu size={19} />}</button></div>
+      </header>
 
-        {/* Dark Radial Gradient & Tech Overlays */}
-        <div style={{
-          position: 'absolute',
-          inset: 0,
-          background: 'radial-gradient(circle at 30% 40%, rgba(16, 25, 28, 0.5) 0%, rgba(16, 25, 28, 0.95) 90%)',
-          zIndex: 1
-        }} />
-
-        {/* Ambient Brand Glows (Electric Blue & Purple ONLY) */}
-        <div style={{ position: 'absolute', top: '5%', left: '-5%', width: 400, height: 400, borderRadius: '50%', background: 'radial-gradient(circle, rgba(106, 63, 160, 0.35) 0%, transparent 70%)', filter: 'blur(70px)', zIndex: 1, pointerEvents: 'none' }} />
-        <div style={{ position: 'absolute', bottom: '5%', right: '10%', width: 350, height: 350, borderRadius: '50%', background: 'radial-gradient(circle, rgba(77, 123, 255, 0.25) 0%, transparent 70%)', filter: 'blur(80px)', zIndex: 1, pointerEvents: 'none' }} />
-
-        {/* Futuristic Overlay Grid / GIS Network Lines */}
-        <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: 0.15, zIndex: 1, pointerEvents: 'none' }}>
-          <defs>
-            <pattern id="gis-grid" width="60" height="60" patternUnits="userSpaceOnUse">
-              <path d="M 60 0 L 0 0 0 60" fill="none" stroke="#4D7BFF" strokeWidth="0.75" strokeDasharray="3,3" />
-              <circle cx="60" cy="60" r="1.5" fill="#6A3FA0" />
-            </pattern>
-          </defs>
-          <rect width="100%" height="100%" fill="url(#gis-grid)" />
-          {/* Polygons / AI nodes */}
-          <polygon points="120,180 320,140 450,260 220,310" fill="rgba(77, 123, 255, 0.04)" stroke="#4D7BFF" strokeWidth="1.2" strokeDasharray="4,4" />
-          <polygon points="480,300 720,240 850,420 580,480" fill="rgba(106, 63, 160, 0.05)" stroke="#6A3FA0" strokeWidth="1.5" />
-          <circle cx="320" cy="140" r="4" fill="#4D7BFF" />
-          <circle cx="720" cy="240" r="4" fill="#6A3FA0" />
-        </svg>
-
-        {/* Top Header Tag */}
-        <div style={{ zIndex: 2, position: 'relative' }}>
-          <div style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-            padding: '0.35rem 0.85rem',
-            borderRadius: '20px',
-            background: 'rgba(106, 63, 160, 0.18)',
-            border: '1px solid rgba(106, 63, 160, 0.4)',
-            backdropFilter: 'blur(10px)'
-          }}>
-            <Cpu size={13} color="#4D7BFF" />
-            <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#ffffff', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-              Decision Support System • Enterprise
-            </span>
+      <main id="contenido-principal">
+        <section
+          id="inicio"
+          className="zeasys-home-hero"
+          style={{ '--hero-photo': `url("${heroPhoto}")` }}
+        >
+          <div className="zeasys-home-hero-copy">
+            <h1>Decisiones mejores para <span>cada parcela.</span></h1>
+            <p className="zeasys-home-lead">ZeaSys reúne clima, suelo, rendimiento y finanzas para entender qué está pasando en tu cultivo y actuar a tiempo.</p>
+            <div className="zeasys-hero-actions"><button type="button" className="zeasys-primary-btn" onClick={() => document.getElementById('capacidades')?.scrollIntoView({ behavior: 'smooth' })}>Ver capacidades <ArrowRight size={17} /></button><button ref={heroAccessButtonRef} type="button" className="zeasys-secondary-link zeasys-secondary-button" onClick={irAlAcceso} aria-controls="zeasys-login-card" aria-expanded={authCardOpen}>Ingresar <ArrowRight size={15} /></button></div>
           </div>
-        </div>
-
-        {/* Center Main Hero Typography & Floating KPI Glass Cards */}
-        <div style={{ zIndex: 2, position: 'relative', margin: 'auto 0', maxWidth: '680px' }}>
-          <h1 style={{
-            fontSize: '2.5rem',
-            fontWeight: 800,
-            lineHeight: 1.12,
-            color: '#ffffff',
-            letterSpacing: '-0.02em',
-            marginBottom: '0.85rem'
-          }}>
-            Decisiones inteligentes{' '}
-            <span style={{
-              background: 'linear-gradient(135deg, #6A3FA0 0%, #4D7BFF 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              display: 'inline-block'
-            }}>
-              para tu cultivo
-            </span>
-          </h1>
-
-          <p style={{
-            fontSize: '0.92rem',
-            lineHeight: 1.55,
-            color: 'rgba(255, 255, 255, 0.75)',
-            fontWeight: 400,
-            marginBottom: '1.75rem',
-            maxWidth: '600px'
-          }}>
-            Predicción de rendimiento, simulación de escenarios, análisis climático y apoyo inteligente para la toma de decisiones agrícolas.
-          </p>
-
-          {/* Floating Glassmorphism Cards Grid */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(2, 1fr)',
-            gap: '0.75rem',
-            marginBottom: '1rem'
-          }}>
-            {/* Card 1: Estimated Yield */}
-            <div style={{
-              background: 'rgba(16, 25, 28, 0.65)',
-              border: '1px solid rgba(77, 123, 255, 0.2)',
-              backdropFilter: 'blur(16px)',
-              borderRadius: '14px',
-              padding: '0.85rem 1rem',
-              boxShadow: '0 8px 24px rgba(0, 0, 0, 0.25)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.85rem'
-            }}>
-              <div style={{ width: 38, height: 38, borderRadius: '10px', background: 'rgba(77, 123, 255, 0.15)', border: '1px solid rgba(77, 123, 255, 0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <TrendingUp size={18} color="#4D7BFF" />
-              </div>
-              <div>
-                <div style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.04em' }}>Rendimiento Estimado</div>
-                <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#ffffff', marginTop: '1px' }}>Por lote</div>
-              </div>
-            </div>
-
-            {/* Card 2: Climate Risk */}
-            <div style={{
-              background: 'rgba(16, 25, 28, 0.65)',
-              border: '1px solid rgba(106, 63, 160, 0.25)',
-              backdropFilter: 'blur(16px)',
-              borderRadius: '14px',
-              padding: '0.85rem 1rem',
-              boxShadow: '0 8px 24px rgba(0, 0, 0, 0.25)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.85rem'
-            }}>
-              <div style={{ width: 38, height: 38, borderRadius: '10px', background: 'rgba(106, 63, 160, 0.18)', border: '1px solid rgba(106, 63, 160, 0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <CloudSun size={18} color="#6A3FA0" />
-              </div>
-              <div>
-                <div style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.04em' }}>Riesgo Climático</div>
-                <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#ffffff', marginTop: '1px' }}>Clima local</div>
-              </div>
-            </div>
-
-            {/* Card 3: Water Stress */}
-            <div style={{
-              background: 'rgba(16, 25, 28, 0.65)',
-              border: '1px solid rgba(77, 123, 255, 0.2)',
-              backdropFilter: 'blur(16px)',
-              borderRadius: '14px',
-              padding: '0.85rem 1rem',
-              boxShadow: '0 8px 24px rgba(0, 0, 0, 0.25)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.85rem'
-            }}>
-              <div style={{ width: 38, height: 38, borderRadius: '10px', background: 'rgba(77, 123, 255, 0.15)', border: '1px solid rgba(77, 123, 255, 0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Activity size={18} color="#4D7BFF" />
-              </div>
-              <div>
-                <div style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.04em' }}>Estrés Hídrico</div>
-                <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#ffffff', marginTop: '1px' }}>Suelo y cultivo</div>
-              </div>
-            </div>
-
-            {/* Card 4: Financial Projection */}
-            <div style={{
-              background: 'rgba(16, 25, 28, 0.65)',
-              border: '1px solid rgba(106, 63, 160, 0.25)',
-              backdropFilter: 'blur(16px)',
-              borderRadius: '14px',
-              padding: '0.85rem 1rem',
-              boxShadow: '0 8px 24px rgba(0, 0, 0, 0.25)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.85rem'
-            }}>
-              <div style={{ width: 38, height: 38, borderRadius: '10px', background: 'rgba(106, 63, 160, 0.18)', border: '1px solid rgba(106, 63, 160, 0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <DollarSign size={18} color="#6A3FA0" />
-              </div>
-              <div>
-                <div style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.04em' }}>Margen Neto Proyectado</div>
-                <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#ffffff', marginTop: '1px' }}>Costos y retorno</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Bottom Statistics Row */}
-        <div style={{
-          zIndex: 2,
-          position: 'relative',
-          display: 'grid',
-          gridTemplateColumns: 'repeat(4, 1fr)',
-          gap: '1rem',
-          paddingTop: '1rem',
-          borderTop: '1px solid rgba(255, 255, 255, 0.08)'
-        }}>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', color: '#22c55e', height: '1.35rem', marginBottom: '2px' }}>
-              <ShieldCheck size={20} />
-            </div>
-            <div style={{ fontSize: '0.7rem', color: 'rgba(255, 255, 255, 0.7)', marginTop: '1px' }}>Modelos de simulación confiables</div>
-          </div>
-          <div>
-            <div style={{ fontSize: '1rem', fontWeight: 800, color: '#ffffff' }}>XGBoost + RF</div>
-            <div style={{ fontSize: '0.7rem', color: 'rgba(255, 255, 255, 0.5)', marginTop: '1px' }}>Modelos predictivos</div>
-          </div>
-          <div>
-            <div style={{ fontSize: '1rem', fontWeight: 800, color: '#4D7BFF' }}>Clima + suelo</div>
-            <div style={{ fontSize: '0.7rem', color: 'rgba(255, 255, 255, 0.5)', marginTop: '1px' }}>Contexto del lote</div>
-          </div>
-          <div>
-            <div style={{ fontSize: '1rem', fontWeight: 800, color: '#6A3FA0' }}>DSS</div>
-            <div style={{ fontSize: '0.7rem', color: 'rgba(255, 255, 255, 0.5)', marginTop: '1px' }}>Apoyo a decisiones</div>
-          </div>
-        </div>
-
-      </div>
-
-      {/* ==========================================
-          RIGHT LOGIN PANEL (40% Desktop Split)
-         ========================================== */}
-      <div style={{
-        width: '40%',
-        height: '100vh',
-        maxHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '1.5rem 2.5rem',
-        background: '#10191C',
-        position: 'relative',
-        overflow: 'hidden',
-        boxSizing: 'border-box'
-      }}>
-        {/* Floating Glass Panel */}
-        <div style={{
-          width: '100%',
-          maxWidth: '400px',
-          background: 'rgba(16, 25, 28, 0.85)',
-          border: '1px solid rgba(77, 123, 255, 0.18)',
-          borderRadius: '20px',
-          padding: '2rem 2rem',
-          backdropFilter: 'blur(20px)',
-          boxShadow: '0 20px 50px rgba(0, 0, 0, 0.5)',
-          boxSizing: 'border-box'
-        }}>
-          
-          {/* Official Large ZeaSys Logo */}
-          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.25rem' }}>
-            <PlatformLogo size={95} />
-          </div>
-
-          {/* Header Title */}
-          <div style={{ textAlign: 'center', marginBottom: '1.25rem' }}>
-            <h2 style={{ fontSize: '1.45rem', fontWeight: 800, color: '#ffffff', marginBottom: '0.25rem' }}>
-              Bienvenido nuevamente
-            </h2>
-            <p style={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: '0.8rem' }}>
-              Accede a la plataforma de simulación agrícola.
-            </p>
-          </div>
-
-          {error && (
-            <div style={{
-              padding: '0.6rem 0.85rem',
-              borderRadius: '10px',
-              fontSize: '0.78rem',
-              marginBottom: '1rem',
-              background: 'rgba(239, 68, 68, 0.12)',
-              border: '1px solid rgba(239, 68, 68, 0.3)',
-              color: '#f87171',
-              lineHeight: 1.35
-            }}>
-              {error}
-            </div>
-          )}
-
-          {/* Official Brand Styled Google Button */}
-          <GoogleBtn onClick={triggerGoogleSignIn} loading={googleLoading} label="Continuar con Google" />
-          <div id="google-hidden-btn" style={{ display: 'none' }}></div>
-
-          {/* Divider */}
-          <div style={{ margin: '1rem 0', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <div style={{ flex: 1, height: '1px', background: 'rgba(255, 255, 255, 0.08)' }} />
-            <span style={{ color: 'rgba(255, 255, 255, 0.35)', fontSize: '0.72rem', fontWeight: 500 }}>o con correo</span>
-            <div style={{ flex: 1, height: '1px', background: 'rgba(255, 255, 255, 0.08)' }} />
-          </div>
-
-          {/* Form */}
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem' }}>
-            <div>
-              <label style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.4rem',
-                fontSize: '0.68rem',
-                fontWeight: 700,
-                color: 'rgba(255, 255, 255, 0.6)',
-                textTransform: 'uppercase',
-                letterSpacing: '0.06em',
-                marginBottom: '0.35rem'
-              }}>
-                <Mail size={12} color="#4D7BFF" /> Correo Electrónico
-              </label>
-              <input
-                type="email"
-                className="form-input"
-                placeholder="usuario@zeasys.com"
-                value={correo}
-                onChange={e => setCorreo(e.target.value)}
-                required
-                style={{
-                  width: '100%',
-                  padding: '0.65rem 0.9rem',
-                  fontSize: '0.85rem',
-                  borderRadius: '12px',
-                  background: 'rgba(10, 15, 18, 0.8)',
-                  border: '1px solid rgba(77, 123, 255, 0.2)',
-                  color: '#ffffff',
-                  outline: 'none',
-                  boxSizing: 'border-box'
-                }}
-              />
-            </div>
-
-            <div>
-              <label style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.4rem',
-                fontSize: '0.68rem',
-                fontWeight: 700,
-                color: 'rgba(255, 255, 255, 0.6)',
-                textTransform: 'uppercase',
-                letterSpacing: '0.06em',
-                marginBottom: '0.35rem'
-              }}>
-                <Lock size={12} color="#6A3FA0" /> Contraseña
-              </label>
-              <input
-                type="password"
-                className="form-input"
-                placeholder="••••••••••••"
-                value={contrasena}
-                onChange={e => setContrasena(e.target.value)}
-                required
-                style={{
-                  width: '100%',
-                  padding: '0.65rem 0.9rem',
-                  fontSize: '0.85rem',
-                  borderRadius: '12px',
-                  background: 'rgba(10, 15, 18, 0.8)',
-                  border: '1px solid rgba(106, 63, 160, 0.25)',
-                  color: '#ffffff',
-                  outline: 'none',
-                  boxSizing: 'border-box'
-                }}
-              />
-            </div>
-
-            {/* Checkbox & Forgot Password */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.75rem' }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', cursor: 'pointer', userSelect: 'none', color: 'rgba(255, 255, 255, 0.65)' }}>
-                <input
-                  type="checkbox"
-                  checked={remember}
-                  onChange={e => setRemember(e.target.checked)}
-                  style={{ width: '14px', height: '14px', accentColor: '#4D7BFF', cursor: 'pointer' }}
+          <div className="zeasys-hero-visual">
+            <div className={`zeasys-hero-flip${authCardOpen ? ' is-open' : ''}${registering ? ' is-registering' : ''}`}>
+              <div className="zeasys-hero-flip-inner">
+                <div className="zeasys-hero-flip-face zeasys-hero-flip-front" aria-hidden={authCardOpen}>
+                  <div className="zeasys-visual-heading"><span>Vista de parcela</span><h2>La señal del campo, en una sola lectura.</h2><p>Rendimiento, clima y brecha productiva con datos del sistema.</p></div>
+                  <div className="zeasys-dashboard-preview">
+                    <div className="zeasys-preview-topline"><span><Leaf size={14} /> Parcela monitoreada</span><span className="zeasys-status-pill"><span /> Datos sincronizados</span></div>
+                    <div className="zeasys-preview-location"><MapPin size={13} /> Finca La Esperanza <small>·</small> Lote MZ-04</div>
+                    <div className="zeasys-preview-main-kpi"><div><span>Rendimiento previsto</span><strong>3.26 <small>t/ha</small></strong></div><div className="zeasys-kpi-up"><TrendingUp size={16} /> +8.4%</div></div>
+                    <div className="zeasys-preview-chart" aria-hidden="true"><span className="chart-bar chart-bar-1" /><span className="chart-bar chart-bar-2" /><span className="chart-bar chart-bar-3" /><span className="chart-bar chart-bar-4" /><span className="chart-bar chart-bar-5" /><span className="chart-bar chart-bar-6" /><span className="chart-line" /></div>
+                    <div className="zeasys-preview-grid"><div><span><CloudSun size={13} /> Riesgo climático</span><strong>Moderado</strong><em>Con datos locales</em></div><div><span><Activity size={13} /> Brecha productiva</span><strong>27%</strong><em>Oportunidad de mejora</em></div></div>
+                    <div className="zeasys-preview-meta"><span>Última lectura <strong>Hoy, 08:40</strong></span><span>Ciclo <strong>Maíz 2026</strong></span></div>
+                  </div>
+                </div>
+                <AccessCard
+                  containerRef={authPanelRef}
+                  className="zeasys-hero-flip-face zeasys-hero-auth-back"
+                  modeAnimating={authModeAnimating}
+                  onClose={closeAccess}
+                  ariaHidden={!authCardOpen}
+                  registering={registering}
+                  error={error}
+                  googleLoading={googleLoading}
+                  googleStatus={googleStatus}
+                  googleButtonRef={googleButtonRef}
+                  handleSubmit={handleSubmit}
+                  handleRegisterSubmit={handleRegisterSubmit}
+                  correo={correo}
+                  setCorreo={setCorreo}
+                  nombre={nombre}
+                  setNombre={setNombre}
+                  contrasena={contrasena}
+                  setContrasena={setContrasena}
+                  confirmar={confirmar}
+                  setConfirmar={setConfirmar}
+                  remember={remember}
+                  setRemember={setRemember}
+                  loading={loading}
+                  switchToRegister={() => switchAuthMode('register')}
+                  switchToLogin={() => switchAuthMode('login')}
                 />
-                Recordar sesión
-              </label>
-              <button
-                type="button"
-                style={{ background: 'none', border: 'none', color: '#4D7BFF', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600 }}
-                onClick={() => alert('Para restablecer su contraseña, contacte al administrador de ZeaSys.')}
-              >
-                ¿Olvidaste tu contraseña?
-              </button>
+              </div>
             </div>
-
-            {/* Main Gradient Login Button (#6A3FA0 -> #4D7BFF) */}
-            <button
-              type="submit"
-              disabled={loading}
-              style={{
-                width: '100%',
-                padding: '0.75rem 1.2rem',
-                borderRadius: '14px',
-                background: 'linear-gradient(135deg, #6A3FA0 0%, #4D7BFF 100%)',
-                color: '#ffffff',
-                border: 'none',
-                fontWeight: 700,
-                fontSize: '0.92rem',
-                cursor: loading ? 'not-allowed' : 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '0.5rem',
-                boxShadow: '0 6px 24px rgba(77, 123, 255, 0.35)',
-                transition: 'all 0.25s ease',
-                marginTop: '0.25rem'
-              }}
-              onMouseEnter={e => {
-                if (!loading) {
-                  e.currentTarget.style.transform = 'translateY(-2px)';
-                  e.currentTarget.style.boxShadow = '0 10px 30px rgba(77, 123, 255, 0.5)';
-                }
-              }}
-              onMouseLeave={e => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = '0 6px 24px rgba(77, 123, 255, 0.35)';
-              }}
-            >
-              {loading ? 'Ingresando...' : (<>Iniciar Sesión <ArrowRight size={16} /></>)}
-            </button>
-          </form>
-
-          {/* Bottom Switch to Register */}
-          <div style={{ marginTop: '1.25rem', textAlign: 'center', fontSize: '0.78rem' }}>
-            <span style={{ color: 'rgba(255, 255, 255, 0.45)' }}>¿No tienes una cuenta? </span>
-            <button
-              style={{ background: 'none', border: 'none', cursor: 'pointer', fontWeight: 700, color: '#4D7BFF', fontSize: '0.78rem', fontFamily: 'inherit' }}
-              onClick={switchToRegister}
-            >
-              Crear cuenta
-            </button>
           </div>
+        </section>
 
+        <section id="capacidades" className="zeasys-capabilities-section">
+          <AgriculturalPattern variant="capabilities" />
+          <div className="zeasys-section-heading">
+            <div><span className="zeasys-section-kicker">Una mirada completa del lote</span><h2>De la señal del campo a una acción clara.</h2></div>
+            <p>Menos intuición aislada. Más contexto para decidir riego, manejo, siembra y rentabilidad.</p>
+          </div>
+          <div className="zeasys-capability-grid">
+            <CapabilityFlipCard
+              tone="green"
+              image={yieldPhoto}
+              imagePosition="58% center"
+              icon={<BarChart3 size={21} />}
+              title="Rendimiento y brecha"
+              summary="Compara el potencial genético, el rendimiento alcanzable y lo que realmente puede entregar tu parcela."
+              details={['Potencial y rendimiento alcanzable', 'Brecha productiva por parcela', 'Escenarios comparables de manejo']}
+              href="#datos"
+              linkLabel="Ver indicadores"
+            />
+            <CapabilityFlipCard
+              tone="blue"
+              image={climateSoilPhoto}
+              imagePosition="center 58%"
+              icon={<CloudSun size={21} />}
+              title="Clima y suelo"
+              summary="Integra señales meteorológicas y edáficas para anticipar estrés hídrico, riesgos y ventanas de manejo."
+              details={['Clima vinculado a la parcela', 'Agua útil y condiciones del suelo', 'Alertas para anticipar riesgos']}
+              href="#datos"
+              linkLabel="Explorar datos"
+            />
+            <CapabilityFlipCard
+              tone="warm"
+              image={decisionsPhoto}
+              imagePosition="center"
+              icon={<ClipboardCheck size={21} />}
+              title="Decisiones explicadas"
+              summary="Consulta un indicador y recibe una explicación clara conectada con los datos visibles de tu parcela."
+              details={['Contexto específico de la parcela', 'Fuentes y estimaciones identificadas', 'Acciones claras y verificables']}
+              href="#contacto"
+              linkLabel="Ver cómo se explica"
+            />
+          </div>
+        </section>
+
+        <section id="datos" className="zeasys-data-section">
+          <AgriculturalPattern variant="data" />
+          <div className="zeasys-data-card zeasys-data-card--with-model">
+            <div className="zeasys-data-card-copy">
+              <span className="zeasys-section-kicker">Diseñado para datos, no para suposiciones</span>
+              <h2>Una fuente de verdad para cada decisión agrícola.</h2>
+              <p>Visualiza la procedencia de tus datos, separa valores reales de estimaciones y entiende qué factor está limitando el rendimiento.</p>
+              <ul><li><CheckCircle2 size={17} /> Valores con fuente y estado de disponibilidad</li><li><CheckCircle2 size={17} /> Escenarios comparables antes de cambiar una práctica</li><li><CheckCircle2 size={17} /> Explicaciones con el contexto de tu parcela</li></ul>
+            </div>
+            <figure className="zeasys-corn-model" aria-label="Modelo tridimensional de una mazorca de maíz">
+              <CornCobModel />
+              <figcaption><span>Objeto de estudio</span><strong>Maíz · Zea mays</strong></figcaption>
+            </figure>
+          </div>
+        </section>
+
+      </main>
+
+      <footer id="contacto" className="zeasys-home-footer">
+        <div className="zeasys-footer-main">
+          <div className="zeasys-footer-brand">
+            <a className="zeasys-home-brand" href="#inicio" aria-label="ZeaSys, inicio"><PlatformLogo variant="wordmark" size={34} /></a>
+            <p>Sistema de apoyo a decisiones agrícolas que reúne datos de campo, predicciones y contexto productivo en una sola lectura.</p>
+            <address className="zeasys-footer-contact"><span><MapPin size={14} /> Ecuador</span><a href="mailto:zeasys123@gmail.com"><Mail size={14} /> zeasys123@gmail.com</a></address>
+            <div className="zeasys-footer-status"><span /> Servicios operativos · Motor XGBoost</div>
+          </div>
+          <div className="zeasys-footer-column"><h3>Plataforma</h3><a href="#inicio">Inicio</a><a href="#capacidades">Capacidades</a><a href="#datos">Datos y modelos</a></div>
+          <div className="zeasys-footer-column"><h3>Producto</h3><a href="#inicio">Vista de parcela</a><a href="#capacidades">Decisiones explicadas</a><button type="button" onClick={irAlAcceso}>Ingresar a ZeaSys</button></div>
+          <div className="zeasys-footer-column"><h3>Soporte</h3><a href="mailto:zeasys123@gmail.com?subject=Ayuda%20con%20ZeaSys">Centro de ayuda</a><a href="mailto:zeasys123@gmail.com?subject=Consulta%20sobre%20ZeaSys">Contacto</a><span>Privacidad y uso responsable de datos</span></div>
         </div>
-      </div>
-
+        <div className="zeasys-footer-bottom"><span>© {new Date().getFullYear()} ZeaSys. Todos los derechos reservados.</span><span>Datos claros · Decisiones agrícolas responsables</span></div>
+      </footer>
     </div>
   );
 }

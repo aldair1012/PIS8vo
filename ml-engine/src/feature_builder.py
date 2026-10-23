@@ -8,6 +8,8 @@ import numpy as np
 import pandas as pd
 import urllib.request
 
+from src.data_providers import fetch_open_meteo_historical, fetch_weather_with_fallback
+
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # Las 36 columnas que esperan los modelos, en el orden exacto de entrenamiento
@@ -344,42 +346,51 @@ def fetch_precision_soil(lat, lon):
             soc_pct = result["soc"] / 100.0
             mapped["materia_organica_pct"] = round(soc_pct * 1.724, 2)
 
+        if not mapped:
+            # SoilGrids puede responder 200 sin datos para un píxel concreto.
+            # No lo convertimos en ceros ni en valores teóricos: exponemos la
+            # ausencia para que la UI muestre "No disponible" con motivo.
+            return {
+                "source": "soilgrids",
+                "source_kind": "soil_properties",
+                "quality": "unavailable",
+                "requested_depth": "0-5cm",
+                "reason": "SoilGrids no devolvió valores para las coordenadas consultadas",
+            }
+
+        mapped.update({
+            "source": "soilgrids",
+            "source_kind": "soil_properties",
+            "quality": "model",
+            "requested_depth": "0-5cm",
+        })
         print(f"[ML Engine] SoilGrids retrieved successfully: {mapped}")
         return mapped
     except Exception as e:
         print(f"[ML Engine] SoilGrids API query failed (falling back): {str(e)}")
-        return None
+        return {
+            "source": "soilgrids",
+            "source_kind": "soil_properties",
+            "quality": "unavailable",
+            "requested_depth": "0-5cm",
+            "reason": str(e),
+        }
 
 
 def fetch_precision_weather(lat, lon):
-    """Consulta Open-Meteo para obtener clima actual de la ubicación."""
+    """Consulta clima operativo con procedencia y fallback explícitos.
+
+    Se conserva el nombre de esta función para no romper imports existentes,
+    pero la implementación ahora usa Open-Meteo y NASA POWER mediante la capa
+    de proveedores. No reemplaza los valores escritos por el usuario; sólo
+    aporta datos externos y métricas agrícolas para el dashboard/chatbot.
+    """
     try:
-        url = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current=temperature_2m,relative_humidity_2m,rain,wind_speed_10m&hourly=soil_temperature_0cm&timezone=auto"
-        print(f"[ML Engine] Querying Open-Meteo API: {url}")
-        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0 (AgroPredict/2.0)'})
-        with urllib.request.urlopen(req, timeout=4.0) as response:
-            data = json.loads(response.read().decode('utf-8'))
-
-        current = data.get("current", {})
-        hourly = data.get("hourly", {})
-
-        mapped = {
-            "temperatura_media_c": float(current.get("temperature_2m", 25.0)),
-            "humedad_relativa_pct": float(current.get("relative_humidity_2m", 70.0)),
-            "viento_speed": float(current.get("wind_speed_10m", 10.0)),
-            "lluvia_reciente": float(current.get("rain", 0.0))
-        }
-
-        soil_temps = hourly.get("soil_temperature_0cm", [])
-        if soil_temps:
-            mapped["temperatura_suelo_c"] = round(float(np.mean(soil_temps[:24])), 2)
-        else:
-            mapped["temperatura_suelo_c"] = mapped["temperatura_media_c"]
-
-        print(f"[ML Engine] Open-Meteo retrieved successfully: {mapped}")
+        mapped = fetch_weather_with_fallback(float(lat), float(lon), timeout=6.0)
+        print(f"[ML Engine] Datos climáticos recibidos de {mapped.get('source')}: {mapped}")
         return mapped
     except Exception as e:
-        print(f"[ML Engine] Open-Meteo API query failed (falling back): {str(e)}")
+        print(f"[ML Engine] Weather providers failed: {str(e)}")
         return None
 
 
@@ -445,6 +456,7 @@ def build_features(data):
     lon = data.get("longitud")
     precision_soil = None
     precision_weather = None
+    historical_weather = None
     inamhi_info = None
     if lat is not None and lon is not None:
         try:
@@ -453,6 +465,11 @@ def build_features(data):
             if abs(lat_f) > 0.01 or abs(lon_f) > 0.01:
                 precision_soil = fetch_precision_soil(lat_f, lon_f)
                 precision_weather = fetch_precision_weather(lat_f, lon_f)
+                if data.get("incluir_historico") is True:
+                    try:
+                        historical_weather = fetch_open_meteo_historical(lat_f, lon_f, timeout=6.0)
+                    except Exception as history_ex:
+                        print(f"[ML Engine] Error consultando histórico Open-Meteo: {str(history_ex)}")
                 try:
                     from src.inamhi_climate import inamhi_db
                     station = inamhi_db.get_nearest_station(lat_f, lon_f)
@@ -478,7 +495,9 @@ def build_features(data):
             if key in precision_soil:
                 features_dict[key] = [precision_soil[key]]
 
-    # Sobrescribir con los inputs del usuario
+    # Sobrescribir con los inputs del usuario. Son la fuente primaria del
+    # modelo porque representan el escenario que el usuario está simulando;
+    # los proveedores externos se mantienen como contexto verificable.
     features_dict["zona"] = [zona]
     features_dict["provincia"] = [provincia]
     features_dict["variedad"] = [maiz_str]
@@ -513,7 +532,11 @@ def build_features(data):
         },
         "precision_data": {
             "soilgrids": precision_soil,
-            "open_meteo": precision_weather,
+            "weather": precision_weather,
+            "open_meteo_historico": historical_weather,
+            # Alias de compatibilidad para consumidores existentes.
+            "open_meteo": precision_weather if precision_weather and precision_weather.get("source") == "open_meteo" else None,
+            "nasa_power": precision_weather if precision_weather and precision_weather.get("source") == "nasa_power" else None,
             "inamhi_historico": inamhi_info
         }
     }

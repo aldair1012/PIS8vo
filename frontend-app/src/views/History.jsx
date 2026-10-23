@@ -3,6 +3,12 @@ import { simulacionService } from '../services/api';
 import { Trash2, TrendingUp, Award, Activity, Database, Clock } from 'lucide-react';
 import InteractiveKPI from '../templates/Common/InteractiveKPI';
 
+const toFiniteNumber = (value) => {
+  if (value === null || value === undefined || value === '') return null;
+  const number = Number(value);
+  return Number.isFinite(number) ? number : null;
+};
+
 export default function History({ recargarDatos }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -38,7 +44,12 @@ export default function History({ recargarDatos }) {
     }
   };
 
-  if (loading && !data) return <div className="flex-center" style={{ height: '70vh' }}>Cargando historial...</div>;  const { simulaciones, estadisticas } = data || { simulaciones: [], estadisticas: {} };
+  if (loading && !data) return <div className="flex-center" style={{ height: '70vh' }}>Cargando historial...</div>;
+  const { simulaciones, estadisticas } = data || { simulaciones: [], estadisticas: {} };
+  const totalSimulaciones = toFiniteNumber(estadisticas.total_simulaciones);
+  const rendimientoPromedio = toFiniteNumber(estadisticas.rendimiento_promedio);
+  const rendimientoMaximo = toFiniteNumber(estadisticas.rendimiento_maximo);
+  const produccionTotal = toFiniteNumber(estadisticas.produccion_total);
 
   return (
     <div style={{ width: '100%', paddingBottom: '2rem' }}>
@@ -89,9 +100,10 @@ export default function History({ recargarDatos }) {
             icon={<Database size={20} />}
             iconClass="text-secondary"
             title="Total Simulaciones"
-            value={estadisticas.total_simulaciones}
-            trend="Registradas"
-            progress={Math.min(100, (estadisticas.total_simulaciones || 1) * 10)}
+            value={totalSimulaciones === null ? 'No disponible' : totalSimulaciones}
+            isMissing={totalSimulaciones === null}
+            trend={totalSimulaciones === null ? 'Sin dato' : 'Registradas'}
+            progress={totalSimulaciones === null ? null : Math.min(100, totalSimulaciones * 10)}
             progressColor="linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%)"
             progressLabelLeft="Activas"
             delay={0}
@@ -100,15 +112,14 @@ export default function History({ recargarDatos }) {
             icon={<TrendingUp size={20} />}
             iconClass="text-success"
             title="Rendimiento Medio"
-            value={<>{Number(estadisticas.rendimiento_promedio || 0).toFixed(2)} <span className="kpi-value-unit">t/ha</span></>}
-            trend="Promedio"
-            progress={Math.min(100, ((Number(estadisticas.rendimiento_promedio || 0) / 10) * 100))}
+            value={rendimientoPromedio === null ? 'No disponible' : <>{rendimientoPromedio.toFixed(2)} <span className="kpi-value-unit">t/ha</span></>}
+            isMissing={rendimientoPromedio === null}
+            trend={rendimientoPromedio === null ? 'Sin dato' : 'Promedio'}
+            progress={rendimientoPromedio === null ? null : Math.min(100, (rendimientoPromedio / 10) * 100)}
             progressColor="linear-gradient(90deg, #16a34a 0%, #34d399 100%)"
             progressLabelLeft="General"
             sparklineData={[
-              Number(estadisticas.rendimiento_promedio || 0) * 0.85,
-              Number(estadisticas.rendimiento_promedio || 0) * 0.95,
-              Number(estadisticas.rendimiento_promedio || 0)
+              ...(rendimientoPromedio === null ? [] : [rendimientoPromedio * 0.85, rendimientoPromedio * 0.95, rendimientoPromedio])
             ]}
             delay={1}
           />
@@ -116,15 +127,14 @@ export default function History({ recargarDatos }) {
             icon={<Award size={20} />}
             iconClass="text-success"
             title="Rendimiento Máximo"
-            value={<>{Number(estadisticas.rendimiento_maximo || 0).toFixed(2)} <span className="kpi-value-unit">t/ha</span></>}
-            trend="Récord"
-            progress={100}
+            value={rendimientoMaximo === null ? 'No disponible' : <>{rendimientoMaximo.toFixed(2)} <span className="kpi-value-unit">t/ha</span></>}
+            isMissing={rendimientoMaximo === null}
+            trend={rendimientoMaximo === null ? 'Sin dato' : 'Récord'}
+            progress={rendimientoMaximo === null ? null : 100}
             progressColor="linear-gradient(90deg, #863bff 0%, #a855f7 100%)"
             progressLabelLeft="Límite"
             sparklineData={[
-              Number(estadisticas.rendimiento_maximo || 0) * 0.9,
-              Number(estadisticas.rendimiento_maximo || 0) * 0.95,
-              Number(estadisticas.rendimiento_maximo || 0)
+              ...(rendimientoMaximo === null ? [] : [rendimientoMaximo * 0.9, rendimientoMaximo * 0.95, rendimientoMaximo])
             ]}
             delay={2}
           />
@@ -132,9 +142,10 @@ export default function History({ recargarDatos }) {
             icon={<Activity size={20} />}
             iconClass="text-secondary"
             title="Producción Acumulada"
-            value={<>{Number(estadisticas.produccion_total || 0).toLocaleString()} <span className="kpi-value-unit">t</span></>}
-            trend="Acumulada"
-            progress={80}
+            value={produccionTotal === null ? 'No disponible' : <>{produccionTotal.toLocaleString('es-EC')} <span className="kpi-value-unit">t</span></>}
+            isMissing={produccionTotal === null}
+            trend={produccionTotal === null ? 'Sin dato' : 'Acumulada'}
+            progress={produccionTotal === null ? null : 80}
             progressColor="linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%)"
             progressLabelLeft="Total Lotes"
             delay={3}

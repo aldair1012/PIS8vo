@@ -1,16 +1,26 @@
 import logoFullUrl from '../../assets/logo-full.svg';
 import logoIconUrl from '../../assets/logo-icon.svg';
+import zeasysMarkUrl from '../../assets/zeasys-mark.svg';
 
-export default function PlatformLogo({ size = 48, isIconOnly = false, className = '', style = {} }) {
-  const height = size * 1.15;
-  // Aspect ratios:
-  // logo-full.svg tiene viewBox 0 0 1440 835 => relación de aspecto ~1.72
-  // logo-icon.svg tiene viewBox 0 100 360 735 => relación de aspecto ~0.49 (figura del choclo)
-  const width = isIconOnly ? height * 0.5 : height * 1.72;
+/**
+ * Shared ZeaSys brand component.
+ *
+ * `legacy` keeps the original artwork used by the authenticated application.
+ * `mark` is the compact data-and-leaf symbol for small surfaces.
+ * `wordmark` is the adaptive lockup used by the public homepage; the name is
+ * rendered once inside this component so callers cannot accidentally repeat it.
+ */
+export default function PlatformLogo({ size = 48, isIconOnly = false, variant = 'legacy', className = '', style = {} }) {
+  const isWordmark = variant === 'wordmark';
+  const isMark = variant === 'mark';
+  const useCompactMark = isMark || isIconOnly;
+  const height = isWordmark ? size : size * 1.15;
+  const width = isWordmark ? size * 4.35 : useCompactMark ? height * 0.88 : height * 1.72;
+  const imageSource = isMark || isWordmark ? zeasysMarkUrl : (isIconOnly ? logoIconUrl : logoFullUrl);
 
   return (
     <div
-      className={`platform-logo ${className}`}
+      className={`platform-logo ${isWordmark ? 'platform-logo--wordmark' : ''} ${isMark ? 'platform-logo--mark' : ''} ${className}`}
       style={{
         width,
         height,
@@ -19,23 +29,27 @@ export default function PlatformLogo({ size = 48, isIconOnly = false, className 
         flexShrink: 0,
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'center',
+        justifyContent: isWordmark ? 'flex-start' : 'center',
+        gap: isWordmark ? size * 0.28 : 0,
         ...style,
       }}
     >
       <img
-        src={isIconOnly ? logoIconUrl : logoFullUrl}
-        alt="ZeaSys"
+        src={isWordmark ? zeasysMarkUrl : imageSource}
+        alt={isWordmark ? '' : 'ZeaSys'}
+        aria-hidden={isWordmark ? 'true' : undefined}
         className="platform-logo-img"
         loading="lazy"
         decoding="async"
         style={{
-          height: '100%',
+          height: isWordmark ? '100%' : '100%',
           width: 'auto',
+          aspectRatio: '1 / 1',
           display: 'block',
           maxWidth: 'none',
         }}
       />
+      {isWordmark && <span className="platform-logo-wordmark">ZeaSys</span>}
     </div>
   );
 }

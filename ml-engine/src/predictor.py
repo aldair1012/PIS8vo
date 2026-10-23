@@ -1,5 +1,5 @@
-# predictor.py - Carga los modelos y hace la predicción + SHAP + escenarios.
-# Los modelos principales son XGBoost y Random Forest (regresión y clasificación).
+# predictor.py - Carga XGBoost y hace la predicción + SHAP + escenarios.
+# XGBoost es el único motor de simulación soportado en producción.
 
 import os
 import json
@@ -15,9 +15,7 @@ MODELS_DIR = os.path.join(BASE_DIR, "models")
 
 # --- Carga de modelos al inicio ---
 print("[ML Engine] Cargando modelos e interpretadores...")
-rf_model = joblib.load(os.path.join(MODELS_DIR, "random_forest.joblib"))
 xgb_model = joblib.load(os.path.join(MODELS_DIR, "xgboost.joblib"))
-rf_clf_model = joblib.load(os.path.join(MODELS_DIR, "random_forest_clf.joblib"))
 xgb_clf_model = joblib.load(os.path.join(MODELS_DIR, "xgboost_clf.joblib"))
 
 label_encoder = joblib.load(os.path.join(MODELS_DIR, "label_encoder.joblib"))
@@ -28,11 +26,48 @@ with open(os.path.join(MODELS_DIR, "metrics.json"), "r") as f:
 
 # SHAP explainers para interpretar la importancia de cada variable
 print("[ML Engine] Inicializando SHAP TreeExplainers...")
-rf_explainer = shap.TreeExplainer(rf_model)
 xgb_explainer = shap.TreeExplainer(xgb_model)
 
 # Lista de modelos disponibles (para el endpoint /health)
-MODELOS_DISPONIBLES = ["random_forest", "xgboost"]
+MODELOS_DISPONIBLES = ["xgboost"]
+
+
+def _intervalo_rendimiento(prediccion, metricas):
+    """Calcula un rango aproximado de predicción a partir de validación.
+
+    El rango no es una garantía estadística ni reemplaza una medición en campo;
+    comunica el error esperado del modelo para evitar presentar un único número
+    como si fuera exacto. Las métricas nuevas proceden de GroupKFold por
+    provincia, pero se mantiene un fallback para modelos antiguos.
+    """
+    try:
+        rmse = max(0.0, float(metricas.get("rmse", 0.0)))
+        mae = max(0.0, float(metricas.get("mae", 0.0)))
+    except (TypeError, ValueError):
+        rmse, mae = 0.0, 0.0
+
+    try:
+        objetivo = model_metrics.get("rango_objetivo", {})
+        minimo = float(objetivo.get("min", 0.5))
+        maximo = float(objetivo.get("max", 12.0))
+    except (TypeError, ValueError):
+        minimo, maximo = 0.5, 12.0
+
+    # 1.96 * RMSE es una aproximación conservadora; se etiqueta como tal en la
+    # respuesta para no confundirla con un intervalo de confianza calibrado.
+    margen = max(mae, 1.96 * rmse)
+    # La predicción puede quedar fuera del rango histórico por el límite de
+    # seguridad del predictor; en ese caso el intervalo nunca debe invertir
+    # sus extremos ni excluir el valor que realmente se devolvió.
+    limite_inferior = max(min(minimo, float(prediccion)), float(prediccion) - margen)
+    limite_superior = min(max(maximo, float(prediccion)), float(prediccion) + margen)
+    return {
+        "min": round(limite_inferior, 2),
+        "max": round(limite_superior, 2),
+        "margen_aproximado": round(margen, 2),
+        "error_medio_validacion": round(mae, 2),
+        "nivel": "aproximado_95_por_validacion_agrupada",
+    }
 
 
 def _probabilidad_cosecha(clf_model, df_encoded):
@@ -85,15 +120,10 @@ def predict(df_features, modelo_nombre="xgboost", area=1.0):
     if modelo_nombre not in MODELOS_DISPONIBLES:
         raise ValueError(f"Modelo no disponible: {modelo_nombre}")
 
-    # Elegir modelo según lo que pidió el usuario
-    if modelo_nombre == "random_forest":
-        reg_model = rf_model
-        clf_model = rf_clf_model
-        explainer = rf_explainer
-    else:
-        reg_model = xgb_model
-        clf_model = xgb_clf_model
-        explainer = xgb_explainer
+    # El contrato conserva el campo `modelo`, pero sólo XGBoost está disponible.
+    reg_model = xgb_model
+    clf_model = xgb_clf_model
+    explainer = xgb_explainer
 
     # Predicción de rendimiento (regresión) y categoría (clasificación)
     prediccion_reg = float(reg_model.predict(df_encoded)[0])
@@ -117,8 +147,13 @@ def predict(df_features, modelo_nombre="xgboost", area=1.0):
     }
 
     produccion_total = round(prediccion_reg * area, 2)
-    r2 = model_metrics[modelo_nombre]["r2"]
-    confianza = round(r2 * 100, 1)
+    metricas_actuales = model_metrics[modelo_nombre]
+    r2 = float(metricas_actuales.get("r2", 0.0))
+    # Se conserva `confianza` por compatibilidad con el frontend, pero se
+    # identifica explícitamente como calidad global del modelo (R²), no como
+    # probabilidad de que esta parcela alcance el rendimiento predicho.
+    confianza = round(max(0.0, min(100.0, r2 * 100)), 1)
+    intervalo_rendimiento = _intervalo_rendimiento(prediccion_reg, metricas_actuales)
 
     # Escenarios climáticos alternativos (qué pasa si llueve más, menos, o hay sequía)
     df_lluvioso = df_encoded.copy()
@@ -165,7 +200,9 @@ def predict(df_features, modelo_nombre="xgboost", area=1.0):
         "probabilidades_cosecha": probabilidades_cosecha,
         "area": area,
         "confianza": confianza,
+        "confianza_tipo": "calidad_global_r2",
+        "intervalo_rendimiento": intervalo_rendimiento,
         "shap_values": shap_dict,
         "escenarios": escenarios,
-        "metricas_modelo": model_metrics[modelo_nombre]
+        "metricas_modelo": metricas_actuales
     }

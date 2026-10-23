@@ -67,7 +67,11 @@ final class ProveedorOpenMeteo implements ProveedorClimaInterface
         if (!empty($valoresPrecip)) {
             $precipTotal30d = array_sum($valoresPrecip);          // mm en 30 días
             $precipAnualEstimada = round($precipTotal30d * 12.0, 1);   // proyección anual
-            // Clamp a rango agronómico razonable (200–3500 mm/año)
+            // `precipitacion` conserva la estimación anual porque los cálculos
+            // agronómicos existentes la usan como lluvia de campaña. El valor
+            // realmente medido en los últimos 30 días se expone aparte para no
+            // etiquetarlo como si fuera un acumulado mensual.
+            $actualizaciones['precipitacion_30d'] = round($precipTotal30d, 1);
             $actualizaciones['precipitacion'] = max(200.0, min(3500.0, $precipAnualEstimada));
         }
 

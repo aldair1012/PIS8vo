@@ -1,11 +1,12 @@
 import { useCallback, useRef, useState, useEffect } from 'react';
-import { dssService, simulacionService } from '../services/api';
+import { dssService } from '../services/api';
 import { Doughnut } from 'react-chartjs-2';
 import { Chart as ChartJS, registerables } from 'chart.js';
 import FinancialROI from '../templates/Charts/FinancialROI';
 import InteractiveKPI from '../templates/Common/InteractiveKPI';
 import AIExplainModal from '../templates/Common/AIExplainModal';
 import EmptyDashboard from '../templates/Common/EmptyDashboard';
+import DashboardIntro, { DashboardSectionHeading } from '../templates/Common/DashboardIntro';
 import useExplicacionIA from '../hooks/usarExplicacionIA';
 
 ChartJS.register(...registerables);
@@ -23,6 +24,16 @@ const parseVal = (val, fallback) => {
   return num < 0 ? 0 : num;
 };
 
+const toFiniteNumber = (value) => {
+  if (value === null || value === undefined || value === '') return null;
+  const number = Number(value);
+  return Number.isFinite(number) ? number : null;
+};
+
+const formatCurrency = (value) => value === null
+  ? 'No disponible'
+  : `$${value.toLocaleString('es-EC', { maximumFractionDigits: 2 })}`;
+
 export default function DashboardFinance({ cultivoElegidoId, anioSeleccionado, onNavigate, onDashboardData }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -33,42 +44,8 @@ export default function DashboardFinance({ cultivoElegidoId, anioSeleccionado, o
     setMostrarModalIa,
     cargandoIa,
     datosIa,
-    pedirExplicacionIa,
-    setRespuestasIaGuardadas
+    pedirExplicacionIa
   } = useExplicacionIA(cultivoElegidoId, anioSeleccionado);
-
-  useEffect(() => {
-    if (data && data.kpis) {
-      const { kpis } = data;
-      const preloadKey = "Retorno de Inversión (ROI)";
-      const preloadContext = {
-        tipo_elemento: "tarjeta",
-        nombre: preloadKey,
-        cultivo: "maiz",
-        valor: `${kpis.roi}%`,
-        unidad: "",
-        estado: kpis.roi > 20 ? "favorable" : (kpis.roi >= 0 ? "regular" : "riesgoso"),
-        rango_ideal: "Mayor al 25%",
-        descripcion_tecnica: "Mide el rendimiento del dinero invertido en el cultivo de maíz. Por ejemplo, un ROI del 20% significa que por cada dólar que inviertes, recuperas tu dólar y ganas 20 centavos adicionales.",
-        impacto_base: "Determina si el capital invertido en el maíz rinde más que guardarlo en el banco o invertirlo en otra actividad.",
-        recomendacion_base: "Si el ROI es negativo o menor al 5%, reevaluar toda la estrategia de costos e insumos de la parcela."
-      };
-      
-      const preload = async () => {
-        try {
-          const res = await simulacionService.explainData({
-            ...preloadContext,
-            cultivo_id: cultivoElegidoId,
-            anio: anioSeleccionado
-          });
-          setRespuestasIaGuardadas(prev => ({ ...prev, [preloadKey]: res }));
-        } catch (err) {
-          console.warn("Error pre-cargando explicación:", err);
-        }
-      };
-      preload();
-    }
-  }, [data, cultivoElegidoId, anioSeleccionado, setRespuestasIaGuardadas]);
 
   const [precioMaizQq, setPrecioMaizQq] = useState('');
   const [rendimientoQq, setRendimientoQq] = useState('');
@@ -298,7 +275,25 @@ export default function DashboardFinance({ cultivoElegidoId, anioSeleccionado, o
 
   const { kpis, costo_total, sensibilidad, precios_rango, rendimientos_rango, roi_estrategias, waterfall_costos } = data || {};
 
-  const ingresoBruto = (waterfall_costos && waterfall_costos.find(c => c.label === 'Ingreso Bruto'))?.amount || 1;
+  const ingresoBruto = toFiniteNumber(
+    (waterfall_costos && waterfall_costos.find(c => c.label === 'Ingreso Bruto'))?.amount
+      ?? kpis.ingreso_bruto
+      ?? kpis.ingreso_bruto_parcela
+  );
+  const margenNeto = toFiniteNumber(kpis.margen_neto);
+  const margenBruto = toFiniteNumber(kpis.margen_bruto);
+  const beneficioCosto = toFiniteNumber(kpis.ganancia_por_dolar);
+  const costoTotal = toFiniteNumber(costo_total);
+  const costosFijosKpi = toFiniteNumber(kpis.costos_fijos ?? kpis.costo_fijo ?? data?.datos_base_sistema?.costos_fijos);
+  const puntoEquilibrio = toFiniteNumber(kpis.punto_equilibrio);
+  const precioPiso = toFiniteNumber(kpis.precio_piso_qq);
+  const margenSeguridad = toFiniteNumber(kpis.margen_seguridad ?? kpis.margen_seguridad_pct);
+  const probSuperarBreakEven = toFiniteNumber(kpis.prob_superar_break_even);
+  const confianzaMonteCarlo = toFiniteNumber(kpis.confianza_monte_carlo ?? kpis.confianza_simulacion);
+  const retornoInversion = toFiniteNumber(kpis.roi);
+  const gananciaPorDolar = beneficioCosto;
+  const tirEstimada = toFiniteNumber(kpis.tir ?? kpis.tir_estimada);
+  const riesgoFinanciero = String(kpis.riesgo_financiero?.nivel ?? kpis.riesgo_financiero ?? '').trim();
 
   const getSensibilidadCardStyle = (marginVal) => {
     const isLight = typeof document !== 'undefined' && document.body.classList.contains('light-theme');
@@ -333,12 +328,16 @@ export default function DashboardFinance({ cultivoElegidoId, anioSeleccionado, o
   };
 
   return (
-    <div>
-      <div className="dashboard-title-row">
-        <div>
-          <p className="dashboard-title-desc">Calcula tus costos y ganancias proyectadas para saber si el negocio será rentable antes de vender.</p>
-        </div>
-      </div>
+    <div className="dashboard-view dashboard-view--finance">
+      <DashboardIntro
+        step="04 / Economía"
+        title="La decisión también debe cerrar en números"
+        description="Ajusta precio, producción y costos para estimar el margen y comparar estrategias antes de invertir."
+        interpretation="Las cifras dependen de los supuestos que ingreses. Compara el margen neto con el punto de equilibrio y luego explora sensibilidad y ROI."
+        source="Modelo financiero · USD por hectárea salvo indicación contraria"
+      />
+
+      <DashboardSectionHeading label="01 · Supuestos" title="Configura tu escenario económico" description="Elige un perfil como punto de partida o introduce tus propios valores y pulsa Calcular." />
 
       {/* Form Container: Parámetros de Mercado, Producción y Costos */}
       <div className="glass-panel" style={{ marginBottom: '1.25rem' }}>
@@ -557,19 +556,19 @@ export default function DashboardFinance({ cultivoElegidoId, anioSeleccionado, o
             </div>
             <div>
               <span style={{ color: 'var(--text-subtle)', display: 'block', fontSize: '0.66rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Cosecha Total Parcela</span>
-              <span style={{ fontWeight: 800, color: '#10b981' }}>{produccionTotalParcela} qq <small style={{ color: 'var(--text-subtle)', fontWeight: 500 }}>({rendQqNum} qq/ha)</small></span>
+              <span style={{ fontWeight: 800, color: 'var(--accent-primary)' }}>{produccionTotalParcela} qq <small style={{ color: 'var(--text-subtle)', fontWeight: 500 }}>({rendQqNum} qq/ha)</small></span>
             </div>
             <div>
               <span style={{ color: 'var(--text-subtle)', display: 'block', fontSize: '0.66rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Ingreso Bruto Total</span>
-              <span style={{ fontWeight: 800, color: '#3b82f6' }}>${Number(ingresoBrutoTotalParcela).toLocaleString()} USD</span>
+              <span style={{ fontWeight: 800, color: 'var(--accent-secondary)' }}>${Number(ingresoBrutoTotalParcela).toLocaleString()} USD</span>
             </div>
             <div>
               <span style={{ color: 'var(--text-subtle)', display: 'block', fontSize: '0.66rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Costo Total Parcela</span>
-              <span style={{ fontWeight: 800, color: '#ef4444' }}>${Number(costoTotalParcelaCalc).toLocaleString()} USD</span>
+              <span style={{ fontWeight: 800, color: 'var(--accent-warning)' }}>${Number(costoTotalParcelaCalc).toLocaleString()} USD</span>
             </div>
             <div>
               <span style={{ color: 'var(--text-subtle)', display: 'block', fontSize: '0.66rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Margen Neto Parcela</span>
-              <span style={{ fontWeight: 900, color: Number(margenNetoParcelaCalc) >= 0 ? '#10b981' : '#ef4444' }}>
+              <span style={{ fontWeight: 900, color: Number(margenNetoParcelaCalc) >= 0 ? 'var(--accent-primary)' : 'var(--accent-warning)' }}>
                 ${Number(margenNetoParcelaCalc).toLocaleString()} USD
               </span>
             </div>
@@ -583,6 +582,7 @@ export default function DashboardFinance({ cultivoElegidoId, anioSeleccionado, o
 
       {data && (
         <>
+          <DashboardSectionHeading label="02 · Resultado" title="Rentabilidad de la parcela" description="Primero comprueba el margen neto; después revisa costos, equilibrio y retorno para entender el riesgo." />
           {/* KPI Cards */}
           <div className="kpi-row">
             <InteractiveKPI
@@ -591,20 +591,22 @@ export default function DashboardFinance({ cultivoElegidoId, anioSeleccionado, o
               slides={[
                 {
                   title: "Margen Neto Estimado",
-                  value: <>${kpis.margen_neto.toLocaleString()} <span className="kpi-value-unit">/ha</span></>,
-                  trend: kpis.margen_neto >= 300 ? "Favorable" : "Bajo",
-                  progress: Math.min(100, Math.max(0, (kpis.margen_neto / 600) * 100)),
-                  progressColor: kpis.margen_neto >= 300 ? "linear-gradient(90deg, #16a34a 0%, #34d399 100%)" : "linear-gradient(90deg, #f59e0b 0%, #fbbf24 100%)",
+                  value: margenNeto === null ? 'No disponible' : <>{formatCurrency(margenNeto)} <span className="kpi-value-unit">/ha</span></>,
+                  isMissing: margenNeto === null,
+                  trend: margenNeto === null ? "Sin dato" : (margenNeto >= 300 ? "Favorable" : "Bajo"),
+                  progress: margenNeto === null ? null : Math.min(100, Math.max(0, (margenNeto / 600) * 100)),
+                  progressColor: margenNeto !== null && margenNeto >= 300 ? "linear-gradient(90deg, #16a34a 0%, #34d399 100%)" : "linear-gradient(90deg, #f59e0b 0%, #fbbf24 100%)",
                   progressLabelLeft: "Retorno Neto",
-                  progressLabelRight: kpis.margen_neto >= 0 ? "Ganancia" : "Pérdida",
-                  miniChart: { type: 'bar', data: [800, 920, 1050, Math.max(10, kpis.margen_neto)], color: '#34d399' },
+                  progressLabelRight: margenNeto === null ? "Sin dato" : (margenNeto >= 0 ? "Ganancia" : "Pérdida"),
+                  // No se inventa una serie histórica: la API sólo entrega el valor actual.
+                  miniChart: null,
                   explanation: {
                     tipo_elemento: "tarjeta",
                     nombre: "Margen Neto Estimado",
                     cultivo: "maiz",
-                    valor: `$${kpis.margen_neto.toLocaleString()} USD`,
+                    valor: margenNeto === null ? null : `${formatCurrency(margenNeto)} USD`,
                     unidad: "/ha",
-                    estado: kpis.margen_neto > 300 ? "favorable" : (kpis.margen_neto >= 0 ? "regular" : "riesgoso"),
+                    estado: margenNeto === null ? "sin_datos" : (margenNeto > 300 ? "favorable" : (margenNeto >= 0 ? "regular" : "riesgoso")),
                     rango_ideal: "Mayor a 300 USD/ha",
                     descripcion_tecnica: "La ganancia neta líquida real que le queda al productor por cada hectárea cultivada de maíz, calculada restando los costos fijos y variables del ingreso total por ventas.",
                     impacto_base: "Un margen neto positivo asegura la sostenibilidad económica del agricultor y la rentabilidad del lote. Si es negativo, indica pérdidas directas.",
@@ -613,20 +615,21 @@ export default function DashboardFinance({ cultivoElegidoId, anioSeleccionado, o
                 },
                 {
                   title: "Ingreso Bruto Total",
-                  value: <>${ingresoBruto.toLocaleString()} <span className="kpi-value-unit">/ha</span></>,
-                  trend: "Ventas",
-                  progress: 85,
+                  value: ingresoBruto === null ? 'No disponible' : <>{formatCurrency(ingresoBruto)} <span className="kpi-value-unit">/ha</span></>,
+                  isMissing: ingresoBruto === null,
+                  trend: ingresoBruto === null ? "Sin dato" : "Ventas",
+                  progress: null,
                   progressColor: "linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%)",
-                  progressLabelLeft: "Facturación",
-                  progressLabelRight: "100%",
-                  miniChart: { type: 'bar', data: [1800, 1950, 2050, ingresoBruto], color: '#60a5fa' },
+                  progressLabelLeft: "",
+                  progressLabelRight: "",
+                  miniChart: null,
                   explanation: {
                     tipo_elemento: "tarjeta",
                     nombre: "Ingreso Bruto Total",
                     cultivo: "maiz",
-                    valor: `$${ingresoBruto.toLocaleString()} USD`,
+                    valor: ingresoBruto === null ? null : `${formatCurrency(ingresoBruto)} USD`,
+                    estado: ingresoBruto === null ? "sin_datos" : "favorable",
                     unidad: "/ha",
-                    estado: "favorable",
                     rango_ideal: "Mayor a 1,500 USD/ha",
                     descripcion_tecnica: "Monto total acumulado recibido por la comercialización del maíz cosechado en la parcela antes de descontar ningún gasto ni costo operativo.",
                     impacto_base: "Refleja la escala económica total de las ventas de la cosecha.",
@@ -635,20 +638,21 @@ export default function DashboardFinance({ cultivoElegidoId, anioSeleccionado, o
                 },
                 {
                   title: "Beneficio / Costo (B/C)",
-                  value: <>{kpis.ganancia_por_dolar || '2.15'} <span className="kpi-value-unit">B/C</span></>,
-                  trend: "Eficiente",
-                  progress: 85,
+                  value: beneficioCosto === null ? 'No disponible' : <>{beneficioCosto.toLocaleString('es-EC', { maximumFractionDigits: 2 })} <span className="kpi-value-unit">B/C</span></>,
+                  isMissing: beneficioCosto === null,
+                  trend: beneficioCosto === null ? "Sin dato" : "Eficiente",
+                  progress: beneficioCosto === null ? null : Math.min(100, Math.max(0, (beneficioCosto / 2.5) * 100)),
                   progressColor: "linear-gradient(90deg, #10b981 0%, #34d399 100%)",
                   progressLabelLeft: "Rentabilidad Usd",
-                  progressLabelRight: `${kpis.ganancia_por_dolar || '2.15'}`,
-                  miniChart: { type: 'ring', percent: 85, color: '#34d399' },
+                  progressLabelRight: beneficioCosto === null ? "Sin dato" : beneficioCosto.toLocaleString('es-EC', { maximumFractionDigits: 2 }),
+                  miniChart: beneficioCosto === null ? null : { type: 'ring', percent: Math.min(100, Math.max(0, (beneficioCosto / 2.5) * 100)), color: '#34d399' },
                   explanation: {
                     tipo_elemento: "tarjeta",
                     nombre: "Relación Beneficio / Costo (B/C)",
                     cultivo: "maiz",
-                    valor: `${kpis.ganancia_por_dolar || 2.15} B/C`,
+                    valor: beneficioCosto === null ? null : `${beneficioCosto} B/C`,
                     unidad: "",
-                    estado: (kpis.ganancia_por_dolar || 2.15) > 1.5 ? "favorable" : "regular",
+                    estado: beneficioCosto === null ? "sin_datos" : (beneficioCosto > 1.5 ? "favorable" : "regular"),
                     rango_ideal: "Mayor a 1.5 B/C",
                     descripcion_tecnica: "Índice financiero que resulta de dividir los ingresos brutos totales entre los costos totales. Muestra cuántos dólares en ventas brutas genera cada dólar invertido.",
                     impacto_base: "Permite evaluar la eficiencia económica global del cultivo.",
@@ -666,20 +670,21 @@ export default function DashboardFinance({ cultivoElegidoId, anioSeleccionado, o
               slides={[
                 {
                   title: "Margen Bruto Operativo",
-                  value: <>${kpis.margen_bruto.toLocaleString()} <span className="kpi-value-unit">/ha</span></>,
-                  trend: "Favorable",
-                  progress: Math.min(100, (kpis.margen_bruto / 1000) * 100),
+                  value: margenBruto === null ? 'No disponible' : <>{formatCurrency(margenBruto)} <span className="kpi-value-unit">/ha</span></>,
+                  isMissing: margenBruto === null,
+                  trend: margenBruto === null ? "Sin dato" : (margenBruto >= 500 ? "Favorable" : "Regular"),
+                  progress: margenBruto === null ? null : Math.min(100, (margenBruto / 1000) * 100),
                   progressColor: "linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%)",
                   progressLabelLeft: "Operativo",
                   progressLabelRight: "Bruto",
-                  miniChart: { type: 'bar', data: [kpis.margen_bruto - 200, kpis.margen_bruto - 100, kpis.margen_bruto - 30, kpis.margen_bruto], color: '#60a5fa' },
+                  miniChart: null,
                   explanation: {
                     tipo_elemento: "tarjeta",
                     nombre: "Margen Bruto Operativo",
                     cultivo: "maiz",
-                    valor: `$${kpis.margen_bruto.toLocaleString()} USD`,
+                    valor: margenBruto === null ? null : `${formatCurrency(margenBruto)} USD`,
                     unidad: "/ha",
-                    estado: kpis.margen_bruto > 500 ? "favorable" : (kpis.margen_bruto >= 200 ? "regular" : "riesgoso"),
+                    estado: margenBruto === null ? "sin_datos" : (margenBruto > 500 ? "favorable" : (margenBruto >= 200 ? "regular" : "riesgoso")),
                     rango_ideal: "Mayor a 600 USD/ha",
                     descripcion_tecnica: "Diferencia directa entre el dinero recibido por la venta del maíz y los costos operativos de campo (semillas, fertilizante, combustible, jornaleros), excluyendo costos fijos de administración o arriendo.",
                     impacto_base: "Muestra la rentabilidad strictly productiva y operativa del cultivo en el lote.",
@@ -688,20 +693,21 @@ export default function DashboardFinance({ cultivoElegidoId, anioSeleccionado, o
                 },
                 {
                   title: "Costo Total Insumos",
-                  value: <>${costo_total || 994} <span className="kpi-value-unit">/ha</span></>,
-                  trend: "Presupuesto",
-                  progress: Math.min(100, ((costo_total || 994) / 1500) * 100),
+                  value: costoTotal === null ? 'No disponible' : <>{formatCurrency(costoTotal)} <span className="kpi-value-unit">/ha</span></>,
+                  isMissing: costoTotal === null,
+                  trend: costoTotal === null ? "Sin dato" : "Presupuesto",
+                  progress: costoTotal === null ? null : Math.min(100, (costoTotal / 1500) * 100),
                   progressColor: "linear-gradient(90deg, #f87171 0%, #ef4444 100%)",
                   progressLabelLeft: "Gastos Lote",
-                  progressLabelRight: `$${costo_total || 994}`,
-                  miniChart: { type: 'bar', data: [85, 120, 60, 45, 120, 80], color: '#f87171' },
+                  progressLabelRight: costoTotal === null ? "Sin dato" : formatCurrency(costoTotal),
+                  miniChart: null,
                   explanation: {
                     tipo_elemento: "tarjeta",
                     nombre: "Costo Total Insumos y Producción",
                     cultivo: "maiz",
-                    valor: `$${costo_total || 994} USD`,
+                    valor: costoTotal === null ? null : `${formatCurrency(costoTotal)} USD`,
                     unidad: "/ha",
-                    estado: "presupuesto",
+                    estado: costoTotal === null ? "sin_datos" : "presupuesto",
                     rango_ideal: "800 a 1,200 USD/ha",
                     descripcion_tecnica: "Suma consolidada de todos los egresos financieros: semillas, fertilización, riego, agrotóxicos fitosanitarios, costos variables operativos y costos fijos de la parcela.",
                     impacto_base: "Define la necesidad total de capital de trabajo que el agricultor debe financiar o desembolsar para el ciclo del cultivo.",
@@ -710,20 +716,21 @@ export default function DashboardFinance({ cultivoElegidoId, anioSeleccionado, o
                 },
                 {
                   title: "Estructura de Fijos",
-                  value: <>$120 <span className="kpi-value-unit">/ha</span></>,
-                  trend: "Administración",
-                  progress: 38,
+                  value: costosFijosKpi === null ? 'No disponible' : <>{formatCurrency(costosFijosKpi)} <span className="kpi-value-unit">/ha</span></>,
+                  isMissing: costosFijosKpi === null,
+                  trend: costosFijosKpi === null ? "Sin dato" : "Administración",
+                  progress: costosFijosKpi === null ? null : Math.min(100, (costosFijosKpi / 300) * 100),
                   progressColor: "linear-gradient(90deg, #fbbf24 0%, #f59e0b 100%)",
                   progressLabelLeft: "Proporción Fija",
-                  progressLabelRight: "38%",
-                  miniChart: { type: 'ring', percent: 38, color: '#fbbf24' },
+                  progressLabelRight: costosFijosKpi === null ? "Sin dato" : `${Math.min(100, Math.round((costosFijosKpi / 300) * 100))}%`,
+                  miniChart: costosFijosKpi === null ? null : { type: 'ring', percent: Math.min(100, (costosFijosKpi / 300) * 100), color: '#fbbf24' },
                   explanation: {
                     tipo_elemento: "tarjeta",
                     nombre: "Estructura de Costos Fijos",
                     cultivo: "maiz",
-                    valor: "$120 USD",
+                    valor: costosFijosKpi === null ? null : `${formatCurrency(costosFijosKpi)} USD`,
                     unidad: "/ha",
-                    estado: "fijo",
+                    estado: costosFijosKpi === null ? "sin_datos" : "fijo",
                     rango_ideal: "100 a 150 USD/ha",
                     descripcion_tecnica: "Representa la proporción de gastos fijos ineludibles como arriendo del suelo, administración y amortización de herramientas que no varían con el volumen cosechado.",
                     impacto_base: "Un porcentaje muy alto de costos fijos eleva el punto de equilibrio y la vulnerabilidad en años de bajo precio.",
@@ -741,20 +748,21 @@ export default function DashboardFinance({ cultivoElegidoId, anioSeleccionado, o
               slides={[
                 {
                   title: "Punto de Equilibrio",
-                  value: <>{kpis.punto_equilibrio} <span className="kpi-value-unit">t/ha</span></>,
-                  trend: "Moderado",
-                  progress: Math.min(100, (kpis.punto_equilibrio / 10) * 100),
+                  value: puntoEquilibrio === null ? 'No disponible' : <>{puntoEquilibrio} <span className="kpi-value-unit">t/ha</span></>,
+                  isMissing: puntoEquilibrio === null,
+                  trend: puntoEquilibrio === null ? "Sin dato" : "Moderado",
+                  progress: puntoEquilibrio === null ? null : Math.min(100, (puntoEquilibrio / 10) * 100),
                   progressColor: "linear-gradient(90deg, #f59e0b 0%, #fbbf24 100%)",
                   progressLabelLeft: "Umbral Mínimo",
-                  progressLabelRight: `${kpis.punto_equilibrio} t/ha`,
-                  miniChart: { type: 'ring', percent: Math.round((kpis.punto_equilibrio / 8.5) * 100), color: '#fbbf24' },
+                  progressLabelRight: puntoEquilibrio === null ? "Sin dato" : `${puntoEquilibrio} t/ha`,
+                  miniChart: puntoEquilibrio === null ? null : { type: 'ring', percent: Math.round((puntoEquilibrio / 8.5) * 100), color: '#fbbf24' },
                   explanation: {
                     tipo_elemento: "tarjeta",
                     nombre: "Punto de Equilibrio (Break-Even Yield)",
                     cultivo: "maiz",
-                    valor: kpis.punto_equilibrio,
+                    valor: puntoEquilibrio,
                     unidad: "t/ha",
-                    estado: kpis.punto_equilibrio < 5.0 ? "favorable" : "riesgoso",
+                    estado: puntoEquilibrio === null ? "sin_datos" : (puntoEquilibrio < 5.0 ? "favorable" : "riesgoso"),
                     rango_ideal: "Menor a 4.5 t/ha",
                     descripcion_tecnica: "La cantidad mínima de toneladas de maíz que se deben producir y vender por hectárea para empatar financieramente (ingresos igual a egresos totales).",
                     impacto_base: "Si tu rendimiento real o predicho está por debajo de este punto de equilibrio, la parcela operará con pérdidas económicas.",
@@ -763,20 +771,21 @@ export default function DashboardFinance({ cultivoElegidoId, anioSeleccionado, o
                 },
                 {
                   title: "Precio Mínimo Venta",
-                  value: <>${kpis.precio_piso_qq || 4.6} <span className="kpi-value-unit">/qq</span></>,
-                  trend: "Break-Even",
-                  progress: 60,
+                  value: precioPiso === null ? 'No disponible' : <>{formatCurrency(precioPiso)} <span className="kpi-value-unit">/qq</span></>,
+                  isMissing: precioPiso === null,
+                  trend: precioPiso === null ? "Sin dato" : "Break-Even",
+                  progress: precioPiso === null ? null : 60,
                   progressColor: "linear-gradient(90deg, #60a5fa 0%, #93c5fd 100%)",
                   progressLabelLeft: "Precio Piso",
-                  progressLabelRight: `$${kpis.precio_piso_qq || 4.6}/qq`,
-                  miniChart: { type: 'bar', data: [8, 7, 6, kpis.precio_piso_qq || 4.6], color: '#60a5fa' },
+                  progressLabelRight: precioPiso === null ? "Sin dato" : `${formatCurrency(precioPiso)}/qq`,
+                  miniChart: null,
                   explanation: {
                     tipo_elemento: "tarjeta",
                     nombre: "Precio Mínimo de Venta (Precio Piso)",
                     cultivo: "maiz",
-                    valor: `$${kpis.precio_piso_qq || 4.6} USD`,
+                    valor: precioPiso === null ? null : `${formatCurrency(precioPiso)} USD`,
                     unidad: "/qq",
-                    estado: "break-even",
+                    estado: precioPiso === null ? "sin_datos" : "break-even",
                     rango_ideal: "Menor a $12.00 USD/qq",
                     descripcion_tecnica: "Precio de mercado por quintal de maíz por debajo del cual el cultivo entra en pérdidas netas considerando la producción esperada de la parcela.",
                     impacto_base: "Permite al agricultor fijar su precio límite para negociar con compradores e industrias balanceadoras.",
@@ -785,20 +794,21 @@ export default function DashboardFinance({ cultivoElegidoId, anioSeleccionado, o
                 },
                 {
                   title: "Margen de Seguridad",
-                  value: <>38 <span className="kpi-value-unit">% Vol</span></>,
-                  trend: "Protección",
-                  progress: 38,
+                  value: margenSeguridad === null ? 'No disponible' : <>{margenSeguridad} <span className="kpi-value-unit">% Vol</span></>,
+                  isMissing: margenSeguridad === null,
+                  trend: margenSeguridad === null ? "Sin dato" : "Protección",
+                  progress: margenSeguridad === null ? null : margenSeguridad,
                   progressColor: "linear-gradient(90deg, #34d399 0%, #10b981 100%)",
                   progressLabelLeft: "Holgura Lluvia/Rend",
-                  progressLabelRight: "38%",
-                  miniChart: { type: 'ring', percent: 38, color: '#34d399' },
+                  progressLabelRight: margenSeguridad === null ? "Sin dato" : `${margenSeguridad}%`,
+                  miniChart: margenSeguridad === null ? null : { type: 'ring', percent: margenSeguridad, color: '#34d399' },
                   explanation: {
                     tipo_elemento: "tarjeta",
                     nombre: "Margen de Seguridad Productivo",
                     cultivo: "maiz",
-                    valor: "38 %",
+                    valor: margenSeguridad === null ? null : `${margenSeguridad} %`,
                     unidad: "Volumen",
-                    estado: "favorable",
+                    estado: margenSeguridad === null ? "sin_datos" : "favorable",
                     rango_ideal: "Mayor al 25%",
                     descripcion_tecnica: "Holgura en porcentaje que puede caer la cosecha o el precio antes de que la parcela comience a registrar pérdidas netas.",
                     impacto_base: "Cuanto mayor sea este porcentaje, más protegido está el productor contra sequías imprevistas o caídas de precio.",
@@ -815,43 +825,45 @@ export default function DashboardFinance({ cultivoElegidoId, anioSeleccionado, o
               iconClass="text-success"
               slides={[
                 {
-                  title: "Superar Break-Even",
-                  value: <>{kpis.prob_superar_break_even} <span className="kpi-value-unit">%</span></>,
-                  trend: "Favorable",
-                  progress: kpis.prob_superar_break_even,
+                  title: "Escenarios sobre equilibrio",
+                  value: probSuperarBreakEven === null ? 'No disponible' : <>{probSuperarBreakEven} <span className="kpi-value-unit">%</span></>,
+                  isMissing: probSuperarBreakEven === null,
+                  trend: probSuperarBreakEven === null ? "Mín. 5 simulaciones" : "Frecuencia simulada",
+                  progress: probSuperarBreakEven,
                   progressColor: "linear-gradient(90deg, #16a34a 0%, #34d399 100%)",
-                  progressLabelLeft: "Probabilidad",
-                  progressLabelRight: `${kpis.prob_superar_break_even}%`,
-                  miniChart: { type: 'ring', percent: kpis.prob_superar_break_even, color: '#34d399' },
+                  progressLabelLeft: "Simulaciones rentables",
+                  progressLabelRight: probSuperarBreakEven === null ? "Sin dato" : `${probSuperarBreakEven}%`,
+                  miniChart: probSuperarBreakEven === null ? null : { type: 'ring', percent: probSuperarBreakEven, color: '#34d399' },
                   explanation: {
                     tipo_elemento: "tarjeta",
-                    nombre: "Probabilidad de Superar el Punto de Equilibrio",
+                    nombre: "Frecuencia de Simulaciones Sobre el Punto de Equilibrio",
                     cultivo: "maiz",
-                    valor: kpis.prob_superar_break_even,
+                    valor: probSuperarBreakEven,
                     unidad: "%",
-                    estado: kpis.prob_superar_break_even > 80 ? "favorable" : (kpis.prob_superar_break_even > 50 ? "regular" : "riesgoso"),
-                    rango_ideal: "Mayor a 75%",
-                    descripcion_tecnica: "La probabilidad estadística de que las toneladas de maíz cosechadas superen el volumen mínimo necesario para cubrir todos los gastos de producción.",
-                    impacto_base: "Un valor bajo indica un nivel inaceptable de riesgo financiero para el productor.",
-                    recomendacion_base: "Revisar los costos fijos y variables. Considerar postergar la siembra a una mejor ventana climática para asegurar mayor rendimiento y elevar esta probabilidad."
+                    estado: probSuperarBreakEven === null ? "sin_datos" : (probSuperarBreakEven > 80 ? "favorable" : (probSuperarBreakEven > 50 ? "regular" : "riesgoso")),
+                    rango_ideal: "Mayor porcentaje de escenarios rentables",
+                    descripcion_tecnica: "Porcentaje de al menos cinco simulaciones guardadas cuya cosecha estimada cubre los costos y el precio configurados. No es una probabilidad calibrada ni una garantía de resultado.",
+                    impacto_base: "Permite ver con qué frecuencia la cosecha simulada alcanzó el punto de equilibrio bajo estos supuestos financieros.",
+                    recomendacion_base: "Contrasta este porcentaje con el margen neto y la sensibilidad al precio antes de invertir."
                   }
                 },
                 {
                   title: "Confianza Monte Carlo",
-                  value: <>85 <span className="kpi-value-unit">%</span></>,
-                  trend: "Simulación",
-                  progress: 85,
+                  value: confianzaMonteCarlo === null ? 'No disponible' : <>{confianzaMonteCarlo} <span className="kpi-value-unit">%</span></>,
+                  isMissing: confianzaMonteCarlo === null,
+                  trend: confianzaMonteCarlo === null ? "Sin dato" : "Simulación",
+                  progress: confianzaMonteCarlo,
                   progressColor: "linear-gradient(90deg, #818cf8 0%, #c084fc 100%)",
                   progressLabelLeft: "30 Corridas",
-                  progressLabelRight: "Alta",
-                  miniChart: { type: 'bar', data: [65, 72, 78, 85], color: '#c084fc' },
+                  progressLabelRight: confianzaMonteCarlo === null ? "Sin dato" : (confianzaMonteCarlo >= 80 ? "Alta" : "Revisar"),
+                  miniChart: confianzaMonteCarlo === null ? null : { type: 'ring', percent: confianzaMonteCarlo, color: '#9ed1ff' },
                   explanation: {
                     tipo_elemento: "tarjeta",
                     nombre: "Nivel de Confianza de Simulación Monte Carlo",
                     cultivo: "maiz",
-                    valor: "85 %",
+                    valor: confianzaMonteCarlo === null ? null : `${confianzaMonteCarlo} %`,
                     unidad: "Confianza",
-                    estado: "favorable",
+                    estado: confianzaMonteCarlo === null ? "sin_datos" : "favorable",
                     rango_ideal: "Mayor al 80%",
                     descripcion_tecnica: "Grado de fiabilidad estadística obtenido tras correr 30 simulaciones biofísicas combinando variaciones climáticas e insumos históricos del lote.",
                     impacto_base: "Asegura que los resultados financieros no son producto del azar sino de un modelo agronómico robusto.",
@@ -860,20 +872,21 @@ export default function DashboardFinance({ cultivoElegidoId, anioSeleccionado, o
                 },
                 {
                   title: "Riesgo Financiero",
-                  value: <>Bajo <span className="kpi-value-unit">Risk</span></>,
-                  trend: "Protegido",
-                  progress: 15,
+                  value: riesgoFinanciero || 'No disponible',
+                  isMissing: !riesgoFinanciero,
+                  trend: riesgoFinanciero ? "Protegido" : "Sin dato",
+                  progress: null,
                   progressColor: "linear-gradient(90deg, #10b981 0%, #34d399 100%)",
                   progressLabelLeft: "Riesgo Pérdida",
-                  progressLabelRight: "15%",
-                  miniChart: { type: 'ring', percent: 15, color: '#10b981' },
+                  progressLabelRight: riesgoFinanciero ? "Nivel reportado" : "Sin dato",
+                  miniChart: null,
                   explanation: {
                     tipo_elemento: "tarjeta",
                     nombre: "Nivel de Riesgo Financiero de Pérdida",
                     cultivo: "maiz",
-                    valor: "Bajo (15%)",
+                    valor: riesgoFinanciero || null,
                     unidad: "",
-                    estado: "favorable",
+                    estado: riesgoFinanciero ? "favorable" : "sin_datos",
                     rango_ideal: "Bajo (menor al 20%)",
                     descripcion_tecnica: "Probabilidad porcentual de que los ingresos por cosecha sean inferiores a la inversión total realizada en la campaña.",
                     impacto_base: "Evalúa la exposición al riesgo del capital invertido en la parcela.",
@@ -881,7 +894,7 @@ export default function DashboardFinance({ cultivoElegidoId, anioSeleccionado, o
                   }
                 }
               ]}
-              tooltip="Probabilidad estadística de que el rendimiento supere el punto de equilibrio financiero."
+              tooltip="Frecuencia de simulaciones que cubren los costos; requiere al menos cinco resultados del lote."
               delay={3}
               onClick={(payload) => pedirExplicacionIa(payload)}
             />
@@ -891,20 +904,21 @@ export default function DashboardFinance({ cultivoElegidoId, anioSeleccionado, o
               slides={[
                 {
                   title: "Retorno (ROI)",
-                  value: <>{kpis.roi} <span className="kpi-value-unit">%</span></>,
-                  trend: kpis.roi >= 0 ? "Favorable" : "Riesgoso",
-                  progress: Math.min(100, Math.max(0, kpis.roi)),
-                  progressColor: kpis.roi >= 0 ? "linear-gradient(90deg, #16a34a 0%, #34d399 100%)" : "linear-gradient(90deg, #ef4444 0%, #f87171 100%)",
+                  value: retornoInversion === null ? 'No disponible' : <>{retornoInversion} <span className="kpi-value-unit">%</span></>,
+                  isMissing: retornoInversion === null,
+                  trend: retornoInversion === null ? "Sin dato" : (retornoInversion >= 0 ? "Favorable" : "Riesgoso"),
+                  progress: retornoInversion === null ? null : Math.min(100, Math.max(0, retornoInversion)),
+                  progressColor: retornoInversion !== null && retornoInversion >= 0 ? "linear-gradient(90deg, #16a34a 0%, #34d399 100%)" : "linear-gradient(90deg, #ef4444 0%, #f87171 100%)",
                   progressLabelLeft: "Inversión",
-                  progressLabelRight: `${kpis.roi}%`,
-                  miniChart: { type: 'ring', percent: Math.min(100, Math.max(0, kpis.roi)), color: kpis.roi >= 0 ? '#34d399' : '#f87171' },
+                  progressLabelRight: retornoInversion === null ? "Sin dato" : `${retornoInversion}%`,
+                  miniChart: retornoInversion === null ? null : { type: 'ring', percent: Math.min(100, Math.max(0, retornoInversion)), color: retornoInversion >= 0 ? '#34d399' : '#f87171' },
                   explanation: {
                     tipo_elemento: "tarjeta",
                     nombre: "Retorno de Inversión (ROI)",
                     cultivo: "maiz",
-                    valor: `${kpis.roi}%`,
+                    valor: retornoInversion,
                     unidad: "",
-                    estado: kpis.roi > 20 ? "favorable" : (kpis.roi >= 0 ? "regular" : "riesgoso"),
+                    estado: retornoInversion === null ? "sin_datos" : (retornoInversion > 20 ? "favorable" : (retornoInversion >= 0 ? "regular" : "riesgoso")),
                     rango_ideal: "Mayor al 25%",
                     descripcion_tecnica: "Mide el rendimiento del dinero invertido en el cultivo de maíz. Por ejemplo, un ROI del 20% significa que por cada dólar que inviertes, recuperas tu dólar y ganas 20 centavos adicionales.",
                     impacto_base: "Determina si el capital invertido en el maíz rinde más que guardarlo en el banco o invertirlo en otra actividad.",
@@ -913,20 +927,21 @@ export default function DashboardFinance({ cultivoElegidoId, anioSeleccionado, o
                 },
                 {
                   title: "Ganancia por Dólar",
-                  value: <>{kpis.ganancia_por_dolar ? `$${kpis.ganancia_por_dolar}` : '$2.53'} <span className="kpi-value-unit">/$</span></>,
-                  trend: "Utilidad",
-                  progress: 82,
+                  value: gananciaPorDolar === null ? 'No disponible' : <>{formatCurrency(gananciaPorDolar)} <span className="kpi-value-unit">/$</span></>,
+                  isMissing: gananciaPorDolar === null,
+                  trend: gananciaPorDolar === null ? "Sin dato" : "Utilidad",
+                  progress: gananciaPorDolar === null ? null : Math.min(100, (gananciaPorDolar / 3) * 100),
                   progressColor: "linear-gradient(90deg, #c084fc 0%, #e879f9 100%)",
                   progressLabelLeft: "Retorno Capital",
-                  progressLabelRight: `${kpis.ganancia_por_dolar ? `$${kpis.ganancia_por_dolar}` : '$2.53'}`,
-                  miniChart: { type: 'bar', data: [0.8, 0.95, 1.05, 1.15], color: '#c084fc' },
+                  progressLabelRight: gananciaPorDolar === null ? "Sin dato" : formatCurrency(gananciaPorDolar),
+                  miniChart: gananciaPorDolar === null ? null : { type: 'ring', percent: Math.min(100, Math.max(0, (gananciaPorDolar / 3) * 100)), color: '#9fc862' },
                   explanation: {
                     tipo_elemento: "tarjeta",
                     nombre: "Ganancia por Dólar Invertido",
                     cultivo: "maiz",
-                    valor: `${kpis.ganancia_por_dolar ? `$${kpis.ganancia_por_dolar}` : '$2.53'} USD`,
+                    valor: gananciaPorDolar === null ? null : `${formatCurrency(gananciaPorDolar)} USD`,
                     unidad: "/$",
-                    estado: "favorable",
+                    estado: gananciaPorDolar === null ? "sin_datos" : "favorable",
                     rango_ideal: "Mayor a $1.20 USD/$",
                     descripcion_tecnica: "Indica cuántos dólares regresa la cosecha por cada dólar desembolsado en semillas, fertilización, riego y mano de obra.",
                     impacto_base: "Muestra la rentabilidad unitaria directa del capital de trabajo.",
@@ -935,20 +950,21 @@ export default function DashboardFinance({ cultivoElegidoId, anioSeleccionado, o
                 },
                 {
                   title: "TIR Estimada",
-                  value: <>42 <span className="kpi-value-unit">% TIR</span></>,
-                  trend: "Interna",
-                  progress: 70,
+                  value: tirEstimada === null ? 'No disponible' : <>{tirEstimada} <span className="kpi-value-unit">% TIR</span></>,
+                  isMissing: tirEstimada === null,
+                  trend: tirEstimada === null ? "Sin dato" : "Interna",
+                  progress: tirEstimada === null ? null : Math.min(100, tirEstimada),
                   progressColor: "linear-gradient(90deg, #a855f7 0%, #c084fc 100%)",
                   progressLabelLeft: "Tasa Interna",
-                  progressLabelRight: "42%",
-                  miniChart: { type: 'ring', percent: 42, color: '#a855f7' },
+                  progressLabelRight: tirEstimada === null ? "Sin dato" : `${tirEstimada}%`,
+                  miniChart: tirEstimada === null ? null : { type: 'ring', percent: Math.min(100, tirEstimada), color: '#d8a83f' },
                   explanation: {
                     tipo_elemento: "tarjeta",
                     nombre: "Tasa Interna de Retorno (TIR) Estimada",
                     cultivo: "maiz",
-                    valor: "42 %",
+                    valor: tirEstimada === null ? null : `${tirEstimada} %`,
                     unidad: "TIR",
-                    estado: "favorable",
+                    estado: tirEstimada === null ? "sin_datos" : "favorable",
                     rango_ideal: "Mayor al 30%",
                     descripcion_tecnica: "Tasa de rendimiento financiero anualizada que genera el proyecto agrícola durante los 4 meses del ciclo del cultivo de maíz.",
                     impacto_base: "Demuestra la rentabilidad financiera del cultivo en comparación con otras alternativas de inversión.",
@@ -963,6 +979,7 @@ export default function DashboardFinance({ cultivoElegidoId, anioSeleccionado, o
           </div>
 
           {/* Charts */}
+          <DashboardSectionHeading label="03 · Sensibilidad" title="Qué cambia el resultado" description="Compara variaciones de precio y rendimiento, distribución de costos y retorno por estrategia." />
           <div className="chart-grid">
             {/* Sensitivity */}
             <div 
@@ -1036,38 +1053,36 @@ export default function DashboardFinance({ cultivoElegidoId, anioSeleccionado, o
               className="glass-panel chart-panel-interactive"
               onClick={() => pedirExplicacionIa({
                 tipo_elemento: "grafico",
-                nombre: "Distribución de Ingresos y Costos",
+                nombre: "Composición de Costos de Producción",
                 cultivo: "maiz",
-                valor: "Ingreso bruto vs Costo de producción",
+                valor: "Participación de cada costo en el costo total",
                 unidad: "USD",
                 estado: "presupuesto",
-                descripcion_tecnica: "Gráfico de cascada que representa el desglose de ingresos brutos y los costos de insumos, siembra, y mano de obra para calcular el margen neto final.",
-                impacto_base: "Muestra cuál es la partida de costos que consume más parte de tus ganancias agrícolas (por ejemplo, fertilizantes o semillas).",
+                descripcion_tecnica: "Gráfico de anillo que muestra exclusivamente cómo se distribuye el costo de producción entre semillas, fertilización, riego, protección, otros costos y costos fijos.",
+                impacto_base: "Muestra cuál es la partida de costos con más peso dentro del presupuesto. El margen neto se presenta por separado para no mezclar ingresos con gastos.",
                 recomendacion_base: "Priorizar el control de las partidas de gasto que representan el mayor porcentaje de egresos.",
                 datos_grafico: waterfall_costos
               })}
             >
               <div className="glass-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', marginBottom: '0.5rem' }}>
-                <h3 style={{ fontSize: '0.95rem', fontWeight: 600, margin: 0 }}>Distribución de Ingresos y Costos</h3>
+                <h3 style={{ fontSize: '0.95rem', fontWeight: 600, margin: 0 }}>Composición de costos de producción</h3>
               </div>
               <div className="glass-card-body" style={{ padding: '0.85rem 1.25rem 1.25rem 1.25rem', display: 'flex', flexDirection: 'column', justifyContent: 'center', height: '100%', minHeight: '260px' }}>
                 {(() => {
-                  const expenseItems = (waterfall_costos || []).filter(item => item.label !== 'Ingreso Bruto');
-                  const totalIncome = (waterfall_costos || []).find(item => item.label === 'Ingreso Bruto')?.amount || 1;
+                  const expenseItems = (waterfall_costos || []).filter(item => !item.is_total && Number(item.amount) < 0);
+                  const totalExpenses = expenseItems.reduce((total, item) => total + Math.abs(Number(item.amount) || 0), 0);
                   const netMargin = (waterfall_costos || []).find(item => item.label === 'Margen Neto')?.amount || 0;
 
                   const colorPalette = [
-                    '#f87171', '#fbbf24', '#60a5fa', '#c084fc', '#f97316', '#38bdf8', '#34d399'
+                    '#d8a83f', '#9fc862', '#9ed1ff', '#70a984', '#d7c176', '#699887'
                   ];
 
                   const chartData = {
                     labels: expenseItems.map(item => item.label),
                     datasets: [{
                       data: expenseItems.map(item => Math.abs(item.amount)),
-                      backgroundColor: expenseItems.map((item, idx) => 
-                        item.label === 'Margen Neto' ? '#34d399' : (colorPalette[idx % colorPalette.length])
-                      ),
-                      borderColor: 'rgba(15, 23, 42, 0.6)',
+                      backgroundColor: expenseItems.map((_, idx) => colorPalette[idx % colorPalette.length]),
+                      borderColor: 'transparent',
                       borderWidth: 2,
                       hoverOffset: 8
                     }]
@@ -1086,13 +1101,15 @@ export default function DashboardFinance({ cultivoElegidoId, anioSeleccionado, o
                           label: (context) => {
                             const label = context.label || '';
                             const val = context.raw || 0;
-                            const pct = ((val / totalIncome) * 100).toFixed(1);
+                            const pct = totalExpenses > 0 ? ((val / totalExpenses) * 100).toFixed(1) : '0.0';
                             return ` ${label}: $${val.toLocaleString()} (${pct}%)`;
                           }
                         }
                       }
                     }
                   };
+
+                  if (totalExpenses <= 0) return <div className="chart-empty-state">No hay costos registrados para mostrar su distribución.</div>;
 
                   return (
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.25rem', alignItems: 'center', minHeight: '240px' }}>
@@ -1101,13 +1118,13 @@ export default function DashboardFinance({ cultivoElegidoId, anioSeleccionado, o
                         <Doughnut data={chartData} options={chartOptions} />
                         <div style={{ position: 'absolute', textAlign: 'center', pointerEvents: 'none' }}>
                           <span style={{ fontSize: '0.68rem', textTransform: 'uppercase', color: 'var(--text-subtle)', fontWeight: 700, letterSpacing: '0.05em', display: 'block' }}>
-                            Margen Neto
+                            Costo total
                           </span>
-                          <span style={{ fontSize: '1.35rem', fontWeight: 800, color: netMargin >= 0 ? '#34d399' : '#f87171', lineHeight: 1.15 }}>
-                            ${netMargin.toLocaleString()}
+                          <span style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1.15 }}>
+                            ${totalExpenses.toLocaleString('es-EC')}
                           </span>
                           <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', display: 'block', marginTop: '2px' }}>
-                            {((netMargin / totalIncome) * 100).toFixed(0)}% del Ingreso
+                            Margen: ${Number(netMargin).toLocaleString('es-EC')}/ha
                           </span>
                         </div>
                       </div>
@@ -1115,9 +1132,9 @@ export default function DashboardFinance({ cultivoElegidoId, anioSeleccionado, o
                       {/* Side Breakdown Legend */}
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem', width: '100%' }}>
                         {expenseItems.map((item, idx) => {
-                          const itemColor = item.label === 'Margen Neto' ? '#34d399' : colorPalette[idx % colorPalette.length];
+                          const itemColor = colorPalette[idx % colorPalette.length];
                           const absVal = Math.abs(item.amount);
-                          const pct = ((absVal / totalIncome) * 100).toFixed(1);
+                          const pct = ((absVal / totalExpenses) * 100).toFixed(1);
 
                           return (
                             <div key={item.label} style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
@@ -1131,7 +1148,7 @@ export default function DashboardFinance({ cultivoElegidoId, anioSeleccionado, o
                                 </div>
                               </div>
                               <div style={{ width: '100%', height: '5px', background: 'var(--border-subtle)', borderRadius: '99px', overflow: 'hidden' }}>
-                                <div style={{ width: `${Math.min(100, (absVal / totalIncome) * 100)}%`, height: '100%', background: itemColor, borderRadius: '99px' }} />
+                                <div style={{ width: `${Math.min(100, (absVal / totalExpenses) * 100)}%`, height: '100%', background: itemColor, borderRadius: '99px' }} />
                               </div>
                             </div>
                           );
@@ -1150,7 +1167,7 @@ export default function DashboardFinance({ cultivoElegidoId, anioSeleccionado, o
             style={{ marginBottom: '1.25rem' }}
           >
             <div className="glass-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', marginBottom: '0.5rem' }}>
-              <h3 style={{ fontSize: '0.95rem', fontWeight: 600, margin: 0 }}>Comparativa de ROI por Estrategia</h3>
+              <h3 style={{ fontSize: '0.95rem', fontWeight: 600, margin: 0 }}>ROI bajo supuestos comparables</h3>
             </div>
             <div className="glass-card-body roi-panel-grid">
               <div 
@@ -1162,9 +1179,9 @@ export default function DashboardFinance({ cultivoElegidoId, anioSeleccionado, o
                   valor: "Retorno sobre inversión global",
                   unidad: "%",
                   estado: "estrategias",
-                  descripcion_tecnica: "Gráfico comparativo general de barras de Retorno sobre la Inversión (ROI) de las 4 estrategias agrícolas evaluadas.",
-                  impacto_base: "Visualiza de forma directa qué estrategia maximiza el retorno económico y la productividad en el lote.",
-                  recomendacion_base: "Analizar el balance entre costo total por hectárea y retorno neto porcentual.",
+                  descripcion_tecnica: "Comparación de ROI calculado con el escenario base y tres cambios hipotéticos explícitos en costos o producción.",
+                  impacto_base: "Permite ver la sensibilidad del retorno a esos supuestos; no es evidencia de que una práctica específica produzca ese cambio.",
+                  recomendacion_base: "Contrasta los costos, márgenes y rendimiento supuestos con datos reales antes de decidir.",
                   datos_grafico: roi_estrategias
                 })}
               >
@@ -1174,10 +1191,10 @@ export default function DashboardFinance({ cultivoElegidoId, anioSeleccionado, o
               <div className="roi-strategy-list">
                 {(() => {
                   const colors = [
-                    { border: 'rgba(59, 130, 246, 0.22)', bg: 'rgba(59, 130, 246, 0.04)', active: '#3b82f6' },
-                    { border: 'rgba(234, 179, 8, 0.22)', bg: 'rgba(234, 179, 8, 0.04)', active: '#ca8a04' },
-                    { border: 'rgba(22, 163, 74, 0.22)', bg: 'rgba(22, 163, 74, 0.04)', active: '#16a34a' },
-                    { border: 'rgba(109, 40, 217, 0.22)', bg: 'rgba(109, 40, 217, 0.04)', active: '#8b5cf6' }
+                    { border: 'rgba(158, 209, 255, .22)', bg: 'rgba(158, 209, 255, .05)', active: '#9ed1ff' },
+                    { border: 'rgba(216, 168, 63, .22)', bg: 'rgba(216, 168, 63, .05)', active: '#d8a83f' },
+                    { border: 'rgba(159, 200, 98, .22)', bg: 'rgba(159, 200, 98, .05)', active: '#9fc862' },
+                    { border: 'rgba(112, 169, 132, .22)', bg: 'rgba(112, 169, 132, .05)', active: '#70a984' }
                   ];
 
                   return roi_estrategias.map((est, i) => {
@@ -1192,17 +1209,12 @@ export default function DashboardFinance({ cultivoElegidoId, anioSeleccionado, o
                             tipo_elemento: "tarjeta",
                             nombre: `Estrategia: ${est.nombre}`,
                             cultivo: "maiz",
-                            valor: `${est.roi}% ROI`,
-                            unidad: `% (Margen Neto: $${est.margen_neto}/ha)`,
-                            estado: est.roi > 0 ? "favorable" : "riesgoso",
-                            rango_ideal: "> 10% ROI",
-                            descripcion_tecnica: `Evaluación financiera detallada de la opción ${est.nombre}. Costo de producción: $${est.costo}/ha con un rendimiento estimado de ${est.rendimiento} t/ha.`,
-                            impacto_base: est.roi > 0 
-                              ? `Esta estrategia genera una utilidad neta de $${est.margen_neto} por hectárea, representando una rentabilidad positiva.` 
-                              : `Esta estrategia genera una pérdida neta de $${Math.abs(est.margen_neto)} por hectárea debido a altos costos de insumos o bajo rendimiento.`,
-                            recomendacion_base: est.roi > 0 
-                              ? `Se recomienda implementar esta técnica si se cuenta con el presupuesto inicial de $${est.costo}/ha.`
-                              : `Se sugiere optimizar la dosis de insumos para llevar el margen a terreno positivo antes de la campaña.`
+                            valor: est.roi === null ? 'ROI no calculable' : `${est.roi}% ROI`,
+                            unidad: `Margen del supuesto: $${est.margen}/ha`,
+                            estado: est.margen > 0 ? 'favorable' : 'riesgoso',
+                            descripcion_tecnica: `${est.nombre}. Costo supuesto: $${est.costo}/ha; rendimiento supuesto: ${est.rendimiento} t/ha.`,
+                            impacto_base: `Con los valores configurados, el margen calculado es $${est.margen}/ha. Es una comparación hipotética, no un resultado observado.`,
+                            recomendacion_base: 'Verifica el costo y el posible cambio productivo con datos locales antes de considerar esta opción.'
                           });
                         }}
                         style={{
@@ -1229,15 +1241,15 @@ export default function DashboardFinance({ cultivoElegidoId, anioSeleccionado, o
                         </div>
                         <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px', flexShrink: 0 }}>
                           <div style={{ fontWeight: 800, fontSize: '1.15rem', color: theme.active, fontFamily: 'var(--font-mono)', lineHeight: 1.1 }}>
-                            {est.roi}% <span style={{ fontSize: '0.68rem', fontWeight: 600, color: 'var(--text-subtle)' }}>ROI</span>
+                            {est.roi === null ? '—' : `${est.roi}%`} <span style={{ fontSize: '0.68rem', fontWeight: 600, color: 'var(--text-subtle)' }}>ROI</span>
                           </div>
-                          <span style={{ 
-                            fontSize: '0.68rem', 
-                            fontWeight: 700, 
-                            padding: '0.12rem 0.45rem', 
+                          <span style={{
+                            fontSize: '0.68rem',
+                            fontWeight: 700,
+                            padding: '0.12rem 0.45rem',
                             borderRadius: '5px',
-                            background: 'rgba(16, 185, 129, 0.15)', 
-                            color: '#10b981', 
+                            background: 'var(--zs-inset-surface)',
+                            color: est.margen >= 0 ? 'var(--zs-accent)' : 'var(--zi-maize-400)',
                             fontFamily: 'var(--font-mono)',
                             display: 'inline-block'
                           }}>

@@ -16,10 +16,15 @@ ml-engine/flask_server.log
 
 # Caché generada en tiempo de ejecución (se regenera sola)
 backend-api/data/cache/
+ml-engine/models/backup_*/
 
 # Datos subidos por usuarios (avatares) — datos personales, no versionar
 backend-api/public/uploads/*
 !backend-api/public/uploads/.htaccess
+
+# Corpus RAG local: los PDF se descargan desde las fuentes oficiales indicadas
+# en rag-sources/SOURCES.md; no versionar archivos binarios pesados.
+rag-sources/*.pdf
 
 # Editor / sistema
 .idea/
@@ -27,6 +32,6 @@ backend-api/public/uploads/*
 .DS_Store
 Thumbs.db
 
-# Nota: los artefactos de despliegue en la raíz (index.html, assets/, images/)
+# Nota: los artefactos de despliegue en la raíz (index.html, assets/, models/)
 # SÍ se versionan a propósito: son lo que XAMPP sirve en /ZeaSys y permiten
 # revertir el sistema desplegado con un solo comando.

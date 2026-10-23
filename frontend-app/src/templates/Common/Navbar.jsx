@@ -26,20 +26,14 @@ export default function Navbar({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            width: '36px',
-            height: '36px',
+            width: '44px',
+            height: '44px',
             borderRadius: '10px',
-            background: menuCerrado 
-              ? 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)' 
-              : 'rgba(255, 255, 255, 0.08)',
-            color: '#ffffff',
-            border: menuCerrado 
-              ? '1.5px solid rgba(255, 255, 255, 0.4)' 
-              : '1px solid var(--border-subtle)',
+            background: 'var(--zs-inset-surface)',
+            color: 'var(--zs-text)',
+            border: '1px solid var(--zs-border)',
             cursor: 'pointer',
-            boxShadow: menuCerrado 
-              ? '0 4px 14px rgba(37, 99, 235, 0.55), 0 0 0 2px rgba(15, 23, 42, 0.3)' 
-              : '0 2px 8px rgba(0, 0, 0, 0.15)',
+            boxShadow: 'var(--zs-shadow-raised)',
             transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
             flexShrink: 0
           }}

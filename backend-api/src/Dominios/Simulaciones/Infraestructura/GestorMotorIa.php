@@ -2,7 +2,7 @@
 /**
  * Adapter: GestorMotorIa
  * ======================
- * Supervisa la salud del motor Flask y lo inicia con auto_ia_server.bat
+ * Supervisa la salud del motor Flask y lo inicia con scripts/auto_ia_server.bat
  * cuando una operación lo necesita.
  */
 
@@ -59,7 +59,7 @@ final class GestorMotorIa implements GestorMotorIaInterface
         }
 
         if (PHP_OS_FAMILY === 'Windows') {
-            $bat = $root . DIRECTORY_SEPARATOR . 'auto_ia_server.bat';
+            $bat = $root . DIRECTORY_SEPARATOR . 'scripts' . DIRECTORY_SEPARATOR . 'auto_ia_server.bat';
             if (!file_exists($bat)) {
                 return false;
             }

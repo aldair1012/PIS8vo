@@ -125,18 +125,27 @@ export const simulacionService = {
 };
 
 export const chatService = {
-  preguntar: async (pregunta, vista = null, cultivoId = null, anio = null, dashboard = null) => {
+  preguntar: async (pregunta, vista = null, cultivoId = null, anio = null, dashboard = null, simulacion = null) => {
     const response = await API.post('/api/chat/preguntar', {
       pregunta,
       vista,
       cultivo_id: cultivoId,
       anio,
       dashboard,
+      simulacion,
     });
     return response.data;
   },
   limpiar: async () => {
     const response = await API.post('/api/chat/limpiar');
+    return response.data;
+  },
+  guardarFavorito: async (datos) => {
+    const response = await API.post('/api/chat/favorito', datos);
+    return response.data;
+  },
+  eliminarFavorito: async (conversacionId) => {
+    const response = await API.post('/api/chat/favorito/eliminar', { conversacion_id: conversacionId });
     return response.data;
   },
 };

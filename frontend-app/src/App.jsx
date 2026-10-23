@@ -2,7 +2,6 @@ import { useCallback, useState, useEffect } from 'react';
 import Sidebar from './templates/Common/Sidebar';
 import Navbar from './templates/Common/Navbar';
 import Login from './views/Login';
-import Register from './views/Register';
 import DashboardScenario from './views/DashboardScenario';
 import DashboardClimate from './views/DashboardClimate';
 import DashboardYield from './views/DashboardYield';
@@ -28,16 +27,11 @@ export default function App() {
   const [cultivoElegidoId, setCultivoElegidoId] = useState(null);
   const [anioSeleccionado, setAnioSeleccionado] = useState(() => new Date().getFullYear());
   const [contextoDashboard, setContextoDashboard] = useState(null);
+  const [contextoSimulacion, setContextoSimulacion] = useState(null);
   const [iaEncendida, setIaEncendida] = useState(false);
   const [recargarDatos, setRecargarDatos] = useState(0);
   const [menuCerrado, setMenuCerrado] = useState(typeof window !== 'undefined' && window.innerWidth <= 1080);
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
-  const [notificationDismissedFor, setNotificationDismissedFor] = useState(null);
-  const showNotification = Boolean(
-    user &&
-    notificationDismissedFor !== user.id &&
-    localStorage.getItem('hideChartInfoNotify') !== 'true'
-  );
   const [isMobileView, setIsMobileView] = useState(() => typeof window !== 'undefined' && window.innerWidth <= 768);
 
   const cultivoActivo = cultivos.find(c => c.id === cultivoElegidoId);
@@ -49,6 +43,18 @@ export default function App() {
     Number(cultivoActivo.longitud) < -81.6 ||
     Number(cultivoActivo.longitud) > -75.0
   );
+
+  // Nueva Simulación tiene su propio selector de parcela. El chat debe usar
+  // ese sujeto y esos parámetros, no la selección global de los dashboards.
+  const enSimulacion = vistaActual === 'simular';
+  const cultivoChatId = enSimulacion ? (contextoSimulacion?.cultivoId ?? null) : cultivoElegidoId;
+  const cultivoChatActivo = enSimulacion ? (contextoSimulacion?.cultivoActivo ?? null) : cultivoActivo;
+  const simulacionChat = enSimulacion ? (contextoSimulacion?.datos ?? null) : null;
+  // El asistente comparte una sola conversación entre los paneles del
+  // dashboard y conserva otra para el borrador de Nueva Simulación.
+  const ambitoChat = enSimulacion ? 'simulacion' : 'dashboard';
+  // Mis lotes y Configuración no ofrecen asistente: allí el chat no aplica.
+  const chatOculto = vistaActual === 'cultivos' || vistaActual === 'configuracion';
 
   // Aplicar tema
   useEffect(() => {
@@ -156,6 +162,9 @@ export default function App() {
   const registrarClimate = useCallback((datos) => registrarContextoDashboard('climate', datos), [registrarContextoDashboard]);
   const registrarYield = useCallback((datos) => registrarContextoDashboard('yield', datos), [registrarContextoDashboard]);
   const registrarFinance = useCallback((datos) => registrarContextoDashboard('finance', datos), [registrarContextoDashboard]);
+  const registrarSimulacion = useCallback((contexto) => {
+    setContextoSimulacion(contexto);
+  }, []);
 
   const cerrarSesion = async () => {
     try {
@@ -208,18 +217,14 @@ export default function App() {
   }
 
   if (!user) {
-    if (isRegistering) {
-      return (
-        <Register
-          onRegisterSuccess={handleLoginSuccess}
-          switchToLogin={() => setIsRegistering(false)}
-        />
-      );
-    }
     return (
       <Login
         onLoginSuccess={handleLoginSuccess}
         switchToRegister={() => setIsRegistering(true)}
+        switchToLogin={() => setIsRegistering(false)}
+        registering={isRegistering}
+        theme={theme}
+        onToggleTheme={() => setTheme((valor) => (valor === 'dark' ? 'light' : 'dark'))}
       />
     );
   }
@@ -227,21 +232,21 @@ export default function App() {
   // Determinar título de pestaña, Dashboard
   const getActiveTitle = () => {
     switch (vistaActual) {
-      case 'yield': return 'DSS 1: Brecha Productiva y Potencial';
-      case 'scenarios': return 'DSS 2: Calendario de Viabilidad de Siembra';
-      case 'climate': return 'DSS 3: Calendario Fenológico y Riesgo Climático';
-      case 'finance': return 'DSS 4: Viabilidad Financiera & ROI';
-      case 'map': return 'Mapa de Lotes';
+      case 'yield': return 'Rendimiento y brecha';
+      case 'scenarios': return 'Viabilidad de siembra';
+      case 'climate': return 'Clima y cultivo';
+      case 'finance': return 'Viabilidad financiera';
+      case 'map': return 'Mapa de parcelas';
       case 'simular': return 'Nueva Simulación';
       case 'history': return 'Historial de Simulaciones';
-      case 'configuracion': return 'Configuración de Usuario y Sistema';
-      default: return 'ZeaSys Engine';
+      case 'configuracion': return 'Configuración';
+      default: return 'ZeaSys';
     }
   };
 
 
   return (
-    <div className="app-container">
+    <div className="app-container zeasys-workspace">
       {/* Ambient background glow blobs for premium glassmorphism */}
       <div className="ambient-glow-1"></div>
       <div className="ambient-glow-2"></div>
@@ -366,6 +371,7 @@ export default function App() {
               onboardingStep={onboardingStep}
               onNextOnboardingStep={handleCompleteOnboarding}
               onNavigate={setVistaActual}
+              onSimulationContextChange={registrarSimulacion}
             />
           )}
           {vistaActual === 'history' && (
@@ -393,90 +399,17 @@ export default function App() {
         </div>
       </div>
 
-      {showNotification && (
-        <div className="info-modal-overlay" style={{ zIndex: 99999 }}>
-          <div className="info-modal-panel" style={{
-            width: '100%',
-            maxWidth: '430px',
-            padding: '2rem 1.75rem',
-            textAlign: 'center',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: '1.1rem'
-          }}>
-            <div style={{
-              background: 'rgba(34, 197, 94, 0.15)',
-              color: '#22c55e',
-              width: '56px',
-              height: '56px',
-              borderRadius: '50%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '1.6rem',
-              boxShadow: '0 8px 16px rgba(34, 197, 94, 0.1)'
-            }}>
-              💡
-            </div>
-            <div>
-              <h3 style={{ fontSize: '1.2rem', fontWeight: 700, margin: '0 0 0.4rem 0', color: 'var(--modal-text)' }}>
-                ZeaSys Analytics
-              </h3>
-              <p style={{ fontSize: '0.82rem', color: 'var(--modal-text-muted)', lineHeight: '1.55', margin: 0 }}>
-                Si deseas ver un diagnóstico técnico detallado sobre cualquiera de los gráficos o métricas del sistema, simplemente <strong>haz clic sobre ellos</strong> para abrir de forma directa el panel de análisis avanzado.
-              </p>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', width: '100%', gap: '0.5rem', marginTop: '0.5rem' }}>
-              <button 
-                onClick={() => setNotificationDismissedFor(user?.id)}
-                className="btn-primary"
-                style={{ 
-                  padding: '0.65rem', 
-                  fontSize: '0.82rem', 
-                  borderRadius: '10px', 
-                  cursor: 'pointer', 
-                  fontWeight: 600,
-                  width: '100%'
-                }}
-              >
-                Entendido, Continuar
-              </button>
-              <button 
-                onClick={() => {
-                  localStorage.setItem('hideChartInfoNotify', 'true');
-                  setNotificationDismissedFor(user?.id);
-                }}
-                style={{ 
-                  background: 'transparent', 
-                  border: 'none', 
-                  color: 'var(--text-subtle)', 
-                  fontSize: '0.72rem', 
-                  cursor: 'pointer', 
-                  padding: '0.45rem', 
-                  textDecoration: 'underline',
-                  transition: 'color 0.2s'
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-primary)'}
-                onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-subtle)'}
-              >
-                No volver a mostrar este mensaje
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Chatbot Widget */}
-      {user && (
+      {user && !chatOculto && (
         <ChatbotWidget
-          key={`chat-${vistaActual}-${cultivoElegidoId || 'sin-parcela'}-${anioSeleccionado || 'sin-anio'}`}
+          key={`chat-${ambitoChat}-${cultivoChatId || 'sin-parcela'}-${anioSeleccionado || 'sin-anio'}`}
           vistaActual={vistaActual}
           usuarioId={user.id}
-          cultivoElegidoId={cultivoElegidoId}
+          cultivoElegidoId={cultivoChatId}
           anioSeleccionado={anioSeleccionado}
           contextoDashboard={contextoDashboard}
-          cultivoActivo={cultivoActivo}
+          cultivoActivo={cultivoChatActivo}
+          simulacion={simulacionChat}
         />
       )}
     </div>

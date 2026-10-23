@@ -8,6 +8,7 @@ namespace ZeaSys\Dominios\Analitica\Aplicacion;
 
 use ZeaSys\Dominios\Analitica\Dominio\CatalogoAgronomicoInterface;
 use ZeaSys\Dominios\Lotes\Dominio\CultivoRepositoryInterface;
+use ZeaSys\Dominios\Terreno\Aplicacion\ServicioClimaActual;
 use ZeaSys\Dominios\Terreno\Aplicacion\ServicioDatosTerreno;
 use ZeaSys\Kernel\Errores\AccesoDenegadoException;
 
@@ -16,7 +17,8 @@ class ServicioAnaliticaClimate
     public function __construct(
         private CatalogoAgronomicoInterface $catalogo,
         private CultivoRepositoryInterface $cultivos,
-        private ServicioDatosTerreno $terreno
+        private ServicioDatosTerreno $terreno,
+        private ServicioClimaActual $climaActual,
     ) {}
 
     public function construir(int $usuarioId, ?int $cultivoId = null, ?int $anio = null): array
@@ -38,8 +40,11 @@ class ServicioAnaliticaClimate
         $temperaturaPromedio = 24.5;
         $humedadPromedio = 65.0;
         $precipitacionPromedio = 800.0;
+        $precipitacion30d = null;
         $fuenteApi = 'Simulado/Histórico';
         $sueloInfo = null;
+        $climaHoy = null;
+        $pronostico7d = [];
 
         $tieneCoordenadas = isset($cultivoSeleccionado['latitud'], $cultivoSeleccionado['longitud'])
             && $cultivoSeleccionado['latitud'] !== '' && $cultivoSeleccionado['longitud'] !== '';
@@ -52,12 +57,37 @@ class ServicioAnaliticaClimate
                 floatval($cultivoSeleccionado['longitud']),
                 $altitud
             );
-            if ($informacionApi['success']) {
+            if ($informacionApi['clima_disponible_api'] ?? false) {
                 $temperaturaPromedio = $informacionApi['clima']['temperatura'];
                 $humedadPromedio = $informacionApi['clima']['humedad'];
                 $precipitacionPromedio = $informacionApi['clima']['precipitacion'];
+                $precipitacion30d = $informacionApi['clima']['precipitacion_30d'] ?? null;
+            }
+            if ($informacionApi['success']) {
                 $fuenteApi = $informacionApi['source'];
+            }
+            if ($informacionApi['suelo_disponible_api'] ?? false) {
                 $sueloInfo = $informacionApi['suelo'];
+            }
+
+            // El clima actual es una observación/pronóstico de corto plazo.
+            // Se mantiene separado del promedio de 30 días para no mezclar
+            // una condición de hoy con la climatología del ciclo.
+            try {
+                $climaConsulta = $this->climaActual->obtener(
+                    floatval($cultivoSeleccionado['latitud']),
+                    floatval($cultivoSeleccionado['longitud']),
+                    $altitud,
+                );
+                $climaHoy = $climaConsulta;
+                if (($climaConsulta['disponible'] ?? false) === true) {
+                    $pronostico7d = is_array($climaConsulta['pronostico_7d'] ?? null)
+                        ? $climaConsulta['pronostico_7d']
+                        : [];
+                }
+            } catch (\Throwable) {
+                // El panel sigue funcionando con el promedio histórico y el
+                // respaldo local; el clima actual se muestra como no disponible.
             }
         }
 
@@ -271,10 +301,50 @@ class ServicioAnaliticaClimate
                 'indice_riesgo' => ['nivel' => $indiceRiesgoClima,'color' => $indiceRiesgoColor]
             ],
             'api_source' => $fuenteApi,
+            // Se conserva clima_actual por compatibilidad con consumidores
+            // anteriores, pero ahora declara explícitamente que es un promedio.
             'clima_actual' => [
                 'temperatura' => $temperaturaPromedio,
                 'humedad' => $humedadPromedio,
-                'precipitacion' => $precipitacionPromedio
+                'precipitacion' => $precipitacionPromedio,
+                'precipitacion_anual_estimada' => $precipitacionPromedio,
+                'precipitacion_30d' => $precipitacion30d,
+                'periodo' => 'promedio_30_dias',
+                'nota_precipitacion' => 'Temperatura y humedad: promedio de 30 dias. Precipitacion: estimacion anual; precipitacion_30d es el acumulado real de 30 dias.',
+                'nota' => 'Promedio de los últimos 30 días; no es el clima de hoy ni un pronóstico.'
+            ],
+            'clima_promedio_30d' => [
+                'temperatura' => $temperaturaPromedio,
+                'humedad' => $humedadPromedio,
+                'precipitacion' => $precipitacionPromedio,
+                'precipitacion_anual_estimada' => $precipitacionPromedio,
+                'precipitacion_30d' => $precipitacion30d,
+                'nota_precipitacion' => 'Precipitacion es estimacion anual; precipitacion_30d es el acumulado real de 30 dias.',
+                'fuente' => $fuenteApi
+            ],
+            'clima_hoy' => $climaHoy,
+            'pronostico_7d' => $pronostico7d,
+            'suelo' => $sueloInfo ? [
+                'ph' => $sueloInfo['ph'] ?? null,
+                'materia_organica_pct' => $sueloInfo['materia_organica'] ?? null,
+                'arcilla_pct' => $sueloInfo['clay'] ?? null,
+                'limo_pct' => $sueloInfo['silt'] ?? null,
+                'arena_pct' => $sueloInfo['sand'] ?? null,
+            ] : null,
+            'nutricion' => [
+                'zona' => $zonaEcuador,
+                'ph_suelo' => $sueloInfo['ph'] ?? ($cultivoSeleccionado['ph'] ?? null),
+                'materia_organica_pct' => $sueloInfo['materia_organica'] ?? null,
+                'ph_optimo' => $ph_optimo,
+                'nitrogeno_recomendado_kg_ha' => $nitrogeno,
+                'fraccionamiento_n' => $fraccionamiento,
+                'biofertilizante' => $biofertilizante,
+                'fertilizacion_registrada' => [
+                    'fecha' => $cultivoSeleccionado['fertilizacion_fecha'] ?? null,
+                    'dosis' => $cultivoSeleccionado['fertilizacion_dosis'] ?? null,
+                    'tipo' => $cultivoSeleccionado['fertilizacion_tipo'] ?? null,
+                ],
+                'nota' => 'Recomendación de catálogo; no sustituye un análisis de suelo. No prescribir dosis de P, K o micronutrientes sin análisis.',
             ],
             'timeline_anomalia' => [
                 'labels' => $etiquetasMeses,

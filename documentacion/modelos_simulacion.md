@@ -9,12 +9,8 @@
 
 Cuando el jurado nos pregunte **"¿Cómo funciona la IA de simulación en ZeaSys?"**, lo explicamos con esta analogía clara:
 
-### 🌲 A) Random Forest (Bosque Aleatorio) — *"El Comité de 300 Agrónomos Expertos"*
-* **¿Cómo lo construí?** Creo un ensamblado de 300 árboles de decisión independientes. Cada árbol analiza una muestra aleatoria diferente de los datos históricos de cosechas de maíz en Ecuador.
-* **¿Cómo predice?** Cuando entra una simulación, cada uno de los 300 árboles emite su pronóstico individual. La predicción final es el **promedio de todas las opiniones**, lo que evita que un error aislado distorsione el resultado final.
-
-### ⚡ B) XGBoost (Extreme Gradient Boosting) — *"El Aprendizaje Corrector Continuo"*
-* **¿Cómo lo construí?** A diferencia de Random Forest, los árboles no se crean de forma independiente, sino en **serie secuencial de 600 árboles**.
+### ⚡ XGBoost (Extreme Gradient Boosting) — *"El Aprendizaje Corrector Continuo"*
+* **¿Cómo lo construí?** Los árboles se crean en **serie secuencial de 600 árboles**.
 * **¿Cómo predice?** El primer árbol hace un cálculo inicial. El segundo árbol revisa los errores que cometió el primero y ajusta sus pesos para corregirlos. El tercer árbol corrige al segundo, y así sucesivamente. Cada nuevo paso afina la precisión hasta alcanzar un error mínimo.
 
 ---
@@ -34,27 +30,24 @@ A continuación explico en detalle cada uno de estos paradigmas:
 ### 2️⃣ Subtipos de Tareas de Machine Learning Implementadas
 
 #### 📊 A) Regresión Supervisada (Supervised Regression)
-* **Modelos usados:** `XGBRegressor` y `RandomForestRegressor`.
+* **Modelo usado:** `XGBRegressor`.
 * **Objetivo:** Predecir un valor numérico **continuo y cuantitativo** (el rendimiento exacto de maíz en toneladas por hectárea, por ejemplo: `6.45 t/ha`).
 * **Función de pérdida:** Minimiza la desviación de los residuos utilizando métricas como el Error Cuadrático Medio ($RMSE$) y el Error Absoluto Medio ($MAE$).
 
 #### 🏷️ B) Clasificación Multiclase Supervisada (Supervised Multi-class Classification)
-* **Modelos usados:** `XGBClassifier` y `RandomForestClassifier`.
+* **Modelo usado:** `XGBClassifier`.
 * **Objetivo:** Clasificar el resultado de la siembra en **categorías cualitativas discretas** (`Rendimiento Alto`, `Rendimiento Medio`, `Rendimiento Bajo`).
-* **Función de pérdida:** Minimiza la entropía cruzada (*log-loss*) para asignar probabilidades a cada una de las 3 clases posibles.
+* **Función de pérdida:** Minimiza la entropía cruzada (*log-loss*) para asignar probabilidades a las cuatro clases disponibles (`Alta`, `Media`, `Baja` y `Muy Baja`).
 
 ---
 
 ### 🌳 3. Familia Algorítmica: Aprendizaje por Ensambles (Ensemble Learning)
 
-En lugar de usar un solo Árbol de Decisión individual (el cual suele memorizar los datos y sufrir de *overfitting*), utilizamos **Ensambles**, que combinan cientos de árboles de decisión para lograr un modelo compuesto mucho más preciso y robusto.
-
-Usamos dos técnicas principales de ensamblado:
+En lugar de usar un solo Árbol de Decisión individual (el cual suele memorizar los datos y sufrir de *overfitting*), utilizamos **Gradient Boosting**, que combina cientos de árboles de decisión secuenciales para corregir errores y producir una predicción robusta.
 
 | Técnica | Algoritmo | ¿Cómo funciona internamente? | Ventaja Principal |
 |---|---|---|---|
-| **Bagging** *(Bootstrap Aggregating)* | **Random Forest** | Entrena 300 árboles de decisión de forma **paralela e independiente**. Cada árbol ve una muestra aleatoria de datos y variables. La respuesta final es la **promedio o votación mayoritaria**. | Excelente para **reducir la varianza** y evitar que datos ruidosos o atípicos distorsionen la predicción. |
-| **Boosting** *(Gradient Boosting)* | **XGBoost** | Entrena 600 árboles de forma **secuencial**. Cada nuevo árbol se enfoca específicamente en **corregir los errores (residuos)** cometidos por los árboles anteriores mediante Descenso de Gradiente. | Excelente para **reducir el sesgo** y lograr la máxima precisión matemática ($R^2 = 67.0\%$). |
+| **Boosting** *(Gradient Boosting)* | **XGBoost** | Entrena 600 árboles de forma **secuencial**. Cada nuevo árbol se enfoca específicamente en **corregir los errores (residuos)** cometidos por los árboles anteriores mediante Descenso de Gradiente. | Es el modelo principal actual: mantiene el menor error en validación por provincia ($RMSE \approx 1.04\ t/ha$). |
 
 ---
 
@@ -73,10 +66,10 @@ A continuación explico exactamente qué hace cada archivo que creé dentro de l
 * **¿Para qué sirve?** Es la puerta de entrada que conecta el sistema web (Backend PHP) con la Inteligencia Artificial en Python.
 * **¿Cómo lo hice?** Utilicé **Flask** y **Flask-CORS** para escuchar peticiones HTTP en el puerto `5000`.
 * **Endpoints que expone:**
-  * `GET /health`: Verifica que el servidor esté activo y que los 4 modelos `.joblib` estén cargados en memoria.
+  * `GET /health`: Verifica que el servidor esté activo y que XGBoost (regresión y clasificación) esté cargado en memoria.
   * `GET /metrics`: Devuelve las métricas actuales de rendimiento ($R^2$, MAE, RMSE, Accuracy, F1-Score).
   * `GET /stats`: Proporciona promedios históricos por zona agrícola (temperatura, pH, nitrógeno, rendimiento).
-  * `POST /predict`: Recibe los parámetros enviados por el usuario, llama a `feature_builder.py` y `predictor.py`, y devuelve el JSON completo con la estimación.
+  * `POST /predict`: Recibe los parámetros enviados por el usuario, llama a `feature_builder.py` y `predictor.py`, y devuelve el JSON completo con la estimación y un intervalo aproximado de rendimiento.
 
 ### 📄 `src/feature_builder.py` (Ingeniería de Características y Preprocesamiento)
 * **¿Para qué sirve?** Toma los datos brutos enviados por el usuario (o por el formulario de simulación) y los transforma en el formato exacto que exigen los modelos matemáticos.
@@ -89,8 +82,8 @@ A continuación explico exactamente qué hace cada archivo que creé dentro de l
 * **Proceso de ejecución interna:**
   1. **Transformación Categórica:** Aplica `label_encoder.joblib` para convertir textos ("Provincia", "Tipo de Suelo") a números.
   2. **Inferencia Dual Paralela:**
-     * **Regresión (`xgboost.joblib` o `random_forest.joblib`):** Calcula el rendimiento exacto en $t/ha$.
-     * **Clasificación (`xgboost_clf.joblib` o `random_forest_clf.joblib`):** Clasifica la cosecha como `Alto`, `Medio` o `Bajo` rendimiento y decodifica el texto con `target_encoder.joblib`.
+     * **Regresión (`xgboost.joblib`):** Calcula el rendimiento exacto en $t/ha$.
+     * **Clasificación (`xgboost_clf.joblib`):** Clasifica la cosecha como `Alta`, `Media`, `Baja` o `Muy Baja` y decodifica el texto con `target_encoder.joblib`.
   3. **Explicabilidad con SHAP (`TreeExplainer`):** Calcula qué porcentaje de impacto positivo o negativo tuvo cada factor (clima, suelo, nitrógeno) en el resultado.
   4. **Simulador de Escenarios Alternativos:** Genera 3 predicciones instantáneas sin modificar la entrada del usuario:
      * *Escenario Lluvioso:* 1000 mm precipitación / 80% humedad.
@@ -103,12 +96,10 @@ A continuación explico exactamente qué hace cada archivo que creé dentro de l
   1. Carga el dataset actualizado `data/maiz_ecuador_training_data.csv`.
   2. Genera un **Backup Automático** de las versiones activas en `models/backup_YYYYMMDD_HHMMSS`.
   3. Entrena y evalúa las nuevas versiones calculando el **RMSE**.
-  4. **Regla de Validación:** Compara el nuevo RMSE contra el guardado en `metrics.json`. Si el nuevo RMSE es menor o igual, se aprueba el reemplazo de los `.joblib`. Si empeora, se rechaza la actualización y se restauran los modelos anteriores.
+  4. **Regla de Validación:** elimina duplicados exactos, separa por provincia usando `GroupKFold` y compara el RMSE medio de XGBoost contra el último entrenamiento agrupado. Si empeora, se conserva el artefacto anterior.
 
 ### 📦 Archivos `.joblib` y `metrics.json` en `models/`
-* `random_forest.joblib`: Modelo entrenado de regresión Random Forest.
 * `xgboost.joblib`: Modelo entrenado de regresión XGBoost.
-* `random_forest_clf.joblib`: Modelo clasificador de categorías Random Forest.
 * `xgboost_clf.joblib`: Modelo clasificador de categorías XGBoost.
 * `label_encoder.joblib`: Objeto de `OrdinalEncoder` para transformar variables de entrada.
 * `target_encoder.joblib`: Objeto de `LabelEncoder` para descodificar las categorías de salida (`Alto`, `Medio`, `Bajo`).
@@ -120,9 +111,8 @@ A continuación explico exactamente qué hace cada archivo que creé dentro de l
 
 | Librería / Módulo | Métodos Específicos | ¿Por qué lo usamos y para qué sirve? |
 |---|---|---|
-| **`scikit-learn`** | `RandomForestRegressor`, `RandomForestClassifier` | Implementa ensambles por Bagging (reducción de varianza y robustez ante ruido). |
 | **`scikit-learn`** | `OrdinalEncoder`, `LabelEncoder` | Convierte texto categórico ("Arcilloso", "Los Ríos") a valores escalares requeridos por los algoritmos. |
-| **`scikit-learn`** | `train_test_split` | Separa los datos en 80% entrenamiento y 20% prueba aleatoria descolgada (`random_state=42`). |
+| **`scikit-learn`** | `GroupKFold` | Valida por provincia para medir generalización a zonas no vistas y evitar fuga entre muestras similares. |
 | **`scikit-learn`** | `r2_score`, `mean_squared_error`, `mean_absolute_error` | Evalúa cuantitativamente el margen de error real del modelo. |
 | **`xgboost`** | `XGBRegressor`, `XGBClassifier` | Implementa Gradient Boosting optimizado en C++ con regularización L1/L2 para maximizar el $R^2$. |
 | **`shap`** | `TreeExplainer`, `shap_values()` | Aplica Teoría de Juegos de Shapley para explicar de forma transparente qué variable pesó más en el resultado. |
@@ -164,7 +154,7 @@ python app.py
 ```bash
 curl -X GET http://localhost:5000/health
 ```
-*Respuesta esperada:* `{"modelos_cargados": [...], "status": "ok", "version": "2.1.0"}`
+*Respuesta esperada:* `{"modelos_cargados": ["xgboost"], "modelo_principal": "xgboost", "status": "ok", "version": "2.2.0"}`
 
 ### C) Probar las Métricas de los Modelos (`/metrics`)
 ```bash
@@ -193,6 +183,12 @@ Abrir terminal en `c:\xampp\htdocs\ZeaSys\ml-engine` y ejecutar:
 python scripts/retrain_models.py
 ```
 
+Si el motor Flask ya estaba encendido antes de publicar un reentrenamiento,
+reinícialo desde la raíz del proyecto para cargar los nuevos artefactos:
+```bat
+scripts\reiniciar_motor_ia.bat
+```
+
 ---
 
 ## 🛡️ 6. Proceso de Re-entrenamiento y Salvaguarda de Confiabilidad
@@ -201,33 +197,21 @@ python scripts/retrain_models.py
 1. **Recolección de Nuevos Datos:** Al incorporar nuevas cosechas reales registradas en las zonas agrícolas de Ecuador, agregamos filas al dataset `maiz_ecuador_training_data.csv`.
 2. **Ajuste de Hiperparámetros de Regularización:**
    * En **XGBoost Regressor**, usamos `learning_rate=0.03`, `subsample=0.8`, `reg_alpha=0.1` (L1) y `reg_lambda=1.0` (L2). Esto penaliza ecuaciones sobre-complejas y evita el sobreajuste (*overfitting*).
-   * En **Random Forest**, limitamos la profundidad máxima `max_depth=12` y usamos `max_features="sqrt"`, garantizando árboles diversos y desacoplados.
-3. **Mapeo del Mecanismo de Salvaguarda Automatizado:**
-   ```python
-   # Código clave en scripts/retrain_models.py
-   rf_improved = new_rf_rmse <= current_rf_rmse
-   xgb_improved = new_xgb_rmse <= current_xgb_rmse
-
-   if rf_improved and xgb_improved:
-       # Se guardan los nuevos archivos .joblib y se actualiza metrics.json
-       joblib.dump(xgb_reg, "models/xgboost.joblib")
-   else:
-       # Se descarta la actualización y se conserva el backup previo
-       print("Reentrenamiento rechazado: El nuevo modelo no mejoró el RMSE.")
-   ```
+3. **Validación agrupada y salvaguarda:** `scripts/retrain_models.py` registra las filas eliminadas, las provincias utilizadas, las métricas de cada pliegue y compara el RMSE medio de XGBoost contra la versión anterior antes de publicar el artefacto.
+4. **Incertidumbre explícita:** cada `/predict` devuelve `intervalo_rendimiento` (rango aproximado basado en RMSE/MAE de validación). `confianza` se conserva por compatibilidad, pero está etiquetada como `calidad_global_r2`; no es una probabilidad de éxito de la parcela.
 
 ---
 
 ## ❓ 7. Preguntas Probables del Jurado y Respuestas Preparadas
 
 ### 0. "¿Qué tipos de Aprendizaje Automático (Machine Learning) utilizaron en el sistema?"
-> *"Utilizamos **Aprendizaje Automático Supervisado** (*Supervised Machine Learning*). Desarrollamos dos modelos de **Regresión Supervisada** (`XGBRegressor` y `RandomForestRegressor`) para predecir el rendimiento continuo en toneladas por hectárea ($t/ha$), y dos modelos de **Clasificación Multiclase Supervisada** (`XGBClassifier` y `RandomForestClassifier`) para categorizar la cosecha como `Alto`, `Medio` o `Bajo` rendimiento. La familia algorítmica utilizada corresponde a **Aprendizaje por Ensambles** (*Ensemble Learning*), combinando técnicas de **Bagging** con Random Forest y **Gradient Boosting** con XGBoost."*
+> *"Utilizamos **Aprendizaje Automático Supervisado** (*Supervised Machine Learning*) mediante XGBoost. `XGBRegressor` predice el rendimiento continuo en toneladas por hectárea ($t/ha$) y `XGBClassifier` categoriza la cosecha como `Alta`, `Media`, `Baja` o `Muy Baja`. La familia algorítmica corresponde a Gradient Boosting con regularización."*
 
-### 1. "¿Por qué utilizaron XGBoost y Random Forest juntos y no solo uno?"
-> *"Utilizamos una arquitectura comparativa dual. **XGBoost** es nuestro modelo principal de regresión porque obtiene el mejor $R^2$ ($67.0\%$) y menor error RMSE ($1.0098\ t/ha$) gracias al entrenamiento secuencial con corrección de residuos. **Random Forest** nos brinda estabilidad complementaria en clasificación por categorías ($62.2\%$ de accuracy) y sirve como validación cruzada para evitar sesgos."*
+### 1. "¿Por qué utilizaron XGBoost como único modelo?"
+> *"XGBoost mantiene el menor error medido en la validación agrupada por provincia (RMSE aproximado de $1.04\ t/ha$; R² medio de 58.2%). Centralizar la inferencia en este modelo elimina divergencias entre motores y facilita mantener una única calibración."*
 
 ### 2. "¿Cómo garantizan que el modelo no esté memorizando los datos (Overfitting)?"
-> *"Implementamos tres estrategias: Primero, dividimos los datos en 80% entrenamiento y 20% prueba descolgada (`train_test_split`). Segundo, limitamos la profundidad máxima de los árboles (`max_depth=12` en RF y `max_depth=4` en XGBoost). Tercero, aplicamos regularización L1 (`reg_alpha=0.1`) y L2 (`reg_lambda=1.0`) en XGBoost."*
+> *"Implementamos varias estrategias: eliminamos duplicados exactos, validamos por provincia con `GroupKFold` para medir datos no vistos, limitamos la profundidad (`max_depth=4`) y aplicamos regularización L1/L2 en XGBoost. Las métricas se registran por pliegue para detectar provincias con mayor error."*
 
 ### 3. "¿Qué sucede si el usuario ingresa datos incompletos en la simulación?"
 > *"El módulo `feature_builder.py` cuenta con un sistema de imputación agronómica inteligente. Si faltan variables categóricas o climáticas, el sistema consulta los promedios históricos de la zona agroecológica seleccionada en Ecuador y completa el vector de entrada antes de enviarlo al modelo."*
