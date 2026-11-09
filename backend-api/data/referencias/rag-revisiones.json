@@ -1,0 +1,154 @@
+[
+  {
+    "source_file": "inec-espac-resultados-2025.pdf",
+    "page": 25,
+    "source_sha256": "63c3a463eabe842aacc6ae915e876cc3c93fbe654a4b740438a0a3a67460ce08",
+    "review_method": "cotejo_visual_pagina_PDF",
+    "review_date": "2026-11-08",
+    "excerpts": [
+      "INEC ESPAC 2025. Maíz duro seco (grano seco), Ecuador. En 2025: superficie sembrada 307.587 ha; superficie cosechada 296.546 ha; producción 1.508.854 toneladas métricas; ventas 1.470.975 toneladas métricas. Son estadísticas nacionales de 2025, no mediciones de una parcela.",
+      "INEC ESPAC 2025. Las provincias de Los Ríos, Manabí y Guayas concentran el 87,1 % de la producción nacional de maíz duro seco. La participación en superficie sembrada es otra medida: Los Ríos 36,1 %, Manabí 31,5 %, Guayas 14,7 %. No confundir superficie con producción."
+    ]
+  },
+  {
+    "source_file": "iniap-guia-maiz-amarillo-litoral-2014.pdf",
+    "page": 11,
+    "source_sha256": "f67624033de373428407870bec85eda141aef8e9d4b80a2f1b7798f032b73572",
+    "review_method": "cotejo_visual_pagina_PDF",
+    "review_date": "2026-11-08",
+    "excerpts": [
+      "Siembra de híbridos INIAP H-551, H-601 y H-553: distancias de 90 u 80 cm entre surcos, una semilla cada 20 cm. Si emerge el 100 % de las semillas, las poblaciones son 55.555 y 62.500 plantas por hectárea, respectivamente. Se requieren aproximadamente 15 kg de semilla certificada para sembrar una hectárea. Referencia histórica para maíz amarillo duro del Litoral, no para cualquier variedad."
+    ]
+  },
+  {
+    "source_file": "iniap-guia-maiz-amarillo-litoral-2014.pdf",
+    "page": 14,
+    "source_sha256": "f67624033de373428407870bec85eda141aef8e9d4b80a2f1b7798f032b73572",
+    "review_method": "cotejo_visual_pagina_PDF",
+    "review_date": "2026-11-08",
+    "excerpts": [
+      "Fertilización del maíz en el Litoral: para conocer la disponibilidad nutricional del suelo, es necesario realizar un análisis de suelo por lo menos cada dos años. La acidez influye negativamente en la disponibilidad de nutrientes."
+    ]
+  },
+  {
+    "source_file": "iniap-guia-maiz-amarillo-litoral-2014.pdf",
+    "page": 16,
+    "source_sha256": "f67624033de373428407870bec85eda141aef8e9d4b80a2f1b7798f032b73572",
+    "review_method": "cotejo_visual_pagina_PDF",
+    "review_date": "2026-11-08",
+    "excerpts": [
+      "La urea contiene 46 % de nitrógeno; la dosis de este elemento depende de la interpretación del análisis de suelo. En época lluviosa, la guía del Litoral fracciona la dosis recomendada: 50 % a los 10–15 días después de la siembra y el 50 % restante alrededor de los 30 días, siempre que el suelo esté húmedo en la superficie. Es una referencia histórica de la guía de 2014, no una dosis universal."
+    ]
+  },
+  {
+    "source_file": "iniap-manual-produccion-maiz-2007.pdf",
+    "page": 7,
+    "source_sha256": "75074137f0eea75ca88a193364a6653d377d2e34cddf95031652492979cd8f34",
+    "review_method": "cotejo_visual_pagina_PDF",
+    "review_date": "2026-11-08",
+    "excerpts": [
+      "Ciclo del cultivo: normalmente los maíces de altura tienen un ciclo de 205 a 270 días desde la siembra hasta la cosecha. El tiempo depende del tipo de maíz, fecha de siembra, localización y altitud.",
+      "Exigencias de clima del manual de 2007: temperatura de 10 °C a 20 °C; para germinación de la semilla, entre 15 °C y 20 °C. Estas cifras son la transcripción de una referencia histórica, no una regla para todas las variedades."
+    ]
+  },
+  {
+    "source_file": "iniap-manual-produccion-maiz-2007.pdf",
+    "page": 8,
+    "source_sha256": "75074137f0eea75ca88a193364a6653d377d2e34cddf95031652492979cd8f34",
+    "review_method": "cotejo_visual_pagina_PDF",
+    "review_date": "2026-11-08",
+    "excerpts": [
+      "Riegos: la fase de floración es el periodo más crítico del crecimiento porque de ella dependen el cuajado, formación y llenado de grano y la producción. El manual aconseja riegos que mantengan la humedad. Para el engrosamiento y maduración de la mazorca se debe disminuir el agua aplicada. Suelos: profundos, ricos en materia orgánica y con buen drenaje para no producir encharques."
+    ]
+  },
+  {
+    "source_file": "iniap-manual-produccion-maiz-2007.pdf",
+    "page": 11,
+    "source_sha256": "75074137f0eea75ca88a193364a6653d377d2e34cddf95031652492979cd8f34",
+    "review_method": "cotejo_visual_pagina_PDF",
+    "review_date": "2026-11-08",
+    "excerpts": [
+      "Defoliación o llacado: no realizarla durante la emisión de estigmas (floración femenina). En grano lechoso, máximo defoliar 25 % de hojas bajo la mazorca. Para una adecuada fertilización es necesario realizar el análisis químico del suelo por lo menos dos meses antes de la siembra. Referencia del manual INIAP de 2007."
+    ]
+  },
+  {
+    "source_file": "iniap-manual-produccion-maiz-2007.pdf",
+    "page": 16,
+    "source_sha256": "75074137f0eea75ca88a193364a6653d377d2e34cddf95031652492979cd8f34",
+    "review_method": "cotejo_visual_pagina_PDF",
+    "review_date": "2026-11-08",
+    "excerpts": [
+      "Cosecha: la época varía con la variedad, temperatura y altitud. Se realiza cuando el grano está en madurez fisiológica (capa negra en la base del grano) y suficientemente seco. Cosechar con alta humedad dificulta la conservación, favorece deterioro, rotura y pudriciones."
+    ]
+  },
+  {
+    "source_file": "iniap-manual-produccion-maiz-2007.pdf",
+    "page": 22,
+    "source_sha256": "75074137f0eea75ca88a193364a6653d377d2e34cddf95031652492979cd8f34",
+    "review_method": "cotejo_visual_pagina_PDF",
+    "review_date": "2026-11-08",
+    "excerpts": [
+      "Maíz forrajero destinado a alimento en verde: el manual de 2007 menciona 35 a 40 kg de semilla por hectárea, hileras de 70 a 80 cm y siembra a chorrillo. Se escogen variedades precoces y con mucha materia verde, como INIAP-101. No equivale a una densidad para producir grano seco."
+    ]
+  },
+  {
+    "source_file": "iniap-guia-produccion-maiz-sierra-2021.pdf",
+    "page": 47,
+    "source_sha256": "cc41ccee362b5c597011b55a06ad9423da4b40afaa01490a5cc6d1d2f9122a84",
+    "review_method": "cotejo_visual_pagina_PDF",
+    "review_date": "2026-11-08",
+    "excerpts": [
+      "Deficiencia de nitrógeno en maíz de la Sierra: amarillamiento o clorosis primero en hojas más viejas (bajeras) o en hojas superiores totalmente expandidas. La planta se torna pálida y aparece necrosis café en la punta que avanza por la nervadura en forma de V invertida. La descripción es orientativa; no constituye diagnóstico de una parcela."
+    ]
+  },
+  {
+    "source_file": "iniap-guia-produccion-maiz-sierra-2021.pdf",
+    "page": 49,
+    "source_sha256": "cc41ccee362b5c597011b55a06ad9423da4b40afaa01490a5cc6d1d2f9122a84",
+    "review_method": "cotejo_visual_pagina_PDF",
+    "review_date": "2026-11-08",
+    "excerpts": [
+      "Deficiencia de fósforo: hojas verde oscuro o café oscuro, con puntas y bordes violáceos; suele identificarse en plantas jóvenes de 2 a 4 hojas con disminución del crecimiento. La guía de la Sierra describe estos síntomas; la observación aislada no confirma una deficiencia."
+    ]
+  },
+  {
+    "source_file": "iniap-guia-produccion-maiz-sierra-2021.pdf",
+    "page": 112,
+    "source_sha256": "cc41ccee362b5c597011b55a06ad9423da4b40afaa01490a5cc6d1d2f9122a84",
+    "review_method": "cotejo_visual_pagina_PDF",
+    "review_date": "2026-11-08",
+    "excerpts": [
+      "Secado de semillas de maíz: la guía de la Sierra de 2021 indica bajar la humedad a 13–14 %, por medios naturales (sol) o artificiales (secadoras). Se refiere a semillas en esta sección, no a humedad relativa del aire ni a humedad del suelo."
+    ]
+  },
+  {
+    "source_file": "mag-guia-productores-maiz-amarillo-2026.pdf",
+    "page": 4,
+    "source_sha256": "bef200ecd8208dd6b1fa115b06756c1ae20cd08e79e4b7ce6f794d23090d8d88",
+    "review_method": "cotejo_visual_pagina_PDF",
+    "review_date": "2026-11-08",
+    "excerpts": [
+      "Prevención ante inundaciones en maíz amarillo: revisar calendario de siembra y cosecha y programar contingencias. Identificar zonas con menor riesgo y buen drenaje; construir, mejorar y limpiar canales de riego, drenaje y acequias para permitir el curso del agua y evitar saturación del suelo. En laderas, usar prácticas de conservación y cultivos de cobertura."
+    ]
+  },
+  {
+    "source_file": "mag-guia-productores-maiz-amarillo-2026.pdf",
+    "page": 5,
+    "source_sha256": "bef200ecd8208dd6b1fa115b06756c1ae20cd08e79e4b7ce6f794d23090d8d88",
+    "review_method": "cotejo_visual_pagina_PDF",
+    "review_date": "2026-11-08",
+    "excerpts": [
+      "Durante una inundación: contar con plan de contingencia, mantener comunicación con responsables de represas y fuentes oficiales; colocar las mazorcas recolectadas en sitio sombreado o sobre lonas con buena ventilación. Si se cuenta con Seguro Agropecuario, comunicar el siniestro para aplicar a cobertura."
+    ]
+  },
+  {
+    "source_file": "mag-guia-productores-maiz-amarillo-2026.pdf",
+    "page": 6,
+    "source_sha256": "bef200ecd8208dd6b1fa115b06756c1ae20cd08e79e4b7ce6f794d23090d8d88",
+    "review_method": "cotejo_visual_pagina_PDF",
+    "review_date": "2026-11-08",
+    "excerpts": [
+      "Si se sospecha una enfermedad del cultivo, comunicarla a Agrocalidad mediante la aplicación Agromóvil, las oficinas de la Agencia o el personal del Ministerio de Agricultura, Ganadería y Pesca. Revisar caminos y transporte para sacar el producto a los centros de acopio."
+    ]
+  }
+]

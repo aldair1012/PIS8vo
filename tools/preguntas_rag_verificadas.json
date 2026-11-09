@@ -1,0 +1,359 @@
+[
+  {
+    "id": "R01",
+    "question": "Según ESPAC 2025, ¿cuántas hectáreas sembradas y toneladas de maíz duro seco hubo en Ecuador?",
+    "relevant_pages": [
+      [
+        "inec-espac-resultados-2025.pdf",
+        25
+      ]
+    ],
+    "split": "desarrollo",
+    "required_facts": [
+      "307.587",
+      "1.508.854"
+    ]
+  },
+  {
+    "id": "R02",
+    "question": "¿Qué provincias concentran el 87,1 % de la producción de maíz según INEC ESPAC 2025?",
+    "relevant_pages": [
+      [
+        "inec-espac-resultados-2025.pdf",
+        25
+      ]
+    ],
+    "split": "desarrollo",
+    "required_facts": [
+      "87,1"
+    ]
+  },
+  {
+    "id": "R03",
+    "question": "¿Qué separación entre surcos y plantas menciona la guía del Litoral para los híbridos H-551, H-601 y H-553?",
+    "relevant_pages": [
+      [
+        "iniap-guia-maiz-amarillo-litoral-2014.pdf",
+        11
+      ]
+    ],
+    "split": "desarrollo",
+    "required_facts": [
+      "90",
+      "80",
+      "20"
+    ]
+  },
+  {
+    "id": "R04",
+    "question": "¿Cuántos kilos de semilla certificada por hectárea recomienda la guía del Litoral de 2014?",
+    "relevant_pages": [
+      [
+        "iniap-guia-maiz-amarillo-litoral-2014.pdf",
+        11
+      ]
+    ],
+    "split": "desarrollo",
+    "required_facts": [
+      "15 kg"
+    ]
+  },
+  {
+    "id": "R05",
+    "question": "¿Cada cuánto propone hacer análisis de suelo la guía del Litoral para conocer la fertilidad?",
+    "relevant_pages": [
+      [
+        "iniap-guia-maiz-amarillo-litoral-2014.pdf",
+        14
+      ]
+    ],
+    "split": "desarrollo",
+    "required_facts": [
+      "dos años"
+    ]
+  },
+  {
+    "id": "R06",
+    "question": "¿Cómo divide la aplicación de urea en época lluviosa la guía del Litoral de 2014?",
+    "relevant_pages": [
+      [
+        "iniap-guia-maiz-amarillo-litoral-2014.pdf",
+        16
+      ]
+    ],
+    "split": "desarrollo",
+    "required_facts": [
+      "46",
+      "10–15",
+      "30"
+    ]
+  },
+  {
+    "id": "R07",
+    "question": "¿Cuántos días dura el ciclo del maíz de altura según el manual INIAP de 2007?",
+    "relevant_pages": [
+      [
+        "iniap-manual-produccion-maiz-2007.pdf",
+        7
+      ]
+    ],
+    "split": "desarrollo",
+    "required_facts": [
+      "205",
+      "270"
+    ]
+  },
+  {
+    "id": "R08",
+    "question": "¿Qué temperatura para germinación menciona el manual INIAP de 2007?",
+    "relevant_pages": [
+      [
+        "iniap-manual-produccion-maiz-2007.pdf",
+        7
+      ]
+    ],
+    "split": "desarrollo",
+    "required_facts": [
+      "15 °C",
+      "20 °C"
+    ]
+  },
+  {
+    "id": "R09",
+    "question": "¿Por qué la floración es crítica para el agua según el manual de maíz de 2007?",
+    "relevant_pages": [
+      [
+        "iniap-manual-produccion-maiz-2007.pdf",
+        8
+      ]
+    ],
+    "split": "desarrollo",
+    "required_facts": [
+      "floración",
+      "cuajado"
+    ]
+  },
+  {
+    "id": "R10",
+    "question": "¿Cuándo evitar la defoliación o llacado y qué límite se menciona en grano lechoso?",
+    "relevant_pages": [
+      [
+        "iniap-manual-produccion-maiz-2007.pdf",
+        11
+      ]
+    ],
+    "split": "desarrollo",
+    "required_facts": [
+      "25 %",
+      "estigmas"
+    ]
+  },
+  {
+    "id": "R11",
+    "question": "¿Qué señal de madurez fisiológica del grano permite identificar el momento de cosecha?",
+    "relevant_pages": [
+      [
+        "iniap-manual-produccion-maiz-2007.pdf",
+        16
+      ]
+    ],
+    "split": "desarrollo",
+    "required_facts": [
+      "capa negra"
+    ]
+  },
+  {
+    "id": "R12",
+    "question": "¿Qué cantidad de semilla menciona el manual de 2007 para maíz forrajero destinado a alimento verde?",
+    "relevant_pages": [
+      [
+        "iniap-manual-produccion-maiz-2007.pdf",
+        22
+      ]
+    ],
+    "split": "desarrollo",
+    "required_facts": [
+      "35",
+      "40"
+    ]
+  },
+  {
+    "id": "R13",
+    "question": "¿Qué síntomas de falta de nitrógeno describe la guía de la Sierra de 2021?",
+    "relevant_pages": [
+      [
+        "iniap-guia-produccion-maiz-sierra-2021.pdf",
+        47
+      ]
+    ],
+    "split": "desarrollo",
+    "required_facts": [
+      "clorosis",
+      "V invertida"
+    ]
+  },
+  {
+    "id": "R14",
+    "question": "¿Qué síntomas presenta una planta joven con deficiencia de fósforo en la guía de la Sierra?",
+    "relevant_pages": [
+      [
+        "iniap-guia-produccion-maiz-sierra-2021.pdf",
+        49
+      ]
+    ],
+    "split": "desarrollo",
+    "required_facts": [
+      "violáceos",
+      "2 a 4"
+    ]
+  },
+  {
+    "id": "R15",
+    "question": "¿A qué humedad propone secar las semillas de maíz la guía de la Sierra de 2021?",
+    "relevant_pages": [
+      [
+        "iniap-guia-produccion-maiz-sierra-2021.pdf",
+        112
+      ]
+    ],
+    "split": "desarrollo",
+    "required_facts": [
+      "13–14"
+    ]
+  },
+  {
+    "id": "R16",
+    "question": "¿Qué medidas de drenaje propone el MAG para prevenir inundaciones en maíz amarillo?",
+    "relevant_pages": [
+      [
+        "mag-guia-productores-maiz-amarillo-2026.pdf",
+        4
+      ]
+    ],
+    "split": "desarrollo",
+    "required_facts": [
+      "drenaje",
+      "acequias"
+    ]
+  },
+  {
+    "id": "R17",
+    "question": "¿Cómo propone el MAG colocar las mazorcas recolectadas durante una inundación?",
+    "relevant_pages": [
+      [
+        "mag-guia-productores-maiz-amarillo-2026.pdf",
+        5
+      ]
+    ],
+    "split": "desarrollo",
+    "required_facts": [
+      "sombreado",
+      "ventilación"
+    ]
+  },
+  {
+    "id": "R18",
+    "question": "¿A quién se comunica una sospecha de enfermedad del cultivo según la guía del MAG?",
+    "relevant_pages": [
+      [
+        "mag-guia-productores-maiz-amarillo-2026.pdf",
+        6
+      ]
+    ],
+    "split": "desarrollo",
+    "required_facts": [
+      "Agrocalidad",
+      "Agromóvil"
+    ]
+  },
+  {
+    "id": "R19",
+    "question": "¿La superficie cosechada de maíz duro seco en 2025 fue igual a la sembrada según INEC?",
+    "relevant_pages": [
+      [
+        "inec-espac-resultados-2025.pdf",
+        25
+      ]
+    ],
+    "split": "validacion",
+    "required_facts": [
+      "307.587",
+      "296.546"
+    ]
+  },
+  {
+    "id": "R20",
+    "question": "Si nace toda la semilla, ¿cuántas plantas por hectárea se obtienen con el espaciamiento del Litoral?",
+    "relevant_pages": [
+      [
+        "iniap-guia-maiz-amarillo-litoral-2014.pdf",
+        11
+      ]
+    ],
+    "split": "validacion",
+    "required_facts": [
+      "55.555",
+      "62.500"
+    ]
+  },
+  {
+    "id": "R21",
+    "question": "Según el manual de 2007, ¿el intervalo para germinar es de 15 a 20 grados o de 150 a 200 grados?",
+    "relevant_pages": [
+      [
+        "iniap-manual-produccion-maiz-2007.pdf",
+        7
+      ]
+    ],
+    "split": "validacion",
+    "required_facts": [
+      "15 °C",
+      "20 °C"
+    ]
+  },
+  {
+    "id": "R22",
+    "question": "¿El porcentaje de secado de la sección de semillas de la Sierra describe la humedad del aire?",
+    "relevant_pages": [
+      [
+        "iniap-guia-produccion-maiz-sierra-2021.pdf",
+        112
+      ]
+    ],
+    "split": "validacion",
+    "required_facts": [
+      "semillas",
+      "13–14"
+    ]
+  },
+  {
+    "id": "R23",
+    "question": "¿Para qué limpiar las acequias y canales antes de excesos de agua, según MAG?",
+    "relevant_pages": [
+      [
+        "mag-guia-productores-maiz-amarillo-2026.pdf",
+        4
+      ]
+    ],
+    "split": "validacion",
+    "required_facts": [
+      "saturación",
+      "canales"
+    ]
+  },
+  {
+    "id": "R24",
+    "question": "¿Qué problema tiene cosechar el grano todavía muy húmedo según INIAP 2007?",
+    "relevant_pages": [
+      [
+        "iniap-manual-produccion-maiz-2007.pdf",
+        16
+      ]
+    ],
+    "split": "validacion",
+    "required_facts": [
+      "humedad",
+      "pudriciones"
+    ]
+  }
+]

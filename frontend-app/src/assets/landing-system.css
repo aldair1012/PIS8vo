@@ -9,20 +9,29 @@
    1. Primitive and semantic tokens
    -------------------------------------------------------------------------- */
 .zeasys-home {
-  /* Primitive palette */
-  --zs-forest-950: #031109;
-  --zs-forest-900: #061a0f;
-  --zs-forest-850: #0b2417;
-  --zs-forest-800: #103221;
-  --zs-forest-700: #1d5f3b;
-  --zs-forest-600: #27784a;
-  --zs-leaf-400: #9fc862;
-  --zs-lime-300: #c4e477;
-  --zs-maize-400: #d8a83f;
-  --zs-sky-300: #9ed1ff;
-  --zs-paper-50: #f6f9f4;
-  --zs-paper-100: #edf4eb;
-  --zs-paper-200: #dfeade;
+  /*
+   * Layer 1 - primitives (HSL). Cada ancla de tono alimenta su propia rampa
+   * tonal: retocar la paleta solo exige cambiar saturación o luminosidad aquí.
+   */
+  --zs-h-forest: 150; /* bosque: fondos y estructura */
+  --zs-h-leaf: 81;    /* hoja: acentos de acción */
+  --zs-h-maize: 42;   /* mazorca del dorado maizal */
+  --zs-h-sky: 208;    /* cielo: foco e información */
+  --zs-h-paper: 100;  /* papel vegetal: superficies */
+
+  --zs-forest-950: hsl(var(--zs-h-forest) 72% 4%);
+  --zs-forest-900: hsl(var(--zs-h-forest) 70% 6%);
+  --zs-forest-850: hsl(var(--zs-h-forest) 56% 9%);
+  --zs-forest-800: hsl(var(--zs-h-forest) 54% 13%);
+  --zs-forest-700: hsl(var(--zs-h-forest) 54% 24%);
+  --zs-forest-600: hsl(var(--zs-h-forest) 52% 32%);
+  --zs-leaf-400: hsl(var(--zs-h-leaf) 54% 59%);
+  --zs-lime-300: hsl(var(--zs-h-leaf) 68% 68%);
+  --zs-maize-400: hsl(var(--zs-h-maize) 68% 55%);
+  --zs-sky-300: hsl(var(--zs-h-sky) 100% 81%);
+  --zs-paper-50: hsl(var(--zs-h-paper) 30% 97%);
+  --zs-paper-100: hsl(var(--zs-h-paper) 34% 94%);
+  --zs-paper-200: hsl(var(--zs-h-paper) 24% 89%);
 
   /* Primitive spacing and shape */
   --zs-space-1: .25rem;
@@ -40,22 +49,26 @@
   --zs-duration-normal: 260ms;
   --zs-duration-slow: 520ms;
 
-  /* Semantic tokens: dark theme */
+  /*
+   * Layer 2 - semantic tokens (dark, base). La dirección de arte del hero
+   * es idéntica en ambos temas; el modo claro solo pinta las superficies
+   * externas (ver el re-fijado de alias más abajo).
+   */
   --zs-page-bg: var(--zs-forest-950);
   --zs-section-bg: var(--zs-forest-900);
-  --zs-surface: var(--zs-forest-850);
-  --zs-surface-raised: var(--zs-forest-800);
-  --zs-text: #f4f8f1;
-  --zs-text-muted: #bfd0c0;
-  --zs-text-faint: #8fa792;
-  --zs-border: rgba(196, 228, 197, .18);
-  --zs-border-strong: rgba(196, 228, 197, .32);
-  --zs-action: var(--zs-lime-300);
-  --zs-action-hover: #d2ec91;
-  --zs-action-text: #102416;
+  --zs-surface: var(--zs-forest-800);
+  --zs-surface-raised: var(--zs-forest-700);
+  --zs-text: hsl(var(--zs-h-paper) 30% 96%);
+  --zs-text-muted: hsl(var(--zs-h-paper) 18% 81%);
+  --zs-text-faint: hsl(var(--zs-h-paper) 12% 61%);
+  --zs-border: hsl(var(--zs-h-leaf) 68% 83% / .18);
+  --zs-border-strong: hsl(var(--zs-h-leaf) 68% 83% / .32);
+  --zs-action: var(--zs-leaf-400);
+  --zs-action-hover: hsl(var(--zs-h-leaf) 74% 78%);
+  --zs-action-text: var(--zs-forest-950);
   --zs-focus: var(--zs-sky-300);
-  --zs-shadow-sm: 0 8px 24px rgba(0, 0, 0, .18);
-  --zs-shadow-lg: 0 28px 72px rgba(0, 0, 0, .28);
+  --zs-shadow-sm: 0 8px 24px hsl(var(--zs-h-forest) 72% 2% / .18);
+  --zs-shadow-lg: 0 28px 72px hsl(var(--zs-h-forest) 72% 2% / .28);
 
   /* Component aliases. Keep legacy components on the same theme contract. */
   --home-bg: var(--zs-page-bg);
@@ -78,21 +91,103 @@
 }
 
 .zeasys-home.zeasys-home--light {
-  --zs-page-bg: #eef4ec;
-  --zs-section-bg: #f6f9f4;
-  --zs-surface: #ffffff;
-  --zs-surface-raised: #e3ede2;
-  --zs-text: #173b28;
-  --zs-text-muted: #466451;
-  --zs-text-faint: #657d6b;
-  --zs-border: rgba(30, 78, 47, .17);
-  --zs-border-strong: rgba(30, 78, 47, .3);
-  --zs-action: #27784a;
-  --zs-action-hover: #1d623c;
-  --zs-action-text: #ffffff;
-  --zs-focus: #165f9c;
-  --zs-shadow-sm: 0 8px 24px rgba(31, 86, 48, .08);
-  --zs-shadow-lg: 0 28px 72px rgba(31, 86, 48, .12);
+  /* Layer 2 - semantic tokens (light). Solo cambian las superficies externas. */
+  --zs-page-bg: hsl(var(--zs-h-paper) 34% 96.5%);
+  --zs-section-bg: hsl(var(--zs-h-paper) 40% 93%);
+  --zs-surface: hsl(var(--zs-h-paper) 30% 99%);
+  --zs-surface-raised: hsl(var(--zs-h-paper) 26% 91%);
+  --zs-text: hsl(var(--zs-h-forest) 58% 12%);
+  --zs-text-muted: hsl(var(--zs-h-forest) 20% 38%);
+  --zs-text-faint: hsl(var(--zs-h-forest) 12% 52%);
+  --zs-border: hsl(var(--zs-h-forest) 38% 30% / .22);
+  --zs-border-strong: hsl(var(--zs-h-forest) 38% 30% / .4);
+  --zs-action: var(--zs-forest-600);
+  --zs-action-hover: hsl(var(--zs-h-forest) 58% 22%);
+  --zs-action-text: hsl(0 0% 100%);
+  --zs-focus: var(--zs-sky-300);
+  --zs-shadow-sm: 0 8px 24px hsl(var(--zs-h-forest) 32% 20% / .1);
+  --zs-shadow-lg: 0 28px 72px hsl(var(--zs-h-forest) 32% 20% / .14);
+}
+
+/* --------------------------------------------------------------------------
+   Límite con styles.css legado.
+
+   Varias reglas legadas de modo claro repinten el hero y su tarjeta con
+   fondos de papel (~5960, ~5761) o fuerzan texto oscuro sobre el vidrio
+   oscuro (~5955, ~5953). landing-system.css carga después de styles.css,
+   así que aquí se mantiene la misma dirección de arte del hero en ambos
+   temas mediante:
+
+   1. Re-fijado de las alias --home-* que consume la capa legada: toda regla
+      legada basada en var() resuelve a los valores oscuros (fotográficos).
+   2. Re-afirmación explícita de las pocas propiedades que el legado escribe
+      con colores duros. Solo aquí se usa !important (frontera con legacy).
+   -------------------------------------------------------------------------- */
+.zeasys-home.zeasys-home--light .zeasys-home-hero {
+  /* Paridad 1:1 con el régimen oscuro del héroe: los mismos literales que la
+     capa legada fija en oscuro (pin unión del héroe + pase raíz final),
+     expresados en HSL. Así, sea cual sea la regla que gane la cascada
+     dentro del héroe, el resultado es idéntico en ambos temas. */
+  --home-text: hsl(111 47% 97%);          /* #f5fbf4 */
+  --home-muted: hsl(126 20% 79%);         /* #c0d5c2 */
+  --home-faint: hsl(124 15% 63%);         /* #91ae93 */
+  --home-border: hsl(115 56% 92% / .2);   /* rgba(225,246,223,.2) */
+  --home-rule: hsl(120 36% 82% / .22);    /* rgba(191,225,191,.22) */
+  --home-bg: hsl(148 45% 5.7%);           /* #08150e */
+  --home-surface: hsl(148 40% 10%);       /* #10251a */
+  --home-surface-soft: hsl(148 42% 14%);  /* #153323 */
+  --home-green: hsl(108 47% 69%);         /* #9bd68c */
+  --home-green-dark: hsl(109 30% 51%);    /* #6ca85e */
+  --home-blue: var(--zs-sky-300);
+  --home-warm: var(--zs-maize-400);
+  color-scheme: dark;
+}
+
+/* El panel de acceso comparte el elemento con .zeasys-hero-flip-face y
+   .zeasys-hero-auth-back: el selector debe ser compuesto, no descendiente.
+   El shorthand re-afirmado elimina también el degradado claro que el legado
+   pinta como background-image (~styles.css 5754), y las alias re-fijadas
+   anulan la paleta clara que el legado declara sobre esta misma cara
+   (~styles.css 4912) para que el panel use la dirección de arte oscura
+   idéntica en ambos temas. */
+.zeasys-home.zeasys-home--light .zeasys-hero-auth-back.zeasys-login-card {
+  --home-text: hsl(111 47% 97%);         /* #f5fbf4 */
+  --home-muted: hsl(126 20% 79%);        /* #c0d5c2 */
+  --home-faint: hsl(124 15% 63%);        /* #91ae93 */
+  --home-border: hsl(115 56% 92% / .2);  /* igual que el pin unión oscuro */
+  --home-green: hsl(108 47% 69%);
+  --home-green-dark: hsl(109 30% 51%);
+  --home-blue: var(--zs-sky-300);
+  border-color: hsl(115 56% 92% / .2) !important;
+  /* El mismo degradado fotográfico que el legado pinta en oscuro
+     (styles.css ~4898): mismo cristal en ambos temas. */
+  background:
+    radial-gradient(circle at 50% 12%, rgba(182, 212, 109, .095), transparent 34%),
+    linear-gradient(145deg, rgba(7, 25, 16, .98), rgba(10, 31, 20, .96)) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .045), 0 26px 64px rgba(0, 0, 0, .14) !important;
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+.zeasys-home.zeasys-home--light .zeasys-hero-auth-back .zeasys-auth-close {
+  color: hsl(111 47% 97%);
+  border-color: hsl(115 56% 92% / .26);
+  background: rgba(4, 18, 11, .48);
+}
+
+.zeasys-home.zeasys-home--light .zeasys-hero-auth-back .zeasys-login-card-head :is(h2, p) { color: hsl(111 47% 97%) !important; }
+.zeasys-home.zeasys-home--light .zeasys-hero-auth-back .zeasys-login-card-head p { color: hsl(126 20% 79%) !important; }
+
+.zeasys-home.zeasys-home--light .zeasys-hero-auth-back .zeasys-login-form input {
+  color: #f5f8f1 !important;
+  background: rgba(4, 18, 11, .38) !important;
+  border-color: rgba(200, 226, 200, .28) !important;
+}
+
+.zeasys-home.zeasys-home--light .zeasys-hero-auth-back .zeasys-login-form input::placeholder { color: #8fa792 !important; }
+
+.zeasys-home.zeasys-home--light .zeasys-hero-auth-back .zeasys-login-form input:focus {
+  border-color: var(--zs-lime-300) !important;
 }
 
 /* --------------------------------------------------------------------------
@@ -195,9 +290,9 @@
 
 .zeasys-home .zeasys-theme-toggle,
 .zeasys-home .zeasys-mobile-menu-toggle {
-  width: 42px;
-  min-width: 42px;
-  height: 42px;
+  width: 44px;
+  min-width: 44px;
+  height: 44px;
   color: var(--zs-text) !important;
   background: transparent;
   border: 1px solid var(--zs-border-strong);
@@ -365,16 +460,30 @@
   place-items: center;
   width: 100%;
   min-height: 48px;
+  padding: 6px;
+  border: 1px solid var(--home-border);
+  border-radius: 16px;
+  background: var(--home-surface-soft);
 }
 
 .zeasys-home .zeasys-google-button-host {
-  display: grid;
-  place-items: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
   width: min(100%, 400px);
+  min-width: 0;
   min-height: 44px;
 }
 
-.zeasys-home .zeasys-google-button-host iframe { max-width: 100%; }
+/* El iframe oficial incluye márgenes propios: no reducirlo por CSS.
+   GIS dibuja 10px laterales y 2px verticales de marco sobre su propia caja
+   (400×44 alrededor de una píldora 380×40); ese marco se recorta para que el
+   botón sea limpio sobre el panel oscuro en ambos temas. */
+.zeasys-home .zeasys-google-button-host iframe {
+  display: block;
+  border: 0;
+  clip-path: inset(2px 10px);
+}
 .zeasys-home .zeasys-google-signin.is-loading .zeasys-google-button-host { pointer-events: none; }
 
 .zeasys-home .zeasys-google-status,
@@ -780,6 +889,13 @@
     box-shadow: var(--zs-shadow-lg);
   }
 
+  /* Límite con styles.css: su contraste fija opacity: 1 !important. */
+  .zeasys-home .zeasys-home-nav .zeasys-home-links:not(.is-open) {
+    opacity: 0 !important;
+    visibility: hidden;
+    pointer-events: none;
+  }
+
   .zeasys-home .zeasys-home-links a { min-height: 44px; display: flex; align-items: center; padding: .65rem .8rem; }
   .zeasys-home .zeasys-mobile-login { min-height: 44px; margin-top: .35rem; }
   .zeasys-home .zeasys-capability-grid { grid-template-columns: 1fr; }
@@ -818,7 +934,7 @@
   .zeasys-home .zeasys-home-brand .platform-logo--wordmark { width: 134px !important; height: 31px !important; }
   .zeasys-home .zeasys-home-brand .platform-logo-wordmark { font-size: 1.05rem !important; }
   .zeasys-home .zeasys-theme-toggle,
-  .zeasys-home .zeasys-mobile-menu-toggle { width: 40px; min-width: 40px; height: 40px; }
+  .zeasys-home .zeasys-mobile-menu-toggle { width: 44px; min-width: 44px; height: 44px; }
   .zeasys-home .zeasys-hero-actions { grid-template-columns: 1fr; }
   .zeasys-home .zeasys-hero-visual,
   .zeasys-home .zeasys-hero-flip { min-height: 840px !important; }
@@ -845,4 +961,16 @@
     transition-duration: 320ms !important;
     transition-timing-function: ease-in-out;
   }
+}
+
+/* Public counterpart of the field-notebook visual system. Hero art remains dark in both themes. */
+.zeasys-home .zeasys-home-nav { border-radius: 18px; box-shadow: 0 6px 25px #00000010; }
+.zeasys-home .zeasys-home-hero-copy h1 { letter-spacing: -.045em; line-height: 1.07; }
+.zeasys-home .zeasys-section-heading h2 { letter-spacing: -.035em; }
+.zeasys-home :is(.zeasys-data-card, .zeasys-login-card) { border-radius: 24px; }
+.zeasys-home .zeasys-capability-face { border-radius: 20px; }
+.zeasys-home .zeasys-login-form input { min-height: 46px; border-radius: 12px; }
+.zeasys-home .zeasys-home-footer { border-top: 1px solid var(--zs-border); }
+@media (max-width: 640px) {
+  .zeasys-home :is(.zeasys-data-card, .zeasys-login-card) { border-radius: 16px; }
 }

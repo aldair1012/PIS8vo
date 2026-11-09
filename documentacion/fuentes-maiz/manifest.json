@@ -1,0 +1,121 @@
+[
+  {
+    "archivo": "espac_2025_datos_abiertos.zip",
+    "institucion": "INEC",
+    "url": "https://www.ecuadorencifras.gob.ec/documentos/web-inec/Estadisticas_agropecuarias/espac/2025/2_DD_DATOS_ABIERTOS_ESPAC_2025.zip",
+    "bytes": 7334049,
+    "sha256": "f60fb4957cf9f416ba20ff86cd0a1d968ad294803c36af97a7095870572fa8df",
+    "estado": "descargado",
+    "consultado_utc": "2026-11-08T00:06:30.515366+00:00"
+  },
+  {
+    "archivo": "espac_2025_diccionario.zip",
+    "institucion": "INEC",
+    "url": "https://www.ecuadorencifras.gob.ec/documentos/web-inec/Estadisticas_agropecuarias/espac/2025/Diccionario_de_variables_2025.zip",
+    "bytes": 24604533,
+    "sha256": "eae7333219e5ab03e0d77f9ac2dcc5676e73321a48317bae967c4929f666525c",
+    "estado": "descargado",
+    "consultado_utc": "2026-11-08T00:06:32.357338+00:00"
+  },
+  {
+    "archivo": "espac_2025_guia.pdf",
+    "institucion": "INEC",
+    "url": "https://www.ecuadorencifras.gob.ec/documentos/web-inec/Estadisticas_agropecuarias/espac/2025/Guia_de_uso_de_bases_de_datos_ESPAC_2025.pdf",
+    "bytes": 1444046,
+    "sha256": "60fca7df181997491e81cd412a1975404add05687f5fc0fa1c93b501b45eaa83",
+    "estado": "descargado",
+    "consultado_utc": "2026-11-08T00:06:30.037078+00:00"
+  },
+  {
+    "archivo": "mag_fertilidad_2022_diccionario.xlsx",
+    "institucion": "MAG",
+    "url": "https://www.datosabiertos.gob.ec/dataset/a3d45497-25df-451b-a551-2f72f290ac6b/resource/f96fc9d4-3de4-466c-8fee-957b17a81612/download/mag_mag_digitalfertilidadquimicasuelos_2022_dd_2022ago.xlsx",
+    "bytes": 14329,
+    "sha256": "b103ae99f2e332fa1199108d17802670d30d257668fec5e8be2a40bc81bc87df",
+    "estado": "descargado",
+    "consultado_utc": "2026-11-08T00:06:30.820353+00:00"
+  },
+  {
+    "archivo": "igm_perfil_PN1-P219.pdf",
+    "institucion": "IGM / Proyecto Nacional de Geoinformacion",
+    "url": "https://www.geoportaligm.gob.ec/geodescargas/suelos/PN1-P219.pdf",
+    "bytes": 265111,
+    "sha256": "77ad96305688afca26543087ed76874e606d6ed780ec87ed5af461c783f97072",
+    "estado": "descargado",
+    "consultado_utc": "2026-11-08T00:12:15.283999+00:00"
+  },
+  {
+    "archivo": "inamhi_precipitacion.csv",
+    "institucion": "INAMHI",
+    "url": "https://www.datosabiertos.gob.ec/dataset/eaa8894f-68d1-4a15-80f8-1a6f528f946c/resource/98c77d18-e863-4e00-8a22-eb47f2981d9c/download/inamhi-precipitacion-2019diciembre.csv",
+    "pagina_recurso": "https://www.datosabiertos.gob.ec/dataset/eaa8894f-68d1-4a15-80f8-1a6f528f946c/resource/98c77d18-e863-4e00-8a22-eb47f2981d9c",
+    "bytes": 2199050,
+    "sha256": "1a7740828032630f26eec7e0e68443b50cc5ede06cd7a2164856bf442c0526fd",
+    "estado": "descargado",
+    "consultado_utc": "2026-11-08T03:39:25.904648+00:00"
+  },
+  {
+    "archivo": "inamhi_temperatura.csv",
+    "institucion": "INAMHI",
+    "url": "https://www.datosabiertos.gob.ec/dataset/aad8a1b7-d125-4430-888a-b9923c1f7ef8/resource/29d46d3d-2c26-46a7-b7e2-8bed24fbba5c/download/inamhi-temperaturamedia-2019diciembre.csv",
+    "pagina_recurso": "https://www.datosabiertos.gob.ec/dataset/aad8a1b7-d125-4430-888a-b9923c1f7ef8/resource/29d46d3d-2c26-46a7-b7e2-8bed24fbba5c",
+    "bytes": 679657,
+    "sha256": "18a30d05a6fc246d65dc69494d37b402e56f6bde1a860c71b2b187724fe6ee1f",
+    "estado": "descargado",
+    "consultado_utc": "2026-11-08T03:39:26.764695+00:00"
+  },
+  {
+    "archivo": "iniap_maiz_duro.pdf",
+    "institucion": "INIAP",
+    "url": "https://tecnologia.iniap.gob.ec/wp-content/uploads/2023/11/fichasmaizduro.pdf",
+    "bytes": 293947,
+    "sha256": "63abf0c660241ebf4f9e0f389da87ac57867430f79bc9fee3470c08a6f732d4b",
+    "estado": "descargado",
+    "consultado_utc": "2026-11-08T03:57:55.458280+00:00"
+  },
+  {
+    "archivo": "iniap_101.pdf",
+    "institucion": "INIAP",
+    "url": "https://tecnologia.iniap.gob.ec/wp-content/uploads/2023/11/iniap1011.pdf",
+    "bytes": 521314,
+    "sha256": "9c5369703fbbeaf0b6b677539c721f51ffc6f033d9773935af38749235877cb5",
+    "estado": "descargado",
+    "consultado_utc": "2026-11-08T03:57:55.651153+00:00"
+  },
+  {
+    "archivo": "iniap_guia_sierra_2021.pdf",
+    "institucion": "INIAP",
+    "url": "https://repositorio.iniap.gob.ec/bitstream/41000/5796/1/GUIA%20CULTIVO%20DE%20MAIZ%202021-1.pdf",
+    "bytes": 9679874,
+    "sha256": "cc41ccee362b5c597011b55a06ad9423da4b40afaa01490a5cc6d1d2f9122a84",
+    "estado": "descargado",
+    "consultado_utc": "2026-11-08T03:58:09.857845+00:00"
+  },
+  {
+    "archivo": "iniap_h554_renacer.pdf",
+    "institucion": "INIAP",
+    "url": "https://repositorio.iniap.gob.ec/server/api/core/bitstreams/55fd3b1a-b173-4dfb-ad4c-18358c7d2f36/content",
+    "bytes": 229137099,
+    "sha256": "2c1b753059795c9965544a174e55e78832594bf38f34c10264646f577ec6aaea",
+    "estado": "descargado",
+    "consultado_utc": "2026-11-08T04:03:23.888676+00:00"
+  },
+  {
+    "archivo": "mag_maiz_2019.pdf",
+    "url": "https://sipa.agricultura.gob.ec/descargas/estudios/rendimientos/maiz/rendimiento_maiz_duro_2019.pdf",
+    "institucion": "Fuente primaria institucional",
+    "bytes": 1449276,
+    "sha256": "fbbfea17041ae396450286366b4568811cb634fb7a38a49338f3795eecd7c26e",
+    "consultado_utc": "2026-11-08T04:35:41.132171+00:00",
+    "estado": "descargado"
+  },
+  {
+    "archivo": "iniap_h551_ficha.pdf",
+    "url": "https://repositorio.iniap.gob.ec/bitstreams/b9ed1623-a3f2-4fcf-b9ec-d28c2833b6cf/download",
+    "institucion": "Fuente primaria institucional",
+    "bytes": 1676643,
+    "sha256": "ac88965a5ed68012674c249b05dc1e5fdf87c4895fdaeccef7ec2e713ddd2056",
+    "consultado_utc": "2026-11-08T04:35:57.818911+00:00",
+    "estado": "descargado"
+  }
+]

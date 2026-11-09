@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
+  <title>Mazorca geométrica</title>
+  <desc>Una mazorca compacta compuesta por tres hileras de granos y una envoltura angular.</desc>
+  <path fill="#000" d="M128 27c-43 24-66 60-66 106 0 44 24 77 66 96 42-19 66-52 66-96 0-46-23-82-66-106zm0 25 42 27v96l-42 27-42-27V79z" fill-rule="evenodd"/>
+  <g fill="#000">
+    <path d="m103 78 18 12-18 12-18-12zm50 0 18 12-18 12-18-12z"/>
+    <path d="m88 111 18 12-18 12-18-12zm40 0 18 12-18 12-18-12zm40 0 18 12-18 12-18-12z"/>
+    <path d="m88 145 18 12-18 12-18-12zm40 0 18 12-18 12-18-12zm40 0 18 12-18 12-18-12z"/>
+    <path d="m103 178 18 12-18 12-18-12zm50 0 18 12-18 12-18-12z"/>
+  </g>
+  <path fill="#000" d="M68 159c-6 28 7 53 31 69-3-19-6-34-12-48zm120 0c6 28-7 53-31 69 3-19 6-34 12-48z"/>
+</svg>

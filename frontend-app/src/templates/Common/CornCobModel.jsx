@@ -52,7 +52,7 @@ export default function CornCobModel() {
     const initialise = async () => {
       try {
         const [THREE, { MTLLoader }, { OBJLoader }] = await Promise.all([
-          import('three'),
+          import('../../utils/cornThree'),
           import('three/examples/jsm/loaders/MTLLoader.js'),
           import('three/examples/jsm/loaders/OBJLoader.js'),
         ]);

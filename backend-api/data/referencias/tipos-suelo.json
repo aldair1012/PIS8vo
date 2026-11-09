@@ -1,0 +1,7 @@
+{
+  "franco_equilibrado": {"label":"Franco", "modelo":"Franco"},
+  "franco": {"label":"Franco limoso", "modelo":"Franco limoso"},
+  "arcilloso": {"label":"Franco arcilloso", "modelo":"Franco arcilloso"},
+  "arenoso": {"label":"Franco arenoso", "modelo":"Franco arenoso"},
+  "arcillo_limoso": {"label":"Arcillo limoso", "modelo":"Arcillo limoso"}
+}

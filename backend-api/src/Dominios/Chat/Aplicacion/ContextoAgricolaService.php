@@ -31,26 +31,26 @@ final class ContextoAgricolaService
      * @param array<int, array<string, mixed>> $simulacionesRecientes
      * @return array<string, mixed>
      */
-    public function construir(int $usuarioId, int $cultivoId, ?int $anio, array $simulacionesRecientes = []): array
+    public function construir(int $usuarioId, int $cultivoId, ?int $año, array $simulacionesRecientes = []): array
     {
         $contexto = [];
         $precio = $this->precioMaiz->obtener();
         $contexto['precio_maiz'] = $this->compactarPrecio($precio);
 
-        $clima = $this->seguro(fn (): mixed => $this->clima->construir($usuarioId, $cultivoId, $anio));
+        $clima = $this->seguro(fn (): mixed => $this->clima->construir($usuarioId, $cultivoId, $año));
         if (is_array($clima) && !($clima['sin_datos'] ?? false)) {
             $contexto['clima'] = $this->compactarClima($clima);
             $contexto['nutricion'] = $this->compactarNutricion($clima['nutricion'] ?? null);
         }
 
-        $rendimiento = $this->seguro(fn (): mixed => $this->rendimiento->construir($usuarioId, $cultivoId, $anio));
+        $rendimiento = $this->seguro(fn (): mixed => $this->rendimiento->construir($usuarioId, $cultivoId, $año));
         if (is_array($rendimiento) && !($rendimiento['sin_datos'] ?? false)) {
             $contexto['rendimiento'] = $this->compactarRendimiento($rendimiento);
         }
 
         // Se usa la misma configuración del dashboard financiero (sin overrides
         // de query) para que el margen del chat no contradiga el panel.
-        $finanzas = $this->seguro(fn (): mixed => $this->finanzas->construir($usuarioId, $cultivoId, $anio, new Peticion('GET')));
+        $finanzas = $this->seguro(fn (): mixed => $this->finanzas->construir($usuarioId, $cultivoId, $año, new Peticion('GET')));
         if (is_array($finanzas) && !($finanzas['sin_datos'] ?? false)) {
             $contexto['finanzas'] = $this->compactarFinanzas($finanzas);
         }
@@ -206,16 +206,14 @@ final class ContextoAgricolaService
         $kpis = is_array($rendimiento['kpis'] ?? null) ? $rendimiento['kpis'] : [];
         return [
             'kpis' => [
-                'rendimiento_potencial' => $kpis['rendimiento_potencial'] ?? null,
-                'rendimiento_alcanzable' => $kpis['rendimiento_alcanzable'] ?? null,
                 'rendimiento_predicho' => $kpis['rendimiento_predicho'] ?? null,
-                'yield_gap_total' => $kpis['yield_gap_total'] ?? null,
-                'principal_limitante' => $kpis['principal_limitante'] ?? null,
-                'fase_vulnerable' => $kpis['fase_vulnerable'] ?? null,
-                'probabilidad_cosecha' => $kpis['probabilidad_cosecha'] ?? null,
-                'agua_util' => $kpis['agua_util'] ?? null,
+                'produccion_total_t' => $kpis['produccion_total_t'] ?? null,
+                'area_simulada_ha' => $kpis['area_simulada_ha'] ?? null,
+                'rendimiento_promedio_simulaciones' => $kpis['rendimiento_promedio_simulaciones'] ?? null,
+                'rendimiento_maximo_catalogo' => $kpis['rendimiento_maximo_catalogo'] ?? null,
             ],
             'simulaciones_count' => $rendimiento['simulaciones_count'] ?? null,
+            'nota' => 'Predicción de la última simulación de esta parcela; no es una cosecha observada ni una brecha de rendimiento medida.',
         ];
     }
 

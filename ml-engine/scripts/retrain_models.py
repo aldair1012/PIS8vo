@@ -13,6 +13,7 @@ import argparse
 import json
 import os
 import shutil
+import sys
 from datetime import datetime
 
 import joblib
@@ -34,6 +35,8 @@ SCRIPTS_DIR = os.path.dirname(os.path.abspath(__file__))
 ML_ENGINE_DIR = os.path.dirname(SCRIPTS_DIR)
 DATA_PATH = os.path.join(ML_ENGINE_DIR, "data", "maiz_ecuador_training_data.csv")
 MODELS_DIR = os.path.join(ML_ENGINE_DIR, "models")
+sys.path.insert(0, ML_ENGINE_DIR)
+from src.training_quality import validar_publicacion
 
 CATEGORICAL_COLS = [
     "zona",
@@ -183,6 +186,7 @@ def train(force=False):
     print(f"[ML Retrain] Base directory: {ML_ENGINE_DIR}")
     print(f"[ML Retrain] Loading training data from {DATA_PATH}")
     frame = pd.read_csv(DATA_PATH)
+    validar_publicacion(frame, DATA_PATH)
 
     required = set(CATEGORICAL_COLS + [TARGET_REG, TARGET_CLF, GROUP_COL])
     missing = sorted(required - set(frame.columns))

@@ -1,0 +1,67 @@
+{
+  "date": "2026-11-08",
+  "old": {
+    "model": "all-minilm",
+    "metrics": {
+      "p1": 0.125,
+      "recall3": 0.2917,
+      "hit3": 0.2917,
+      "mrr3": 0.2014,
+      "ndcg3": 0.2247,
+      "fact_coverage": 0.3056,
+      "seconds": 0.0319
+    }
+  },
+  "new": {
+    "model": "embeddinggemma:300m",
+    "metrics": {
+      "p1": 0.9583,
+      "recall3": 1.0,
+      "hit3": 1.0,
+      "mrr3": 0.9792,
+      "ndcg3": 0.9846,
+      "fact_coverage": 1.0,
+      "seconds": 0.2057
+    },
+    "by_split": {
+      "desarrollo": {
+        "p1": 0.9444,
+        "recall3": 1.0,
+        "hit3": 1.0,
+        "mrr3": 0.9722,
+        "ndcg3": 0.9795,
+        "fact_coverage": 1.0,
+        "seconds": 0.2066
+      },
+      "validacion": {
+        "p1": 1.0,
+        "recall3": 1.0,
+        "hit3": 1.0,
+        "mrr3": 1.0,
+        "ndcg3": 1.0,
+        "fact_coverage": 1.0,
+        "seconds": 0.2032
+      }
+    }
+  },
+  "corpus": {
+    "pages": 258,
+    "ocr_pages": 84,
+    "visually_reviewed_pages": 15,
+    "reviewed_excerpts": 17,
+    "entries": 616,
+    "sha256": "fb1a768e0c4d1fb3b399defde7025f6e42a4931903c044f8bbfda986de850f8d"
+  },
+  "answers": {
+    "count": 27,
+    "http_errors": 0,
+    "median_seconds": 1.725,
+    "max_seconds": 8.704,
+    "review": "24 preguntas de referencia y tres límites; se cotejaron cifras y citas. Coincidencias literales no se equiparan automáticamente con calidad semántica."
+  },
+  "limitations": [
+    "Muestra de páginas y preguntas seleccionadas; no revisión visual exhaustiva de 258 páginas.",
+    "La comparación cambia corpus, fragmentación, embeddings y ranking; no atribuye la mejora a un solo componente.",
+    "No mide precisión agrícola ni garantiza toda respuesta futura."
+  ]
+}

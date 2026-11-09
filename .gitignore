@@ -35,3 +35,17 @@ Thumbs.db
 # Nota: los artefactos de despliegue en la raíz (index.html, assets/, models/)
 # SÍ se versionan a propósito: son lo que XAMPP sirve en /ZeaSys y permiten
 # revertir el sistema desplegado con un solo comando.
+
+# Resultados locales de Playwright
+frontend-app/test-results/
+frontend-app/playwright-report/
+
+# Configuración local privada de la prueba Docker
+docker/.env
+
+# Paquetes generados para revisión académica
+/ZeaSys-*.zip
+/ZeaSys-*.zip.sha256
+
+# Base de datos real con datos personales (nombres, correos, hashes)
+database/agropredict_db.sql

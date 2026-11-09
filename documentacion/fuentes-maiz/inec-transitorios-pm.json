@@ -1,0 +1,80 @@
+[
+  [
+    "Institución",
+    "Instituto Nacional de Estadística y Censos (INEC)",
+    ""
+  ],
+  [
+    "Identificador",
+    "INEC_PDA_2025",
+    ""
+  ],
+  [
+    "Documento Referencia",
+    "INEC_DEAGA_ESPAC_2025",
+    ""
+  ],
+  [
+    "Nombre",
+    "Base en formato CSV_2025",
+    ""
+  ],
+  [
+    "Descripción",
+    "Contiene los datos de producción, ventas, uso de riego, fertilizantes y plaguicidas en cultivos transitorios",
+    ""
+  ],
+  [
+    "Código institución",
+    "https://www.ecuadorencifras.gob.ec",
+    ""
+  ],
+  [
+    "Licencia",
+    "CC-BY-4.0",
+    ""
+  ],
+  [
+    "Fecha de creación",
+    "2026-05-04",
+    ""
+  ],
+  [
+    "Frecuencia de actualización",
+    "Anual",
+    ""
+  ],
+  [
+    "Archivo maestro",
+    "Base de Datos Encuesta de Superficie y Producción Agropecuaria Continua ESPAC (Cultivos transitorios)",
+    ""
+  ],
+  [
+    "Anonimización",
+    "Si",
+    ""
+  ],
+  [
+    "Responsable",
+    "maritza_cuichan@inec.gob.ec",
+    ""
+  ],
+  [
+    "Lenguaje",
+    "Español",
+    ""
+  ],
+  [
+    "Etiquetas",
+    "Cultivos transitorios, producción, ventas, fertilizantes, plaguicidas",
+    ""
+  ],
+  [
+    "URI",
+    "https://www.ecuadorencifras.gob.ec/estadisticas-agropecuarias-2/",
+    ""
+  ],
+  [
+    ""
+  ]
+]

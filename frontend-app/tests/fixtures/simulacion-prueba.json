@@ -1,0 +1,272 @@
+{
+  "area": 0.83,
+  "categoria_cosecha": "Baja",
+  "confianza": 58.2,
+  "confianza_tipo": "calidad_global_r2",
+  "entradas_modelo": {
+    "altitud_msnm": 2700.0,
+    "aplicaciones_nitrogeno": 3.0,
+    "azufre_kg_ha": 15.1,
+    "biofertilizante": 0.0,
+    "ciclo_dias": 120,
+    "control_plaga": "quimico",
+    "densidad_plantas_ha": 51078.5,
+    "fosforo_p2o5_kg_ha": 34.35,
+    "horas_luz_dia": 6.6,
+    "humedad_relativa_pct": 70.0,
+    "lamina_riego_mm": 150.0,
+    "magnesio_kg_ha": 14.9,
+    "materia_organica_pct": 2.86,
+    "ndvi_r3_llenado_grano": 0.601,
+    "ndvi_v6_vegetativo": 0.6094999999999999,
+    "ndvi_vt_floracion": 0.7295,
+    "nitrogeno_kg_ha": 150.0,
+    "ph_suelo": 6.2,
+    "plagas_presentes": "Ninguna",
+    "potasio_k2o_kg_ha": 27.75,
+    "precipitacion_mm": 700.0,
+    "presion_plaga_score": 0.535,
+    "profundidad_suelo_cm": 71.5,
+    "provincia": "Pichincha",
+    "riego_tipo": "goteo",
+    "semilla_certificada": 1.0,
+    "temperatura_max_c": 32.2,
+    "temperatura_media_c": 26.7,
+    "temperatura_min_c": 22.2,
+    "textura_arcilla_pct": 36.25,
+    "textura_arena_pct": 30.8,
+    "textura_limo_pct": 33.45,
+    "tipo_grano": "Suave Harinoso",
+    "tipo_suelo": "Franco arcilloso",
+    "variedad": "INIAP 101 Blanco Harinoso",
+    "zona": "Sierra_Norte"
+  },
+  "escenarios": {
+    "lluvioso": {
+      "condiciones": {
+        "humedad_pct": 80.0,
+        "precipitacion_mm_ciclo": 1000.0
+      },
+      "produccion": 3.08,
+      "rendimiento": 3.71
+    },
+    "sequia": {
+      "condiciones": {
+        "humedad_pct": 40.0,
+        "precipitacion_mm_ciclo": 300.0,
+        "temperatura_c": 33.0
+      },
+      "produccion": 2.6,
+      "rendimiento": 3.14
+    },
+    "verano": {
+      "condiciones": {
+        "humedad_pct": 60.0,
+        "precipitacion_mm_ciclo": 700.0
+      },
+      "produccion": 3.07,
+      "rendimiento": 3.7
+    }
+  },
+  "explicacion_modelo": {
+    "aportes": {
+      "altitud_msnm": -0.30155906081199646,
+      "aplicaciones_nitrogeno": -0.006293884478509426,
+      "azufre_kg_ha": -0.029661599546670914,
+      "biofertilizante": -0.1362176239490509,
+      "ciclo_dias": 0.01332869753241539,
+      "control_plaga": -0.03535843268036842,
+      "densidad_plantas_ha": -0.07167617231607437,
+      "fosforo_p2o5_kg_ha": 0.007482108660042286,
+      "horas_luz_dia": -0.1847507655620575,
+      "humedad_relativa_pct": -0.008390305563807487,
+      "lamina_riego_mm": 0.05869778245687485,
+      "magnesio_kg_ha": -0.022794298827648163,
+      "materia_organica_pct": 0.013637911528348923,
+      "ndvi_r3_llenado_grano": -0.017307274043560028,
+      "ndvi_v6_vegetativo": 0.005820753052830696,
+      "ndvi_vt_floracion": -0.14307992160320282,
+      "nitrogeno_kg_ha": 0.02848139777779579,
+      "ph_suelo": 0.16064541041851044,
+      "plagas_presentes": -0.005110581871122122,
+      "potasio_k2o_kg_ha": -0.0097215436398983,
+      "precipitacion_mm": 0.026508649811148643,
+      "presion_plaga_score": -0.18586258590221405,
+      "profundidad_suelo_cm": -0.036645106971263885,
+      "provincia": -0.022740621119737625,
+      "riego_tipo": 0.23849335312843323,
+      "semilla_certificada": 0.0823247954249382,
+      "temperatura_max_c": -0.06678856164216995,
+      "temperatura_media_c": 0.16298706829547882,
+      "temperatura_min_c": 0.010715114884078503,
+      "textura_arcilla_pct": -0.024999765679240227,
+      "textura_arena_pct": -0.01777922548353672,
+      "textura_limo_pct": -0.00391946779564023,
+      "tipo_grano": -0.00167695467825979,
+      "tipo_suelo": -0.0015182700008153915,
+      "variedad": -0.002570387441664934,
+      "zona": 0.0004027961695101112
+    },
+    "base": 4.243541717529297,
+    "prediccion_sin_recorte": 3.716647148132324,
+    "recortada": false
+  },
+  "intervalo_rendimiento": {
+    "error_medio_validacion": 0.82,
+    "margen_aproximado": 2.05,
+    "max": 5.76,
+    "min": 1.67,
+    "nivel": "orientativo_no_calibrado"
+  },
+  "metricas_modelo": {
+    "mae": 0.8166106498749832,
+    "r2": 0.5820256434519516,
+    "rmse": 1.044246811324636,
+    "validacion": "GroupKFold por provincia"
+  },
+  "modelo": "xgboost",
+  "precision_data": {
+    "inamhi_historico": null,
+    "nasa_power": null,
+    "open_meteo": null,
+    "open_meteo_historico": null,
+    "soilgrids": null,
+    "weather": null
+  },
+  "probabilidad_cosecha": 21.5,
+  "probabilidades_cosecha": {
+    "Alta": 1.2,
+    "Baja": 77.7,
+    "Media": 20.3,
+    "Muy Baja": 0.8
+  },
+  "produccion_total": 3.08,
+  "recomendaciones": [
+    "Temperatura elevada (26.7°C) superior al óptimo (14-18°C). Implementar riego para reducir estrés térmico.",
+    "Humedad relativa adecuada (70.0%) para el cultivo.",
+    "Precipitación del ciclo insuficiente (700 mm/ciclo) frente al requerimiento (800-1200 mm/ciclo). Se requiere riego complementario.",
+    "Dosis de Nitrógeno (150 kg/ha) en rango sugerido (135-160 kg/ha).",
+    "pH del suelo alcalino (6.2). Rango óptimo: 6.0-6.0. Considerar materia orgánica para bajar el pH."
+  ],
+  "rendimiento_estimado": 3.7166,
+  "shap_values": {
+    "area": 0.0,
+    "fertilizante": 0.0285,
+    "humedad": -0.0084,
+    "phSuelo": 0.1606,
+    "precipitacion": 0.0265,
+    "temperatura": 0.163,
+    "tipoSuelo": -0.0015
+  },
+  "success": true,
+  "trazabilidad": {
+    "advertencias": [
+      "El modelo completa 20 variables sin dato propio con referencias del conjunto de entrenamiento, cuyo origen sigue sin acreditar. Revisa cuáles son en Datos utilizados; no son mediciones de la parcela."
+    ],
+    "calendario": {
+      "ciclo_dias": 120,
+      "fecha_fin_estimada": "2024-06-26",
+      "fecha_siembra": "2024-02-28",
+      "nota": "Fecha orientativa: no demuestra madurez, clima futuro ni fecha real de cosecha. La fecha sitúa el periodo; XGBoost utiliza ciclo_dias, no una nueva variable de fecha.",
+      "origen_duracion": "Ingresado por el productor"
+    },
+    "calidad_referencias": {
+      "duplicados_adicionales": 100,
+      "filas_elegibles_experimento": 1970,
+      "filas_invalidas": 296,
+      "filas_originales": 2366,
+      "nota": "Excluir filas en un experimento no acredita la procedencia ni convierte las demás observaciones en cosechas verificadas.",
+      "problemas": {
+        "canguil_clasificado_como_suave": 49,
+        "categorias_ausentes": 0,
+        "magnitudes_imposibles": 0,
+        "numeros_ausentes_o_no_finitos": 0,
+        "temperaturas_inconsistentes": 201,
+        "textura_inconsistente": 58
+      }
+    },
+    "clima_ciclo": {
+      "estado": "no_solicitado",
+      "nota": "El clima del proveedor es contexto; el cálculo conserva el escenario ingresado."
+    },
+    "contrato_campo": "1.0",
+    "evaluacion_precipitacion_ciclo": "disponible",
+    "fuentes": {
+      "altitud_msnm": "Altitud enviada por la aplicación; puede ser un valor predeterminado",
+      "aplicaciones_nitrogeno": "Referencia del conjunto de entrenamiento (origen sin acreditar)",
+      "azufre_kg_ha": "Referencia del conjunto de entrenamiento (origen sin acreditar)",
+      "biofertilizante": "Referencia del conjunto de entrenamiento (origen sin acreditar)",
+      "ciclo_dias": "Ingresado por el productor para este escenario",
+      "control_plaga": "Referencia del conjunto de entrenamiento (origen sin acreditar)",
+      "densidad_plantas_ha": "Referencia del conjunto de entrenamiento (origen sin acreditar)",
+      "fosforo_p2o5_kg_ha": "Referencia del conjunto de entrenamiento (origen sin acreditar)",
+      "horas_luz_dia": "Referencia del conjunto de entrenamiento (origen sin acreditar)",
+      "humedad_relativa_pct": "Entrada de la simulación",
+      "lamina_riego_mm": "Ingresado por el productor para este escenario",
+      "magnesio_kg_ha": "Referencia del conjunto de entrenamiento (origen sin acreditar)",
+      "materia_organica_pct": "Referencia del conjunto de entrenamiento (origen sin acreditar)",
+      "ndvi_r3_llenado_grano": "Referencia del conjunto de entrenamiento (origen sin acreditar)",
+      "ndvi_v6_vegetativo": "Referencia del conjunto de entrenamiento (origen sin acreditar)",
+      "ndvi_vt_floracion": "Referencia del conjunto de entrenamiento (origen sin acreditar)",
+      "nitrogeno_kg_ha": "Entrada de la simulación",
+      "ph_suelo": "Entrada de la simulación",
+      "plagas_presentes": "Referencia del conjunto de entrenamiento (origen sin acreditar)",
+      "potasio_k2o_kg_ha": "Referencia del conjunto de entrenamiento (origen sin acreditar)",
+      "precipitacion_mm": "Precipitación acumulada del ciclo ingresada explícitamente (mm/ciclo)",
+      "presion_plaga_score": "Referencia del conjunto de entrenamiento (origen sin acreditar)",
+      "profundidad_suelo_cm": "Referencia del conjunto de entrenamiento (origen sin acreditar)",
+      "provincia": "Ubicación reconocida",
+      "riego_tipo": "Ingresado por el productor para este escenario",
+      "semilla_certificada": "Referencia del conjunto de entrenamiento (origen sin acreditar)",
+      "temperatura_max_c": "Estimación a partir de temperatura media",
+      "temperatura_media_c": "Entrada de la simulación",
+      "temperatura_min_c": "Estimación a partir de temperatura media",
+      "textura_arcilla_pct": "Referencia del conjunto de entrenamiento (origen sin acreditar)",
+      "textura_arena_pct": "Referencia del conjunto de entrenamiento (origen sin acreditar)",
+      "textura_limo_pct": "Referencia del conjunto de entrenamiento (origen sin acreditar)",
+      "tipo_grano": "Tipo registrado homologado al modelo",
+      "tipo_suelo": "Textura ingresada; categoría homologada del modelo",
+      "variedad": "Variedad registrada",
+      "zona": "Ubicación reconocida"
+    },
+    "periodo_precipitacion": "mm/ciclo",
+    "periodo_precipitacion_catalogo_modelo": "mm/ciclo",
+    "precipitacion_ciclo_mm": 700.0,
+    "precipitacion_payload_mm": 700.0,
+    "suelo_ubicacion_utilizado": false,
+    "supuestos": [
+      "materia_organica_pct",
+      "profundidad_suelo_cm",
+      "textura_arcilla_pct",
+      "textura_arena_pct",
+      "textura_limo_pct",
+      "horas_luz_dia",
+      "densidad_plantas_ha",
+      "fosforo_p2o5_kg_ha",
+      "potasio_k2o_kg_ha",
+      "magnesio_kg_ha",
+      "azufre_kg_ha",
+      "aplicaciones_nitrogeno",
+      "biofertilizante",
+      "semilla_certificada",
+      "ndvi_v6_vegetativo",
+      "ndvi_vt_floracion",
+      "ndvi_r3_llenado_grano",
+      "plagas_presentes",
+      "presion_plaga_score",
+      "control_plaga"
+    ],
+    "unidad_fertilizante": "kg N/ha",
+    "provincia_identificada": {
+      "provincia": "Pichincha",
+      "fuente": "Coordenadas ficticias del entorno de prueba"
+    },
+    "variedad_simulada": {
+      "estado": "etiqueta_documentada",
+      "registrada": "INIAP 101 Blanco Harinoso Precoz",
+      "utilizada_por_modelo": "INIAP 101 Blanco Harinoso"
+    }
+  },
+  "version_modelo": "9e865aee66f4175a",
+  "simulacion_id": 999999
+}

@@ -3,10 +3,12 @@
 import logging
 import math
 import os
+import sys
 
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from src import feature_builder, predictor
+from src.simulation_contract import validar_campos
 
 app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = 1 * 1024 * 1024
@@ -28,9 +30,12 @@ def payload_demasiado_grande(_error):
 
 def _validar_numero(data, campo, *, minimo=None, maximo=None):
     """Convierte y valida un campo numérico sin aceptar NaN ni infinitos."""
+    # bool hereda de int en Python, pero true/false no son mediciones.
+    if isinstance(data.get(campo), bool):
+        raise ValueError(f"El campo {campo} debe ser numérico")
     try:
         valor = float(data[campo])
-    except (KeyError, TypeError, ValueError):
+    except (KeyError, TypeError, ValueError, OverflowError):
         raise ValueError(f"El campo {campo} debe ser numérico") from None
 
     if not math.isfinite(valor):
@@ -58,14 +63,32 @@ def _validar_entrada(data):
     # aquí solo se rechazan entradas imposibles o peligrosas para el modelo.
     _validar_numero(data, "temperatura", minimo=-100, maximo=100)
     _validar_numero(data, "humedad", minimo=0, maximo=100)
-    _validar_numero(data, "precipitacion", minimo=0)
-    _validar_numero(data, "fertilizante", minimo=0)
+    # XGBoost representa features numéricas como float32. Un float64 finito
+    # puede desbordar el modelo; el área además escala producciones hasta 12 t/ha.
+    maximo_feature = feature_builder.MAX_FEATURE_VALUE
+    _validar_numero(data, "precipitacion", minimo=0, maximo=maximo_feature)
+    _validar_numero(data, "fertilizante", minimo=0, maximo=maximo_feature)
     _validar_numero(data, "phSuelo", minimo=0, maximo=14)
-    _validar_numero(data, "area", minimo=0.01)
+    _validar_numero(data, "area", minimo=0.01, maximo=sys.float_info.max / 12.0)
 
     if not isinstance(data["tipoSuelo"], str) or not data["tipoSuelo"].strip():
         raise ValueError("El campo tipoSuelo debe ser un texto no vacío")
+    feature_builder.normalizar_tipo_suelo(data["tipoSuelo"])
+    validar_campos(data)
+    if "precipitacion_ciclo_mm" in data:
+        _validar_numero(data, "precipitacion_ciclo_mm", minimo=0, maximo=maximo_feature)
 
+    # Omitir estos campos conserva los valores predeterminados del constructor.
+    # Si se envían, deben tener el tipo esperado; null no activa ese default.
+    for campo in ("variedad_maiz", "tipo_maiz", "ubicacion"):
+        if campo in data and not isinstance(data[campo], str):
+            raise ValueError(f"El campo {campo} debe ser un texto")
+    if "altitud" in data:
+        _validar_numero(data, "altitud", minimo=-maximo_feature, maximo=maximo_feature)
+    if "incluir_historico" in data and not isinstance(data["incluir_historico"], bool):
+        raise ValueError("El campo incluir_historico debe ser un booleano")
+
+    # El cliente PHP envía null cuando no dispone de coordenadas.
     for campo, minimo, maximo in (("latitud", -90, 90), ("longitud", -180, 180)):
         if data.get(campo) is not None:
             _validar_numero(data, campo, minimo=minimo, maximo=maximo)
@@ -93,7 +116,8 @@ def health():
         "modelos_cargados": predictor.MODELOS_DISPONIBLES,
         "modelo_principal": predictor.model_metrics.get("modelo_principal", "xgboost"),
         "validacion": predictor.model_metrics.get("validacion_agrupada", {}).get("estrategia", "no_disponible"),
-        "version": "2.2.0"
+        "version": "2.6.0",
+        "contrato_campo": "1.0"
     })
 
 
@@ -142,6 +166,7 @@ def predict_route():
         )
         resultado["recomendaciones"] = recomendaciones
         resultado["precision_data"] = metadata["precision_data"]
+        resultado["trazabilidad"] = metadata.get("trazabilidad", {})
 
         return jsonify(resultado)
 
@@ -180,7 +205,7 @@ def stats():
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     print("\n" + "=" * 50)
-    print("   ZeaSys ML Engine v2.2.0 - XGBoost")
+    print("   ZeaSys ML Engine v2.6.0 - XGBoost")
     print("   http://127.0.0.1:5000")
     print("=" * 50 + "\n")
     app.run(host="0.0.0.0", port=5000, debug=False)

@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
+  <title>Mazorca con hojas</title>
+  <desc>Una mazorca frontal, protegida por dos hojas de su envoltura.</desc>
+  <path fill="#000" d="M91 119C52 128 38 162 47 198c22-5 40-18 52-41l8-26zm74 0c39 9 53 43 44 79-22-5-40-18-52-41l-8-26z"/>
+  <path fill="#000" d="M128 31c-37 20-58 57-58 102 0 48 22 82 58 101 36-19 58-53 58-101 0-45-21-82-58-102z"/>
+  <g fill="#fff">
+    <ellipse cx="108" cy="73" rx="9" ry="12"/><ellipse cx="148" cy="73" rx="9" ry="12"/>
+    <ellipse cx="96" cy="105" rx="9" ry="12"/><ellipse cx="128" cy="105" rx="9" ry="12"/><ellipse cx="160" cy="105" rx="9" ry="12"/>
+    <ellipse cx="96" cy="139" rx="9" ry="12"/><ellipse cx="128" cy="139" rx="9" ry="12"/><ellipse cx="160" cy="139" rx="9" ry="12"/>
+    <ellipse cx="103" cy="173" rx="9" ry="12"/><ellipse cx="153" cy="173" rx="9" ry="12"/>
+  </g>
+</svg>

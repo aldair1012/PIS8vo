@@ -23,7 +23,7 @@ final class FavoritoRepositorioEspia implements FavoritoRepositoryInterface
         return $this->siguienteId++;
     }
 
-    public function obtenerRecientes(int $usuarioId, ?int $cultivoId, ?int $anio, int $limite = 4): array
+    public function obtenerRecientes(int $usuarioId, ?int $cultivoId, ?int $año, int $limite = 4): array
     {
         return $this->recientes;
     }
@@ -68,7 +68,7 @@ test('FavoritoService: guarda la conversación con el título del primer mensaje
         'conversacion_id' => 'abc123def456abc123def456abc123de',
         'vista' => 'yield',
         'cultivo_id' => 195,
-        'anio' => 2026,
+        'año' => 2026,
         'mensajes' => [
             ['rol' => 'usuario', 'texto' => '¿Cómo está el clima?'],
             ['rol' => 'asistente', 'texto' => 'Hoy hay 24 °C y 2 mm de lluvia.'],
@@ -97,7 +97,7 @@ test('FavoritoService: en Nueva Simulación el ámbito es simulacion', function 
         'conversacion_id' => 'abc123def456abc123def456abc123de',
         'vista' => 'simular',
         'cultivo_id' => 195,
-        'anio' => 2026,
+        'año' => 2026,
         'mensajes' => [['rol' => 'usuario', 'texto' => '¿Qué fertilizante?']],
     ]);
 

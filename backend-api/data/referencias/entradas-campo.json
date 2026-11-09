@@ -1,0 +1,89 @@
+{
+  "version": "1.0",
+  "campos": {
+    "ciclo_dias": {
+      "label": "Duración prevista del cultivo (días)",
+      "min": 1,
+      "max": 730,
+      "entero": true
+    },
+    "densidad_plantas_ha": {
+      "label": "Densidad de siembra (plantas/ha)",
+      "min": 1,
+      "max": 200000,
+      "entero": true
+    },
+    "lamina_riego_mm": {
+      "label": "Agua de riego de todo el ciclo (mm)",
+      "min": 0,
+      "max": 10000
+    },
+    "riego_tipo": {
+      "label": "Sistema de agua o riego",
+      "opciones": {
+        "temporal_lluvia": "Solo lluvia",
+        "goteo": "Goteo",
+        "aspersion": "Aspersión",
+        "gravedad": "Gravedad",
+        "goteo_aspersion": "Goteo y aspersión",
+        "aspersion_lluvia": "Lluvia y aspersión",
+        "lluvia_complementario": "Lluvia con riego complementario",
+        "natural_exceso": "Exceso de agua natural registrado"
+      }
+    },
+    "fosforo_p2o5_kg_ha": {
+      "label": "Fósforo aplicado (kg P₂O₅/ha)",
+      "min": 0,
+      "max": 1000
+    },
+    "potasio_k2o_kg_ha": {
+      "label": "Potasio aplicado (kg K₂O/ha)",
+      "min": 0,
+      "max": 1000
+    },
+    "magnesio_kg_ha": {
+      "label": "Magnesio aplicado (kg Mg/ha)",
+      "min": 0,
+      "max": 500
+    },
+    "azufre_kg_ha": {
+      "label": "Azufre aplicado (kg S/ha)",
+      "min": 0,
+      "max": 500
+    },
+    "aplicaciones_nitrogeno": {
+      "label": "Aplicaciones de nitrógeno (veces)",
+      "min": 1,
+      "max": 6,
+      "entero": true
+    },
+    "materia_organica_pct": {
+      "label": "Materia orgánica del suelo (%)",
+      "min": 0,
+      "max": 100
+    },
+    "profundidad_suelo_cm": {
+      "label": "Profundidad del suelo evaluada (cm)",
+      "min": 1,
+      "max": 500
+    },
+    "semilla_certificada": {
+      "label": "¿La semilla es certificada?",
+      "opciones": {
+        "1": "Sí",
+        "0": "No"
+      },
+      "entero": true
+    },
+    "temperatura_min_c": {
+      "label": "Temperatura mínima del escenario (°C)",
+      "min": -50,
+      "max": 60
+    },
+    "temperatura_max_c": {
+      "label": "Temperatura máxima del escenario (°C)",
+      "min": -50,
+      "max": 60
+    }
+  }
+}

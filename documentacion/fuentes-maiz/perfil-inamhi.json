@@ -1,0 +1,54 @@
+[
+  {
+    "archivo": "inamhi_precipitacion.csv",
+    "filas": 20588,
+    "columnas": [
+      "Estacion",
+      "NombreEstacion",
+      "longitud2",
+      "latitud2",
+      "altitud",
+      "anio",
+      "ene",
+      "feb",
+      "mar",
+      "abr",
+      "may",
+      "jun",
+      "jul",
+      "ago",
+      "sep",
+      "oct",
+      "nov",
+      "dic"
+    ],
+    "encoding": "cp1252",
+    "coincide_con_copia_app": false
+  },
+  {
+    "archivo": "inamhi_temperatura.csv",
+    "filas": 6498,
+    "columnas": [
+      "Estacion",
+      "NombreEstacion",
+      "longitud2",
+      "latitud2",
+      "altitud",
+      "anio",
+      "ene",
+      "feb",
+      "mar",
+      "abr",
+      "may",
+      "jun",
+      "jul",
+      "ago",
+      "sep",
+      "oct",
+      "nov",
+      "dic"
+    ],
+    "encoding": "cp1252",
+    "coincide_con_copia_app": false
+  }
+]

@@ -1,5 +1,5 @@
 <?php
-// src/Dominios/Simulaciones/Explicacion/Aplicacion/ServicioExplicabilidad.php — Orquestador: contexto → primer match → ensamblado verbatim de la respuesta (legacy 913–929).
+// Contexto validado → estrategia con evidencia → respuesta compatible con el modal.
 declare(strict_types=1);
 
 namespace ZeaSys\Dominios\Simulaciones\Explicacion\Aplicacion;
@@ -16,9 +16,9 @@ final class ServicioExplicabilidad
     }
 
     /**
-     * Puerto de SimulacionController::explain(): catálogo Strategy en lugar de la
-     * cadena if/elseif. Primer match gana, igual que el original; el ensamblado
-     * final (líneas 913–929) es verbatim.
+     * Selecciona la definición específica y conserva las claves públicas del modal.
+     * Cada estrategia usa requisitos y evidencia de su indicador; la ausencia de
+     * una simulación no impide interpretar una medición explícita de clima o suelo.
      *
      * @param array<string, mixed> $contextoBruto Cuerpo de la petición de la tarjeta.
      * @return array<string, mixed>
@@ -26,16 +26,10 @@ final class ServicioExplicabilidad
     public function explicar(array $contextoBruto): array
     {
         $contexto    = $this->resolutor->construir($contextoBruto);
-        $nombreLower = $contexto['nombre_lower'];
+        $nombreLower = strtr($contexto['nombre_lower'], ['á' => 'a', 'é' => 'e', 'í' => 'i', 'ó' => 'o', 'ú' => 'u', 'ñ' => 'n']);
         $secciones   = [];
 
         foreach ($this->registro->reglas() as $regla) {
-            if (($regla['grafico'] ?? false) && !isset($contexto['datos_grafico'])) {
-                continue; // paridad: el bloque gráfico original solo corre con datos_grafico
-            }
-            if (isset($regla['extra']) && !($regla['extra'])($contexto)) {
-                continue; // p. ej. ExplicadorCurvaTemporal exige $dg['labels']
-            }
             if (isset($regla['condicion']) && !$this->evaluador->cumple($regla['condicion'], $nombreLower)) {
                 continue; // ExplicadorDefault no tiene condición: fallback final
             }
@@ -44,10 +38,11 @@ final class ServicioExplicabilidad
             break; // primer match gana, igual que if/elseif
         }
 
-        // Construir respuesta (verbatim líneas 913–929)
+        // Conserva las claves consumidas por usarExplicacionIA y el modal.
         $nombre    = $contexto['nombre'];
-        $nivelText = $contexto['nivel_text'];
-        $data      = $contextoBruto;
+        $sinDatos = str_starts_with($secciones[0]['contenido'] ?? '', 'No hay un dato disponible');
+        $nivelText = $sinDatos ? 'regular' : $contexto['nivel_text'];
+        $data      = $contexto['entrada'];
 
         $mappedResponse = [
             'titulo' => $nombre,
@@ -57,7 +52,7 @@ final class ServicioExplicabilidad
             'que_significa' => $secciones[0]['contenido'] ?? '',
             'por_que_pudo_pasar' => $secciones[1]['contenido'] ?? '',
             'como_mejorarlo' => $secciones[2]['contenido'] ?? ($secciones[count($secciones)-1]['contenido'] ?? ''),
-            'alerta_clave' => $data['alerta_clave'] ?? $data['alerta'] ?? 'Revisar recomendaciones.',
+            'alerta_clave' => $sinDatos ? 'Dato no disponible.' : ($data['alerta_clave'] ?? $data['alerta'] ?? 'Revisar la fuente y el alcance del indicador.'),
             'source' => 'Intérprete Agrícola ZeaSys',
             'offline' => true
         ];

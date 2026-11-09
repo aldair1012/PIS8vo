@@ -2,8 +2,8 @@ import { useEffect } from 'react';
 
 const SECTION_IDS = ['inicio', 'capacidades', 'datos', 'contacto'];
 const SCROLL_KEYS = new Set(['ArrowDown', 'ArrowUp', 'PageDown', 'PageUp', ' ', 'Home', 'End']);
-// Wait until a meaningful part of the next section is visible, so the
-// automatic movement never has to cover almost a full screen.
+// Espera hasta que una parte significativa de la siguiente sección sea visible, para que el
+// movimiento automático nunca tenga que cubrir casi una pantalla completa.
 const PEEK_RATIO = 0.4;
 const SETTLE_DELAY_MS = 150;
 const easeInOutSmoother = (progress) => progress ** 3 * (progress * (progress * 6 - 15) + 10);
@@ -51,7 +51,7 @@ export default function useSectionSnap(enabled) {
     const settle = () => {
       if (snapping || direction === 0) return;
       if (performance.now() - lastUserInputAt > 1400) {
-        // Anchor links and scripted scrolls establish a new starting section.
+        // Los enlaces de anclaje y los desplazamientos por script establecen una nueva sección de inicio.
         settledIndex = sectionAt(0.5);
         return;
       }
@@ -69,8 +69,8 @@ export default function useSectionSnap(enabled) {
       const distance = targetY - startY;
       settledIndex = candidateIndex;
 
-      // Reduced motion should mean less travel time, never an abrupt jump.
-      // Keep the section framing the user requested, but make it more restrained.
+      // El movimiento reducido debería significar menos tiempo de viaje, nunca un salto abrupto.
+      // Mantener el encuadre de la sección que el usuario solicitó, pero más contenido.
       const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       const duration = prefersReducedMotion
         ? Math.min(900, Math.max(560, 460 + Math.abs(distance) * 0.55))

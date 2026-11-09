@@ -1,0 +1,20 @@
+/* Registro de campo: diálogo propio de Mis parcelas. */
+.zeasys-workspace .registro-campo-abrir { min-height: 44px; margin: 8px 12px 0 0; padding: 8px 14px; border: 1px solid var(--zs-border-strong); border-radius: 10px; color: var(--zs-text); background: var(--zs-raised); font: inherit; font-size: 14px; cursor: pointer; }
+.registro-campo { width: min(960px, calc(100vw - 24px)); max-height: min(90dvh, 900px); overflow-y: auto; padding: clamp(16px, 3vw, 28px); border: 1px solid var(--zs-border-strong); border-radius: 16px; color: var(--zs-text); background: var(--zs-surface); box-shadow: 0 20px 70px rgba(0, 0, 0, .4); }
+.registro-campo::backdrop { background: rgba(0, 0, 0, .65); }
+.registro-campo-header { display: flex; justify-content: space-between; align-items: start; gap: 16px; }
+.registro-campo h2 { margin: 0; font-size: 1.25rem; }
+.registro-campo p { color: var(--zs-muted); line-height: 1.5; font-size: 13px; }
+.registro-campo :is(button, input, select, summary) { font: inherit; }
+.registro-campo :is(button, input, select) { min-height: 44px; }
+.registro-campo :is(button, input, select, summary):focus-visible { outline: 2px solid var(--zs-focus); outline-offset: 3px; }
+.registro-campo button { padding: 8px 14px; border: 1px solid var(--zs-border-strong); border-radius: 9px; color: var(--zs-text); background: var(--zs-raised); cursor: pointer; }
+.registro-campo-selector, .registro-campo .yd-measurement-grid label { display: grid; gap: 6px; font-size: 13px; font-weight: 600; }
+.registro-campo-selector { max-width: 420px; margin: 20px 0; }
+.registro-campo :is(input, select) { width: 100%; padding: 8px 10px; border: 1px solid var(--zs-border); border-radius: 8px; background: var(--zs-inset-surface); color: var(--zs-text); }
+.registro-campo .yd-field-record summary { min-height: 44px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-weight: 700; cursor: pointer; }
+.registro-campo .yd-field-record summary span { color: var(--zs-muted); font-size: 12px; font-weight: 400; }
+.registro-campo .yd-measurement-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 12px; margin: 16px 0; }
+.registro-campo fieldset { display: grid; align-content: start; gap: 10px; min-width: 0; padding: 14px; border: 1px solid var(--zs-border); border-radius: 12px; background: var(--zs-raised); }
+.registro-campo legend { font-weight: 700; padding: 0 4px; }
+.registro-campo .yd-field-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }

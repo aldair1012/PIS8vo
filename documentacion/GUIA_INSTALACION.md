@@ -4,9 +4,9 @@
 
 Instala en tu computadora los siguientes programas si no los tienes:
 
-- **XAMPP** (con PHP 8.0 o superior y MySQL).
-- **Node.js** (versión 18 o superior).
-- **Python** (versión 3.9 a 3.11).
+- **XAMPP** con PHP 8.2 y MySQL/MariaDB, como el entorno probado.
+- **Node.js** compatible con Vite (`^20.19.0` o `>=22.12.0` según la versión instalada), solo para reconstruir el frontend. La revisión local usa Node 24.16.0.
+- **Python 3.11 de 64 bits**, para el paquete de revisión.
 
 ---
 
@@ -14,13 +14,11 @@ Instala en tu computadora los siguientes programas si no los tienes:
 
 1. Abre XAMPP y enciende **Apache** y **MySQL**.
 2. Entra en tu navegador a: `http://localhost/phpmyadmin`
-3. Crea una base de datos nueva llamada `zeasys_db` (o `agropredict_db`).
+3. Crea una base de datos nueva llamada `agropredict_db`. Si ya existe, no la sobrescribas; revisa su contenido y configuración.
 4. Haz clic en **Importar** y selecciona el archivo ubicado en:
-   `c:\xampp\htdocs\ZeaSys\database\agropredict_db.sql`
+   `c:\xampp\htdocs\ZeaSys\database\schema-demo.sql`. El instalador del paquete para docentes crea automáticamente una base separada llamada `zeasys_revision`; siga su `LEEME.txt` para esa modalidad.
 
-El dump ya crea `chat_favoritos` y declara XGBoost como único modelo de
-simulación. Si actualizas una base creada antes de esos cambios, ejecuta una sola
-vez las migraciones incrementales:
+El esquema de demostración crea las tablas sin cuentas ni parcelas personales. El archivo `database/agropredict_db.sql` de esta instalación puede contener datos personales: no lo distribuyas ni lo importes para una demostración. Para actualizar una base existente, haz primero un respaldo y revisa qué migraciones le corresponden:
 
 ```cmd
 mysql -u root agropredict_db < database\migraciones\20261018_solo_xgboost.sql

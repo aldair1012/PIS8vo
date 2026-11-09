@@ -1,0 +1,39 @@
+columna_actual;fuente_candidata;campo_o_recurso;compatibilidad;condicion_para_utilizar
+zona;INEC_ESPAC2025;ct_trs / ct_trc / ct_tro / ct_znd;derivable;Revisar la clasificación regional y conservar zona no delimitada sin forzar una región
+provincia;INEC_ESPAC2025;ual_prov;disponible;Normalizar espacios y etiquetas manteniendo también el texto original
+variedad;INIAP_H603 / MAG_SIPA;Ensayos y caracterización de producción;parcial;ESPAC no identifica el híbrido por nombre y la clase de semilla no equivale a variedad
+tipo_grano;INEC_ESPAC2025;ct_nclavr / ct_k520;parcial;Distingue duro o suave y seco o choclo pero no garantiza equivalencia con todas las categorías del modelo actual
+riego_tipo;INEC_ESPAC2025;ct_riego / ct_porc_surc / ct_porc_aspe / ct_porc_micr / ct_porc_gote;parcial;Puede haber varios métodos y se conserva la proporción sin inventar un único método
+tipo_suelo;IGM_SUELOS;Clase textural por horizonte y cartografía geopedológica;complemento_espacial;Verificar si el contrato usa textura o clasificación taxonómica y vincular por ubicación y profundidad
+ph_suelo;IGM_SUELOS / MAG_SUELOS2022;pH de perfiles / capas de propiedades químicas;complemento_espacial;Documentar método profundidad año y naturaleza medida o cartografiada sin imputar un pH provincial a todas las parcelas
+materia_organica_pct;IGM_SUELOS / MAG_SUELOS2022;MO de perfiles / materia orgánica cartografiada;complemento_espacial;Distinguir materia orgánica de carbono orgánico y respetar porcentaje método y profundidad
+profundidad_suelo_cm;IGM_SUELOS;Profundidad efectiva y horizontes;complemento_espacial;Profundidad de muestra y profundidad efectiva de raíces no son intercambiables
+textura_arcilla_pct;IGM_SUELOS;Arcilla del análisis físico por horizonte;complemento_espacial;Usar porcentajes del mismo horizonte y muestra que arena y limo
+textura_arena_pct;IGM_SUELOS;Arena del análisis físico por horizonte;complemento_espacial;Usar porcentajes del mismo horizonte y muestra que arcilla y limo
+textura_limo_pct;IGM_SUELOS;Limo del análisis físico por horizonte;complemento_espacial;Usar porcentajes del mismo horizonte y muestra que arcilla y arena
+altitud_msnm;IGM_SUELOS / INAMHI_LLUVIA / INAMHI_TMEDIA;Altitud del perfil o estación;parcial;La altitud de una estación o perfil no es automáticamente la altitud de la parcela encuestada
+temperatura_media_c;INAMHI_TMEDIA;Valores mensuales por estación y año;disponible_sin_vinculo_a_cosecha;Descarga verificada con años 1960 a 2019 y debe coincidir el periodo del cultivo
+temperatura_min_c;INAMHI_CATALOGO;Estadísticas diarias o mensuales de temperatura mínima;catalogo_sin_serie_descargada;Solicitar u obtener la serie de estación y fechas antes de poblar la columna
+temperatura_max_c;INAMHI_CATALOGO;Estadísticas diarias o mensuales de temperatura máxima;catalogo_sin_serie_descargada;No confundir máxima diaria con promedio mensual de máximas
+precipitacion_mm;INAMHI_LLUVIA;Totales mensuales por estación y año;disponible_sin_vinculo_a_cosecha;Sumar solo meses del periodo definido y controlar faltantes sin convertirlos en cero
+humedad_relativa_pct;INAMHI_CATALOGO;Estadísticas de humedad relativa;catalogo_sin_serie_descargada;Obtener serie temporal y definir cómo se agrega durante el ciclo
+horas_luz_dia;NINGUNA_EQUIVALENCIA_VERIFICADA;Fotoperiodo por definir;sin_equivalente_directo;Heliofanía efectiva no equivale a duración astronómica del día y se debe fijar el significado de la entrada
+densidad_plantas_ha;INIAP_ENSAYOS;Diseño de siembra de ensayos;parcial;Se necesita densidad de cada observación y no una recomendación general asignada a toda la encuesta
+ciclo_dias;INEC_ESPAC2025 / INIAP_ENSAYOS;ct_k507 mes de siembra / ct_k508 año / ct_k509 mes de cosecha;parcial;Los meses no permiten reconstruir el día exacto ni la duración exacta y floración no equivale a cosecha
+nitrogeno_kg_ha;INEC_ESPAC2025 / INIAP_NUTRIENTES;ct_cantidad_nit_fq / ct_umed_nit_fq y tratamientos experimentales;parcial;Masa de fertilizante comercial no equivale a masa de N y faltan composición y superficie efectivamente tratada
+fosforo_p2o5_kg_ha;INEC_ESPAC2025 / INIAP_NUTRIENTES;ct_cantidad_fq / ct_umed_fq y tratamientos experimentales;parcial;Verificar formulación y expresar P o P2O5 de forma explícita sin usar fósforo del suelo en ppm como dosis aplicada
+potasio_k2o_kg_ha;INEC_ESPAC2025 / INIAP_NUTRIENTES;ct_cantidad_pot_fq / ct_umed_pot_fq y tratamientos experimentales;parcial;Verificar formulación y distinguir K de K2O y concentración del suelo de dosis de fertilización
+magnesio_kg_ha;INIAP_NUTRIENTES;Tratamientos de omisión de Mg;ensayo_sin_microdatos_descargados;Hace falta la dosis aplicada por tratamiento y repetición y no usar Mg del suelo como kg aplicados
+azufre_kg_ha;INIAP_NUTRIENTES;Tratamientos de omisión de S;ensayo_sin_microdatos_descargados;Verificar dosis formulación calendario y repetición sin generalizar resultados de producción de semilla a grano comercial
+aplicaciones_nitrogeno;NINGUNA_EQUIVALENCIA_VERIFICADA;Calendario de aplicaciones por parcela;pendiente;No se deduce el número de aplicaciones a partir de la cantidad anual de fertilizante
+lamina_riego_mm;NINGUNA_EQUIVALENCIA_VERIFICADA;Volumen aplicado dividido por superficie;pendiente;La superficie regada y el método de riego no determinan por sí solos los milímetros de agua aplicados
+biofertilizante;INIAP_SUELOS2025;Tratamientos con biofertilizantes;parcial;Fertilizante orgánico en ESPAC no demuestra uso de microorganismos biofertilizantes
+semilla_certificada;INEC_ESPAC2025;ct_k506;parcial;El código 3 identifica la clase certificada pero los códigos de híbridos nacional o internacional no prueban por sí solos ausencia de certificación
+ndvi_v6_vegetativo;NINGUNA_EQUIVALENCIA_VERIFICADA;Imagen y fecha de etapa V6 por parcela;pendiente;Requiere polígono calendario fenológico control de nubes y producto satelital documentado
+ndvi_vt_floracion;NINGUNA_EQUIVALENCIA_VERIFICADA;Imagen y fecha de etapa VT por parcela;pendiente;No asignar un promedio provincial como medición de floración de cada parcela
+ndvi_r3_llenado_grano;NINGUNA_EQUIVALENCIA_VERIFICADA;Imagen y fecha de etapa R3 por parcela;pendiente;No se encontró una serie oficial vinculada a las cosechas descargadas y esta entrada limita predicciones hechas antes de esa etapa
+plagas_presentes;INEC_ESPAC2025 / MAG_SIPA;ct_k512 / ct_plagas / afectaciones declaradas;parcial;Pérdida de superficie por plagas no equivale a inventario de especies presentes ni ausencia de pérdida a ausencia de plaga
+presion_plaga_score;NINGUNA_EQUIVALENCIA_VERIFICADA;Escala propia del CSV actual;sin_equivalente_directo;Se necesita definición de escala método de observación y validación de su relación con daño o incidencia
+control_plaga;INEC_ESPAC2025;ct_apliplagui / ct_porg / ct_pqui;parcial;Aplicar plaguicida no describe por completo el método de control ni demuestra eficacia o manejo integrado
+rendimiento_t_ha;INEC_ESPAC2025 / MAG_SIPA;ct_prod / ct_k511ha y rendimientos objetivos;derivable_con_revision;Usar superficie positiva mismo producto estado de cosecha y humedad compatible y revisar asociaciones y diseño muestral
+categoria_cosecha;NINGUNA_ETIQUETA_OFICIAL_VERIFICADA;Etiqueta derivada por definir;requiere_regla_documentada;No se encontró una categoría oficial equivalente y los umbrales deben justificarse sin convertir la propia etiqueta en predictor

@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import tailwindcss from '@tailwindcss/vite'
 
 // Plugin para inyectar import L from 'leaflet' en Geoman antes de evaluarse
 function leafletGeomanPlugin() {
@@ -20,14 +21,14 @@ function leafletGeomanPlugin() {
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [leafletGeomanPlugin(), react()],
+  plugins: [leafletGeomanPlugin(), react(), tailwindcss()],
   server: {
     port: 5500,
     strictPort: true
   },
   base: './',
   build: {
-    rollupOptions: {
+    rolldownOptions: {
       output: {
         entryFileNames: 'assets/app-[hash].js',
         chunkFileNames: 'assets/[name]-[hash].js',
@@ -37,28 +38,17 @@ export default defineConfig({
           }
           return 'assets/[name]-[hash][extname]';
         },
-        manualChunks(id) {
-          if (id.includes('node_modules')) {
-            if (id.includes('/three/') || id.includes('\\three\\')) {
-              return 'modelo-3d';
-            }
-            if (id.includes('chart.js') || id.includes('react-chartjs-2')) {
-              return 'graficos';
-            }
-            if (id.includes('lucide-react')) {
-              return 'iconos';
-            }
-            if (id.includes('leaflet') || id.includes('@geoman-io')) {
-              return 'mapas';
-            }
-            if (id.includes('react-dom') || id.includes('/react/') || id.includes('scheduler')) {
-              return 'react';
-            }
-            if (id.includes('axios')) {
-              return 'http';
-            }
-            return 'terceros';
-          }
+        codeSplitting: {
+          includeDependenciesRecursively: false,
+          groups: [
+            { name: 'modelo-3d-core', test: /[\\/]three[\\/]build[\\/]three\.core\.js$/, priority: 30 },
+            { name: 'modelo-3d', test: /node_modules[\\/]three[\\/]/, priority: 20 },
+            { name: 'graficos', test: /node_modules[\\/](?:chart\.js|react-chartjs-2)[\\/]/ },
+            { name: 'iconos', test: /node_modules[\\/]lucide-react[\\/]/ },
+            { name: 'mapas', test: /node_modules[\\/](?:leaflet|@geoman-io)[\\/]/ },
+            { name: 'react', test: /node_modules[\\/](?:react|react-dom|scheduler)[\\/]/ },
+            { name: 'http', test: /node_modules[\\/]axios[\\/]/ },
+          ],
         }
       }
     }

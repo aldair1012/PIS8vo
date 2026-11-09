@@ -87,7 +87,7 @@ final class GestorMotorIa implements GestorMotorIaInterface
                 'status'  => 'ok',
                 'running' => true,
                 'started' => false,
-                'message' => 'Motor de simulación activo',
+                'mensaje' => 'Motor de simulación activo',
             ];
         }
 
@@ -96,7 +96,7 @@ final class GestorMotorIa implements GestorMotorIaInterface
                 'status'  => 'error',
                 'running' => false,
                 'started' => false,
-                'message' => 'No se pudo iniciar el motor de simulación. Verifique que Python esté instalado.',
+                'mensaje' => 'No se pudo iniciar el motor de simulación. Verifique que Python esté instalado.',
             ];
         }
 
@@ -107,7 +107,7 @@ final class GestorMotorIa implements GestorMotorIaInterface
                     'status'  => 'ok',
                     'running' => true,
                     'started' => true,
-                    'message' => 'Motor de simulación iniciado correctamente',
+                    'mensaje' => 'Motor de simulación iniciado correctamente',
                 ];
             }
         }
@@ -116,7 +116,7 @@ final class GestorMotorIa implements GestorMotorIaInterface
             'status'  => 'error',
             'running' => false,
             'started' => false,
-            'message' => 'El motor de simulación no respondió a tiempo.',
+            'mensaje' => 'El motor de simulación no respondió a tiempo.',
         ];
     }
 
@@ -136,7 +136,7 @@ final class GestorMotorIa implements GestorMotorIaInterface
             'started' => $started,
             'url'     => IA_SERVER_URL,
             'health'  => $running ? $this->detallesSalud() : null,
-            'message' => $running ? 'Motor de simulación activo' : 'Motor de simulación inactivo',
+            'mensaje' => $running ? 'Motor de simulación activo' : 'Motor de simulación inactivo',
         ];
     }
 }

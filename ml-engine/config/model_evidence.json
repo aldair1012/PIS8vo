@@ -1,0 +1,16 @@
+{
+  "version": "2026-11-08.1",
+  "uso": "exploracion_de_escenarios",
+  "artefactos_sha256": {
+    "label_encoder.joblib": "814657032116ceb2764e2457b36c4c419eb56f53b60929412e64c520ef7b49b6",
+    "target_encoder.joblib": "6405c41de16842261ac377d6947e9fbe699ac16e73f8db81969f68e3fcdaf9ba",
+    "xgboost.joblib": "9e865aee66f4175a9e9600357db853dc59cbb995488f8ce5b08b61ed02ac1a12",
+    "xgboost_clf.joblib": "9ecb549ff8dc1d41cc3507d5e3ea837df6df321c59b1ffcefa1ea43e5e1d4378"
+  },
+  "dataset_sha256": "dd3a29e6748f2d948a4236fe32dd8b5f2a45776f1bda64d9657870ad719e4fde",
+  "procedencia_entrenamiento": "no_acreditada",
+  "validacion_cosechas_independientes": false,
+  "producto_objetivo": "grano_seco",
+  "advertencia": "Las métricas internas no verifican exactitud agrícola en una parcela nueva.",
+  "modelo_espac2025_publicado": false
+}

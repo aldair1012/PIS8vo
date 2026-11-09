@@ -15,16 +15,17 @@ final class SimulacionController
     }
 
     public function simular(Peticion $peticion): void { RespuestaJson::enviar($this->servicio->simular($this->usuarioId(), $peticion)); }
+    public function evaluarVariedades(Peticion $peticion): void { RespuestaJson::enviar($this->servicio->evaluarVariedades($this->usuarioId(), $peticion)); }
     public function historial(Peticion $peticion): void { RespuestaJson::enviar($this->servicio->historial($this->usuarioId(), $peticion)); }
     public function eliminar(Peticion $peticion): void { RespuestaJson::enviar($this->servicio->eliminar($this->usuarioId(), $peticion)); }
-    public function iaStatus(Peticion $peticion): void { RespuestaJson::enviar($this->servicio->iaStatus($peticion)); }
-    public function explain(Peticion $peticion): void { RespuestaJson::enviar($this->servicio->explain($this->usuarioId(), $peticion)); }
+    public function estadoIA(Peticion $peticion): void { RespuestaJson::enviar($this->servicio->estadoIA($peticion)); }
+    public function explicar(Peticion $peticion): void { RespuestaJson::enviar($this->servicio->explicar($this->usuarioId(), $peticion)); }
 
     /**
      * El middleware de sesión ya garantiza $_SESSION['usuario_id'] para estas rutas
-     * (iaStatus es pública pero no usa este helper). Lectura directa de superglobal
+     * (estadoIA es pública pero no usa este helper). Lectura directa de superglobal
      * deliberada: Http es la capa sancionada para superglobals (traducción Petición→servicio).
-     * Aquí solo se lee el id ya fijado por el login.
+     * Aquí solo se lee el id ya fijado por el inicio de sesión.
      */
     private function usuarioId(): int
     {

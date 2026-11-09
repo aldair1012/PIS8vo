@@ -10,7 +10,10 @@ interface SimulacionRepositoryInterface
     public function guardar(array $datos, array $resultado): int;
 
     /** @return array<int, array<string, mixed>> */
-    public function obtenerPorUsuario(int $usuarioId, int $limite = 50, ?int $year = null): array;
+    public function obtenerPorUsuario(int $usuarioId, int $limite = 50, ?int $year = null, int $desplazamiento = 0): array;
+
+    /** @return list<int> Años de todo el historial del usuario, independientes de la página. */
+    public function obtenerAniosPorUsuario(int $usuarioId): array;
 
     /** @return array<string, mixed>|null */
     public function obtenerPorId(int $id): ?array;
@@ -21,16 +24,19 @@ interface SimulacionRepositoryInterface
     /** @return array<int, array<string, mixed>> @used-by F05 (Scenario/Financial migrarán a este repositorio). */
     public function obtenerRecientes(int $usuarioId, int $limite = 5, ?int $year = null): array;
 
+    /** @return array<int, array<string, mixed>> Simulaciones de una sola parcela; year es el año de creación. */
+    public function obtenerRecientesPorCultivo(int $usuarioId, int $cultivoId, int $limite = 50, ?int $year = null): array;
+
     public function eliminar(int $id): bool;
 
     /** @used-by F05 (Scenario migrará a este repositorio). */
     public function contarPorUsuario(int $usuarioId): int;
 
     /**
-     * Última simulación de una parcela (con fallback sin año): SQL inline de
-     * SimulacionController::explain() líneas 249–265 (port en T13 del catálogo de explicadores).
+     * Última simulación de una parcela, limitada al año solicitado si no es null.
+     * Devuelve null si no hay registros; nunca recurre a una campaña distinta.
      *
      * @return array<string, mixed>|null
      */
-    public function obtenerUltimaPorCultivo(int $cultivoId, ?int $anio = null): ?array;
+    public function obtenerUltimaPorCultivo(int $cultivoId, ?int $año = null): ?array;
 }

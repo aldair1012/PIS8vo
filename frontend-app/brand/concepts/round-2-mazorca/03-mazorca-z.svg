@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
+  <title>Mazorca Z</title>
+  <desc>Una mazorca estilizada con un surco en negativo que dibuja la letra Z.</desc>
+  <path fill="#000" d="M128 28c-44 25-66 61-66 107 0 43 24 75 66 94 42-19 66-51 66-94 0-46-22-82-66-107z"/>
+  <path fill="#fff" d="M91 79h75v18l-46 63h45v18H89v-18l46-63H91z"/>
+  <path fill="#000" d="M68 155c-7 27 7 54 31 72-4-20-7-37-13-51zm120 0c7 27-7 54-31 72 4-20 7-37 13-51z"/>
+</svg>

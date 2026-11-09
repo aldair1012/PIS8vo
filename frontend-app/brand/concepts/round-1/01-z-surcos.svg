@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
+  <title>Z surcada</title>
+  <desc>Una Z geométrica construida como dos franjas de cultivo que se conectan en diagonal.</desc>
+  <path fill="#000" d="M44 48h168v44L104 164h108v44H44v-44l108-72H44z"/>
+</svg>

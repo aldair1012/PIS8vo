@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "collection": "zeasys_pdf_v2_embeddinggemma_300m_fb1a768e",
+  "model": "embeddinggemma:300m",
+  "corpus_sha256": "fb1a768e0c4d1fb3b399defde7025f6e42a4931903c044f8bbfda986de850f8d",
+  "query_prefix": "task: search result | query: ",
+  "document_prefix": "title: {source} | text: ",
+  "dimensions": 768,
+  "entries": 616,
+  "index_seconds": 271.641
+}

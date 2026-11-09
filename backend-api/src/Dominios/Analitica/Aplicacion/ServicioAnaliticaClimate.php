@@ -1,7 +1,6 @@
 <?php
 // src/Dominios/Analitica/Aplicacion/ServicioAnaliticaClimate.php — Servicio que construye los datos del dashboard Climate.
-// Port verbatim de ClimateController::index() (líneas 231-581), adaptado a return array.
-// Sustituye la llamada interna consultarDatosApiPrecision() por el ServicioDatosTerreno inyectado.
+// Conserva datos externos con procedencia; los indicadores no estimables permanecen null.
 declare(strict_types=1);
 
 namespace ZeaSys\Dominios\Analitica\Aplicacion;
@@ -21,7 +20,7 @@ class ServicioAnaliticaClimate
         private ServicioClimaActual $climaActual,
     ) {}
 
-    public function construir(int $usuarioId, ?int $cultivoId = null, ?int $anio = null): array
+    public function construir(int $usuarioId, ?int $cultivoId = null, ?int $año = null): array
     {
         $cultivoSeleccionado = null;
 
@@ -37,37 +36,44 @@ class ServicioAnaliticaClimate
             return ['sin_datos' => true, 'total_cultivos' => $totalCultivos];
         }
 
-        $temperaturaPromedio = 24.5;
-        $humedadPromedio = 65.0;
-        $precipitacionPromedio = 800.0;
+        $temperaturaPromedio = null;
+        $humedadPromedio = null;
+        $precipitacionPromedio = null;
         $precipitacion30d = null;
-        $fuenteApi = 'Simulado/Histórico';
+        $fuenteApi = 'No disponible';
         $sueloInfo = null;
         $climaHoy = null;
         $pronostico7d = [];
 
-        $tieneCoordenadas = isset($cultivoSeleccionado['latitud'], $cultivoSeleccionado['longitud'])
-            && $cultivoSeleccionado['latitud'] !== '' && $cultivoSeleccionado['longitud'] !== '';
+        $tieneCoordenadas = $this->numero($cultivoSeleccionado['latitud'] ?? null, -90, 90) !== null
+            && $this->numero($cultivoSeleccionado['longitud'] ?? null, -180, 180) !== null;
         if ($tieneCoordenadas) {
             $altitud = isset($cultivoSeleccionado['altitud']) && $cultivoSeleccionado['altitud'] !== ''
                 ? (float) $cultivoSeleccionado['altitud']
                 : null;
-            $informacionApi = $this->terreno->obtener(
-                floatval($cultivoSeleccionado['latitud']),
-                floatval($cultivoSeleccionado['longitud']),
-                $altitud
-            );
-            if ($informacionApi['clima_disponible_api'] ?? false) {
-                $temperaturaPromedio = $informacionApi['clima']['temperatura'];
-                $humedadPromedio = $informacionApi['clima']['humedad'];
-                $precipitacionPromedio = $informacionApi['clima']['precipitacion'];
-                $precipitacion30d = $informacionApi['clima']['precipitacion_30d'] ?? null;
+            try {
+                $informacionApi = $this->terreno->obtener(
+                    (float) $cultivoSeleccionado['latitud'], (float) $cultivoSeleccionado['longitud'], $altitud
+                );
+            } catch (\Throwable) {
+                $informacionApi = [];
             }
-            if ($informacionApi['success']) {
-                $fuenteApi = $informacionApi['source'];
+            // El proveedor puede devolver un bloque parcial mezclado con respaldo.
+            // Solo publicar campos cuyo origen API esté registrado individualmente.
+            $camposClima = is_array($informacionApi['clima_campos_api'] ?? null) ? $informacionApi['clima_campos_api'] : [];
+            $clima = is_array($informacionApi['clima'] ?? null) ? $informacionApi['clima'] : [];
+            if ($informacionApi['clima_disponible_api'] ?? false) {
+                $temperaturaPromedio = in_array('temperatura', $camposClima, true) ? $this->numero($clima['temperatura'] ?? null) : null;
+                $humedadPromedio = in_array('humedad', $camposClima, true) ? $this->numero($clima['humedad'] ?? null, 0, 100) : null;
+                $precipitacionPromedio = in_array('precipitacion', $camposClima, true) ? $this->numero($clima['precipitacion'] ?? null, 0) : null;
+                $precipitacion30d = in_array('precipitacion_30d', $camposClima, true) ? $this->numero($clima['precipitacion_30d'] ?? null, 0) : null;
+            }
+            if ($informacionApi['success'] ?? false) {
+                $fuenteApi = (string) ($informacionApi['source'] ?? 'Proveedor externo');
             }
             if ($informacionApi['suelo_disponible_api'] ?? false) {
-                $sueloInfo = $informacionApi['suelo'];
+                $camposSuelo = is_array($informacionApi['suelo_campos_api'] ?? null) ? $informacionApi['suelo_campos_api'] : [];
+                $sueloInfo = array_intersect_key($informacionApi['suelo'] ?? [], array_flip($camposSuelo));
             }
 
             // El clima actual es una observación/pronóstico de corto plazo.
@@ -86,116 +92,34 @@ class ServicioAnaliticaClimate
                         : [];
                 }
             } catch (\Throwable) {
-                // El panel sigue funcionando con el promedio histórico y el
-                // respaldo local; el clima actual se muestra como no disponible.
+                // La indisponibilidad no debe impedir mostrar los otros bloques.
             }
         }
 
-        $year = $anio ?? (int) date('Y');
+        $year = $año ?? (int) date('Y');
 
-        $ensoEstado = 'Neutral';
+        $ensoEstado = null;
         $ensoColor = 'info';
-        $ensoDesc = "Escenario neutral de referencia para {$year}; ZeaSys no tiene integrada una fuente ENSO en tiempo real.";
-
-        $probLluviaBaja = $precipitacionPromedio < 700 ? round(max(20, min(85, 100 - ($precipitacionPromedio / 10))), 0) : round(max(10, 70 - ($precipitacionPromedio / 15)), 0);
-        $probEstrTermico = $temperaturaPromedio > 30 ? round(min(90, ($temperaturaPromedio - 25) * 15), 0) : round(max(5, ($temperaturaPromedio - 20) * 5), 0);
-
-        if ($sueloInfo) {
-            $aguaUtil = round($sueloInfo['sand'] * 0.6 + $sueloInfo['clay'] * 1.8 + $sueloInfo['silt'] * 1.2, 0);
-            $aguaUtil = max(30, min(200, $aguaUtil));
-        } else {
-            $aguaUtil = round(max(30, min(180, $precipitacionPromedio * 0.15 + $humedadPromedio * 0.5)), 0);
-        }
-
-        $indiceRiesgoClima = 'Bajo';
-        $indiceRiesgoColor = 'success';
-        if ($probLluviaBaja > 60 || $probEstrTermico > 50) {
-            $indiceRiesgoClima = 'Alto';
-            $indiceRiesgoColor = 'danger';
-        } elseif ($probLluviaBaja > 35 || $probEstrTermico > 25) {
-            $indiceRiesgoClima = 'Moderado';
-            $indiceRiesgoColor = 'warning';
-        }
-
+        $ensoDesc = "No disponible: ZeaSys no tiene integrada una fuente ENSO para {$year}.";
+        $probLluviaBaja = null;
+        $probEstrTermico = null;
+        $aguaUtil = null;
+        $indiceRiesgoClima = null;
+        $indiceRiesgoColor = 'info';
         $etiquetasMeses = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
-        $anomaliaLluvia = [];
-        $anomaliaTemp = [];
-        $promedioHistLluvia = [];
+        $anomaliaLluvia = $anomaliaTemp = $promedioHistLluvia = array_fill(0, 12, null);
+        $aguaPorEstrato = array_fill(0, 4, null);
 
-        if ($tieneCoordenadas) {
-            $latitud = floatval($cultivoSeleccionado['latitud']);
-            $longitud = floatval($cultivoSeleccionado['longitud']);
-            $altitud = floatval($cultivoSeleccionado['altitud'] ?? 45.0);
-
-            $esSierra = $altitud > 1000 || ($longitud > -79.0 && $longitud < -78.0);
-            $esAmazonia = $longitud > -77.5;
-
-            for ($i = 0; $i < 12; $i++) {
-                if ($esSierra) {
-                    $temperaturaBase = 15.0 + sin(deg2rad($i * 30 + 60)) * 1.5;
-                    $lluviaBase = 80.0 + sin(deg2rad($i * 60)) * 30.0;
-                } elseif ($esAmazonia) {
-                    $temperaturaBase = 24.0 + sin(deg2rad($i * 30 + 120)) * 0.8;
-                    $lluviaBase = 160.0 + cos(deg2rad($i * 30)) * 40.0;
-                } else {
-                    $temperaturaBase = 26.0 + sin(deg2rad($i * 30 + 90)) * 1.2;
-                    $lluviaBase = ($i >= 0 && $i <= 3) ? (160.0 - $i * 35) : 12.0;
-                }
-                $promedioHistLluvia[] = round($lluviaBase, 1);
-                $semilla = implode('|', [$usuarioId, $cultivoId ?? 0, $year, $i]);
-                $anomaliaLluvia[] = round($lluviaBase + $this->variacionDeterminista($semilla . '|lluvia', -10, 15), 1);
-                $anomaliaTemp[] = round($temperaturaBase + $this->variacionDeterminista($semilla . '|temp', -8, 8) / 10, 1);
+        $emergenciaMes = $crecimientoMes = $floracionMes = $llenadoMes = 'No disponible';
+        $fechaSiembra = $this->fechaValida($cultivoSeleccionado['fecha_siembra'] ?? null);
+        if ($fechaSiembra !== null) {
+            $mesSiembra = new \DateTimeImmutable($fechaSiembra);
+            $mesSiembra = $mesSiembra->modify('first day of this month');
+            $mesesEtapas = [];
+            for ($i = 0; $i < 4; $i++) {
+                $mesesEtapas[] = $etiquetasMeses[(int) $mesSiembra->modify("+{$i} months")->format('m') - 1];
             }
-        } else {
-            for ($i = 0; $i < 12; $i++) {
-                $baseLluvia = 60 + sin(deg2rad($i * 30)) * 30;
-                $semilla = implode('|', [$usuarioId, $cultivoId ?? 0, $year, $i]);
-                $anomaliaLluvia[] = round($baseLluvia + $this->variacionDeterminista($semilla . '|lluvia', -20, 15), 1);
-                $promedioHistLluvia[] = round($baseLluvia, 1);
-                $anomaliaTemp[] = round($temperaturaPromedio + sin(deg2rad($i * 30 + 90)) * 3 + $this->variacionDeterminista($semilla . '|temp', -10, 10) / 10, 1);
-            }
-        }
-
-        if ($sueloInfo) {
-            $aguaPorEstrato = [
-                round($aguaUtil * ($sueloInfo['clay'] / 100), 0),
-                round($aguaUtil * ($sueloInfo['silt'] / 100), 0),
-                round($aguaUtil * ($sueloInfo['sand'] / 100), 0),
-                0
-            ];
-            $aguaPorEstrato[3] = max(0, $aguaUtil - array_sum(array_slice($aguaPorEstrato, 0, 3)));
-        } else {
-            $aguaPorEstrato = [
-                round($aguaUtil * 0.35, 0),
-                round($aguaUtil * 0.28, 0),
-                round($aguaUtil * 0.22, 0),
-                round($aguaUtil * 0.15, 0)
-            ];
-        }
-
-        $emergenciaMes = 'Mes 1';
-        $crecimientoMes = 'Mes 2';
-        $floracionMes = 'Mes 3';
-        $llenadoMes = 'Mes 4';
-
-        if (!empty($cultivoSeleccionado['fecha_siembra'])) {
-            $fechaSiembraObj = new \DateTime($cultivoSeleccionado['fecha_siembra']);
-            $meses = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
-            $emergenciaMes = $meses[intval($fechaSiembraObj->format('m')) - 1];
-            $fechaCrecimiento = clone $fechaSiembraObj;
-            $fechaCrecimiento->modify('+1 month');
-            $crecimientoMes = $meses[intval($fechaCrecimiento->format('m')) - 1];
-            $fechaFloracion = clone $fechaSiembraObj;
-            $fechaFloracion->modify('+2 months');
-            $floracionMes = $meses[intval($fechaFloracion->format('m')) - 1];
-            $fechaLlenado = clone $fechaSiembraObj;
-            $fechaLlenado->modify('+3 months');
-            $llenadoMes = $meses[intval($fechaLlenado->format('m')) - 1];
-        } else {
-            $emergenciaMes = 'Oct-Nov';
-            $crecimientoMes = 'Nov-Dic';
-            $floracionMes = 'Ene-Feb';
-            $llenadoMes = 'Mar-Apr';
+            [$emergenciaMes, $crecimientoMes, $floracionMes, $llenadoMes] = $mesesEtapas;
         }
 
         $datosAgronomia = $this->catalogo->cargar();
@@ -238,15 +162,15 @@ class ServicioAnaliticaClimate
             }
         }
 
-        $temp_optima = $condicionesEncontradas['Temperatura Óptima (°C)'] ?? '21–27';
-        $ph_optimo = $condicionesEncontradas['pH Óptimo'] ?? '6.0–6.5';
-        $tipo_suelo = $condicionesEncontradas['Tipo de Suelo'] ?? 'Franco arcilloso / Franco limoso';
-        $densidad = $condicionesEncontradas['Densidad (pl/ha)'] ?? '62,500–83,333';
-        $riego = $condicionesEncontradas['Riego'] ?? 'Temporal (lluvia)';
-        $ciclo_dias = $condicionesEncontradas['Ciclo (días)'] ?? '115–125';
+        $temp_optima = $condicionesEncontradas['Temperatura Óptima (°C)'] ?? 'No disponible';
+        $ph_optimo = $condicionesEncontradas['pH Óptimo'] ?? 'No disponible';
+        $tipo_suelo = $condicionesEncontradas['Tipo de Suelo'] ?? 'No disponible';
+        $densidad = $condicionesEncontradas['Densidad (pl/ha)'] ?? 'No disponible';
+        $riego = $condicionesEncontradas['Riego'] ?? 'No disponible';
+        $ciclo_dias = $condicionesEncontradas['Ciclo (días)'] ?? 'No disponible';
 
-        $nitrogeno = $fertilizacionEncontrada['Nitrógeno N (kg/ha)'] ?? '180–200';
-        $fraccionamiento = $fertilizacionEncontrada['Fraccionamiento N'] ?? '3 aplicaciones fraccionadas';
+        $nitrogeno = $fertilizacionEncontrada['Nitrógeno N (kg/ha)'] ?? 'No disponible';
+        $fraccionamiento = $fertilizacionEncontrada['Fraccionamiento N'] ?? 'No disponible';
         $biofertilizante = $fertilizacionEncontrada['Biofertilizante INIAP'] ?? 'N/A';
 
         $plagas = $datosAgronomia['plagas_enfermedades'] ?? [];
@@ -281,29 +205,44 @@ class ServicioAnaliticaClimate
                     $coincidencias[] = "{$name} (Umbral: {$umbral}; Control: {$control})";
                 }
             }
-            if (empty($coincidencias)) { return "No se registran plagas de alta incidencia."; }
-            return "Plagas clave: " . implode(" | ", $coincidencias);
+            if (empty($coincidencias)) { return "Sin fichas coincidentes; no hay observaciones de incidencia de esta parcela."; }
+            return "Referencias de monitoreo del catálogo (no incidencia observada): " . implode(" | ", $coincidencias);
         };
 
         $lineaTiempoFenologica = [
-            ['etapa' => 'Emergencia','mes' => $emergenciaMes,'riesgo' => 'Bajo Riesgo','alerta' => 'Bajo','color' => 'success','descripcion' => "Suelo: {$tipo_suelo} (pH óptimo: {$ph_optimo}). Densidad objetivo: {$densidad} pl/ha. Riego: {$riego}. " . $generarTextoPlagas('Emergencia')],
-            ['etapa' => 'Crecimiento','mes' => $crecimientoMes,'riesgo' => 'Riesgo Moderado','alerta' => 'Moderado','color' => 'warning','descripcion' => "Fertilización recomendada: {$nitrogeno} kg/ha de N. Fraccionamiento: {$fraccionamiento}. Biofertilización: {$biofertilizante}. " . $generarTextoPlagas('Crecimiento')],
-            ['etapa' => 'Floración','mes' => $floracionMes,'riesgo' => 'Alto Riesgo','alerta' => 'Alto','color' => 'danger','descripcion' => "Temperatura óptima de desarrollo: {$temp_optima} °C. Evitar encharcamientos o sequías extremas durante polinización. " . $generarTextoPlagas('Floración')],
-            ['etapa' => 'Llenado de grano','mes' => $llenadoMes,'riesgo' => 'Riesgo Moderado','alerta' => 'Moderado','color' => 'warning','descripcion' => "Duración estimada del ciclo en esta zona: {$ciclo_dias} días. Mantener humedad residual. " . $generarTextoPlagas('Llenado de grano')]
+            ['etapa' => 'Emergencia','mes' => $emergenciaMes,'riesgo' => 'No evaluado','alerta' => 'Sin evaluación','color' => 'info','descripcion' => "Suelo: {$tipo_suelo} (pH óptimo: {$ph_optimo}). Densidad objetivo: {$densidad} pl/ha. Riego: {$riego}. " . $generarTextoPlagas('Emergencia')],
+            ['etapa' => 'Crecimiento','mes' => $crecimientoMes,'riesgo' => 'No evaluado','alerta' => 'Sin evaluación','color' => 'info','descripcion' => "Fertilización recomendada: {$nitrogeno} kg/ha de N. Fraccionamiento: {$fraccionamiento}. Biofertilización: {$biofertilizante}. " . $generarTextoPlagas('Crecimiento')],
+            ['etapa' => 'Floración','mes' => $floracionMes,'riesgo' => 'No evaluado','alerta' => 'Sin evaluación','color' => 'info','descripcion' => "Temperatura óptima de desarrollo: {$temp_optima} °C. Evitar encharcamientos o sequías extremas durante polinización. " . $generarTextoPlagas('Floración')],
+            ['etapa' => 'Llenado de grano','mes' => $llenadoMes,'riesgo' => 'No evaluado','alerta' => 'Sin evaluación','color' => 'info','descripcion' => "Duración estimada del ciclo en esta zona: {$ciclo_dias} días. Mantener humedad residual. " . $generarTextoPlagas('Llenado de grano')]
         ];
 
+        foreach ($lineaTiempoFenologica as &$etapa) {
+            $etapa['tipo'] = 'referencia_fenologica_no_observada';
+            $etapa['estado'] = 'no_evaluado';
+            $etapa['fuente'] = 'Catálogo agronómico local; meses orientativos desde la siembra registrada';
+        }
+        unset($etapa);
+
         return [
+            'procedencia' => [
+                'clima' => ['tipo' => 'modelo_reanalisis', 'fuente' => $fuenteApi, 'campos_api' => $camposClima ?? [],
+                    'nota' => 'Promedios y acumulados del proveedor; no son mediciones del lote. Campos ausentes permanecen null.'],
+                'riesgo' => ['estado' => 'no_disponible', 'motivo' => 'No hay un modelo probabilístico calibrado para riesgo de sequía o estrés térmico.'],
+                'agua_util' => ['estado' => 'no_disponible', 'motivo' => 'Textura, lluvia y humedad relativa no permiten medir agua útil actual ni repartirla por profundidad.'],
+                'anomalias' => ['estado' => 'no_disponible', 'motivo' => 'Falta una serie mensual del año solicitado y una climatología comparable.'],
+            ],
             'kpis' => [
                 'enso' => ['estado' => $ensoEstado,'color' => $ensoColor,'desc' => $ensoDesc],
                 'prob_lluvia_bajo_promedio' => $probLluviaBaja,
                 'prob_estres_termico' => $probEstrTermico,
                 'agua_util' => $aguaUtil,
-                'indice_riesgo' => ['nivel' => $indiceRiesgoClima,'color' => $indiceRiesgoColor]
+                'indice_riesgo' => ['nivel' => $indiceRiesgoClima,'color' => $indiceRiesgoColor,'estado' => 'no_disponible']
             ],
             'api_source' => $fuenteApi,
             // Se conserva clima_actual por compatibilidad con consumidores
             // anteriores, pero ahora declara explícitamente que es un promedio.
             'clima_actual' => [
+                'disponible' => $temperaturaPromedio !== null || $humedadPromedio !== null || $precipitacion30d !== null,
                 'temperatura' => $temperaturaPromedio,
                 'humedad' => $humedadPromedio,
                 'precipitacion' => $precipitacionPromedio,
@@ -314,6 +253,7 @@ class ServicioAnaliticaClimate
                 'nota' => 'Promedio de los últimos 30 días; no es el clima de hoy ni un pronóstico.'
             ],
             'clima_promedio_30d' => [
+                'disponible' => $temperaturaPromedio !== null || $humedadPromedio !== null || $precipitacion30d !== null,
                 'temperatura' => $temperaturaPromedio,
                 'humedad' => $humedadPromedio,
                 'precipitacion' => $precipitacionPromedio,
@@ -348,22 +288,34 @@ class ServicioAnaliticaClimate
             ],
             'timeline_anomalia' => [
                 'labels' => $etiquetasMeses,
+                'estado' => 'no_disponible',
+                'motivo' => 'Sin serie mensual y climatología comparable; no se generan curvas sintéticas.',
                 'lluvia_historica' => $promedioHistLluvia,
                 'lluvia_anomala' => $anomaliaLluvia,
                 'temperatura_anomala' => $anomaliaTemp
             ],
             'agua_estratos' => [
                 'labels' => ['0-20 cm', '20-40 cm', '40-60 cm', '60-100 cm'],
-                'valores' => $aguaPorEstrato
+                'valores' => $aguaPorEstrato,
+                'estado' => 'no_disponible',
+                'motivo' => 'Faltan mediciones de humedad, capacidad de campo, marchitez y profundidad efectiva.'
             ],
             'timeline_fenologico' => $lineaTiempoFenologica,
-            'fecha_siembra' => $cultivoSeleccionado ? $cultivoSeleccionado['fecha_siembra'] : null
+            'fecha_siembra' => $fechaSiembra
         ];
     }
 
-    private function variacionDeterminista(string $semilla, int $minimo, int $maximo): int
+    private function numero(mixed $valor, ?float $minimo = null, ?float $maximo = null): ?float
     {
-        $enteroSinSigno = (int) sprintf('%u', crc32($semilla));
-        return $minimo + ($enteroSinSigno % ($maximo - $minimo + 1));
+        if (is_bool($valor) || !is_numeric($valor)) return null;
+        $numero = (float) $valor;
+        return is_finite($numero) && ($minimo === null || $numero >= $minimo) && ($maximo === null || $numero <= $maximo) ? $numero : null;
+    }
+
+    private function fechaValida(mixed $valor): ?string
+    {
+        if (!is_string($valor)) return null;
+        $fecha = \DateTimeImmutable::createFromFormat('!Y-m-d', $valor);
+        return $fecha !== false && $fecha->format('Y-m-d') === $valor ? $valor : null;
     }
 }

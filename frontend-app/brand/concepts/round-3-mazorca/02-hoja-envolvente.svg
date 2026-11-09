@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
+  <title>Hoja envolvente</title>
+  <desc>Una mazorca horizontal con una sola hoja que envuelve su base.</desc>
+  <path fill="#000" d="M74 158c27 36 86 47 145 3-37 11-68 8-91-5-23-12-39-30-54-48-3 17-3 34 0 50z"/>
+  <path fill="#000" fill-rule="evenodd" d="M48 72h152c20 0 32 20 32 56s-12 56-32 56H48c-20 0-32-20-32-56s12-56 32-56zm28 20a8 10 0 1 0 0 20 8 10 0 1 0 0-20zm39 0a8 10 0 1 0 0 20 8 10 0 1 0 0-20zm39 0a8 10 0 1 0 0 20 8 10 0 1 0 0-20zm39 0a8 10 0 1 0 0 20 8 10 0 1 0 0-20zM95 119a8 10 0 1 0 0 20 8 10 0 1 0 0-20zm39 0a8 10 0 1 0 0 20 8 10 0 1 0 0-20zm39 0a8 10 0 1 0 0 20 8 10 0 1 0 0-20zM76 146a8 10 0 1 0 0 20 8 10 0 1 0 0-20zm39 0a8 10 0 1 0 0 20 8 10 0 1 0 0-20zm39 0a8 10 0 1 0 0 20 8 10 0 1 0 0-20zm39 0a8 10 0 1 0 0 20 8 10 0 1 0 0-20z"/>
+</svg>

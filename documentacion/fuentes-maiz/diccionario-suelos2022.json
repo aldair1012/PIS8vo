@@ -1,0 +1,44 @@
+{
+  "xl/worksheets/sheet1.xml": [
+    {
+      "A1": "Institución",
+      "B1": "Ministerio de Agricultura y Ganadería"
+    },
+    {
+      "A2": "Identificador",
+      "B2": "MAG_MAG_DIGITALFERTILIDADQUIMICASUELOS_2022_DD_2022AGO"
+    },
+    {
+      "A3": "Documento Referencia",
+      "B3": "MAG_MAG_DIGITALFERTILIDADQUIMICASUELOS_2022_2022AGO"
+    },
+    {
+      "A4": "Nombre",
+      "B4": "Mapa digital de fertilidad química de los suelos del Ecuador continental, resolución 30 metros, año 2022"
+    },
+    {
+      "A5": "Descripción",
+      "B5": "Fertilidad química de los suelos: Capacidad o estado de los suelos para suministrar los elementos nutritivos esenciales necesarios para un desarrollo adecuado de las plantas.\n\n* Disponible para descarga las siguientes propiedades químicas del suelo: materia orgánica, potencial hidrógeno, fósforo, potasio, saturación y suma de bases, conductividad eléctrica y capacidad de intercambio catiónico."
+    },
+    {
+      "A6": "Nombre del campo",
+      "B6": "Descripción del campo"
+    },
+    {
+      "A7": "OID",
+      "B7": "El ObjectID (OID) es un número identificador de objeto exclusivo definido por el sistema para cada fila de la tabla"
+    },
+    {
+      "A8": "VALUE",
+      "B8": "VALUE es una lista de cada valor de celda exclusivo en los datasets de ráster (en una cuadrícula, es un entero)."
+    },
+    {
+      "A9": "COUNT",
+      "B9": "COUNT representa el número de celdas en el dataset ráster con el valor de celda en la columna VALUE. Los valores de celda que representa NoData no se calculan en la tabla de atributos de ráster."
+    },
+    {
+      "A10": "clases",
+      "B10": "Clase de fertilidad química de los suelos"
+    }
+  ]
+}

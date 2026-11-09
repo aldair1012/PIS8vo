@@ -50,7 +50,7 @@ final class FavoritoService
         // El ámbito reproduce el alcance de la memoria: los dashboards comparten
         // una conversación y Nueva Simulación mantiene la suya.
         $ambito = $vista === 'simular' ? 'simulacion' : 'dashboard';
-        $anio = $this->enteroOpcional($datos['anio'] ?? null, 'anio', 2000, 2100);
+        $año = $this->enteroOpcional($datos['año'] ?? null, 'año', 2000, 2100);
         $cultivoId = $this->enteroOpcional($datos['cultivo_id'] ?? null, 'cultivo_id', 1, PHP_INT_MAX);
 
         $cultivo = null;
@@ -80,15 +80,15 @@ final class FavoritoService
         }
 
         $favoritoId = $this->favoritos->guardar($usuarioId, $conversacionId, [
-            'cultivo_id' => $cultivoId,
-            'anio' => $anio,
+            'parcela_id' => $cultivoId,
+            'año' => $año,
             'ambito' => $ambito,
             'vista' => $vista,
             'titulo' => $titulo,
             'mensajes' => $mensajes,
             'contexto' => [
                 'parcela' => is_array($cultivo) ? ($cultivo['nombre_parcela'] ?? null) : null,
-                'anio' => $anio,
+                'año' => $año,
                 'ambito' => $ambito,
                 'vista' => $vista,
                 'guardado_en' => date('c'),
@@ -122,9 +122,9 @@ final class FavoritoService
      *
      * @return array<int, array{titulo:string,respuesta_clave:string,guardado_en:?string}>
      */
-    public function recientesParaContexto(int $usuarioId, ?int $cultivoId, ?int $anio, int $limite = 4): array
+    public function recientesParaContexto(int $usuarioId, ?int $cultivoId, ?int $año, int $limite = 4): array
     {
-        $filas = $this->favoritos->obtenerRecientes($usuarioId, $cultivoId, $anio, $limite);
+        $filas = $this->favoritos->obtenerRecientes($usuarioId, $cultivoId, $año, $limite);
         $salida = [];
         foreach ($filas as $fila) {
             if (!is_array($fila)) {

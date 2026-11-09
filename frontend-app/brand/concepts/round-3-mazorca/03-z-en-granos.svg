@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
+  <title>Z en granos</title>
+  <desc>Una mazorca horizontal de granos redondeados con una Z abierta en el centro.</desc>
+  <path fill="#000" fill-rule="evenodd" d="M47 76h162c20 0 31 19 31 52s-11 52-31 52H47c-20 0-31-19-31-52s11-52 31-52zm28 22a8 10 0 1 0 0 20 8 10 0 1 0 0-20zm106 0a8 10 0 1 0 0 20 8 10 0 1 0 0-20zM67 150a8 10 0 1 0 0 20 8 10 0 1 0 0-20zm106 0a8 10 0 1 0 0 20 8 10 0 1 0 0-20zM86 123h83v14l-48 32h48v14H86v-14l48-32H86z"/>
+</svg>

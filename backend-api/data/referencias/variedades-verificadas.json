@@ -1,0 +1,16 @@
+{
+  "consultado": "2026-10-24",
+  "nota": "Referencias experimentales publicadas. Un máximo de ensayo no demuestra un límite genético ni garantiza el rendimiento de una parcela.",
+  "variedades": [
+    {
+      "nombre": "INIAP H-603 Superior",
+      "promedio_t_ha": 8.48,
+      "maximo_t_ha": 10.82,
+      "fuente": "INIAP · Limongi Andrade et al., Agronomía Colombiana 36(2), 2018",
+      "url": "https://repositorio.iniap.gob.ec/items/167c75ef-de78-4f29-9939-2e7e71fea5f9/full",
+      "ensayos": "29 localidades, 2010–2013",
+      "condiciones_maximo": "Época seca bajo riego, Litoral ecuatoriano",
+      "nota": "Promedio y máximo reportados por el estudio. No equivalen al potencial zonal GAEZ, a una medición de la parcela ni a un límite genético demostrado."
+    }
+  ]
+}

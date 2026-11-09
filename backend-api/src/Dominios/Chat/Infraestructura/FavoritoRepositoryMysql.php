@@ -30,13 +30,13 @@ final class FavoritoRepositoryMysql implements FavoritoRepositoryInterface
         );
 
         $stmt = $this->db->prepare(
-            'INSERT INTO chat_favoritos
-                (usuario_id, cultivo_id, anio, ambito, vista, conversacion_id, titulo, mensajes_json, contexto_json)
+            'INSERT INTO conversaciones_favoritas
+                (usuario_id, parcela_id, año, ambito, vista, conversacion_id, titulo, mensajes_json, contexto_json)
              VALUES
-                (:usuario_id, :cultivo_id, :anio, :ambito, :vista, :conversacion_id, :titulo, :mensajes_json, :contexto_json)
+                (:usuario_id, :parcela_id, :año, :ambito, :vista, :conversacion_id, :titulo, :mensajes_json, :contexto_json)
              ON DUPLICATE KEY UPDATE
-                cultivo_id = VALUES(cultivo_id),
-                anio = VALUES(anio),
+                parcela_id = VALUES(parcela_id),
+                año = VALUES(año),
                 ambito = VALUES(ambito),
                 vista = VALUES(vista),
                 titulo = VALUES(titulo),
@@ -46,8 +46,8 @@ final class FavoritoRepositoryMysql implements FavoritoRepositoryInterface
         );
         $stmt->execute([
             ':usuario_id' => $usuarioId,
-            ':cultivo_id' => $datos['cultivo_id'] ?? null,
-            ':anio' => $datos['anio'] ?? null,
+            ':parcela_id' => $datos['parcela_id'] ?? null,
+            ':año' => $datos['año'] ?? null,
             ':ambito' => (string) ($datos['ambito'] ?? 'dashboard'),
             ':vista' => $datos['vista'] ?? null,
             ':conversacion_id' => $conversacionId,
@@ -63,7 +63,7 @@ final class FavoritoRepositoryMysql implements FavoritoRepositoryInterface
 
         // En un UPDATE por clave duplicada lastInsertId() es 0; se recupera el id.
         $stmt = $this->db->prepare(
-            'SELECT id FROM chat_favoritos
+            'SELECT id FROM conversaciones_favoritas
              WHERE usuario_id = :usuario_id AND conversacion_id = :conversacion_id
              LIMIT 1'
         );
@@ -75,24 +75,24 @@ final class FavoritoRepositoryMysql implements FavoritoRepositoryInterface
         return (int) ($stmt->fetchColumn() ?: 0);
     }
 
-    public function obtenerRecientes(int $usuarioId, ?int $cultivoId, ?int $anio, int $limite = 4): array
+    public function obtenerRecientes(int $usuarioId, ?int $cultivoId, ?int $año, int $limite = 4): array
     {
         $limite = max(1, min(10, $limite));
         $condiciones = ['usuario_id = :usuario_id'];
         $parametros = [':usuario_id' => $usuarioId];
 
         if ($cultivoId !== null) {
-            $condiciones[] = '(cultivo_id = :cultivo_id OR cultivo_id IS NULL)';
-            $parametros[':cultivo_id'] = $cultivoId;
+            $condiciones[] = '(parcela_id = :parcela_id OR parcela_id IS NULL)';
+            $parametros[':parcela_id'] = $cultivoId;
         }
-        if ($anio !== null) {
-            $condiciones[] = '(anio = :anio OR anio IS NULL)';
-            $parametros[':anio'] = $anio;
+        if ($año !== null) {
+            $condiciones[] = '(año = :año OR año IS NULL)';
+            $parametros[':año'] = $año;
         }
 
         $stmt = $this->db->prepare(
-            'SELECT id, cultivo_id, anio, ambito, vista, conversacion_id, titulo, mensajes_json, actualizado_en
-             FROM chat_favoritos
+            'SELECT id, parcela_id, año, ambito, vista, conversacion_id, titulo, mensajes_json, actualizado_en
+             FROM conversaciones_favoritas
              WHERE ' . implode(' AND ', $condiciones) . '
              ORDER BY actualizado_en DESC, id DESC
              LIMIT ' . $limite
@@ -105,7 +105,7 @@ final class FavoritoRepositoryMysql implements FavoritoRepositoryInterface
     public function eliminar(int $usuarioId, string $conversacionId): void
     {
         $stmt = $this->db->prepare(
-            'DELETE FROM chat_favoritos
+            'DELETE FROM conversaciones_favoritas
              WHERE usuario_id = :usuario_id AND conversacion_id = :conversacion_id'
         );
         $stmt->execute([

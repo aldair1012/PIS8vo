@@ -1,31 +1,40 @@
-import { useCallback, useState, useEffect } from 'react';
+import { lazy, Suspense, useCallback, useState, useEffect, useRef } from 'react';
 import Sidebar from './templates/Common/Sidebar';
 import Navbar from './templates/Common/Navbar';
 import Login from './views/Login';
-import DashboardScenario from './views/DashboardScenario';
-import DashboardClimate from './views/DashboardClimate';
-import DashboardYield from './views/DashboardYield';
-import DashboardFinance from './views/DashboardFinance';
-import Cultivos from './views/Cultivos';
-import Simular from './views/Simular';
-import History from './views/History';
-import MapPage from './views/MapPage';
-import Configuracion from './views/Configuracion';
-
-import ChatbotWidget from './components/ChatbotWidget';
 import { AlertTriangle } from 'lucide-react';
-import { authService, cultivosService, simulacionService } from './services/api';
+import { authService, parcelasService, simulacionService } from './services/api';
+
+const DashboardScenario = lazy(() => import('./views/DashboardScenario'));
+const DashboardClimate = lazy(() => import('./views/DashboardClimate'));
+const DashboardYield = lazy(() => import('./views/DashboardRendimiento'));
+const DashboardFinance = lazy(() => import('./views/DashboardFinance'));
+const Cultivos = lazy(() => import('./views/Cultivos'));
+const RegistroCampo = lazy(() => import('./components/RegistroCampo'));
+const Simular = lazy(() => import('./views/Simular'));
+const History = lazy(() => import('./views/History'));
+const MapPage = lazy(() => import('./views/MapPage'));
+const Configuracion = lazy(() => import('./views/Configuracion'));
+const ChatbotWidget = lazy(() => import('./components/ChatbotWidget'));
 
 export default function App() {
   const [user, setUser] = useState(null);
   const [authChecked, setAuthChecked] = useState(false);
+  const [authError, setAuthError] = useState(false);
+  const [authAttempt, setAuthAttempt] = useState(0);
+  const [sessionError, setSessionError] = useState(null);
+  const authGeneration = useRef(0);
   const [isRegistering, setIsRegistering] = useState(false);
 
   // Estados del diseño (Layout)
   const [vistaActual, setVistaActual] = useState('yield');
+  const [registroCampoId, setRegistroCampoId] = useState(null);
   const [cultivos, setCultivos] = useState([]);
+  const [cultivosError, setCultivosError] = useState(false);
+  const [cultivosCargando, setCultivosCargando] = useState(true);
+  const solicitudCultivos = useRef(0);
   const [cultivoElegidoId, setCultivoElegidoId] = useState(null);
-  const [anioSeleccionado, setAnioSeleccionado] = useState(() => new Date().getFullYear());
+  const [añoSeleccionado, setAñoSeleccionado] = useState(() => new Date().getFullYear());
   const [contextoDashboard, setContextoDashboard] = useState(null);
   const [contextoSimulacion, setContextoSimulacion] = useState(null);
   const [iaEncendida, setIaEncendida] = useState(false);
@@ -85,27 +94,39 @@ export default function App() {
 
   // Verificar autenticación al inicio
   useEffect(() => {
+    let vigente = true;
     async function checkAuth() {
       try {
-        const data = await authService.me();
-        if (data.authenticated) {
-          setUser(data.user);
+        const data = await authService.yo();
+        if (!vigente) return;
+        setAuthError(false);
+        if (data.autenticado) {
+          setUser(data.usuario);
         }
       } catch (err) {
+        if (!vigente) return;
         console.error('Session validation failed:', err);
+        setAuthError(true);
       } finally {
-        setAuthChecked(true);
+        if (vigente) setAuthChecked(true);
       }
     }
     checkAuth();
-  }, []);
+    return () => { vigente = false; };
+  }, [authAttempt]);
 
   const [onboardingStep, setOnboardingStep] = useState(0);
 
   // Obtener parcelas y verificar el servicio de IA cuando el usuario está logueado
   const cargarCultivos = useCallback(async () => {
+    const generation = authGeneration.current;
+    const solicitud = ++solicitudCultivos.current;
+    setCultivosCargando(true);
     try {
-      const data = await cultivosService.listar();
+      const data = await parcelasService.listar();
+      if (generation !== authGeneration.current || solicitud !== solicitudCultivos.current || !user) return;
+      if (!Array.isArray(data)) throw new Error('La respuesta de parcelas no es válida.');
+      setCultivosError(false);
       setCultivos(data);
       const isDone = user?.id ? localStorage.getItem(`onboarding_done_${user.id}`) === 'true' : false;
 
@@ -124,13 +145,17 @@ export default function App() {
         }
       }
     } catch (err) {
+      if (generation !== authGeneration.current || solicitud !== solicitudCultivos.current || !user) return;
       console.error('Error fetching crops:', err);
+      setCultivosError(true);
+    } finally {
+      if (generation === authGeneration.current && solicitud === solicitudCultivos.current && user) setCultivosCargando(false);
     }
   }, [cultivoElegidoId, user]);
 
   const revisarEstadoIa = useCallback(async () => {
     try {
-      const data = await simulacionService.iaStatus();
+      const data = await simulacionService.estadoIA();
       setIaEncendida(data.running);
     } catch {
       setIaEncendida(false);
@@ -156,8 +181,8 @@ export default function App() {
   // viendo. La clave evita reutilizar un snapshot de otra parcela o año.
   const registrarContextoDashboard = useCallback((vista, datos) => {
     if (!datos || typeof datos !== 'object') return;
-    setContextoDashboard({ vista, datos, cultivoId: cultivoElegidoId, anio: anioSeleccionado });
-  }, [cultivoElegidoId, anioSeleccionado]);
+    setContextoDashboard({ vista, datos, cultivoId: cultivoElegidoId, año: añoSeleccionado });
+  }, [cultivoElegidoId, añoSeleccionado]);
   const registrarScenario = useCallback((datos) => registrarContextoDashboard('scenarios', datos), [registrarContextoDashboard]);
   const registrarClimate = useCallback((datos) => registrarContextoDashboard('climate', datos), [registrarContextoDashboard]);
   const registrarYield = useCallback((datos) => registrarContextoDashboard('yield', datos), [registrarContextoDashboard]);
@@ -166,23 +191,40 @@ export default function App() {
     setContextoSimulacion(contexto);
   }, []);
 
-  const cerrarSesion = async () => {
-    try {
-      await authService.logout();
-    } catch (err) {
-      console.warn('Sesión finalizada:', err);
-    } finally {
+  const limpiarSesion = useCallback(() => {
+      authGeneration.current++;
       setUser(null);
       setCultivos([]);
+      setCultivosError(false);
+      setCultivosCargando(true);
       setCultivoElegidoId(null);
       setVistaActual('yield');
       setOnboardingStep(0);
       setIsRegistering(false);
+      setContextoDashboard(null);
+      setContextoSimulacion(null);
+      setSessionError(null);
+  }, []);
+
+  useEffect(() => {
+    window.addEventListener('zeasys:session-expired', limpiarSesion);
+    return () => window.removeEventListener('zeasys:session-expired', limpiarSesion);
+  }, [limpiarSesion]);
+
+  const cerrarSesion = async () => {
+    try {
+      await authService.cerrarSesion();
+      limpiarSesion();
+    } catch (err) {
+      if (err.response?.status === 401) limpiarSesion();
+      else setSessionError('No se pudo cerrar la sesión en el servidor. Comprueba la conexión e inténtalo de nuevo.');
     }
   };
 
   const handleLoginSuccess = (u) => {
+    authGeneration.current++;
     setUser(u);
+    setSessionError(null);
     // Al autenticarse, cargarCultivos() verificará si ya posee parcelas en la base de datos
     setVistaActual('yield');
     setOnboardingStep(0);
@@ -203,9 +245,12 @@ export default function App() {
     setVistaActual('yield');
   };
 
-  const handleSimulationCompleted = () => {
+  const handleSimulationCompleted = ({ cultivoId } = {}) => {
     // Incrementar disparador para recargar listas de historial
     setRecargarDatos(prev => prev + 1);
+    if (Number.isInteger(Number(cultivoId)) && Number(cultivoId) > 0) {
+      setCultivoElegidoId(Number(cultivoId));
+    }
   };
 
   const handleCultivoChanged = () => {
@@ -214,6 +259,18 @@ export default function App() {
 
   if (!authChecked) {
     return <div className="flex-center" style={{ height: '100vh', background: 'var(--background)', color: 'var(--text-muted)' }}>Validando sesión de ZeaSys...</div>;
+  }
+
+  if (authError) {
+    return (
+      <main className="flex-center" style={{ minHeight: '100vh', flexDirection: 'column', gap: '1rem', padding: '2rem', textAlign: 'center', background: 'var(--background)', color: 'var(--text)' }}>
+        <div role="alert">
+          <h1>No se pudo conectar con ZeaSys</h1>
+          <p>Comprueba que el servidor esté encendido y vuelve a intentarlo.</p>
+        </div>
+        <button type="button" onClick={() => { setAuthChecked(false); setAuthAttempt(valor => valor + 1); }}>Reintentar conexión</button>
+      </main>
+    );
   }
 
   if (!user) {
@@ -232,7 +289,7 @@ export default function App() {
   // Determinar título de pestaña, Dashboard
   const getActiveTitle = () => {
     switch (vistaActual) {
-      case 'yield': return 'Rendimiento y brecha';
+      case 'yield': return 'Rendimiento proyectado';
       case 'scenarios': return 'Viabilidad de siembra';
       case 'climate': return 'Clima y cultivo';
       case 'finance': return 'Viabilidad financiera';
@@ -247,6 +304,7 @@ export default function App() {
 
   return (
     <div className="app-container zeasys-workspace">
+      <a className="workspace-skip-link" href="#workspace-content">Ir al contenido</a>
       {/* Ambient background glow blobs for premium glassmorphism */}
       <div className="ambient-glow-1"></div>
       <div className="ambient-glow-2"></div>
@@ -271,13 +329,16 @@ export default function App() {
 
       {/* Main Panel */}
       <div className="main-content">
+        {sessionError && <div role="alert" className="bg-danger-alpha text-danger" style={{ padding: '1rem' }}>{sessionError}</div>}
         <Navbar
+          theme={theme}
+          onToggleTheme={() => setTheme((current) => current === 'dark' ? 'light' : 'dark')}
           title={getActiveTitle()}
           cultivos={cultivos}
           cultivoElegidoId={cultivoElegidoId}
           setCultivoElegidoId={setCultivoElegidoId}
-          anioSeleccionado={anioSeleccionado}
-          setAnioSeleccionado={setAnioSeleccionado}
+          añoSeleccionado={añoSeleccionado}
+          setAñoSeleccionado={setAñoSeleccionado}
           user={user}
           iaEncendida={iaEncendida}
           menuCerrado={menuCerrado}
@@ -286,7 +347,9 @@ export default function App() {
           setVistaActual={setVistaActual}
         />
 
-        <div
+        <main
+          id="workspace-content"
+          tabIndex={-1}
           className="content-body"
           style={['map', 'cultivos'].includes(vistaActual) ? {
             minHeight: isMobileView ? 'auto' : 'calc(100vh - 64px)',
@@ -303,6 +366,13 @@ export default function App() {
             flex: 1
           }}
         >
+          {cultivosCargando && cultivos.length === 0 && vistaActual !== 'configuracion' ? <p role="status">Cargando tus parcelas…</p> : cultivosError && vistaActual !== 'configuracion' ? (
+            <div role="alert">
+              <h2>No se pudieron cargar tus parcelas</h2>
+              <p>Comprueba la conexión y vuelve a intentarlo. Tus datos guardados no se han modificado.</p>
+              <button type="button" onClick={cargarCultivos}>Reintentar carga</button>
+            </div>
+          ) : <Suspense fallback={<p role="status">Cargando vista…</p>}>
           {fueraDeEcuador && ['scenarios', 'climate', 'yield', 'finance'].includes(vistaActual) && (
             <div className="bg-danger-alpha text-danger" style={{
               padding: '1rem',
@@ -328,7 +398,7 @@ export default function App() {
           {vistaActual === 'scenarios' && (
             <DashboardScenario
               cultivoElegidoId={cultivoElegidoId}
-              anioSeleccionado={anioSeleccionado}
+              añoSeleccionado={añoSeleccionado}
               onNavigate={setVistaActual}
               onDashboardData={registrarScenario}
             />
@@ -336,7 +406,7 @@ export default function App() {
           {vistaActual === 'climate' && (
             <DashboardClimate
               cultivoElegidoId={cultivoElegidoId}
-              anioSeleccionado={anioSeleccionado}
+              añoSeleccionado={añoSeleccionado}
               onNavigate={setVistaActual}
               onDashboardData={registrarClimate}
             />
@@ -344,15 +414,25 @@ export default function App() {
           {vistaActual === 'yield' && (
             <DashboardYield
               cultivoElegidoId={cultivoElegidoId}
-              anioSeleccionado={anioSeleccionado}
-              onNavigate={setVistaActual}
+              añoSeleccionado={añoSeleccionado}
+              onNavigate={(destino, fechaSimulacion) => {
+                if (destino === 'cultivos' && fechaSimulacion === 'registro') setRegistroCampoId(cultivoElegidoId);
+                if (destino === 'finance' && typeof fechaSimulacion === 'string') {
+                  const añoSimulacion = Number(fechaSimulacion.slice(0, 4));
+                  if (Number.isInteger(añoSimulacion) && añoSimulacion >= 2000 && añoSimulacion <= 2100) {
+                    setAñoSeleccionado(añoSimulacion);
+                  }
+                }
+                setVistaActual(destino);
+              }}
               onDashboardData={registrarYield}
+              onAbrirRegistroCampo={() => setRegistroCampoId(cultivoElegidoId)}
             />
           )}
           {vistaActual === 'finance' && (
             <DashboardFinance
               cultivoElegidoId={cultivoElegidoId}
-              anioSeleccionado={anioSeleccionado}
+              añoSeleccionado={añoSeleccionado}
               onNavigate={setVistaActual}
               onDashboardData={registrarFinance}
             />
@@ -368,9 +448,9 @@ export default function App() {
             <Simular
               cultivos={cultivos}
               onSimulationCompleted={handleSimulationCompleted}
+              onNavigate={setVistaActual}
               onboardingStep={onboardingStep}
               onNextOnboardingStep={handleCompleteOnboarding}
-              onNavigate={setVistaActual}
               onSimulationContextChange={registrarSimulacion}
             />
           )}
@@ -379,6 +459,16 @@ export default function App() {
               recargarDatos={recargarDatos}
             />
           )}
+          {registroCampoId !== null && (
+            <Suspense fallback={<p role="status">Cargando registro…</p>}>
+              <RegistroCampo
+                cultivos={cultivos}
+                initialId={registroCampoId}
+                onClose={() => setRegistroCampoId(null)}
+              />
+            </Suspense>
+          )}
+
           {vistaActual === 'cultivos' && (
             <Cultivos
               onCultivoChanged={handleCultivoChanged}
@@ -396,21 +486,24 @@ export default function App() {
               cultivos={cultivos}
             />
           )}
-        </div>
+          </Suspense>}
+        </main>
       </div>
 
       {/* Chatbot Widget */}
-      {user && !chatOculto && (
+      {user && !chatOculto && !cultivosError && (
+        <Suspense fallback={null}>
         <ChatbotWidget
-          key={`chat-${ambitoChat}-${cultivoChatId || 'sin-parcela'}-${anioSeleccionado || 'sin-anio'}`}
+          key={`chat-${ambitoChat}-${cultivoChatId || 'sin-parcela'}-${añoSeleccionado || 'sin-año'}`}
           vistaActual={vistaActual}
           usuarioId={user.id}
           cultivoElegidoId={cultivoChatId}
-          anioSeleccionado={anioSeleccionado}
+          añoSeleccionado={añoSeleccionado}
           contextoDashboard={contextoDashboard}
           cultivoActivo={cultivoChatActivo}
           simulacion={simulacionChat}
         />
+        </Suspense>
       )}
     </div>
   );

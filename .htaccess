@@ -13,10 +13,10 @@ Options -Indexes
     RewriteEngine On
     RewriteRule (^|/)\. - [F,L]
     # Solo el front controller y los avatares deben ser públicos dentro del backend.
-    RewriteRule ^(?:backend-api/(?:src|tests|data|models)|database|docs|documentacion|frontend-app|ml-engine)(?:/|$) - [F,L,NC]
+    RewriteRule ^(?:backend-api/(?:src|tests|data|models)|database|docs|documentacion|frontend-app|ml-engine|entrega|scripts|tools|docker|rag-sources)(?:/|$) - [F,L,NC]
 </IfModule>
 
-<FilesMatch "(?i)(^\.|\.(?:sql|joblib|py|pyc|csv|md|bat|log|ini|env|lock)$)">
+<FilesMatch "(?i)(^\.|\.(?:sql|joblib|py|pyc|csv|md|bat|ps1|zip|log|ini|env|lock)$)">
     Require all denied
 </FilesMatch>
 

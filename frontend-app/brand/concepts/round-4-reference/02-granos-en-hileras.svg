@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
+  <title>Granos en hileras</title>
+  <desc>Mazorquita frontal de cuerpo compacto y granos redondeados en hileras alternas.</desc>
+  <g fill="#000">
+    <path d="M91 153c-17-8-38-22-57-35 10 23 12 48 19 71 8 25 24 42 49 53 7-20 6-43-1-63z"/>
+    <path d="M165 153c17-8 38-22 57-35-10 23-12 48-19 71-8 25-24 42-49 53-7-20-6-43 1-63z"/>
+    <path fill-rule="evenodd" d="M70 163c-5-34-5-68 1-94 6-27 26-40 57-40s51 13 57 40c6 26 6 60 1 94l-17-1c5-33 5-65 0-86-4-20-18-30-41-30s-37 10-41 30c-5 21-5 53 0 86z"/>
+    <path d="M122 50q6-4 12 0v19q-6 4-12 0z"/>
+    <path d="M101 74q7-4 14 0v19q-7 4-14 0zm40 0q7-4 14 0v19q-7 4-14 0z"/>
+    <path d="M90 99q7-4 14 0v19q-7 4-14 0zm28 0q7-4 14 0v19q-7 4-14 0zm28 0q7-4 14 0v19q-7 4-14 0z"/>
+    <path d="M90 124q7-4 14 0v19q-7 4-14 0zm28 0q7-4 14 0v19q-7 4-14 0zm28 0q7-4 14 0v19q-7 4-14 0z"/>
+    <path d="M99 149q7-4 14 0v15q-7 4-14 0zm28 0q7-4 14 0v15q-7 4-14 0zm28 0q7-4 14 0v15q-7 4-14 0z"/>
+  </g>
+</svg>

@@ -1,5 +1,6 @@
 import { useMemo, useState, useEffect, useRef } from 'react';
 import { Sprout } from 'lucide-react';
+import '../utils/mapRuntime';
 
 const DEFAULT_LAT = -1.8312;
 const DEFAULT_LNG = -78.1834;

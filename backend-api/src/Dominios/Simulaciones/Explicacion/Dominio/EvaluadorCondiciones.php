@@ -14,6 +14,9 @@ final class EvaluadorCondiciones
      */
     public function cumple(array $condicion, string $nombreLower): bool
     {
+        if (isset($condicion['patron'])) {
+            return preg_match($condicion['patron'], $nombreLower) === 1;
+        }
         if (isset($condicion['cualquiera'])) {
             foreach ($condicion['cualquiera'] as $texto) {
                 if (strpos($nombreLower, $texto) !== false) { return true; }

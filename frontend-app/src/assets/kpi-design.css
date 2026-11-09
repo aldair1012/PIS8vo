@@ -1,0 +1,93 @@
+/* Tarjetas de indicadores: superficies y acentos propios del sistema interno. */
+.zeasys-workspace .kpi-card,
+.zeasys-workspace .ydp-dashboard .ydp-metric {
+  --zs-text: #f2f9ef;
+  --zs-accent: #b4e985;
+  --zs-muted: #c3d8c2;
+  --zs-faint: #a9c3aa;
+  --zs-border: rgba(182, 226, 166, .25);
+  --zs-border-strong: rgba(182, 226, 166, .5);
+  --kpi-card-border: rgba(156, 224, 137, .48);
+  --kpi-card-shadow: inset 0 1px 0 rgba(220, 255, 218, .38), inset 0 -2px 6px rgba(115, 228, 81, .18), 0 7px 24px rgba(2, 28, 13, .2);
+  --kpi-card-bg: radial-gradient(ellipse at 8% 105%, rgba(111, 204, 73, .23), transparent 45%), linear-gradient(145deg, #123e29 0%, #082719 57%, #0b3823 100%);
+  --ydp-accent: #b4e985;
+}
+.zeasys-workspace .ydp-dashboard .ydp-metric {
+  position: relative;
+  background: var(--kpi-card-bg);
+  border-color: var(--kpi-card-border);
+  box-shadow: var(--kpi-card-shadow);
+}
+.zeasys-workspace .kpi-card { position: relative; box-shadow: inset 0 1px 0 rgba(217, 255, 210, .2), 0 6px 20px rgba(4, 28, 15, .16); }
+.zeasys-workspace .kpi-card .kpi-top-row { display: flex; align-items: center; justify-content: flex-start; gap: 9px; min-width: 0; }
+.zeasys-workspace .kpi-card .kpi-heading-title { flex: 1; min-width: 0; color: var(--zs-text); font-size: 13px; font-weight: 700; line-height: 1.3; overflow-wrap: anywhere; }
+.zeasys-workspace .kpi-card .kpi-heading-status { display: flex; align-items: flex-start; justify-content: flex-end; flex: 0 1 auto; min-width: 0; }
+.zeasys-workspace .kpi-card .kpi-severity { color: #ffd08d; font-size: 11px; font-weight: 700; text-align: right; line-height: 1.3; }
+.zeasys-workspace .kpi-card .kpi-severity--danger { color: #ffaaa2; }
+.zeasys-workspace .kpi-card .kpi-carousel-wrapper { margin-top: 4px; }
+.zeasys-workspace .kpi-card .kpi-switcher { display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-top: auto; border-top: 1px solid var(--zs-border); color: var(--zs-muted); font-size: 11px; }
+.zeasys-workspace .kpi-card .kpi-carousel-dots { display: flex; align-items: center; }
+.zeasys-workspace .kpi-switcher .kpi-dot, .zeasys-workspace .ydp-metric-dots button { position: relative; display: grid; place-items: center; width: 44px; height: 44px; min-width: 44px; min-height: 44px; padding: 0; border: 0; background: transparent; cursor: pointer; }
+.zeasys-workspace .kpi-switcher .kpi-dot.active, .zeasys-workspace .ydp-metric-dots button.is-active { background: transparent; }
+.zeasys-workspace .kpi-switcher .kpi-dot::after, .zeasys-workspace .ydp-metric-dots button::after { content: ''; width: 7px; height: 7px; border-radius: 50%; background: #789579; }
+.zeasys-workspace .kpi-switcher .kpi-dot.active::after, .zeasys-workspace .ydp-metric-dots button.is-active::after { background: #b4e985; }
+.zeasys-workspace .ydp-dashboard .ydp-metric-dots { gap: 0; }
+.zeasys-workspace .ydp-dashboard .ydp-metric-window { min-height: 88px; }
+.zeasys-workspace .ydp-dashboard .ydp-metric-label, .zeasys-workspace .ydp-dashboard .ydp-metric-value, .zeasys-workspace .ydp-dashboard .ydp-metric-value small { color: var(--zs-text); }
+body:not(.light-theme) .zeasys-workspace .dss-metric-col { --kpi-dss-bg: linear-gradient(145deg, #123e29, #082719); --zs-text: #f2f9ef; --zs-muted: #c3d8c2; --zs-border: rgba(182, 226, 166, .25); }
+@media (max-width: 480px) { .zeasys-workspace .kpi-card .kpi-heading-title { font-size: 13px; } }
+@media (prefers-reduced-motion: reduce) { .zeasys-workspace .kpi-card, .zeasys-workspace .ydp-dashboard .ydp-metric { animation: none; transition: none; } }
+
+/* El indicador principal conserva el acento agrícola; el resto usa la superficie clara. */
+body.light-theme .zeasys-workspace :is(.kpi-card, .ydp-metric:not(.ydp-metric--feature), .dss-metric-col) {
+  --zs-text: var(--zp-ink);
+  --zs-muted: var(--zp-ink-muted);
+  --zs-faint: var(--zp-ink-muted);
+  --zs-accent: var(--zp-forest-600);
+  --zs-border: #c5d5c7;
+  --zs-border-strong: #8bad92;
+  --zs-inset-surface: var(--zp-paper-200);
+  --zs-raised: var(--zp-paper-300);
+  --kpi-card-bg: var(--zp-paper-50);
+  --kpi-card-border: #c5d5c7;
+  --kpi-card-shadow: 0 3px 12px #192c230a;
+  --kpi-dss-bg: var(--zp-paper-50);
+  --ydp-accent: var(--zp-forest-600);
+}
+body.light-theme .zeasys-workspace :is(.kpi-card, .ydp-metric:not(.ydp-metric--feature))::after { background: none; }
+
+/* Jerarquía de la referencia, ajustada al ancho real de cada tarjeta. */
+.zeasys-workspace .kpi-card, .zeasys-workspace .ydp-dashboard .ydp-metric { container-type: inline-size; }
+.zeasys-workspace .kpi-card { --kpi-value-size: clamp(30px, 12cqw, 50px); --kpi-unit-size: clamp(13px, 4cqw, 21px); }
+.zeasys-workspace .kpi-card .kpi-value-compact { --kpi-value-size: clamp(26px, 9cqw, 36px); --kpi-unit-size: clamp(12px, 3.3cqw, 17px); }
+.zeasys-workspace .kpi-card .kpi-heading-title { font-size: clamp(13px, 4cqw, 16px); }
+.zeasys-workspace .ydp-dashboard .ydp-metric-label { font-size: clamp(13px, 4cqw, 16px); font-weight: 700; }
+.zeasys-workspace .ydp-dashboard .ydp-metric-value { font-size: clamp(30px, 12cqw, 50px); line-height: 1.04; letter-spacing: -.04em; }
+.zeasys-workspace .ydp-dashboard .ydp-metric-value--long { font-size: clamp(23px, 8cqw, 36px); }
+.zeasys-workspace .ydp-dashboard .ydp-metric-value small { font-size: clamp(13px, 4cqw, 21px); font-weight: 700; }
+.zeasys-workspace .ydp-dashboard .ydp-metric-detail { font-size: clamp(12px, 3.4cqw, 14px); }
+
+.zeasys-workspace .dss-metric-col {
+  container-type: inline-size;
+  --kpi-dss-bg: linear-gradient(145deg, #123e29, #082719);
+  --kpi-dss-title-size: clamp(13px, 4cqw, 16px);
+  --kpi-dss-value-size: clamp(26px, 10cqw, 44px);
+  --kpi-dss-detail-size: 12px;
+  --zs-text: #f2f9ef;
+  --zs-muted: #c3d8c2;
+  --zs-border: rgba(182, 226, 166, .25);
+  --zs-inset-surface: #0b3823;
+  --zs-raised: #123e29;
+  min-height: 145px;
+}
+.zeasys-workspace .dss-metric-col .dss-metric-title { line-height: 1.3; text-transform: none; letter-spacing: 0; }
+.zeasys-workspace .dss-metric-col .dss-metric-value { font-family: inherit; }
+.zeasys-workspace .dss-metric-col .dss-metric-value span { font-size: clamp(13px, 4cqw, 19px); color: var(--zs-muted); }
+.zeasys-workspace .dss-metric-col .dss-metric-trend { line-height: 1.4; }
+
+.zeasys-workspace .kpi-card::after, .zeasys-workspace .ydp-dashboard .ydp-metric::after {
+  content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  background: radial-gradient(ellipse 55% 9% at 20% 0%, rgba(235,255,231,.22), transparent 75%), radial-gradient(ellipse 50% 11% at 20% 100%, rgba(132,255,102,.16), transparent 78%);
+}
+
+/* Opciones con nombres legibles: cada botón explica qué dato muestra. */

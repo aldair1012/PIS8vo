@@ -18,7 +18,7 @@ final class ClienteMotorFlask implements MotorPrediccionInterface
     {
         $url = IA_SERVER_URL . '/predict';
 
-        $payload = json_encode([
+        $entradas = [
             'temperatura'   => (float) $datos['temperatura'],
             'humedad'       => (float) $datos['humedad'],
             'precipitacion' => (float) $datos['precipitacion'],
@@ -32,8 +32,19 @@ final class ClienteMotorFlask implements MotorPrediccionInterface
             'altitud'       => (float) ($datos['altitud'] ?? 45.0),
             'latitud'       => isset($datos['latitud']) ? (float) $datos['latitud'] : null,
             'longitud'      => isset($datos['longitud']) ? (float) $datos['longitud'] : null,
-            'modelo'        => $datos['modelo_usado'] ?? 'xgboost'
-        ]);
+            'modelo'        => $datos['modelo_usado'] ?? 'xgboost',
+            // El backend ya consulta y valida las referencias del formulario.
+            // No repetir clima reciente que no interviene en el escenario ni el REST de suelo obsoleto.
+            'incluir_contexto_reciente' => false,
+            'consultar_suelo' => false,
+        ];
+        if (array_key_exists('precipitacion_ciclo_mm', $datos)) {
+            $entradas['precipitacion_ciclo_mm'] = (float) $datos['precipitacion_ciclo_mm'];
+        }
+        foreach (['parametros_campo', 'fecha_siembra', 'incluir_historico', 'suelo_ubicacion'] as $campo) {
+            if (array_key_exists($campo, $datos)) $entradas[$campo] = $datos[$campo];
+        }
+        $payload = json_encode($entradas);
 
         $ch = curl_init($url);
         curl_setopt_array($ch, [

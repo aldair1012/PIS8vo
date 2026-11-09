@@ -2,7 +2,7 @@
 /**
  * Repositorio: CultivoRepositoryMysql
  * ====================================
- * Repositorio MySQL de parcelas y cultivos. Mantiene las consultas del
+ * Repositorio MySQL de parcelas y parcelas. Mantiene las consultas del
  * contrato HTTP y recibe PDO por inyección para aislar la infraestructura.
  */
 
@@ -21,7 +21,7 @@ final class CultivoRepositoryMysql implements CultivoRepositoryInterface
     public function crear(array $datos): int
     {
         $stmt = $this->db->prepare(
-            'INSERT INTO cultivos
+            'INSERT INTO parcelas
                 (usuario_id, nombre_parcela, variedad_maiz, tipo_maiz, ubicacion, area, latitud, longitud, fecha_siembra, geojson, altitud, ph, fertilizacion_fecha, fertilizacion_dosis, fertilizacion_tipo)
              VALUES
                 (:usuario_id, :nombre_parcela, :variedad_maiz, :tipo_maiz, :ubicacion, :area, :latitud, :longitud, :fecha_siembra, :geojson, :altitud, :ph, :fertilizacion_fecha, :fertilizacion_dosis, :fertilizacion_tipo)'
@@ -50,7 +50,7 @@ final class CultivoRepositoryMysql implements CultivoRepositoryInterface
     public function obtenerPorUsuario(int $usuarioId): array
     {
         $stmt = $this->db->prepare(
-            'SELECT * FROM cultivos
+            'SELECT * FROM parcelas
              WHERE usuario_id = :usuario_id AND activo = 1
              ORDER BY fecha_registro DESC'
         );
@@ -60,7 +60,7 @@ final class CultivoRepositoryMysql implements CultivoRepositoryInterface
 
     public function obtenerPorId(int $id): ?array
     {
-        $stmt = $this->db->prepare('SELECT * FROM cultivos WHERE id = :id');
+        $stmt = $this->db->prepare('SELECT * FROM parcelas WHERE id = :id');
         $stmt->execute(['id' => $id]);
         return $stmt->fetch() ?: null;
     }
@@ -69,7 +69,7 @@ final class CultivoRepositoryMysql implements CultivoRepositoryInterface
     {
         $stmt = $this->db->prepare(
             'SELECT c.*, u.nombre as nombre_usuario
-             FROM cultivos c
+             FROM parcelas c
              JOIN usuarios u ON c.usuario_id = u.id
              WHERE c.usuario_id = :usuario_id
                AND c.latitud IS NOT NULL
@@ -84,7 +84,7 @@ final class CultivoRepositoryMysql implements CultivoRepositoryInterface
     public function actualizar(int $id, array $datos): bool
     {
         $stmt = $this->db->prepare(
-            'UPDATE cultivos SET
+            'UPDATE parcelas SET
                 nombre_parcela = :nombre_parcela,
                 variedad_maiz  = :variedad_maiz,
                 tipo_maiz      = :tipo_maiz,
@@ -123,7 +123,7 @@ final class CultivoRepositoryMysql implements CultivoRepositoryInterface
     public function eliminar(int $id): bool
     {
         $stmt = $this->db->prepare(
-            'UPDATE cultivos SET activo = 0 WHERE id = :id'
+            'UPDATE parcelas SET activo = 0 WHERE id = :id'
         );
         return $stmt->execute(['id' => $id]);
     }
@@ -131,7 +131,7 @@ final class CultivoRepositoryMysql implements CultivoRepositoryInterface
     public function contarPorUsuario(int $usuarioId): int
     {
         $stmt = $this->db->prepare(
-            'SELECT COUNT(*) FROM cultivos
+            'SELECT COUNT(*) FROM parcelas
              WHERE usuario_id = :usuario_id AND activo = true'
         );
         $stmt->execute(['usuario_id' => $usuarioId]);
@@ -141,7 +141,7 @@ final class CultivoRepositoryMysql implements CultivoRepositoryInterface
     public function areaTotalPorUsuario(int $usuarioId): float
     {
         $stmt = $this->db->prepare(
-            'SELECT COALESCE(SUM(area), 0) FROM cultivos
+            'SELECT COALESCE(SUM(area), 0) FROM parcelas
              WHERE usuario_id = :usuario_id AND activo = true'
         );
         $stmt->execute(['usuario_id' => $usuarioId]);

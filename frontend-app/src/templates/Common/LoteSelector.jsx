@@ -21,7 +21,7 @@ import {
  *  - cultivos: Array of cultivo objects
  *  - cultivoElegidoId: Currently selected cultivo ID
  *  - setCultivoElegidoId: Setter for selected cultivo
- *  - anioSeleccionado: Currently selected year
+ *  - añoSeleccionado: Currently selected year
  *  - setAnioSeleccionado: Setter for selected year
  *  - setVistaActual: Navigation setter (to go to 'cultivos' view)
  */
@@ -29,8 +29,9 @@ export default function LoteSelector({
   cultivos,
   cultivoElegidoId,
   setCultivoElegidoId,
-  anioSeleccionado,
+  añoSeleccionado,
   setAnioSeleccionado,
+  vistaActual,
   setVistaActual
 }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -68,12 +69,12 @@ export default function LoteSelector({
     }
 
     // Asegurar que el año seleccionado actualmente esté presente
-    if (anioSeleccionado) {
-      yearSet.add(Number(anioSeleccionado));
+    if (vistaActual !== 'yield' && añoSeleccionado) {
+      yearSet.add(Number(añoSeleccionado));
     }
 
     return Array.from(yearSet).sort((a, b) => a - b);
-  }, [cultivos, anioSeleccionado]);
+  }, [cultivos, añoSeleccionado, vistaActual]);
 
   // Close on click outside
   useEffect(() => {
@@ -97,33 +98,16 @@ export default function LoteSelector({
       if (e.key === 'Escape' && isOpen) {
         setIsOpen(false);
         setSearchQuery('');
+        triggerRef.current?.focus();
       }
     };
     document.addEventListener('keydown', handleEscape);
     return () => document.removeEventListener('keydown', handleEscape);
   }, [isOpen]);
 
-  // Filter cultivos by search and selected year
+  // Los lotes siguen disponibles aunque se simulen en un año distinto al de
+  // su registro o siembra. El año sólo filtra los datos del dashboard.
   const filteredCultivos = cultivos.filter(c => {
-    if (anioSeleccionado) {
-      let cYear = null;
-      if (c.fecha_siembra) {
-        const y = parseInt(String(c.fecha_siembra).substring(0, 4), 10);
-        if (!isNaN(y) && y > 2000) cYear = y;
-      }
-      if (!cYear && c.fecha_registro) {
-        const y = parseInt(String(c.fecha_registro).substring(0, 4), 10);
-        if (!isNaN(y) && y > 2000) cYear = y;
-      }
-      if (!cYear && c.created_at) {
-        const y = parseInt(String(c.created_at).substring(0, 4), 10);
-        if (!isNaN(y) && y > 2000) cYear = y;
-      }
-      if (cYear && cYear !== Number(anioSeleccionado)) {
-        return false;
-      }
-    }
-
     if (!searchQuery.trim()) return true;
     const q = searchQuery.toLowerCase();
     return (
@@ -152,7 +136,11 @@ export default function LoteSelector({
         ref={triggerRef}
         className={`lote-selector-trigger ${isOpen ? 'active' : ''}`}
         onClick={() => setIsOpen(!isOpen)}
-        title="Seleccionar parcela y año"
+        title={vistaActual === 'yield' ? 'Seleccionar parcela' : 'Seleccionar parcela y año'}
+        aria-label={cultivoActivo ? `Seleccionar parcela. Actual: ${cultivoActivo.nombre_parcela}` : 'Seleccionar parcela'}
+        aria-expanded={isOpen}
+        aria-controls={isOpen ? 'selector-parcelas' : undefined}
+        type="button"
       >
         <div className="lote-selector-trigger-icon">
           <Sprout size={15} />
@@ -163,8 +151,8 @@ export default function LoteSelector({
           </span>
           <span className="lote-selector-trigger-sub">
             {cultivoActivo 
-              ? `${cultivoActivo.area} ha · ${anioSeleccionado}`
-              : `Año ${anioSeleccionado}`
+              ? `${cultivoActivo.area} ha${vistaActual === 'yield' ? '' : ` · ${añoSeleccionado}`}`
+              : 'Elige un lote'
             }
           </span>
         </div>
@@ -188,7 +176,7 @@ export default function LoteSelector({
 
       {/* Dropdown Panel */}
       {isOpen && (
-        <div ref={panelRef} className="lote-selector-panel">
+        <div ref={panelRef} id="selector-parcelas" role="dialog" aria-label="Seleccionar parcela" className="lote-selector-panel">
           {/* Panel Header */}
           <div className="lote-selector-panel-header">
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -198,7 +186,9 @@ export default function LoteSelector({
             </div>
             <button 
               className="lote-selector-close" 
-              onClick={() => { setIsOpen(false); setSearchQuery(''); }}
+              type="button"
+              aria-label="Cerrar selector de parcelas"
+              onClick={() => { setIsOpen(false); setSearchQuery(''); triggerRef.current?.focus(); }}
               title="Cerrar"
             >
               <X size={16} />
@@ -206,7 +196,7 @@ export default function LoteSelector({
           </div>
 
           {/* Year Selector */}
-          <div className="lote-selector-year-row">
+          {vistaActual !== 'yield' && <div className="lote-selector-year-row">
             <span className="lote-selector-year-label">
               <Calendar size={13} />
               Año:
@@ -215,14 +205,14 @@ export default function LoteSelector({
               {years.map(y => (
                 <button
                   key={y}
-                  className={`lote-selector-year-pill ${anioSeleccionado === y ? 'active' : ''}`}
+                  className={`lote-selector-year-pill ${añoSeleccionado === y ? 'active' : ''}`}
                   onClick={() => setAnioSeleccionado(y)}
                 >
                   {y}
                 </button>
               ))}
             </div>
-          </div>
+          </div>}
 
           {/* Search */}
           <div className="lote-selector-search">
@@ -231,6 +221,7 @@ export default function LoteSelector({
               type="text"
               className="lote-selector-search-input"
               placeholder="Buscar parcela..."
+              aria-label="Buscar parcela"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               autoFocus
@@ -242,7 +233,7 @@ export default function LoteSelector({
             {filteredCultivos.length === 0 ? (
               <div className="lote-selector-empty">
                 <Sprout size={32} style={{ color: 'var(--border-strong)', strokeWidth: 1.5 }} />
-                <p>{searchQuery ? 'No se encontraron parcelas' : `No tienes parcelas registradas en ${anioSeleccionado || ''}`}</p>
+                <p>{searchQuery ? 'No se encontraron parcelas' : 'No tienes parcelas registradas'}</p>
               </div>
             ) : (
               filteredCultivos.map(c => {

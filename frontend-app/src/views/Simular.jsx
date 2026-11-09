@@ -1,778 +1,340 @@
-import { useState, useEffect } from 'react';
-import { simulacionService, cultivosService } from '../services/api';
-import { Cpu, FileText, CheckCircle, AlertTriangle, TrendingUp, Zap, Award, CloudRain, Sun, Thermometer } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { MapPin, Pencil, Check, ArrowRight, RefreshCw, Info, Sprout } from 'lucide-react';
+import { simulacionService, parcelasService } from '../services/api';
+import { parseScenarioNumber, normalizarDecimalEntrada } from '../utils/simulationInput';
+import { prepararCamposCultivo, finCultivo, camposCultivo as definicionesCampo } from '../utils/fieldInputs';
+import { provinceFromLocation } from '../utils/yieldDashboard';
+import { buscarFichaMaiz } from '../data/variedadesMaizEcuador';
+import tiposSuelo from '../../../backend-api/data/referencias/tipos-suelo.json' with { type: 'json' };
+import EvaluacionVariedades from '../components/EvaluacionVariedades';
+import ParametrosCampo from '../components/ParametrosCampo';
+import ResultadoSimulacion from '../components/ResultadoSimulacion';
+import '../assets/simulacion.css';
 
-// Funciones auxiliares para validar inputs numéricos
-const limpiarTextoNumerico = (valor, permiteNegativo = false) => {
-  if (!valor || typeof valor !== 'string') return valor;
-  let limpio = valor.replace(/[/*+eE]/g, '');
-  if (permiteNegativo) {
-    return limpio.replace(/[^0-9.,-]/g, '');
-  }
-  return limpio.replace(/[-]/g, '').replace(/[^0-9.,]/g, '');
-};
+const vacios = { area: '', temp: '', hum: '', prec: '', fert: '', ph: '', suelo: '' };
+const esNumero = value => ['number','string'].includes(typeof value) && String(value).trim() !== '' && Number.isFinite(Number(value));
 
-const evitarOperadores = (e, permiteNegativo = false) => {
-  const teclas = ['/', '*', '+', 'e', 'E'];
-  if (!permiteNegativo) {
-    teclas.push('-');
-  }
-  if (teclas.includes(e.key)) {
-    e.preventDefault();
-  }
-};
+const CATALOGO_FERT = [
+  { id:'urea', nombre:'Urea', formula:'46-0-0', N:46, P:0, K:0, Mg:0, S:0, precio:33 },
+  { id:'dap', nombre:'Fosfato diamónico (DAP)', formula:'18-46-0', N:18, P:46, K:0, Mg:0, S:0, precio:45 },
+  { id:'mop', nombre:'Muriato de potasio (MOP)', formula:'0-0-60', N:0, P:0, K:60, Mg:0, S:0, precio:36 },
+  { id:'sa', nombre:'Sulfato de amonio', formula:'21-0-0 · 24 S', N:21, P:0, K:0, Mg:0, S:24, precio:29 },
+  { id:'na', nombre:'Nitrato de amonio', formula:'33-0-0', N:33, P:0, K:0, Mg:0, S:0, precio:36 },
+  { id:'sulpomag', nombre:'Sulpomag (langbeinita)', formula:'0-0-22 · 18 S · 11 Mg', N:0, P:0, K:22, Mg:11, S:18, precio:38 },
+  { id:'npk15', nombre:'Mezcla NPK', formula:'15-15-15', N:15, P:15, K:15, Mg:0, S:0, precio:48 },
+  { id:'npk12', nombre:'Mezcla NPK', formula:'12-24-12 · 16 S', N:12, P:24, K:16, Mg:0, S:16, precio:52 },
+  { id:'npk10', nombre:'Mezcla NPK', formula:'10-30-10', N:10, P:30, K:10, Mg:0, S:0, precio:55 },
+  { id:'compost', nombre:'Compost o estiércol', formula:'~1,5-0,5-1,2', N:1.5, P:0.5, K:1.2, Mg:0.3, S:0.4, precio:8 },
+];
+const num = v => { const n = parseFloat(String(v ?? '').replace(/,/g, '.').replace(/[^\\d.]/g, '')); return Number.isFinite(n) ? n : 0; };
+const pct = v => Math.min(Math.max(num(v), 0), 100);
+const fmt1 = n => (Math.round(n * 10) / 10).toLocaleString('es');
 
-export default function Simular({ cultivos, onSimulationCompleted, onboardingStep, onNextOnboardingStep, onSimulationContextChange }) {
+export default function Simular({ cultivos, onSimulationCompleted, onNavigate, onboardingStep, onNextOnboardingStep, onSimulationContextChange }) {
   const [cultivoId, setCultivoId] = useState('');
-  const [temp, setTemp] = useState('');
-  const [hum, setHum] = useState('');
-  const [prec, setPrec] = useState('');
-  const [fert, setFert] = useState('');
-  const [ph, setPh] = useState('');
-  const [suelo, setSuelo] = useState('franco');
-  const [area, setArea] = useState('');
-
+  const [datos, setDatos] = useState(vacios);
+  const [campos, setCampos] = useState({});
+  const [fecha, setFecha] = useState('');
+  const [historico, setHistorico] = useState(false);
+  const [referencias, setReferencias] = useState(null);
+  const [automaticos, setAutomaticos] = useState({});
+  const [editarDatos, setEditarDatos] = useState(false);
+  const [cargandoDatos, setCargandoDatos] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [fetchingLocation, setFetchingLocation] = useState(false);
   const [error, setError] = useState(null);
+  const [aviso, setAviso] = useState('');
+  const [recarga, setRecarga] = useState(0);
   const [result, setResult] = useState(null);
+  const [areaResultado, setAreaResultado] = useState(null);
+  const [vista, setVista] = useState('preparar');
+  const [modoFert, setModoFert] = useState('producto');
+  const [seleccionados, setSeleccionados] = useState([]);
+  const [inputsFert, setInputsFert] = useState({});
+  const [customsFert, setCustomsFert] = useState([]);
+  const [aplicacionesN, setAplicacionesN] = useState(2);
+  const [formOtroAbierto, setFormOtroAbierto] = useState(false);
+  const [formOtro, setFormOtro] = useState({ nombre: '', N: '0', P: '0', K: '0', Mg: '0', S: '0', precio: '0' });
+  const modificados = useRef({});
+  const headingResultado = useRef(null);
+  const tabs = useRef([]);
+  const parcela = cultivos.find(c => Number(c.id) === Number(cultivoId));
+  const phParcela = parcela?.ph;
+  const areaParcela = parcela?.area;
+  const ficha = buscarFichaMaiz(parcela?.variedad_maiz);
+  const sinModelo = ficha?.simulacion_grano_habilitada === false;
+  const provincia = referencias && Object.hasOwn(referencias, 'provincia') ? referencias.provincia : provinceFromLocation(parcela?.ubicacion);
+  const fin = finCultivo(fecha, parseScenarioNumber(campos.ciclo_dias));
+  const catalogoFert = [...CATALOGO_FERT, ...customsFert];
+  const findFert = id => catalogoFert.find(p => p.id === id);
+  const totalN = seleccionados.reduce((s, id) => { const r = inputsFert[id]; const p = findFert(id); const kg = r?.unidad === 'kg' ? num(r?.dosis) : num(r?.dosis) * 50; return s + kg * pct(r?.N ?? p?.N ?? 0) / 100; }, 0);
+  const totalP = seleccionados.reduce((s, id) => { const r = inputsFert[id]; const p = findFert(id); const kg = r?.unidad === 'kg' ? num(r?.dosis) : num(r?.dosis) * 50; return s + kg * pct(r?.P ?? p?.P ?? 0) / 100; }, 0);
+  const totalK = seleccionados.reduce((s, id) => { const r = inputsFert[id]; const p = findFert(id); const kg = r?.unidad === 'kg' ? num(r?.dosis) : num(r?.dosis) * 50; return s + kg * pct(r?.K ?? p?.K ?? 0) / 100; }, 0);
+  const totalMg = seleccionados.reduce((s, id) => { const r = inputsFert[id]; const p = findFert(id); const kg = r?.unidad === 'kg' ? num(r?.dosis) : num(r?.dosis) * 50; return s + kg * pct(r?.Mg ?? p?.Mg ?? 0) / 100; }, 0);
+  const totalS = seleccionados.reduce((s, id) => { const r = inputsFert[id]; const p = findFert(id); const kg = r?.unidad === 'kg' ? num(r?.dosis) : num(r?.dosis) * 50; return s + kg * pct(r?.S ?? p?.S ?? 0) / 100; }, 0);
+  const totalCosto = seleccionados.reduce((s, id) => { const r = inputsFert[id]; const p = findFert(id); const dosis = num(r?.dosis); const precio = num(r?.precio ?? p?.precio); return s + (r?.unidad === 'kg' ? (num(r?.dosis) / 50) * precio : dosis * precio); }, 0);
+  const planFertilizacion = seleccionados.map(id => {
+    const p = findFert(id); const r = inputsFert[id] || {};
+    const dosis = num(r.dosis); const kg = r.unidad === 'kg' ? dosis : dosis * 50;
+    return { nombre: p?.nombre, formula: p?.formula, dosis, unidad: r.unidad || 'bolsa', porcentaje: { N: pct(r.N ?? p?.N), P: pct(r.P ?? p?.P), K: pct(r.K ?? p?.K), Mg: pct(r.Mg ?? p?.Mg), S: pct(r.S ?? p?.S) }, aporte: { N: kg * pct(r.N ?? p?.N) / 100, P: kg * pct(r.P ?? p?.P) / 100, K: kg * pct(r.K ?? p?.K) / 100, Mg: kg * pct(r.Mg ?? p?.Mg) / 100, S: kg * pct(r.S ?? p?.S) / 100 }, costo: r.unidad === 'kg' ? (dosis / 50) * num(r.precio ?? p?.precio) : dosis * num(r.precio ?? p?.precio) };
+  });
 
-  // Sincronizar variables con el cultivo seleccionado usando APIs de ubicación (Open-Meteo y SoilGrids)
-  useEffect(() => {
-    if (cultivoId) {
-      const fetchLocationMetrics = async (id) => {
-        setFetchingLocation(true);
-        setError(null);
-        try {
-          const res = await cultivosService.obtenerValoresUbicacion(id);
-          if (res.success) {
-            if (res.temperatura !== undefined && res.temperatura !== null) setTemp(res.temperatura.toString());
-            if (res.humedad !== undefined && res.humedad !== null) setHum(res.humedad.toString());
-            if (res.precipitacion !== undefined && res.precipitacion !== null) setPrec(res.precipitacion.toString());
-            if (res.ph_suelo !== undefined && res.ph_suelo !== null) setPh(res.ph_suelo.toString());
-            if (res.tipo_suelo) setSuelo(res.tipo_suelo);
-            if (res.area_simulada !== undefined && res.area_simulada !== null) setArea(res.area_simulada.toString());
-          }
-        } catch (err) {
-          console.error('Error fetching location metrics:', err);
-          // Fallback a propiedades simples de la base de datos
-          const selected = cultivos.find(c => c.id === Number(id));
-          if (selected) {
-            if (selected.ph) setPh(selected.ph.toString());
-            if (selected.area) setArea(selected.area.toString());
-          }
-        } finally {
-          setFetchingLocation(false);
-        }
-      };
-      fetchLocationMetrics(cultivoId);
-    }
-  }, [cultivoId, cultivos]);
-
-  // El asistente debe leer la parcela y los parámetros de este formulario, no
-  // la parcela que quedó seleccionada en el navbar para los dashboards. Se
-  // publica el borrador cada vez que cambia un campo; el id de la parcela se
-  // usa aparte para reiniciar la conversación cuando cambia el sujeto.
-  useEffect(() => {
-    if (typeof onSimulationContextChange !== 'function') return;
-    const seleccionado = cultivos.find((cultivo) => cultivo.id === Number(cultivoId)) || null;
-    if (!seleccionado) {
-      onSimulationContextChange(null);
-      return;
-    }
-    onSimulationContextChange({
-      cultivoId: seleccionado.id,
-      cultivoActivo: seleccionado,
-      datos: {
-        temperatura: temp,
-        humedad: hum,
-        precipitacion: prec,
-        fertilizante: fert,
-        ph_suelo: ph,
-        tipo_suelo: suelo,
-        area_simulada: area,
-        cargando_ubicacion: fetchingLocation,
-      },
+  const invalidar = () => { setResult(null); setAreaResultado(null); setError(null); };
+  const cambiarDato = (key, value) => {
+    modificados.current[key] = true;
+    setDatos(prev => ({ ...prev, [key]: value }));
+    invalidar();
+  };
+  const cambiarCampos = values => {
+    setCampos(values); invalidar();
+    if (!finCultivo(fecha, parseScenarioNumber(values.ciclo_dias))) setHistorico(false);
+  };
+  const toggleFert = id => {
+    setSeleccionados(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+    setInputsFert(prev => {
+      if (prev[id]) return prev;
+      const p = findFert(id);
+      return { ...prev, [id]: { dosis: '1', unidad: 'bolsa', N: String(p?.N ?? 0), P: String(p?.P ?? 0), K: String(p?.K ?? 0), Mg: String(p?.Mg ?? 0), S: String(p?.S ?? 0), precio: String(p?.precio ?? 0) } };
     });
-  }, [cultivoId, temp, hum, prec, fert, ph, suelo, area, fetchingLocation, cultivos, onSimulationContextChange]);
-
-  const parseNum = (val) => {
-    if (val === null || val === undefined || val === '') return 0;
-    const clean = String(val).replace(',', '.');
-    return parseFloat(clean) || 0;
+    invalidar();
+  };
+  const updateInput = (id, field, value) => {
+    setInputsFert(prev => ({ ...prev, [id]: { ...(prev[id] || {}), [field]: value } }));
+    invalidar();
+  };
+  const agregarOtroFert = () => {
+    const prod = { id: 'otro-' + Date.now(), nombre: (formOtro.nombre || '').trim() || 'Producto propio', formula: `${formOtro.N}-${formOtro.P}-${formOtro.K}`, N: Number(formOtro.N) || 0, P: Number(formOtro.P) || 0, K: Number(formOtro.K) || 0, Mg: Number(formOtro.Mg) || 0, S: Number(formOtro.S) || 0, precio: Number(formOtro.precio) || 0, propio: true };
+    setCustomsFert(prev => [...prev, prod]);
+    setSeleccionados(prev => [...prev, prod.id]);
+    setInputsFert(prev => ({ ...prev, [prod.id]: { dosis: '1', unidad: 'bolsa', N: formOtro.N, P: formOtro.P, K: formOtro.K, Mg: formOtro.Mg, S: formOtro.S, precio: formOtro.precio } }));
+    setFormOtro({ nombre: '', N: '0', P: '0', K: '0', Mg: '0', S: '0', precio: '0' });
+    setFormOtroAbierto(false);
+    invalidar();
+  };
+  const seleccionar = id => {
+    const crop = cultivos.find(c => Number(c.id) === Number(id));
+    modificados.current = {};
+    setCultivoId(id); setEditarDatos(false); setReferencias(null); setAviso(''); setAutomaticos({});
+    setDatos({ ...vacios, area: esNumero(crop?.area) ? String(crop.area) : '', ph: esNumero(crop?.ph) ? String(crop.ph) : '' });
+    setCampos({}); setFecha(crop?.fecha_siembra ?? ''); setHistorico(false); setVista('preparar'); invalidar();
   };
 
-  const handleSimulate = async (e) => {
-    e.preventDefault();
-    setError(null);
-    setResult(null);
+  useEffect(() => {
+    let vigente = true;
+    if (!cultivoId) return () => { vigente = false; };
+    const consultar = async () => {
+      setCargandoDatos(true);
+      try {
+        const response = await parcelasService.obtenerValoresUbicacion(cultivoId);
+        if (!vigente) return;
+        if (!response.exito) throw new Error('Referencias no disponibles');
+        setReferencias(response); setAviso('');
+        const propuesta = {};
+        for (const [key, field] of Object.entries({ temp: 'temperatura', hum: 'humedad', ph: 'ph_suelo', area: 'area_simulada' })) {
+          if (esNumero(response[field])) propuesta[key] = String(response[field]);
+        }
+        if (Object.hasOwn(tiposSuelo, response.tipo_suelo ?? '')) propuesta.suelo = response.tipo_suelo;
+        setDatos(prev => {
+          const next = { ...prev };
+          for (const [key, value] of Object.entries(propuesta)) if (!modificados.current[key]) next[key] = value;
+          return next;
+        });
+        setAutomaticos(Object.fromEntries(Object.keys(propuesta).map(key => [key, true])));
+      } catch {
+        if (vigente) setAviso('No se pudieron consultar las referencias externas. Conserva los datos registrados y completa los campos que faltan.');
+      } finally { if (vigente) setCargandoDatos(false); }
+    };
+    consultar();
+    return () => { vigente = false; };
+  }, [cultivoId, phParcela, areaParcela, recarga]);
 
-    const areaVal = parseNum(area);
-    const tempVal = parseNum(temp);
-    const humVal = parseNum(hum);
-    const precVal = parseNum(prec);
-    const fertVal = parseNum(fert);
-    const phVal = parseNum(ph);
+  useEffect(() => {
+    if (modoFert !== 'producto' || seleccionados.length === 0) return;
+    setDatos(prev => ({ ...prev, fert: fmt1(totalN) }));
+    setCampos(prev => ({
+      ...prev,
+      fosforo_p2o5_kg_ha: String(Math.round(totalP * 10) / 10),
+      potasio_k2o_kg_ha: String(Math.round(totalK * 10) / 10),
+      magnesio_kg_ha: String(Math.round(totalMg * 10) / 10),
+      azufre_kg_ha: String(Math.round(totalS * 10) / 10),
+      aplicaciones_nitrogeno: String(aplicacionesN),
+    }));
+  }, [modoFert, seleccionados, inputsFert, totalN, totalP, totalK, totalMg, totalS, aplicacionesN]);
 
-    // Validación 1: El área debe ser mayor a 0 ha
-    if (areaVal <= 0) {
-      setError('El área a simular debe ser mayor a 0 ha.');
-      return;
-    }
+  useEffect(() => {
+    onSimulationContextChange?.(parcela ? {
+      cultivoId: parcela.id, cultivoActivo: parcela,
+      datos: { temperatura: datos.temp, humedad: datos.hum, precipitacion: datos.prec,
+        precipitacion_ciclo_mm: datos.prec, periodo_precipitacion: 'mm/ciclo', fertilizante: datos.fert,
+        ph_suelo: datos.ph, tipo_suelo: datos.suelo, area_simulada: datos.area,
+        parametros_campo: campos, fecha_siembra: fecha, cargando_ubicacion: cargandoDatos },
+    } : null);
+  }, [parcela, datos, campos, fecha, cargandoDatos, onSimulationContextChange]);
 
-    // Validación 2: El área no puede superar el área total de la parcela seleccionada
-    const selectedCrop = cultivos.find(c => c.id === Number(cultivoId));
-    if (selectedCrop && selectedCrop.area) {
-      const maxArea = parseNum(selectedCrop.area);
-      if (maxArea > 0 && areaVal > maxArea) {
-        setError(`El área a simular (${areaVal} ha) no puede superar el tamaño total de la parcela seleccionada (${maxArea} ha).`);
+  const simular = async event => {
+    event.preventDefault(); setError(null);
+    if (!parcela) { setError('Selecciona una parcela para preparar la simulación.'); return; }
+    if (sinModelo) { setError('Esta variedad tiene ficha de consulta; su cálculo específico todavía requiere un modelo compatible.'); return; }
+    const numbers = {};
+    for (const [key, label, min, max] of [
+      ['area', 'Área a simular', .01, Number(parcela.area)], ['temp', 'Temperatura media', 0, 50],
+      ['hum', 'Humedad relativa', 0, 100], ['prec', 'Lluvia del ciclo', 0, 4000],
+      ['fert', 'Nitrógeno aplicado', 0, 500], ['ph', 'pH del suelo', 3, 11],
+    ]) {
+      const value = parseScenarioNumber(datos[key]);
+      if (value === null || value < min || value > max) {
+        setError(`${label}: introduce un número entre ${min} y ${max}. No uses separadores de miles: escribe 3500 o, si es un decimal, 3.5.`);
         return;
       }
+      numbers[key] = value;
     }
-
-    setLoading(true);
-
-    const payload = {
-      cultivo_id: Number(cultivoId),
-      modelo_usado: 'xgboost',
-      temperatura: tempVal,
-      humedad: humVal,
-      precipitacion: precVal,
-      fertilizante: fertVal,
-      ph_suelo: phVal,
-      tipo_suelo: suelo,
-      area_simulada: areaVal
-    };
-
+    if (!datos.suelo) { setError('Selecciona la textura del suelo; no hay una estimación disponible para este punto.'); return; }
+    if (!campos.riego_tipo) { setError('Indica si el cultivo recibirá solo lluvia o qué sistema de riego utilizarás.'); return; }
+    let manejo;
     try {
-      const res = await simulacionService.simular(payload);
-      setResult(res.resultado);
-      onSimulationCompleted();
-    } catch (err) {
-      setError(err.response?.data?.error || 'Error al procesar la simulación.');
-    } finally {
-      setLoading(false);
-    }
+      manejo = prepararCamposCultivo(campos, numbers.temp);
+      if (fecha && !finCultivo(fecha, 1)) throw new Error('Revisa la fecha de siembra.');
+    } catch (validationError) { setError(validationError.message); return; }
+    const payload = { cultivo_id: Number(cultivoId), modelo_usado: 'xgboost', temperatura: numbers.temp,
+      humedad: numbers.hum, precipitacion: numbers.prec, precipitacion_ciclo_mm: numbers.prec,
+      fertilizante: numbers.fert, ph_suelo: numbers.ph, tipo_suelo: datos.suelo,
+      area_simulada: numbers.area, parametros_campo: manejo };
+    if (modoFert === 'producto' && seleccionados.length > 0) payload.plan_fertilizacion = planFertilizacion;
+    payload.usar_suelo_ubicacion = Boolean(automaticos.suelo && !modificados.current.suelo);
+    if (fecha) payload.fecha_siembra = fecha;
+    if (historico && fin) payload.incluir_historico = true;
+    setLoading(true);
+    try {
+      const response = await simulacionService.simular(payload);
+      if (!response.exito || !response.resultado || typeof response.resultado !== 'object' || Array.isArray(response.resultado)) throw new Error('No se recibió un resultado válido.');
+      setResult(response.resultado); setAreaResultado(numbers.area); setVista('resultado');
+      onSimulationCompleted?.({ cultivoId: Number(cultivoId), simulacionId: response.resultado.simulacion_id });
+    } catch (failure) { const detail = failure.response?.data?.error; setError(typeof detail === 'string' ? detail : detail?.message || failure.message || 'No se pudo completar la simulación.'); }
+    finally { setLoading(false); }
   };
 
-  const parseRecommendation = (rec) => {
-    let rawStr = typeof rec === 'string' ? rec : (rec?.texto || String(rec || ''));
-
-    // Limpiar citas internas como 【12†L43-L51】
-    let cleanText = rawStr
-      .replace(/【[^】]*】/g, '')
-      .replace(/^[\u{1F300}-\u{1F9FF}\u{1F600}-\u{1F64F}\u{1F680}-\u{1F6FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\s]+/gu, '')
-      .replace(/\s+/g, ' ')
-      .trim();
-
-    let type = 'info';
-    let iconColor = '#3b82f6';
-    const lower = cleanText.toLowerCase();
-
-    if (lower.includes('óptim') || lower.includes('adecuad') || lower.includes('alinead') || rawStr.includes('✅')) {
-      type = 'success';
-      iconColor = '#10b981';
-    } else if (lower.includes('excesiv') || lower.includes('baja') || lower.includes('bajo') || lower.includes('alcalin') || lower.includes('ácid') || lower.includes('vigilar') || rawStr.includes('⚠️')) {
-      type = 'warning';
-      iconColor = '#f59e0b';
-    } else if (lower.includes('crític') || lower.includes('sever') || lower.includes('alto') || lower.includes('riesgo') || rawStr.includes('🔴') || rawStr.includes('❌')) {
-      type = 'danger';
-      iconColor = '#ef4444';
-    }
-
-    let tag = 'Recomendación Agronómica';
-    let accion = cleanText;
-    let justificacion = null;
-    let fuente = null;
-
-    // Detectar "Consejo de precisión local (X):"
-    const consejoMatch = cleanText.match(/^(Consejo de precisión local\s*\((.*?)\)|Recomendación\s*\((.*?)\)):\s*(.*)/i);
-    if (consejoMatch) {
-      const zonaStr = consejoMatch[2] || consejoMatch[3] || 'Local';
-      tag = `Consejo de Precisión Local • ${zonaStr}`;
-      accion = consejoMatch[4];
-    } else if (cleanText.toLowerCase().includes('ph')) {
-      tag = 'Manejo de Suelo & pH';
-    } else if (cleanText.toLowerCase().includes('fertiliz') || cleanText.toLowerCase().includes('nitrógeno') || cleanText.toLowerCase().includes('dosis')) {
-      tag = 'Nutrición & Fertilización';
-    } else if (cleanText.toLowerCase().includes('temperatura') || cleanText.toLowerCase().includes('precipitaci') || cleanText.toLowerCase().includes('humedad') || cleanText.toLowerCase().includes('riego')) {
-      tag = 'Clima & Riego';
-    }
-
-    // Separar | Justificación:
-    if (accion.includes('| Justificación:')) {
-      const parts = accion.split('| Justificación:');
-      accion = parts[0].trim();
-      let justText = parts[1].trim();
-
-      const fuenteMatch = justText.match(/(.*?)\s*\(([^()]+)\)$/);
-      if (fuenteMatch && (fuenteMatch[2].toLowerCase().includes('iniap') || fuenteMatch[2].toLowerCase().includes('magap') || fuenteMatch[2].toLowerCase().includes('revista') || fuenteMatch[2].match(/\d{4}/))) {
-        justificacion = fuenteMatch[1].trim();
-        fuente = fuenteMatch[2].trim();
-      } else {
-        justificacion = justText;
-      }
-    }
-
-    return { type, tag, accion, justificacion, fuente, iconColor };
+  const placeholdersNum = { area: 'Ej.: 1.5', temp: 'Ej.: 24.5', hum: 'Ej.: 70', prec: 'Ej.: 650', fert: 'Ej.: 120', ph: 'Ej.: 6.2' };
+  const campoNumero = (key, id, label, hint) => {
+    const bloqueado = Boolean(automaticos[key] && !editarDatos);
+    return <div className="form-group"><label className="form-label" htmlFor={id}>{label} <span aria-hidden="true">*</span></label>
+      <input id={id} type="text" inputMode="decimal" className="form-input" required value={datos[key]} readOnly={bloqueado}
+        placeholder={placeholdersNum[key]}
+        onChange={event => cambiarDato(key, event.target.value)} onBlur={event => { const value = normalizarDecimalEntrada(event.target.value); if (value !== datos[key]) cambiarDato(key, value); }} />
+      {hint && <p className="form-hint">{hint}</p>}
+      {automaticos[key] && <span className="simulation-origin">{modificados.current[key] ? 'Ajustado por ti' : 'Dato precargado'}{bloqueado ? ' · Modificar datos para editar' : ''}</span>}
+    </div>;
   };
+  const cambiarRiego = value => {
+    const next = { ...campos, riego_tipo: value };
+    if (value === 'temporal_lluvia') next.lamina_riego_mm = '0';
+    else if (campos.riego_tipo === 'temporal_lluvia') next.lamina_riego_mm = '';
+    cambiarCampos(next);
+  };
+  const seleccionarTab = next => { setVista(next); tabs.current[next === 'preparar' ? 0 : 1]?.focus(); };
 
-  return (
-    <div className="simular-container fade-in">
-      <div className="simular-header">
-        <div>
-          <h2 className="simular-title">Nueva Simulación de Lote</h2>
-          <p className="simular-subtitle">Prueba distintas configuraciones para tu siembra y mira qué resultados predice el motor de simulación.</p>
-        </div>
-      </div>
-
-      {error && (
-        <div className="alert alert-danger fade-in" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem' }}>
-          <AlertTriangle size={18} />
-          <span>{error}</span>
-        </div>
-      )}
-
-      {/* Banner Destacado de Onboarding Paso 2 */}
-      {onboardingStep === 2 && (
-        <div style={{
-          background: 'linear-gradient(135deg, rgba(37, 99, 235, 0.18) 0%, rgba(139, 92, 246, 0.15) 100%)',
-          border: '1.5px solid rgba(59, 130, 246, 0.4)',
-          borderRadius: '12px',
-          padding: '0.95rem 1.15rem',
-          marginBottom: '1.5rem',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '0.85rem',
-          boxShadow: '0 4px 16px rgba(59, 130, 246, 0.12)'
-        }}>
-          <div style={{
-            background: '#3b82f6',
-            color: '#fff',
-            width: '34px',
-            height: '34px',
-            borderRadius: '50%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontWeight: 800,
-            fontSize: '1rem',
-            flexShrink: 0
-          }}>
-            2
-          </div>
-          <div style={{ flex: 1 }}>
-            <h4 style={{ fontSize: '0.92rem', fontWeight: 800, margin: '0 0 0.2rem 0', color: 'var(--text-primary)' }}>
-              Paso 2 de 3: Ejecuta tu Primera Simulación Agronómica
-            </h4>
-            <p style={{ fontSize: '0.8rem', margin: 0, color: 'var(--text-muted)', lineHeight: '1.45' }}>
-              Selecciona tu parcela registrada, revisa las métricas de clima y suelo y presiona "Ejecutar Simulación" para predecir tu rendimiento de cosecha.
-            </p>
-          </div>
-        </div>
-      )}
-
-      <div className="simulacion-layout" style={{ display: 'grid', gridTemplateColumns: result ? '1fr 1fr' : '1fr', gap: '2rem' }}>
-        {/* Left Column: Form & Validation HUD */}
-        <div className="simulacion-form-column">
-          <div className="glass-panel">
-            <div className="glass-card-header">
-              <h3 style={{ fontSize: '1.1rem', fontWeight: 600 }}>Parámetros de Entrada</h3>
-            </div>
-            <div className="glass-card-body">
-              <form noValidate onSubmit={handleSimulate}>
-                <div className="form-group">
-                  <label className="form-label">Parcela de Referencia *</label>
-                  <select className="form-select" value={cultivoId} onChange={e => setCultivoId(e.target.value)} required>
-                    <option value="">Seleccione una parcela...</option>
-                    {cultivos.map(c => (
-                      <option key={c.id} value={c.id}>{c.nombre_parcela} ({c.area} ha)</option>
-                    ))}
-                  </select>
-                  {fetchingLocation && (
-                    <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', marginTop: '0.35rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                      <span className="spinner-border spinner-border-sm text-success" style={{ width: '12px', height: '12px' }}></span>
-                      <span>Consultando clima (Open-Meteo) y suelo (SoilGrids) en tiempo real para esta ubicación...</span>
-                    </div>
-                  )}
-                </div>
-
-                <div className="form-group">
-                  <label className="form-label">Área a Simular (ha) *</label>
-                  <input
-                    type="text"
-                    inputMode="decimal"
-                    className="form-input"
-                    value={area}
-                    onChange={e => setArea(limpiarTextoNumerico(e.target.value))}
-                    onKeyDown={evitarOperadores}
-                    required
-                  />
-                </div>
-
-                <div className="simulacion-grid-2">
-                  <div className="form-group">
-                    <label className="form-label">Temperatura Media (°C) *</label>
-                    <input 
-                      type="text" 
-                      inputMode="decimal" 
-                      className="form-input" 
-                      value={temp} 
-                      onChange={e => setTemp(limpiarTextoNumerico(e.target.value, true))} 
-                      onKeyDown={e => evitarOperadores(e, true)}
-                      required 
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Humedad Relativa (%) *</label>
-                    <input 
-                      type="text" 
-                      inputMode="decimal" 
-                      className="form-input" 
-                      value={hum} 
-                      onChange={e => setHum(limpiarTextoNumerico(e.target.value))} 
-                      onKeyDown={evitarOperadores}
-                      required 
-                    />
-                  </div>
-                </div>
-
-                <div className="simulacion-grid-2">
-                  <div className="form-group">
-                    <label className="form-label">Precipitación (mm/año) *</label>
-                    <input 
-                      type="text" 
-                      inputMode="decimal" 
-                      className="form-input" 
-                      value={prec} 
-                      onChange={e => setPrec(limpiarTextoNumerico(e.target.value))} 
-                      onKeyDown={evitarOperadores}
-                      required 
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Nitrógeno / Fertilizante (kg/ha) *</label>
-                    <input 
-                      type="text" 
-                      inputMode="decimal" 
-                      className="form-input" 
-                      value={fert} 
-                      onChange={e => setFert(limpiarTextoNumerico(e.target.value))} 
-                      onKeyDown={evitarOperadores}
-                      required 
-                    />
-                  </div>
-                </div>
-
-                <div className="simulacion-grid-2">
-                  <div className="form-group">
-                    <label className="form-label">pH del Suelo *</label>
-                    <input 
-                      type="text" 
-                      inputMode="decimal" 
-                      className="form-input" 
-                      value={ph} 
-                      onChange={e => setPh(limpiarTextoNumerico(e.target.value))} 
-                      onKeyDown={evitarOperadores}
-                      required 
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Textura del Suelo *</label>
-                    <select className="form-select" value={suelo} onChange={e => setSuelo(e.target.value)}>
-                      <option value="franco">Franco Limoso</option>
-                      <option value="arcilloso">Franco Arcilloso</option>
-                      <option value="arenoso">Franco Arenoso</option>
-                    </select>
-                  </div>
-                </div>
-
-                <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '1.5rem', padding: '0.85rem' }} disabled={loading}>
-                  {loading ? 'Procesando simulación biofísica...' : 'Ejecutar Simulación'}
-                </button>
-              </form>
-            </div>
-          </div>
-
-          {/* Validation HUD under the Form to fill bottom-left empty space */}
-          {result && (
-            <div className="glass-panel" style={{ marginTop: '2rem', animation: 'fadeIn 0.5s ease' }}>
-              <div className="glass-card-header">
-                <h3 style={{ fontSize: '1.05rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <Cpu size={18} className="text-secondary" />
-                  <span>Validación de Parámetros de Entrada</span>
-                </h3>
+  return <div className="simulation-workbench">
+    <header className="simulation-page-heading" hidden={vista === 'resultado'}><div><p className="simulation-eyebrow">Tu parcela · tu escenario</p><h1>Prepara tu cosecha</h1><p>Revisa los datos, completa el manejo y consulta una estimación de grano seco.</p></div><span className="simulation-product"><Sprout size={17} /> Simulación de grano seco</span></header>
+    <div className="simulation-tabs" role="tablist" aria-label="Pasos de la simulación" onKeyDown={event => {
+      if (['ArrowRight', 'ArrowLeft', 'Home', 'End'].includes(event.key)) { event.preventDefault(); seleccionarTab(event.key === 'Home' || !result ? 'preparar' : event.key === 'End' ? 'resultado' : vista === 'preparar' ? 'resultado' : 'preparar'); }
+    }}><button ref={node => { tabs.current[0] = node; }} id="tab-preparar" role="tab" aria-selected={vista === 'preparar'} aria-controls="panel-preparar" tabIndex={vista === 'preparar' ? 0 : -1} onClick={() => setVista('preparar')}><span>1</span> Preparar escenario</button><button ref={node => { tabs.current[1] = node; }} id="tab-resultado" role="tab" aria-selected={vista === 'resultado'} aria-controls="panel-resultado" tabIndex={vista === 'resultado' ? 0 : -1} disabled={!result} onClick={() => setVista('resultado')}><span>2</span> Resultado</button></div>
+    {error && <div className="simulation-error" role="alert"><Info size={19} /><p>{error}</p></div>}
+    <section id="panel-preparar" role="tabpanel" aria-labelledby="tab-preparar" hidden={vista !== 'preparar'}>
+      {onboardingStep === 2 && <p className="simulation-notice">Tu parcela ya está registrada. Completa este escenario para crear tu primera simulación.</p>}
+      <div className="simulation-prepare-grid"><form className="simulation-form" noValidate onSubmit={simular}>
+        <fieldset disabled={loading}><section className="simulation-section"><header className="simulation-section-heading"><div><span className="simulation-section-number">01</span><h2>Elige tu parcela</h2></div></header>
+          <div className="form-group"><label className="form-label" htmlFor="simular-parcela">Parcela de referencia <span aria-hidden="true">*</span></label><select id="simular-parcela" className="form-select" value={cultivoId} onChange={event => seleccionar(event.target.value)}><option value="">Selecciona una parcela</option>{cultivos.map(crop => <option key={crop.id} value={crop.id}>{crop.nombre_parcela} ({crop.area} ha)</option>)}</select></div>
+          {parcela && <div className="simulation-location"><MapPin size={19} /><div><strong>{provincia ?? (cargandoDatos ? 'Identificando provincia…' : 'Provincia sin confirmar')}</strong><p>{parcela.ubicacion || 'Coordenadas registradas en la parcela'}</p><span>{parcela.variedad_maiz}</span></div></div>}
+        </section>
+        <section className="simulation-section"><header className="simulation-section-heading"><div><span className="simulation-section-number">02</span><h2>Revisa los datos del escenario</h2></div><button type="button" className="simulation-edit" onClick={() => setEditarDatos(value => !value)} disabled={!cultivoId}>{editarDatos ? <Check size={16} /> : <Pencil size={16} />}{editarDatos ? 'Listo, usar estos datos' : 'Modificar datos'}</button></header>
+          <p>Precargamos las referencias disponibles de ubicación. Puedes modificarlas para este cálculo; no cambiarán el registro de tu parcela.</p>
+          {cargandoDatos && <p role="status" className="simulation-loading"><span /> Consultando clima, suelo y provincia…</p>}
+          {aviso && <p role="status" className="simulation-notice">{aviso}</p>}
+          <div className="simulation-fields-grid">
+            {campoNumero('area', 'simular-area', 'Área a simular (ha)')}
+            <div className="form-group"><label className="form-label" htmlFor="simular-suelo">Textura del suelo <span aria-hidden="true">*</span></label><select id="simular-suelo" className="form-select" value={datos.suelo} disabled={Boolean(automaticos.suelo && !editarDatos)} onChange={event => cambiarDato('suelo', event.target.value)}><option value="">Selecciona una textura</option>{Object.entries(tiposSuelo).map(([code, rule]) => <option key={code} value={code}>{rule.label}</option>)}</select><p className="form-hint">{referencias?.referencia_suelo ? `Mapa: ${referencias.referencia_suelo.clase_estimada ?? 'textura estimada'}. Se propone el grupo compatible con el modelo; puedes corregirlo.` : 'Si no hay datos de mapa, selecciona el tipo que conoces. No asignamos una textura por defecto sin respaldo.'}</p></div>
+            {campoNumero('temp', 'simular-temperatura', 'Temperatura media (°C)', 'Usa una media representativa del ciclo; la referencia reciente puede ser distinta.')}
+            {campoNumero('hum', 'simular-humedad', 'Humedad relativa (%)')}
+            {campoNumero('prec', 'lluvia-ciclo', 'Lluvia acumulada del ciclo (mm)', 'Acumulado o escenario de lluvia para todo el cultivo. No uses el total anual.')}
+            <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+              <label className="form-label">Fertilización del plan (afecta la predicción con N, P, K, Mg, S y aplicaciones de N)</label>
+              <div className="simulation-mode-toggle">
+                <button type="button" className={`simulation-mode-btn ${modoFert === 'producto' ? 'activo' : ''}`} onClick={() => setModoFert('producto')}>Por producto</button>
+                <button type="button" className={`simulation-mode-btn ${modoFert === 'nutriente' ? 'activo' : ''}`} onClick={() => setModoFert('nutriente')}>Por nutriente (avanzado)</button>
               </div>
-              <div className="glass-card-body" style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-                <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', margin: 0, lineHeight: '1.4' }}>
-                  Análisis automático de tus datos de simulación frente a los óptimos de cultivo para maíz:
-                </p>
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', marginTop: '0.5rem' }}>
-                  {/* Temperature */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.6rem 0.85rem', background: 'rgba(255, 255, 255, 0.01)', borderRadius: '8px', border: '1px solid var(--border-subtle)' }}>
-                    <div>
-                      <div style={{ fontSize: '0.82rem', fontWeight: 600 }}>Temperatura</div>
-                      <div style={{ fontSize: '0.7rem', color: 'var(--text-subtle)' }}>Simulado: {temp}°C (Óptimo: 21–27°C)</div>
+              {modoFert === 'producto' && <>
+                <p className="form-hint">Marca los fertilizantes que vas a usar. El nitrógeno calculado rellena la casilla del escenario y P, K, Mg, S y aplicaciones entran al modelo.</p>
+                <div className="simulation-chips">
+                  {catalogoFert.map(p => (
+                    <button type="button" key={p.id} className={`simulation-chip ${seleccionados.includes(p.id) ? 'sel' : ''}`} onClick={() => toggleFert(p.id)}>{p.nombre} <small>{p.formula}</small></button>
+                  ))}
+                  <button type="button" className="simulation-chip simulation-chip-otro" onClick={() => setFormOtroAbierto(v => !v)}>➕ Otros…</button>
+                </div>
+                {formOtroAbierto && (
+                  <div className="simulation-otro-form">
+                    <div className="simulation-otro-grid">
+                      <input className="form-input" placeholder="Nombre del producto" value={formOtro.nombre} onChange={e => setFormOtro({ ...formOtro, nombre: e.target.value })} />
+                      <input className="form-input" inputMode="decimal" placeholder="% N" value={formOtro.N} onChange={e => setFormOtro({ ...formOtro, N: e.target.value })} />
+                      <input className="form-input" inputMode="decimal" placeholder="% P₂O₅" value={formOtro.P} onChange={e => setFormOtro({ ...formOtro, P: e.target.value })} />
+                      <input className="form-input" inputMode="decimal" placeholder="% K₂O" value={formOtro.K} onChange={e => setFormOtro({ ...formOtro, K: e.target.value })} />
+                      <input className="form-input" inputMode="decimal" placeholder="% Mg" value={formOtro.Mg} onChange={e => setFormOtro({ ...formOtro, Mg: e.target.value })} />
+                      <input className="form-input" inputMode="decimal" placeholder="% S" value={formOtro.S} onChange={e => setFormOtro({ ...formOtro, S: e.target.value })} />
+                      <input className="form-input" inputMode="decimal" placeholder="Precio/bolsa" value={formOtro.precio} onChange={e => setFormOtro({ ...formOtro, precio: e.target.value })} />
                     </div>
-                    {Number(temp) >= 21 && Number(temp) <= 27 ? (
-                      <span className="badge" style={{ background: 'rgba(34, 197, 94, 0.1)', color: '#22c55e', border: '1px solid rgba(34, 197, 94, 0.2)' }}>Óptimo</span>
-                    ) : (
-                      <span className="badge" style={{ background: 'rgba(234, 179, 8, 0.1)', color: '#eab308', border: '1px solid rgba(234, 179, 8, 0.2)' }}>Riesgo Térmico</span>
-                    )}
+                    <button type="button" className="btn btn-outline" onClick={agregarOtroFert}>Agregar a mi plan</button>
                   </div>
-
-                  {/* Precipitation */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.6rem 0.85rem', background: 'rgba(255, 255, 255, 0.01)', borderRadius: '8px', border: '1px solid var(--border-subtle)' }}>
-                    <div>
-                      <div style={{ fontSize: '0.82rem', fontWeight: 600 }}>Precipitación</div>
-                      <div style={{ fontSize: '0.7rem', color: 'var(--text-subtle)' }}>Simulado: {prec} mm (Óptimo: 600–800 mm)</div>
-                    </div>
-                    {Number(prec) >= 600 && Number(prec) <= 800 ? (
-                      <span className="badge" style={{ background: 'rgba(34, 197, 94, 0.1)', color: '#22c55e', border: '1px solid rgba(34, 197, 94, 0.2)' }}>Óptimo</span>
-                    ) : Number(prec) < 600 ? (
-                      <span className="badge" style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.2)' }}>Déficit</span>
-                    ) : (
-                      <span className="badge" style={{ background: 'rgba(234, 179, 8, 0.1)', color: '#eab308', border: '1px solid rgba(234, 179, 8, 0.2)' }}>Exceso</span>
-                    )}
-                  </div>
-
-                  {/* Soil pH */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.6rem 0.85rem', background: 'rgba(255, 255, 255, 0.01)', borderRadius: '8px', border: '1px solid var(--border-subtle)' }}>
-                    <div>
-                      <div style={{ fontSize: '0.82rem', fontWeight: 600 }}>pH del Suelo</div>
-                      <div style={{ fontSize: '0.7rem', color: 'var(--text-subtle)' }}>Simulado: {ph} (Óptimo: 6.0–6.5)</div>
-                    </div>
-                    {Number(ph) >= 6.0 && Number(ph) <= 6.5 ? (
-                      <span className="badge" style={{ background: 'rgba(34, 197, 94, 0.1)', color: '#22c55e', border: '1px solid rgba(34, 197, 94, 0.2)' }}>Óptimo</span>
-                    ) : Number(ph) < 6.0 ? (
-                      <span className="badge" style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.2)' }}>Ácido</span>
-                    ) : (
-                      <span className="badge" style={{ background: 'rgba(234, 179, 8, 0.1)', color: '#eab308', border: '1px solid rgba(234, 179, 8, 0.2)' }}>Alcalino</span>
-                    )}
-                  </div>
-
-                  {/* Nitrogen */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.6rem 0.85rem', background: 'rgba(255, 255, 255, 0.01)', borderRadius: '8px', border: '1px solid var(--border-subtle)' }}>
-                    <div>
-                      <div style={{ fontSize: '0.82rem', fontWeight: 600 }}>Nitrógeno (Fertilizante)</div>
-                      <div style={{ fontSize: '0.7rem', color: 'var(--text-subtle)' }}>Simulado: {fert} kg/ha (Óptimo: 180–200 kg/ha)</div>
-                    </div>
-                    {Number(fert) >= 180 && Number(fert) <= 200 ? (
-                      <span className="badge" style={{ background: 'rgba(34, 197, 94, 0.1)', color: '#22c55e', border: '1px solid rgba(34, 197, 94, 0.2)' }}>Óptimo</span>
-                    ) : Number(fert) < 180 ? (
-                      <span className="badge" style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.2)' }}>Bajo</span>
-                    ) : (
-                      <span className="badge" style={{ background: 'rgba(234, 179, 8, 0.1)', color: '#eab308', border: '1px solid rgba(234, 179, 8, 0.2)' }}>Excesivo</span>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Right Column: Result Display */}
-        {result && (
-          <div className="glass-panel simulacion-result-panel" style={{ animation: 'fadeIn 0.5s ease', height: 'fit-content' }}>
-            <div className="glass-card-header">
-              <h3 style={{ fontSize: '1.1rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <CheckCircle className="text-success" size={20} />
-                <span>Resultados de Inferencia</span>
-              </h3>
-            </div>
-            <div className="glass-card-body">
-              {/* Core metrics */}
-              <div className="simulacion-metric-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.2rem', marginBottom: '2rem' }}>
-                <div style={{ 
-                  padding: '1.25rem', 
-                  background: 'linear-gradient(135deg, rgba(34, 197, 94, 0.08) 0%, rgba(34, 197, 94, 0.02) 100%)', 
-                  border: '1px solid rgba(34, 197, 94, 0.2)', 
-                  borderRadius: '14px', 
-                  textAlign: 'center',
-                  boxShadow: '0 4px 15px rgba(34, 197, 94, 0.03)',
-                  position: 'relative',
-                  overflow: 'hidden'
-                }}>
-                  <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '0.4rem', color: '#22c55e', opacity: 0.8 }}>
-                    <TrendingUp size={18} />
-                  </div>
-                  <div style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Rendimiento Estimado</div>
-                  <div style={{ fontSize: '2rem', fontWeight: 800, color: '#22c55e', margin: '0.35rem 0', fontFamily: 'var(--font-sans)', letterSpacing: '-0.5px' }}>
-                    {result.rendimiento_estimado.toFixed(2)}
-                  </div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-subtle)', fontWeight: 500 }}>toneladas / hectárea</div>
-                </div>
-
-                <div style={{ 
-                  padding: '1.25rem', 
-                  background: 'linear-gradient(135deg, rgba(134, 59, 255, 0.08) 0%, rgba(59, 130, 246, 0.02) 100%)', 
-                  border: '1px solid rgba(134, 59, 255, 0.2)', 
-                  borderRadius: '14px', 
-                  textAlign: 'center',
-                  boxShadow: '0 4px 15px rgba(134, 59, 255, 0.03)',
-                  position: 'relative',
-                  overflow: 'hidden'
-                }}>
-                  <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '0.4rem', color: '#a78bfa', opacity: 0.8 }}>
-                    <Zap size={18} />
-                  </div>
-                  <div style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Producción Total</div>
-                  <div style={{ fontSize: '2rem', fontWeight: 800, color: '#a78bfa', margin: '0.35rem 0', fontFamily: 'var(--font-sans)', letterSpacing: '-0.5px' }}>
-                    {result.produccion_total.toLocaleString()}
-                  </div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-subtle)', fontWeight: 500 }}>toneladas en {result.area} ha</div>
-                </div>
-              </div>
-
-              {/* Confidence and Harvest Category */}
-              <div className="simulacion-summary-grid" style={{ 
-                display: 'grid',
-                gridTemplateColumns: '1fr 1fr',
-                gap: '1rem',
-                padding: '1.25rem', 
-                background: 'rgba(255, 255, 255, 0.015)', 
-                borderRadius: '12px', 
-                marginBottom: '2rem', 
-                border: '1px solid var(--border-subtle)',
-                boxShadow: 'inset 0 1px 3px rgba(0, 0, 0, 0.1)'
-              }}>
-                <div style={{ borderRight: '1px solid var(--border-subtle)', paddingRight: '0.5rem' }}>
-                  <span style={{ fontSize: '0.72rem', color: 'var(--text-subtle)', textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.03em' }}>Categoría de Cosecha:</span>
-                  <div style={{ fontWeight: 700, fontSize: '1.15rem', marginTop: '0.25rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                    <Award size={18} className="text-secondary" />
-                    <span>{result.categoria_cosecha}</span>
-                  </div>
-                </div>
-                <div style={{ paddingLeft: '0.5rem' }}>
-                  <span style={{ fontSize: '0.72rem', color: 'var(--text-subtle)', textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.03em' }}>Fiabilidad del Algoritmo:</span>
-                  <div style={{ fontWeight: 700, fontSize: '1.15rem', marginTop: '0.25rem', color: '#22c55e', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                    <CheckCircle size={18} />
-                    <span>{result.confianza}%</span>
-                  </div>
-                </div>
-              </div>
-
-              {result.intervalo_rendimiento && (
-                <div style={{
-                  marginBottom: '2rem',
-                  padding: '0.9rem 1.1rem',
-                  borderRadius: '12px',
-                  border: '1px solid rgba(59, 130, 246, 0.25)',
-                  background: 'rgba(59, 130, 246, 0.06)',
-                  color: 'var(--text-primary)'
-                }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', alignItems: 'baseline', flexWrap: 'wrap' }}>
-                    <strong style={{ fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                      Rango esperado del rendimiento
-                    </strong>
-                    <span style={{ fontSize: '0.95rem', fontWeight: 800, color: '#60a5fa' }}>
-                      {Number(result.intervalo_rendimiento.min).toFixed(2)}–{Number(result.intervalo_rendimiento.max).toFixed(2)} t/ha
-                    </span>
-                  </div>
-                  <div style={{ marginTop: '0.35rem', fontSize: '0.72rem', color: 'var(--text-muted)', lineHeight: 1.4 }}>
-                    Intervalo aproximado calculado con el error de validación agrupada; no es una garantía ni sustituye mediciones de campo.
-                  </div>
-                </div>
-              )}
-
-              {/* Recommendations */}
-              <div style={{ marginBottom: '2rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.85rem' }}>
-                  <h4 style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-subtle)', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>
-                    Recomendaciones de Precisión Agronómica
-                  </h4>
-                  <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', background: 'rgba(255,255,255,0.05)', padding: '0.2rem 0.65rem', borderRadius: '12px', border: '1px solid var(--border-subtle)' }}>
-                    {result.recomendaciones.length} sugerencias
-                  </span>
-                </div>
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-                  {result.recomendaciones.map((rec, i) => {
-                    const { type, tag, accion, justificacion, fuente, iconColor } = parseRecommendation(rec);
-                    
-                    const badgeBg = type === 'success' ? 'rgba(34, 197, 94, 0.12)' : type === 'warning' ? 'rgba(234, 179, 8, 0.12)' : type === 'danger' ? 'rgba(239, 68, 68, 0.12)' : 'rgba(59, 130, 246, 0.12)';
-                    const badgeBorder = type === 'success' ? 'rgba(34, 197, 94, 0.25)' : type === 'warning' ? 'rgba(234, 179, 8, 0.25)' : type === 'danger' ? 'rgba(239, 68, 68, 0.25)' : 'rgba(59, 130, 246, 0.25)';
-
-                    return (
-                      <div key={i} style={{ 
-                        background: 'rgba(255, 255, 255, 0.02)', 
-                        borderRadius: '12px', 
-                        border: '1px solid var(--border-subtle)',
-                        padding: '1rem 1.15rem',
-                        boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
-                        transition: 'all 0.2s ease'
-                      }}>
-                        {/* Header Badge */}
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem', marginBottom: '0.65rem' }}>
-                          <div style={{
-                            fontSize: '0.7rem',
-                            fontWeight: 700,
-                            letterSpacing: '0.04em',
-                            color: iconColor,
-                            background: badgeBg,
-                            border: `1px solid ${badgeBorder}`,
-                            padding: '0.2rem 0.6rem',
-                            borderRadius: '6px',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '0.35rem'
-                          }}>
-                            <span>{tag}</span>
-                          </div>
-                        </div>
-
-                        {/* Action Item */}
-                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
-                          <div style={{ 
-                            color: iconColor, 
-                            display: 'flex', 
-                            alignItems: 'center', 
-                            justifyContent: 'center',
-                            flexShrink: 0,
-                            width: '26px',
-                            height: '26px',
-                            borderRadius: '50%',
-                            background: badgeBg,
-                            border: `1px solid ${badgeBorder}`,
-                            marginTop: '2px'
-                          }}>
-                            {type === 'success' && <CheckCircle size={14} />}
-                            {type === 'warning' && <AlertTriangle size={14} />}
-                            {type === 'danger' && <AlertTriangle size={14} style={{ transform: 'rotate(180deg)' }} />}
-                            {type === 'info' && <CheckCircle size={14} />}
-                          </div>
-
-                          <div style={{ flex: 1, fontSize: '0.88rem', color: 'var(--text-primary)', lineHeight: '1.45', fontWeight: 600 }}>
-                            {accion}
-                          </div>
-                        </div>
-
-                        {/* Technical Justification Section */}
-                        {justificacion && (
-                          <div style={{ 
-                            marginTop: '0.75rem',
-                            padding: '0.75rem 0.9rem', 
-                            background: 'rgba(0, 0, 0, 0.25)', 
-                            borderRadius: '8px', 
-                            borderLeft: `3px solid ${iconColor}`,
-                            fontSize: '0.78rem',
-                            color: 'var(--text-muted)',
-                            lineHeight: '1.5'
-                          }}>
-                            <div style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.25rem', fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                              <span>Justificación Técnica</span>
-                            </div>
-                            <p style={{ margin: 0 }}>{justificacion}</p>
-
-                            {fuente && (
-                              <div style={{ marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.7rem', color: 'rgba(255, 255, 255, 0.5)' }}>
-                                <FileText size={12} color={iconColor} />
-                                <span><strong>Fuente:</strong> {fuente}</span>
-                              </div>
-                            )}
-                          </div>
-                        )}
+                )}
+                {seleccionados.map(id => {
+                  const p = findFert(id); const r = inputsFert[id] || {};
+                  const dosis = num(r.dosis); const kg = r.unidad === 'kg' ? dosis : dosis * 50;
+                  return (
+                    <div className="simulation-fert-row" key={id}>
+                      <div className="simulation-fert-row-head"><strong>{p?.nombre}</strong> <span className="simulation-fert-formula">{p?.formula}</span>
+                        <button type="button" className="simulation-fert-quitar" onClick={() => { setSeleccionados(prev => prev.filter(x => x !== id)); invalidar(); }}>Quitar ✕</button>
                       </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Alternative Scenarios */}
-              <div>
-                <h4 style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-subtle)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.85rem' }}>Escenarios Climáticos Alternativos</h4>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem' }}>
-                  <div className="alternative-scenario-card" style={{ 
-                    background: 'linear-gradient(185deg, rgba(239, 68, 68, 0.08) 0%, rgba(239, 68, 68, 0.02) 100%)', 
-                    border: '1px solid rgba(239, 68, 68, 0.2)', 
-                    padding: '0.85rem', 
-                    borderRadius: '12px', 
-                    textAlign: 'center',
-                    boxShadow: '0 4px 10px rgba(239, 68, 68, 0.02)'
-                  }}>
-                    <div style={{ display: 'flex', justifyContent: 'center', color: '#ef4444', marginBottom: '0.35rem' }}>
-                      <Sun size={16} />
+                      <div className="simulation-fert-row-grid">
+                        <label>Peso<input className="form-input" inputMode="decimal" value={r.dosis || ''} onChange={e => updateInput(id, 'dosis', e.target.value)} /></label>
+                        <label>Unidad<select className="form-select" value={r.unidad || 'bolsa'} onChange={e => updateInput(id, 'unidad', e.target.value)}>
+                          <option value="bolsa">Bolsa 50 kg</option><option value="kg">kg/ha</option>
+                        </select></label>
+                        <label>% N<input className="form-input" inputMode="decimal" value={r.N || ''} onChange={e => updateInput(id, 'N', e.target.value)} /></label>
+                        <label>Precio/bolsa<input className="form-input" inputMode="decimal" value={r.precio || ''} onChange={e => updateInput(id, 'precio', e.target.value)} /></label>
+                      </div>
+                      <p className="form-hint">{fmt1(kg)} kg de producto → <strong>{fmt1(kg * pct(r.N || p?.N || 0) / 100)} kg N/ha</strong> · {fmt1(kg * pct(r.P || p?.P || 0) / 100)} P₂O₅ · {fmt1(kg * pct(r.K || p?.K || 0) / 100)} K₂O · {fmt1(kg * pct(r.Mg || p?.Mg || 0) / 100)} Mg · {fmt1(kg * pct(r.S || p?.S || 0) / 100)} S · costo <strong>{fmt1(r.unidad === 'kg' ? (dosis / 50) * num(r.precio || p?.precio) : dosis * num(r.precio || p?.precio))} USD/ha</strong></p>
                     </div>
-                    <div style={{ fontSize: '0.72rem', color: '#ef4444', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.03em' }}>Sequía</div>
-                    <div style={{ fontSize: '1.15rem', fontWeight: 800, marginTop: '0.35rem', color: 'var(--text-primary)' }}>{result.escenarios.sequia.rendimiento} t/ha</div>
+                  );
+                })}
+                {seleccionados.length > 0 && (
+                  <div className="simulation-fert-totales">
+                    <div><strong>N total:</strong> {fmt1(totalN)} kg N/ha</div>
+                    <div><strong>P₂O₅:</strong> {fmt1(totalP)} · <strong>K₂O:</strong> {fmt1(totalK)} · <strong>Mg:</strong> {fmt1(totalMg)} · <strong>S:</strong> {fmt1(totalS)} kg/ha</div>
+                    <div><strong>Costo:</strong> {fmt1(totalCosto)} USD/ha</div>
+                    <p className="form-hint">P, K, Mg y S entran al modelo como parámetros de campo; aplicaciones de N: {aplicacionesN}. INIAP (secano): fracciona el N — mitad a los 15 días y mitad a los 30.</p>
                   </div>
-                  <div className="alternative-scenario-card" style={{ 
-                    background: 'linear-gradient(185deg, rgba(59, 130, 246, 0.08) 0%, rgba(59, 130, 246, 0.02) 100%)', 
-                    border: '1px solid rgba(59, 130, 246, 0.2)', 
-                    padding: '0.85rem', 
-                    borderRadius: '12px', 
-                    textAlign: 'center',
-                    boxShadow: '0 4px 10px rgba(59, 130, 246, 0.02)'
-                  }}>
-                    <div style={{ display: 'flex', justifyContent: 'center', color: '#3b82f6', marginBottom: '0.35rem' }}>
-                      <Thermometer size={16} />
-                    </div>
-                    <div style={{ fontSize: '0.72rem', color: '#3b82f6', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.03em' }}>Estándar</div>
-                    <div style={{ fontSize: '1.15rem', fontWeight: 800, marginTop: '0.35rem', color: 'var(--text-primary)' }}>{result.escenarios.verano.rendimiento} t/ha</div>
-                  </div>
-                  <div className="alternative-scenario-card" style={{ 
-                    background: 'linear-gradient(185deg, rgba(34, 197, 94, 0.08) 0%, rgba(34, 197, 94, 0.02) 100%)', 
-                    border: '1px solid rgba(34, 197, 94, 0.2)', 
-                    padding: '0.85rem', 
-                    borderRadius: '12px', 
-                    textAlign: 'center',
-                    boxShadow: '0 4px 10px rgba(34, 197, 94, 0.02)'
-                  }}>
-                    <div style={{ display: 'flex', justifyContent: 'center', color: '#16a34a', marginBottom: '0.35rem' }}>
-                      <CloudRain size={16} />
-                    </div>
-                    <div style={{ fontSize: '0.72rem', color: '#16a34a', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.03em' }}>Lluvioso</div>
-                    <div style={{ fontSize: '1.15rem', fontWeight: 800, marginTop: '0.35rem', color: 'var(--text-primary)' }}>{result.escenarios.lluvioso.rendimiento} t/ha</div>
-                  </div>
+                )}
+                <div className="form-group">
+                  <label className="form-label" htmlFor="simular-aplicaciones">Aplicaciones de nitrógeno (veces)</label>
+                  <select id="simular-aplicaciones" className="form-select" value={aplicacionesN} onChange={e => { setAplicacionesN(Number(e.target.value)); invalidar(); }}>
+                    {[1,2,3,4].map(n => <option key={n} value={n}>{n}</option>)}
+                  </select>
                 </div>
-              </div>
-
-              {/* Banner de Redirección Final a DSS 1 en Onboarding */}
-              {onboardingStep === 2 && (
-                <div style={{
-                  marginTop: '1.5rem',
-                  background: 'linear-gradient(135deg, rgba(34, 197, 94, 0.18) 0%, rgba(59, 130, 246, 0.15) 100%)',
-                  border: '1.5px solid rgba(34, 197, 94, 0.4)',
-                  borderRadius: '12px',
-                  padding: '1.1rem 1.25rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: '1rem',
-                  boxShadow: '0 4px 16px rgba(34, 197, 94, 0.15)'
-                }}>
-                  <div>
-                    <h4 style={{ fontSize: '0.92rem', fontWeight: 800, margin: '0 0 0.25rem 0', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                      ¡Simulación Completada! Ir al Análisis DSS 1
-                    </h4>
-                    <p style={{ fontSize: '0.78rem', margin: 0, color: 'var(--text-muted)', lineHeight: '1.45' }}>
-                      Has registrado tu parcela y creado tu simulación. Presiona el botón para ir a tu panel principal de Rendimiento y Brechas Productivas.
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => onNextOnboardingStep && onNextOnboardingStep()}
-                    className="btn btn-primary"
-                    style={{
-                      padding: '0.65rem 1.15rem',
-                      fontSize: '0.82rem',
-                      borderRadius: '10px',
-                      fontWeight: 700,
-                      flexShrink: 0,
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.5rem'
-                    }}
-                  >
-                    <span>Ir a DSS 1</span>
-                    <TrendingUp size={16} />
-                  </button>
-                </div>
-              )}
+              </>}
+              {modoFert === 'nutriente' && <p className="form-hint">Modo avanzado: entra directo los kilos de nutriente en la casilla de abajo.</p>}
+              {campoNumero('fert', 'simular-nitrogeno', 'Nitrógeno aplicado (kg N/ha)', modoFert === 'producto' && seleccionados.length > 0 ? 'Calculado con tu plan de fertilización.' : 'Cantidad de nutriente, no peso del producto. 100 kg de urea al 46 % aportan 46 kg de N.')}
             </div>
+            {campoNumero('ph', 'simular-ph', 'pH del suelo')}
           </div>
-        )}
-      </div>
-    </div>
-  );
+          <p className="simulation-small">Puedes usar coma decimal: se convierte en punto al salir del campo. Escribe los miles sin separadores, por ejemplo 3500.</p>
+        </section>
+        <section className="simulation-section"><header className="simulation-section-heading"><div><span className="simulation-section-number">03</span><h2>Define el agua del cultivo</h2></div></header><div className="simulation-fields-grid"><div className="form-group"><label className="form-label" htmlFor="campo-riego_tipo">Sistema de agua o riego <span aria-hidden="true">*</span></label><select id="campo-riego_tipo" className="form-select" value={campos.riego_tipo ?? ''} onChange={event => cambiarRiego(event.target.value)}><option value="">Selecciona cómo recibirá agua</option>{Object.entries(definicionesCampo.riego_tipo.opciones).filter(([key]) => key !== 'natural_exceso').map(([code, label]) => <option key={code} value={code}>{label}</option>)}</select></div><div className="form-group"><label className="form-label" htmlFor="campo-lamina_riego_mm">Agua de riego de todo el ciclo (mm) <small>Opcional</small></label><input id="campo-lamina_riego_mm" className="form-input" type="text" inputMode="decimal" readOnly={campos.riego_tipo === 'temporal_lluvia'} placeholder="Ej.: 120" value={campos.lamina_riego_mm ?? ''} onChange={event => cambiarCampos({ ...campos, lamina_riego_mm: event.target.value })} onBlur={event => cambiarCampos({ ...campos, lamina_riego_mm: normalizarDecimalEntrada(event.target.value) })} /><p className="form-hint">{campos.riego_tipo === 'temporal_lluvia' ? 'Solo lluvia: el agua aportada por riego es 0 mm.' : 'No incluye lluvia. 1 mm equivale a 10 m³ de agua por hectárea.'}</p></div></div></section>
+        <ParametrosCampo fecha={fecha} onFechaChange={value => { setFecha(value); setHistorico(false); invalidar(); }} valores={campos} onChange={cambiarCampos} ficha={ficha} historico={historico} onHistoricoChange={value => { setHistorico(value); invalidar(); }} />
+        {sinModelo && <p className="simulation-notice">Esta variedad tiene ficha de consulta. Su cálculo específico de rendimiento todavía necesita un modelo compatible; puedes revisar los requisitos en la ayuda de variedades.</p>}
+        <footer className="simulation-submit"><p>El cálculo combina tus datos con referencias para las variables que falten. La estimación no garantiza la cosecha.</p><button type="submit" className="btn btn-primary" disabled={loading || cargandoDatos || !cultivoId || sinModelo}>{loading ? 'Calculando tu escenario…' : 'Ejecutar Simulación'}<ArrowRight size={18} /></button></footer>
+        </fieldset>
+      </form>
+      <aside className="simulation-sidebar" aria-label="Ayuda para preparar la simulación"><section className="simulation-section"><h2>Antes de calcular</h2><ul className="simulation-checklist"><li>La superficie puede ser una parte de tu parcela.</li><li>El clima debe representar el ciclo que quieres simular.</li><li>Confirma el riego y las dosis que realmente aplicarás.</li></ul><p className="simulation-small">El resultado es de grano seco. Choclo y canguil tienen requisitos y productos de cosecha diferentes.</p></section>
+        <EvaluacionVariedades key={cultivoId} cultivoId={cultivoId} ph={datos.ph} disabled={loading || cargandoDatos} />
+        {cultivoId && <details className="simulation-source"><summary>De dónde vienen los datos precargados</summary><p>{referencias?.fuente_provincia ?? 'Provincia indicada en la ubicación registrada.'}</p><p>Suelo: mapas <a href="https://maps.isric.org/" target="_blank" rel="noopener noreferrer">ISRIC SoilGrids</a>, malla de 250 m y capa superficial de 0–5 cm. Es una estimación, no un análisis de laboratorio.</p><p>Provincia: INEC/HDX, distribuido por <a href="https://www.geoboundaries.org/" target="_blank" rel="noopener noreferrer">geoBoundaries</a> bajo CC BY 3.0 IGO. Referencia simplificada de 2018.</p><button type="button" className="simulation-edit" disabled={cargandoDatos || loading} onClick={() => { invalidar(); setRecarga(value => value + 1); }}><RefreshCw size={15} /> Volver a consultar referencias</button></details>}
+      </aside></div>
+    </section>
+    <section id="panel-resultado" role="tabpanel" aria-labelledby="tab-resultado" hidden={vista !== 'resultado'}>{result && <ResultadoSimulacion result={result} parcela={parcela} areaSimulada={areaResultado} headingRef={headingResultado} onEditar={() => { setVista('preparar'); setEditarDatos(true); }} onAnalisis={onNavigate ? () => { if (onboardingStep === 2) onNextOnboardingStep?.(); onNavigate('yield'); } : undefined} />}</section>
+  </div>;
 }

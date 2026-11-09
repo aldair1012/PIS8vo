@@ -9,6 +9,7 @@ use ZeaSys\Kernel\Errores\NoAutorizadoException;
 use ZeaSys\Kernel\Errores\ValidacionException;
 use ZeaSys\Kernel\Peticion;
 use ZeaSys\Kernel\RespuestaJson;
+use ZeaSys\Kernel\SesionSinBloqueo;
 
 final class ChatController
 {
@@ -36,8 +37,8 @@ final class ChatController
         }
         $cultivoIdRaw = $cuerpo['cultivo_id'] ?? null;
         $cultivoId = $this->enteroOpcional($cultivoIdRaw, 'cultivo_id', 1, PHP_INT_MAX);
-        $anioRaw = $cuerpo['anio'] ?? null;
-        $anio = $this->enteroOpcional($anioRaw, 'anio', 2000, 2100);
+        $añoRaw = $cuerpo['año'] ?? null;
+        $año = $this->enteroOpcional($añoRaw, 'año', 2000, 2100);
 
         // Es un resumen generado por el frontend del dashboard visible. Se
         // limita su tamaño porque sólo debe complementar, nunca sustituir,
@@ -64,7 +65,10 @@ final class ChatController
 
         $usuarioId = (int) ($_SESSION['usuario_id'] ?? 0);
 
-        $respuesta = $this->servicio->preguntar($pregunta, $vista, $usuarioId, $cultivoId, $anio, $dashboard, $simulacion);
+        $respuesta = SesionSinBloqueo::ejecutar(
+            fn () => $this->servicio->preguntar($pregunta, $vista, $usuarioId, $cultivoId, $año, $dashboard, $simulacion),
+            'chat',
+        );
 
         RespuestaJson::enviar($respuesta);
     }
@@ -77,7 +81,7 @@ final class ChatController
 
     /**
      * Guarda la conversación visible como favorita del usuario. El cuerpo
-     * incluye conversacion_id, vista, cultivo_id, anio y mensajes; el servicio
+     * incluye conversacion_id, vista, cultivo_id, año y mensajes; el servicio
      * valida la propiedad de la parcela y normaliza los mensajes.
      */
     public function guardarFavorito(Peticion $peticion): void

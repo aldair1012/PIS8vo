@@ -1,6 +1,7 @@
 /* ZeaSys Design System — Dark + Light mode */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
+@import "./assets/palette.css";
 @import "./assets/styles.css";
 @import "./assets/landing-system.css";
 @import "./assets/internal-system.css";

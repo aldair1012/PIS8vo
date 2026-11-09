@@ -7,7 +7,8 @@ Sistema de apoyo a la decisión agrícola para parcelas de maíz en Ecuador.
 - `frontend-app/`: código fuente React/Vite. `npm run build` genera y sincroniza el frontend servido por XAMPP en la raíz (`index.html`, `assets/`, `models/` e `images/`).
 - `backend-api/`: API PHP organizada por dominios y capas.
 - `ml-engine/`: API Flask y modelos de simulación.
-- `database/agropredict_db.sql`: esquema y datos iniciales de MySQL.
+- `database/agropredict_db.sql`: copia local de MySQL que puede contener datos personales; no distribuirla.
+- `database/schema-demo.sql`: esquema vacío para instalaciones y pruebas sin datos personales.
 - `database/migraciones/`: cambios incrementales para bases ya instaladas.
 - `scripts/`: lanzadores locales de Apache/MySQL, ML, Chroma, Ollama y Flowise.
 - `tools/`: migraciones reproducibles de Flowise y utilidades del corpus RAG.
@@ -31,12 +32,12 @@ Sí son descartables y están ignorados por Git: `frontend-app/dist/`, `node_mod
 
 ## Puesta en marcha rápida
 
-1. Importa `database/agropredict_db.sql` en MySQL. El dump ya incluye la tabla
-   `chat_favoritos` y XGBoost como único modelo.
+1. En una instalación nueva, crea `agropredict_db` e importa `database/schema-demo.sql` en MySQL. No sobrescribas una base existente. El paquete académico usa su propia base `zeasys_revision`. Para compartir el proyecto, no distribuyas `database/agropredict_db.sql`, pues puede contener datos personales.
 2. Si actualizas una base existente, aplica las migraciones pendientes:
    ```cmd
    mysql -u root agropredict_db < database\migraciones\20261018_solo_xgboost.sql
    mysql -u root agropredict_db < database\migraciones\20261019_chat_favoritos.sql
+   mysql -u root agropredict_db < database\migraciones\20261024_mediciones_rendimiento.sql
    ```
 3. Ejecuta `scripts\iniciar_sistemas.bat` como lanzador único. Comprueba los puertos y
    enciende Apache, MySQL, ML, Chroma, Ollama y Flowise sin duplicar procesos.
@@ -46,3 +47,22 @@ Sí son descartables y están ignorados por Git: `frontend-app/dist/`, `node_mod
 6. Abre `http://localhost/ZeaSys/`.
 
 La guía completa está en [`documentacion/GUIA_INSTALACION.md`](documentacion/GUIA_INSTALACION.md). La referencia de APIs y calidad de datos está en [`documentacion/proveedores-datos.md`](documentacion/proveedores-datos.md). El chatbot se configura según [`documentacion/flowise-hibrido.md`](documentacion/flowise-hibrido.md).
+
+## Mejoras recientes
+
+- Estado y tareas pendientes: [`documentacion/avance-mejoras-20261105.md`](documentacion/avance-mejoras-20261105.md).
+- Fuentes y evaluación de cosechas verificadas: [`documentacion/fuentes-evaluacion-cosechas.md`](documentacion/fuentes-evaluacion-cosechas.md).
+- Copias locales y limitaciones de recuperación: [`documentacion/respaldo-local.md`](documentacion/respaldo-local.md).
+- Auditoría preliminar de los cinco PDF: [`documentacion/auditoria-pdf-20261105.md`](documentacion/auditoria-pdf-20261105.md).
+
+## Verificación local
+
+Con las dependencias de Node y Python ya instaladas, ejecuta desde la raíz:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\verificar_sistema.ps1
+```
+
+Ejecuta lint, pruebas del frontend, cinco suites PHP sin base de datos, pruebas Python con proveedores simulados y el build del frontend. Se detiene ante el primer fallo. El build sincroniza los recursos servidos por XAMPP; usa `-OmitirBuild` para comprobar solo código y pruebas. Si PHP está instalado en otra ubicación, indica `-PhpPath 'D:\ruta\php.exe'`.
+
+Este comando no ejecuta la suite de contrato, que crea usuarios y registros en la base configurada. Las pruebas de navegador también se verifican por separado. El diagnóstico inicial, los cambios y las limitaciones están en [`documentacion/revision-sistema-20261101.md`](documentacion/revision-sistema-20261101.md).

@@ -12,6 +12,10 @@ use ZeaSys\Kernel\Errores\ServicioExternoException;
 
 final class ServicioDatosTerreno
 {
+    public static function claveCache(float $latitud, float $longitud): string
+    {
+        return 'precision_data_v6_'.round($latitud,3).'_'.round($longitud,3);
+    }
     public function __construct(
         private CacheInterface $cache,
         private ProveedorClimaInterface $clima,
@@ -30,9 +34,9 @@ final class ServicioDatosTerreno
     {
         $claveLat = round($latitud, 3);
         $claveLng = round($longitud, 3);
-        // v4 agrega precipitacion_30d sin reutilizar entradas v3 que sólo
-        // guardaban la proyección anual en el campo precipitacion.
-        $clave = "precision_data_v4_{$claveLat}_{$claveLng}";
+        // v5 conserva procedencia por campo: un proveedor parcial no convierte
+        // los defaults de otras variables en observaciones de la API.
+        $clave = self::claveCache($latitud, $longitud);
 
         $datosCache = $this->cache->obtener($clave);
         if ($datosCache !== null) {
@@ -77,10 +81,12 @@ final class ServicioDatosTerreno
         }
 
         $datosClimaYSuelo = [
-            'success' => false,
+            'exito' => false,
             'source' => 'Contexto agronómico estimado',
             'clima_disponible_api' => false,
             'suelo_disponible_api' => false,
+            'clima_campos_api' => [],
+            'suelo_campos_api' => [],
             'clima' => [
                 'temperatura' => $tempDefecto,
                 'humedad' => $humDefecto,
@@ -100,6 +106,7 @@ final class ServicioDatosTerreno
         // API de Open-Meteo — Promedio histórico de los últimos 30 días
         try {
             $bloqueClima = $this->clima->obtenerClima($latitud, $longitud, $altitud);
+            $datosClimaYSuelo['clima_campos_api'] = array_keys($bloqueClima);
             foreach ($bloqueClima as $claveClima => $valorClima) {
                 $datosClimaYSuelo['clima'][$claveClima] = $valorClima;
             }
@@ -108,7 +115,7 @@ final class ServicioDatosTerreno
                 $datosClimaYSuelo['clima']['temperatura_suelo'] = $datosClimaYSuelo['clima']['temperatura'] - 1.5;
             }
             if ($bloqueClima !== []) {
-                $datosClimaYSuelo['success'] = true;
+                $datosClimaYSuelo['exito'] = true;
                 $datosClimaYSuelo['clima_disponible_api'] = true;
             }
         } catch (ServicioExternoException) {
@@ -118,11 +125,12 @@ final class ServicioDatosTerreno
         // API de SoilGrids
         try {
             $bloqueSuelo = $this->suelo->obtenerSuelo($latitud, $longitud);
+            $datosClimaYSuelo['suelo_campos_api'] = array_keys($bloqueSuelo);
             foreach ($bloqueSuelo as $claveSuelo => $valorSuelo) {
                 $datosClimaYSuelo['suelo'][$claveSuelo] = $valorSuelo;
             }
             if ($bloqueSuelo !== []) {
-                $datosClimaYSuelo['success'] = true;
+                $datosClimaYSuelo['exito'] = true;
                 $datosClimaYSuelo['suelo_disponible_api'] = true;
             }
         } catch (ServicioExternoException) {
@@ -134,11 +142,16 @@ final class ServicioDatosTerreno
             ? 'Open-Meteo Archive (promedio 30 días)'
             : 'clima estimado';
         $fuentes[] = $datosClimaYSuelo['suelo_disponible_api']
-            ? 'SoilGrids (suelo estimado por modelo)'
+            ? 'SoilGrids WMS (suelo estimado por mapa, 250 m, 0–5 cm)'
             : 'suelo de respaldo';
         $datosClimaYSuelo['source'] = implode(' + ', $fuentes);
+        $datosClimaYSuelo['procedencia_campos'] = [
+            'clima_referencia_estimada' => array_values(array_diff(array_keys($datosClimaYSuelo['clima']), $datosClimaYSuelo['clima_campos_api'])),
+            'suelo_referencia_estimada' => array_values(array_diff(array_keys($datosClimaYSuelo['suelo']), $datosClimaYSuelo['suelo_campos_api'])),
+            'nota' => 'Los campos de referencia son contexto estimado; no son mediciones ni datos recibidos del proveedor.',
+        ];
 
-        if ($datosClimaYSuelo['success']) {
+        if ($datosClimaYSuelo['exito']) {
             $this->cache->guardar($clave, $datosClimaYSuelo);
         }
 

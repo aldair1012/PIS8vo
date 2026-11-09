@@ -13,7 +13,7 @@ test('GeminiFlowise: la consulta enviada al modelo es corta y conserva el dashbo
     assert_contains('Pregunta del usuario:', $prompt);
     assert_contains('Contexto autorizado de ZeaSys:', $prompt);
     assert_contains('precipitacion', $prompt);
-    assert_true(mb_strlen($prompt, 'UTF-8') <= 4000, 'La consulta no debe superar el límite del prompt');
+    assert_true(mb_strlen($prompt, 'UTF-8') <= 10000, 'La consulta no debe superar el límite del prompt');
 });
 
 test('GeminiFlowise: recorta consultas extensas sin lanzar una excepción', function (): void {
@@ -22,7 +22,7 @@ test('GeminiFlowise: recorta consultas extensas sin lanzar una excepción', func
     $metodo->setAccessible(true);
     $prompt = $metodo->invoke($gemini, str_repeat('pregunta agrícola ', 300), str_repeat('dato dashboard ', 300));
 
-    assert_true(mb_strlen($prompt, 'UTF-8') <= 4000);
+    assert_true(mb_strlen($prompt, 'UTF-8') <= 10000);
     assert_contains('[recortado]', $prompt);
 });
 
@@ -37,7 +37,7 @@ test('GeminiFlowise: no envía el historial gigante al prompt', function (): voi
     ];
     $resumen = $metodo->invoke($gemini, $contexto, '¿Qué significa el rendimiento predicho?');
 
-    assert_true(mb_strlen($resumen, 'UTF-8') <= 3200);
+    assert_true(mb_strlen($resumen, 'UTF-8') <= 6400);
     assert_true(strpos($resumen, 'historial') === false, 'El historial debe quedar en la memoria del flujo');
     assert_contains('rendimiento_predicho', $resumen);
 });
@@ -48,7 +48,7 @@ test('GeminiFlowise: incluye clima actual, precio y nutrición en el contexto co
     $metodo->setAccessible(true);
     $contexto = [
         'panel_actual' => 'finance',
-        'anio_seleccionado' => 2026,
+        'año_seleccionado' => 2026,
         'cultivo_activo' => ['nombre_parcela' => 'La Esperanza'],
         'contexto_agricola' => [
             'clima' => [
@@ -89,7 +89,7 @@ test('GeminiFlowise: incluye clima actual, precio y nutrición en el contexto co
 
     $resumen = $metodo->invoke($gemini, $contexto, '¿Cómo afecta el precio y el clima a mi margen?');
 
-    assert_true(mb_strlen($resumen, 'UTF-8') <= 3200);
+    assert_true(mb_strlen($resumen, 'UTF-8') <= 6400);
     assert_contains('precio_maiz', $resumen);
     assert_contains('impacto_precio', $resumen);
     assert_contains('delta_ingreso_estimado', $resumen);
@@ -106,7 +106,7 @@ test('GeminiFlowise: conserva el borrador de la simulación y sus campos faltant
     $metodo->setAccessible(true);
     $contexto = [
         'panel_actual' => 'simular',
-        'anio_seleccionado' => 2026,
+        'año_seleccionado' => 2026,
         'cultivo_activo' => ['id' => 195, 'nombre_parcela' => '8vo', 'area' => 0.51],
         'simulacion_borrador' => [
             'estado' => 'borrador_no_ejecutado',
@@ -131,7 +131,7 @@ test('GeminiFlowise: conserva el borrador de la simulación y sus campos faltant
 
     $resumen = $metodo->invoke($gemini, $contexto, '¿Qué fertilizante recomienda para esta simulación?');
 
-    assert_true(mb_strlen($resumen, 'UTF-8') <= 3200);
+    assert_true(mb_strlen($resumen, 'UTF-8') <= 6400);
     assert_contains('simulacion_borrador', $resumen);
     assert_contains('8vo', $resumen);
     assert_contains('temperatura_entrada_c', $resumen);
@@ -150,16 +150,44 @@ test('GeminiFlowise: la regla del prompt prioriza el borrador de simulación', f
     assert_contains('fuente principal', $prompt);
 });
 
-test('GeminiFlowise: el prompt pide respuestas directas y evita fuentes no solicitadas', function (): void {
+test('GeminiFlowise: el prompt pide respuestas directas y cita documentos utilizados', function (): void {
     $gemini = new GeminiFlowise();
     $metodo = new ReflectionMethod(GeminiFlowise::class, 'construirPrompt');
     $metodo->setAccessible(true);
     $prompt = $metodo->invoke($gemini, '¿Qué recomiendas?', '{"precio_maiz":{"promedio":18.53}}');
 
     assert_contains('sin plantillas', $prompt);
-    assert_contains('no agregues fuentes', $prompt);
-    assert_contains('salvo que el usuario los pida', $prompt);
-    assert_true(mb_strlen($prompt, 'UTF-8') <= 4000, 'La consulta no debe superar el límite del prompt');
+    assert_contains('incluye la cita cuando uses documentos', $prompt);
+    assert_contains('evita proveedores y datos de relleno', $prompt);
+    assert_true(mb_strlen($prompt, 'UTF-8') <= 10000, 'La consulta no debe superar el límite del prompt');
+});
+
+test('GeminiFlowise: conserva instrucciones de claridad y seguridad aun con contexto extenso', function (): void {
+    $metodo = new ReflectionMethod(new GeminiFlowise(), 'construirPrompt');
+    $metodo->setAccessible(true);
+    $prompt = $metodo->invoke(new GeminiFlowise(), '¿Cómo puedo mejorar mi producción?', str_repeat('dato de parcela ', 500));
+    assert_contains('español sencillo', $prompt);
+    assert_contains('por qué importa', $prompt);
+    assert_contains('análisis de suelo y validación local', $prompt);
+    assert_true(mb_strlen($prompt, 'UTF-8') <= 10000);
+});
+
+test('GeminiFlowise: incorpora referencias válidas con documento y página sin aceptar fuentes ajenas', function (): void {
+    $gemini = new GeminiFlowise();
+    $normalizar = new ReflectionMethod($gemini, 'normalizarDocumentos');
+    $normalizar->setAccessible(true);
+    $docs = $normalizar->invoke($gemini, [
+        ['pageContent' => 'Texto agrícola de referencia', 'metadata' => ['source_file' => 'iniap-guia-produccion-maiz-sierra-2021.pdf', 'page' => 44, 'ocr' => false]],
+        ['pageContent' => 'Contenido ajeno', 'metadata' => ['source_file' => 'otro.pdf', 'page' => 1]],
+        ['pageContent' => 'Sin página', 'metadata' => ['source_file' => 'iniap-guia-produccion-maiz-sierra-2021.pdf']],
+    ]);
+    assert_true(count($docs) === 1 && $docs[0]['pagina'] === 44);
+    assert_contains('Texto agrícola', $docs[0]['texto']);
+    $compactar = new ReflectionMethod($gemini, 'compactarContextoParaConsulta');
+    $compactar->setAccessible(true);
+    $json = $compactar->invoke($gemini, ['referencias_documentales' => $docs], '¿Qué dice el INIAP?');
+    $contexto = json_decode($json, true);
+    assert_true(($contexto['referencias_documentales'][0]['pagina'] ?? null) === 44, 'Debe conservar la referencia en JSON válido.');
 });
 
 test('GeminiFlowise: sólo incluye conversaciones favoritas si la pregunta las menciona', function (): void {
@@ -198,4 +226,68 @@ test('GeminiFlowise: la regla del prompt reserva los favoritos para cuando se pi
 
 test('GeminiFlowise: no permite configurar el flujo sin URL o chatflow', function (): void {
     assert_true(class_exists(GeminiFlowise::class));
+});
+
+
+test('GeminiFlowise: evita mezclar guías regionales opuestas en preguntas específicas', function (): void {
+    $normalizar = new ReflectionMethod(GeminiFlowise::class, 'normalizarDocumentos');
+    $docs = [
+        ['pageContent' => 'Sierra', 'metadata' => ['source_file' => 'iniap-guia-produccion-maiz-sierra-2021.pdf', 'page' => 5]],
+        ['pageContent' => 'Litoral', 'metadata' => ['source_file' => 'iniap-guia-maiz-amarillo-litoral-2014.pdf', 'page' => 5]],
+    ];
+    assert_true(count($normalizar->invoke(new GeminiFlowise(), $docs, 'plagas en el Litoral')) === 1);
+    assert_true(($normalizar->invoke(new GeminiFlowise(), $docs, 'plagas en el Litoral')[0]['texto'] ?? '') === 'Litoral');
+    assert_true(count($normalizar->invoke(new GeminiFlowise(), $docs, 'comparar Sierra y Litoral')) === 2);
+    assert_true(count($normalizar->invoke(new GeminiFlowise(), $docs, 'manejo de maíz')) === 2);
+});
+
+ test('RecuperadorChroma: conserva texto y metadatos sin generar respuesta', function (): void {
+    $llamadas = [];
+    $cliente = new \ZeaSys\Dominios\Chat\Infraestructura\RecuperadorChroma(function ($url, $payload) use (&$llamadas) {
+        $llamadas[] = [$url, $payload];
+        if (count($llamadas) === 1) return [['name' => 'zeasys_cinco_pdf_v1', 'id' => '12345678-1234-1234-1234-123456789abc']];
+        if (count($llamadas) === 2) return ['embeddings' => [array_fill(0, 384, 0.1)]];
+        return ['documents' => [['Texto real']], 'metadatas' => [[['source_file' => 'inec-espac-resultados-2025.pdf', 'page' => 2]]]];
+    }, []);
+    $resultado = $cliente->recuperar('consulta de prueba');
+    assert_equals('Texto real', $resultado[0]['pageContent']);
+    assert_equals(2, $resultado[0]['metadata']['page']);
+    assert_equals(3, count($llamadas));
+    assert_equals('consulta de prueba', $llamadas[1][1]['input']);
+ });
+
+ test('RecuperadorChroma: falla de forma segura ante respuestas inválidas', function (): void {
+    $datos = [
+        [],
+        [['name' => 'zeasys_cinco_pdf_v1', 'id' => '../otra-ruta']],
+        [['name' => 'zeasys_cinco_pdf_v1', 'id' => '12345678-1234-1234-1234-123456789abc']],
+    ];
+    foreach ($datos as $respuesta) {
+        $cliente = new \ZeaSys\Dominios\Chat\Infraestructura\RecuperadorChroma(fn ($url, $body) => $respuesta, []);
+        assert_equals(null, $cliente->recuperar('pregunta'));
+    }
+    $cliente = new \ZeaSys\Dominios\Chat\Infraestructura\RecuperadorChroma(function () { throw new RuntimeException('sin servicio'); }, []);
+    assert_equals(null, $cliente->recuperar('pregunta'));
+ });
+
+test('RecuperadorChroma: acepta direcciones internas configuradas sin alterar rutas de API', function (): void {
+    $prevChroma = getenv('ZEASYS_CHROMA_URL');
+    $prevOllama = getenv('ZEASYS_OLLAMA_URL');
+    putenv('ZEASYS_CHROMA_URL=http://chroma:8000');
+    putenv('ZEASYS_OLLAMA_URL=http://ollama:11434');
+    try {
+        $urls = [];
+        $cliente = new \ZeaSys\Dominios\Chat\Infraestructura\RecuperadorChroma(function ($url, $body) use (&$urls) {
+            $urls[] = $url;
+            if (count($urls) === 1) return [['name' => 'zeasys_cinco_pdf_v1', 'id' => '12345678-1234-1234-1234-123456789abc']];
+            if (count($urls) === 2) return ['embeddings' => [array_fill(0, 384, 0.1)]];
+            return ['documents' => [[]], 'metadatas' => [[]]];
+        }, []);
+        assert_equals([], $cliente->recuperar('pregunta'));
+        assert_true(str_starts_with($urls[0], 'http://chroma:8000/'));
+        assert_equals('http://ollama:11434/api/embed', $urls[1]);
+    } finally {
+        $prevChroma === false ? putenv('ZEASYS_CHROMA_URL') : putenv('ZEASYS_CHROMA_URL=' . $prevChroma);
+        $prevOllama === false ? putenv('ZEASYS_OLLAMA_URL') : putenv('ZEASYS_OLLAMA_URL=' . $prevOllama);
+    }
 });

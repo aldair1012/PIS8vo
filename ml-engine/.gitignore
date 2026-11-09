@@ -4,3 +4,4 @@ __pycache__/
 logs/
 flask_server.log
 *.log
+experimentos/

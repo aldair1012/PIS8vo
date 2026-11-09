@@ -1,0 +1,15 @@
+FROM python:3.11-slim
+ENV PYTHONUNBUFFERED=1
+WORKDIR /app/ml-engine
+RUN apt-get update && apt-get install -y --no-install-recommends libgomp1 \
+    && rm -rf /var/lib/apt/lists/*
+COPY ml-engine/requirements.txt ./requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
+COPY ml-engine/app.py ./app.py
+COPY ml-engine/src/ ./src/
+COPY ml-engine/config/ ./config/
+COPY ml-engine/data/ ./data/
+COPY ml-engine/models/ ./models/
+COPY backend-api/data/*.json /app/backend-api/data/
+EXPOSE 5000
+CMD ["python", "app.py"]

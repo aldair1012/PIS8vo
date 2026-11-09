@@ -294,10 +294,10 @@ export default function Login({ onLoginSuccess, switchToRegister, switchToLogin,
     setError(null);
     setGoogleLoading(true);
     try {
-      const data = await authService.googleLogin(idToken, remember);
-      onLoginSuccess(data.user);
+      const data = await authService.iniciarSesionGoogle(idToken, remember);
+      onLoginSuccess(data.usuario);
     } catch (err) {
-      const msg = err.response?.data?.message
+      const msg = err.response?.data?.mensaje
         || (typeof err.response?.data?.error === 'string' ? err.response.data.error : 'Error al conectar con el servidor.');
       setError(msg);
     } finally {
@@ -374,17 +374,23 @@ export default function Login({ onLoginSuccess, switchToRegister, switchToLogin,
 
     let renderedWidth = 0;
     const render = () => {
-      const width = Math.min(400, Math.floor(host.clientWidth));
+      // GIS mide su contenido al crearlo: esperar a que la cara deje de
+      // estar de canto durante el giro 3D evita un botón sin espacio para texto.
+      const available = host.clientWidth;
+      if (host.getBoundingClientRect().width < available * 0.95) return;
+      const width = Math.min(380, Math.floor(available) - 20);
       if (width < 100 || (width === renderedWidth && host.hasChildNodes())) return;
       try {
         host.replaceChildren();
         window.google.accounts.id.renderButton(host, {
           type: 'standard',
-          theme: theme === 'dark' ? 'outline_dark' : 'outline',
+          // El panel de acceso es oscuro en ambos temas: el botón oficial
+          // siempre en su variante negra para mantener la dirección de arte.
+          theme: 'filled_black',
           size: 'large',
           text: registering ? 'signup_with' : 'continue_with',
-          shape: 'rectangular',
-          width,
+          shape: 'pill',
+          width: String(width),
           locale: 'es',
         });
         renderedWidth = width;
@@ -394,22 +400,32 @@ export default function Login({ onLoginSuccess, switchToRegister, switchToLogin,
     };
 
     const frame = window.requestAnimationFrame(render);
+    const observer = new ResizeObserver(render);
+    observer.observe(host);
+    const card = host.closest('.zeasys-hero-flip') ?? host.closest('.zeasys-login-card')?.parentElement;
+    const afterTransition = () => window.requestAnimationFrame(render);
+    card?.addEventListener('transitionend', afterTransition);
+    // Las transiciones de un ancestro no siempre llegan al contenedor observado.
+    const settled = window.setTimeout(render, 1000);
     window.addEventListener('resize', render);
     return () => {
       window.cancelAnimationFrame(frame);
+      window.clearTimeout(settled);
+      observer.disconnect();
+      card?.removeEventListener('transitionend', afterTransition);
       window.removeEventListener('resize', render);
     };
-  }, [authCardOpen, googleStatus, registering, theme]);
+  }, [authCardOpen, googleStatus, registering]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
     setError(null);
     setLoading(true);
     try {
-      const data = await authService.login(correo, contrasena, remember);
-      onLoginSuccess(data.user);
+      const data = await authService.iniciarSesion(correo, contrasena, remember);
+      onLoginSuccess(data.usuario);
     } catch (err) {
-      const msg = err.response?.data?.message
+      const msg = err.response?.data?.mensaje
         || (typeof err.response?.data?.error === 'string' ? err.response.data.error : null)
         || 'Error al conectar con el servidor.';
       setError(msg);
@@ -427,10 +443,10 @@ export default function Login({ onLoginSuccess, switchToRegister, switchToLogin,
     }
     setLoading(true);
     try {
-      const data = await authService.register(nombre, correo, contrasena, confirmar);
-      onLoginSuccess(data.user);
+      const data = await authService.registrarse(nombre, correo, contrasena, confirmar);
+      onLoginSuccess(data.usuario);
     } catch (err) {
-      const msg = err.response?.data?.message
+      const msg = err.response?.data?.mensaje
         || (typeof err.response?.data?.error === 'string' ? err.response.data.error : null)
         || 'Error al conectar con el servidor.';
       setError(msg);

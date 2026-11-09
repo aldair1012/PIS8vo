@@ -1,12 +1,12 @@
-import { User, Cpu, Menu, ChevronDown, ChevronLeft } from 'lucide-react';
+import { User, Cpu, Menu, ChevronDown, ChevronLeft, Sun, Moon } from 'lucide-react';
 import LoteSelector from './LoteSelector';
 
 export default function Navbar({ 
-  title, 
+  title, theme, onToggleTheme,
   cultivos, 
   cultivoElegidoId, 
   setCultivoElegidoId, 
-  anioSeleccionado, 
+  añoSeleccionado, 
   setAnioSeleccionado,
   user,
   iaEncendida,
@@ -21,7 +21,10 @@ export default function Navbar({
         <button
           onClick={() => setMenuCerrado(!menuCerrado)}
           className="navbar-sidebar-toggle-btn"
-          title={menuCerrado ? "Expandir barra lateral" : "Ocultar barra lateral"}
+          title={menuCerrado ? "Expandir barra lateral" : "Contraer barra lateral"}
+          aria-label={menuCerrado ? "Expandir barra lateral" : "Contraer barra lateral"}
+          aria-expanded={!menuCerrado}
+          aria-controls="workspace-sidebar"
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -34,7 +37,7 @@ export default function Navbar({
             border: '1px solid var(--zs-border)',
             cursor: 'pointer',
             boxShadow: 'var(--zs-shadow-raised)',
-            transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+            transition: 'transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.2s ease, border-color 0.2s ease',
             flexShrink: 0
           }}
           onMouseEnter={(e) => {
@@ -46,14 +49,15 @@ export default function Navbar({
         >
           {menuCerrado ? <Menu size={19} /> : <ChevronLeft size={19} />}
         </button>
-        <h2 className="navbar-title" style={{ margin: 0 }}>{title}</h2>
+        <div className="workspace-heading"><span className="workspace-eyebrow">ZeaSys / Centro de cultivo</span><h2 className="navbar-title" style={{ margin: 0 }}>{title}</h2></div>
       </div>
       
       <div className="navbar-right">
+        <button type="button" className="workspace-theme-switch" onClick={onToggleTheme} aria-label={theme === 'dark' ? 'Activar modo claro' : 'Activar modo oscuro'} title={theme === 'dark' ? 'Modo claro' : 'Modo oscuro'}>{theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}</button>
         {/* ML Engine Status */}
-        <div className="status-indicator" style={{ flexShrink: 0 }} title={iaEncendida ? "Servidor de IA responde" : "Servidor de IA desconectado"}>
+        <div className="status-indicator" role="status" aria-label={iaEncendida ? "Servidor de IA conectado" : "Servidor de IA desconectado"} title={iaEncendida ? "Servidor de IA responde" : "Servidor de IA desconectado"}>
           <Cpu size={15} className={iaEncendida ? "text-success" : "text-danger"} />
-          <span className="ia-status-label" style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>IA</span>
+          <span className="ia-status-label">IA</span>
           <span className={`status-dot ${iaEncendida ? "active" : "inactive"}`} />
         </div>
 
@@ -63,35 +67,33 @@ export default function Navbar({
             cultivos={cultivos}
             cultivoElegidoId={cultivoElegidoId}
             setCultivoElegidoId={setCultivoElegidoId}
-            anioSeleccionado={anioSeleccionado}
+            añoSeleccionado={añoSeleccionado}
             setAnioSeleccionado={setAnioSeleccionado}
+            vistaActual={vistaActual}
             setVistaActual={setVistaActual}
           />
         )}
 
         {/* User & Settings Button Integrated */}
         {user && (
-          <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+          <div className="workspace-account">
             <button 
               onClick={() => setVistaActual(vistaActual === 'configuracion' ? 'yield' : 'configuracion')}
-              className={`lote-selector-trigger ${vistaActual === 'configuracion' ? 'active' : ''}`}
-              style={{ 
-                border: '1.5px solid var(--border-subtle)',
-                padding: '0.4rem 0.65rem',
-                gap: '0.55rem'
-              }}
+              className={`lote-selector-trigger workspace-account-trigger ${vistaActual === 'configuracion' ? 'active' : ''}`}
               title="Configuración de Cuenta y Sistema"
+              aria-label={`Configuración de cuenta de ${user.nombre}`}
+              type="button"
             >
-              <div 
+              <div className="workspace-account-avatar"
                 style={{ 
-                  width: '26px', 
-                  height: '26px', 
+                  width: '32px', 
+                  height: '32px', 
                   borderRadius: '50%', 
                   overflow: 'hidden', 
                   display: 'flex', 
                   alignItems: 'center', 
                   justifyContent: 'center',
-                  background: 'rgba(59, 130, 246, 0.15)',
+                  background: 'var(--zs-raised)',
                   border: '1px solid var(--border-strong)',
                   flexShrink: 0
                 }}

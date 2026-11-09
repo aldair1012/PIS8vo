@@ -1,0 +1,1 @@
+export{n as MTLLoader}from"./modelo-3d-N2a5_a0f.js";

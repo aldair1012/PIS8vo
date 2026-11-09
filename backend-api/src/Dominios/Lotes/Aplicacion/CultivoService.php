@@ -8,6 +8,8 @@ namespace ZeaSys\Dominios\Lotes\Aplicacion;
 use ZeaSys\Dominios\Lotes\Dominio\CultivoRepositoryInterface;
 use ZeaSys\Dominios\Lotes\Dominio\ValidadorLimitesEcuador;
 use ZeaSys\Dominios\Terreno\Aplicacion\ServicioDatosTerreno;
+use ZeaSys\Dominios\Terreno\Aplicacion\ProvinciaParcela;
+use ZeaSys\Dominios\Terreno\Aplicacion\TexturaSuelo;
 use ZeaSys\Kernel\Errores\AccesoDenegadoException;
 use ZeaSys\Kernel\Errores\ValidacionException;
 use ZeaSys\Kernel\Errores\ZeaSysException;
@@ -35,20 +37,20 @@ final class CultivoService
 
         $datos = [
             'usuario_id'     => $usuarioId,
-            'nombre_parcela' => trim($data['nombre_parcela'] ?? ''),
-            'variedad_maiz'  => trim($data['variedad_maiz'] ?? 'Híbrido convencional'),
-            'tipo_maiz'      => trim($data['tipo_maiz'] ?? 'Duro Amarillo'),
-            'ubicacion'      => trim($data['ubicacion'] ?? ''),
+            'nombre_parcela' => $this->texto($data['nombre_parcela'] ?? '', 'nombre_parcela'),
+            'variedad_maiz'  => $this->texto($data['variedad_maiz'] ?? 'Híbrido convencional', 'variedad_maiz'),
+            'tipo_maiz'      => $this->texto($data['tipo_maiz'] ?? 'Duro Amarillo', 'tipo_maiz'),
+            'ubicacion'      => $this->texto($data['ubicacion'] ?? '', 'ubicacion'),
             'area'           => $this->numeroOpcional($data, 'area') ?? 0.0,
             'latitud'        => $this->numeroOpcional($data, 'latitud'),
             'longitud'       => $this->numeroOpcional($data, 'longitud'),
             'fecha_siembra'  => $this->fechaOpcional($data, 'fecha_siembra'),
             'geojson'        => $this->geoJsonOpcional($data),
             'altitud'        => $this->numeroOpcional($data, 'altitud'),
-            'ph'             => $this->numeroOpcional($data, 'ph') ?? 6.5,
+            'ph'             => $this->numeroOpcional($data, 'ph'),
             'fertilizacion_fecha' => $this->fechaOpcional($data, 'fertilizacion_fecha'),
             'fertilizacion_dosis' => $this->numeroOpcional($data, 'fertilizacion_dosis'),
-            'fertilizacion_tipo'  => !empty($data['fertilizacion_tipo']) ? trim($data['fertilizacion_tipo']) : null
+            'fertilizacion_tipo'  => $this->tipoFertilizacionAlCrear($data['fertilizacion_tipo'] ?? null)
         ];
 
         $this->validarTextos($datos);
@@ -71,8 +73,8 @@ final class CultivoService
 
         $datos['id'] = $id;
         return [
-            'success' => true,
-            'message' => 'Parcela registrada exitosamente.',
+            'exito' => true,
+            'mensaje' => 'Parcela registrada exitosamente.',
             'cultivo' => $datos
         ];
     }
@@ -93,10 +95,10 @@ final class CultivoService
         }
 
         $datos = [
-            'nombre_parcela' => trim($data['nombre_parcela'] ?? $cultivo['nombre_parcela']),
-            'variedad_maiz'  => trim($data['variedad_maiz'] ?? $cultivo['variedad_maiz']),
-            'tipo_maiz'      => trim($data['tipo_maiz'] ?? $cultivo['tipo_maiz']),
-            'ubicacion'      => trim($data['ubicacion'] ?? $cultivo['ubicacion']),
+            'nombre_parcela' => $this->texto($data['nombre_parcela'] ?? $cultivo['nombre_parcela'], 'nombre_parcela'),
+            'variedad_maiz'  => $this->texto($data['variedad_maiz'] ?? $cultivo['variedad_maiz'], 'variedad_maiz'),
+            'tipo_maiz'      => $this->texto($data['tipo_maiz'] ?? $cultivo['tipo_maiz'], 'tipo_maiz'),
+            'ubicacion'      => $this->texto($data['ubicacion'] ?? $cultivo['ubicacion'], 'ubicacion'),
             'area'           => array_key_exists('area', $data) ? ($this->numeroOpcional($data, 'area') ?? 0.0) : (float) $cultivo['area'],
             'latitud'        => array_key_exists('latitud', $data) ? $this->numeroOpcional($data, 'latitud') : ($cultivo['latitud'] !== null ? (float) $cultivo['latitud'] : null),
             'longitud'       => array_key_exists('longitud', $data) ? $this->numeroOpcional($data, 'longitud') : ($cultivo['longitud'] !== null ? (float) $cultivo['longitud'] : null),
@@ -106,7 +108,7 @@ final class CultivoService
             'ph'             => array_key_exists('ph', $data) ? $this->numeroOpcional($data, 'ph') : ($cultivo['ph'] !== null ? (float) $cultivo['ph'] : null),
             'fertilizacion_fecha' => array_key_exists('fertilizacion_fecha', $data) ? $this->fechaOpcional($data, 'fertilizacion_fecha') : $cultivo['fertilizacion_fecha'],
             'fertilizacion_dosis' => array_key_exists('fertilizacion_dosis', $data) ? $this->numeroOpcional($data, 'fertilizacion_dosis') : ($cultivo['fertilizacion_dosis'] !== null ? (float) $cultivo['fertilizacion_dosis'] : null),
-            'fertilizacion_tipo'  => isset($data['fertilizacion_tipo']) ? trim($data['fertilizacion_tipo']) : $cultivo['fertilizacion_tipo']
+            'fertilizacion_tipo'  => isset($data['fertilizacion_tipo']) ? $this->texto($data['fertilizacion_tipo'], 'fertilizacion_tipo') : $cultivo['fertilizacion_tipo']
         ];
 
         $this->validarTextos($datos);
@@ -129,8 +131,8 @@ final class CultivoService
 
         $datos['id'] = $id;
         return [
-            'success' => true,
-            'message' => 'Parcela actualizada exitosamente.',
+            'exito' => true,
+            'mensaje' => 'Parcela actualizada exitosamente.',
             'cultivo' => $datos
         ];
     }
@@ -154,7 +156,7 @@ final class CultivoService
             throw new ZeaSysException('Error al eliminar: ' . $e->getMessage(), 500);
         }
 
-        return ['success' => true, 'message' => 'Parcela eliminada correctamente.'];
+        return ['exito' => true, 'mensaje' => 'Parcela eliminada correctamente.'];
     }
 
     /** mapa() 199–206. */
@@ -182,59 +184,86 @@ final class CultivoService
         $lng = isset($cultivo['longitud']) && $cultivo['longitud'] !== '' ? (float) $cultivo['longitud'] : null;
 
         $clima = [
-            'temperatura' => 24.5,
-            'humedad' => 68.0,
-            'precipitacion' => 750.0
+            'temperatura' => null,
+            'humedad' => null,
+            'precipitacion' => null
         ];
         $suelo = [
-            'ph' => !empty($cultivo['ph']) ? floatval($cultivo['ph']) : 6.5,
-            'tipo_suelo' => 'franco'
+            'ph' => isset($cultivo['ph']) && is_numeric($cultivo['ph']) ? (float) $cultivo['ph'] : null,
+            'tipo_suelo' => null
         ];
-        $fuente = 'Valores por defecto del cultivo';
+        $fuente = 'Datos registrados; condiciones externas no disponibles';
+        $procedencia = ['ph_suelo' => $suelo['ph'] !== null ? 'Registro de la parcela' : 'No disponible', 'area_simulada' => 'Registro de la parcela'];
 
         if ($lat !== null && $lng !== null) {
             try {
                 $altitud = isset($cultivo['altitud']) && $cultivo['altitud'] !== '' ? (float) $cultivo['altitud'] : null;
                 $datosApi = $this->terreno->obtener($lat, $lng, $altitud);
 
-                if (isset($datosApi['clima'])) {
-                    $clima['temperatura'] = $datosApi['clima']['temperatura'];
-                    $clima['humedad'] = $datosApi['clima']['humedad'];
-                    $clima['precipitacion'] = $datosApi['clima']['precipitacion'];
+                foreach (array_keys($clima) as $campo) {
+                    if (in_array($campo, $datosApi['clima_campos_api'] ?? [], true) && is_numeric($datosApi['clima'][$campo] ?? null)) {
+                        $clima[$campo] = (float) $datosApi['clima'][$campo];
+                        $procedencia[$campo] = 'Proveedor externo';
+                    }
                 }
 
-                if (empty($cultivo['ph']) && isset($datosApi['suelo']['ph'])) {
+                if ($suelo['ph'] === null && in_array('ph', $datosApi['suelo_campos_api'] ?? [], true) && isset($datosApi['suelo']['ph'])) {
                     $suelo['ph'] = $datosApi['suelo']['ph'];
+                    $procedencia['ph_suelo'] = 'Proveedor externo';
                 }
 
-                if (isset($datosApi['suelo'])) {
-                    $arcilla = $datosApi['suelo']['clay'] ?? 30;
-                    $arena = $datosApi['suelo']['sand'] ?? 40;
-                    if ($arcilla > 35) {
-                        $suelo['tipo_suelo'] = 'arcilloso';
-                    } elseif ($arena > 50) {
-                        $suelo['tipo_suelo'] = 'arenoso';
-                    } else {
-                        $suelo['tipo_suelo'] = 'franco';
+                if (count(array_intersect(['clay','sand','silt'], $datosApi['suelo_campos_api'] ?? [])) === 3) {
+                    $textura = TexturaSuelo::clasificar($datosApi['suelo']);
+                    if ($textura !== null) {
+                        $suelo['tipo_suelo'] = $textura['tipo_modelo'];
+                        $procedencia['tipo_suelo'] = 'SoilGrids WMS · estimación por coordenadas';
                     }
                 }
                 $fuente = $datosApi['source'] ?? 'Open-Meteo & SoilGrids';
             } catch (\Exception $e) {
                 error_log('[ZeaSys] No fue posible consultar los datos del terreno: ' . $e->getMessage());
-                $fuente = 'Valores agronómicos de respaldo';
+                $fuente = 'Datos registrados; proveedores no disponibles';
             }
         }
 
         return [
-            'success' => true,
+            'exito' => true,
             'source' => $fuente,
+            'provincia' => ProvinciaParcela::resolver($cultivo)['provincia'],
+            'fuente_provincia' => ProvinciaParcela::resolver($cultivo)['fuente'],
+            'referencia_suelo' => isset($datosApi) && isset($suelo['tipo_suelo']) ? [
+                'fuente'=>'ISRIC SoilGrids 250 m · servicio de mapas', 'profundidad'=>'0–5 cm',
+                'clase_estimada'=>$textura['clase_estimada'] ?? null,
+                'arcilla_pct'=>$datosApi['suelo']['clay'] ?? null, 'arena_pct'=>$datosApi['suelo']['sand'] ?? null,
+                'limo_pct'=>$datosApi['suelo']['silt'] ?? null,
+                'nota'=>'Estimación de mapa agrupada para el modelo; puedes corregirla con un análisis de suelo.',
+            ] : null,
             'temperatura' => $clima['temperatura'],
             'humedad' => $clima['humedad'],
             'precipitacion' => $clima['precipitacion'],
             'ph_suelo' => $suelo['ph'],
             'tipo_suelo' => $suelo['tipo_suelo'],
-            'area_simulada' => !empty($cultivo['area']) ? floatval($cultivo['area']) : 1.0
+            'area_simulada' => isset($cultivo['area']) ? (float) $cultivo['area'] : null,
+            'periodo_precipitacion' => 'mm/año estimados; no equivale al ciclo',
+            'procedencia' => $procedencia,
         ];
+    }
+
+    private function texto(mixed $valor, string $campo): string
+    {
+        if (!is_string($valor)) {
+            throw new ValidacionException("El campo {$campo} debe ser texto.");
+        }
+        return trim($valor);
+    }
+
+    private function tipoFertilizacionAlCrear(mixed $valor): ?string
+    {
+        if ($valor === null) {
+            return null;
+        }
+        $texto = $this->texto($valor, 'fertilizacion_tipo');
+        return empty($valor) ? null : $texto;
     }
 
     private function numeroOpcional(array $data, string $campo): ?float
@@ -258,12 +287,12 @@ final class CultivoService
         if (!array_key_exists($campo, $data) || $data[$campo] === null || $data[$campo] === '') {
             return null;
         }
-        if (!is_string($data[$campo])) {
+        if (!is_string($data[$campo]) || preg_match('/^\d{4}-\d{2}-\d{2}$/D', $data[$campo]) !== 1) {
             throw new ValidacionException("El campo {$campo} debe ser una fecha válida.");
         }
         $fecha = \DateTimeImmutable::createFromFormat('!Y-m-d', $data[$campo]);
         $errores = \DateTimeImmutable::getLastErrors();
-        if ($fecha === false || ($errores !== false && ($errores['warning_count'] > 0 || $errores['error_count'] > 0))) {
+        if ($fecha === false || $fecha->format('Y-m-d') !== $data[$campo] || ($errores !== false && ($errores['warning_count'] > 0 || $errores['error_count'] > 0))) {
             throw new ValidacionException("El campo {$campo} debe usar el formato AAAA-MM-DD.");
         }
         return $fecha->format('Y-m-d');

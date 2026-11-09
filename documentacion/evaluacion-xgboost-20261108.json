@@ -1,0 +1,648 @@
+{
+  "estado": "completado",
+  "semilla": 42,
+  "sha256_dataset_original": "dd3a29e6748f2d948a4236fe32dd8b5f2a45776f1bda64d9657870ad719e4fde",
+  "calidad": {
+    "filas_originales": 2366,
+    "filas_invalidas": 296,
+    "duplicados_adicionales": 100,
+    "filas_elegibles_experimento": 1970,
+    "problemas": {
+      "numeros_ausentes_o_no_finitos": 0,
+      "categorias_ausentes": 0,
+      "temperaturas_inconsistentes": 201,
+      "textura_inconsistente": 58,
+      "magnitudes_imposibles": 0,
+      "canguil_clasificado_como_suave": 49
+    },
+    "nota": "Excluir filas en un experimento no acredita la procedencia ni convierte las demás observaciones en cosechas verificadas."
+  },
+  "versiones": {
+    "python": "3.11.9",
+    "xgboost": "3.2.0",
+    "sklearn": "1.8.0"
+  },
+  "validacion": "4 grupos externos por provincia; 3 internos para selección de parámetros. Categorías ajustadas solo con entrenamiento.",
+  "configuraciones": [
+    {
+      "n_estimators": 600,
+      "max_depth": 4,
+      "learning_rate": 0.03,
+      "subsample": 0.8,
+      "colsample_bytree": 0.8,
+      "reg_alpha": 0.1,
+      "reg_lambda": 1.0,
+      "random_state": 42,
+      "tree_method": "hist",
+      "n_jobs": 2,
+      "objective": "reg:squarederror"
+    },
+    {
+      "n_estimators": 350,
+      "max_depth": 2,
+      "learning_rate": 0.03,
+      "subsample": 0.8,
+      "colsample_bytree": 0.8,
+      "reg_alpha": 0.1,
+      "reg_lambda": 8.0,
+      "random_state": 42,
+      "tree_method": "hist",
+      "n_jobs": 2,
+      "objective": "reg:squarederror",
+      "min_child_weight": 10
+    },
+    {
+      "n_estimators": 450,
+      "max_depth": 3,
+      "learning_rate": 0.03,
+      "subsample": 0.8,
+      "colsample_bytree": 0.8,
+      "reg_alpha": 0.5,
+      "reg_lambda": 5.0,
+      "random_state": 42,
+      "tree_method": "hist",
+      "n_jobs": 2,
+      "objective": "reg:squarederror",
+      "min_child_weight": 5
+    }
+  ],
+  "publicacion": false,
+  "resultados": {
+    "contrato_actual_36": {
+      "columnas": [
+        "zona",
+        "provincia",
+        "variedad",
+        "tipo_grano",
+        "riego_tipo",
+        "tipo_suelo",
+        "ph_suelo",
+        "materia_organica_pct",
+        "profundidad_suelo_cm",
+        "textura_arcilla_pct",
+        "textura_arena_pct",
+        "textura_limo_pct",
+        "altitud_msnm",
+        "temperatura_media_c",
+        "temperatura_min_c",
+        "temperatura_max_c",
+        "precipitacion_mm",
+        "humedad_relativa_pct",
+        "horas_luz_dia",
+        "densidad_plantas_ha",
+        "ciclo_dias",
+        "nitrogeno_kg_ha",
+        "fosforo_p2o5_kg_ha",
+        "potasio_k2o_kg_ha",
+        "magnesio_kg_ha",
+        "azufre_kg_ha",
+        "aplicaciones_nitrogeno",
+        "lamina_riego_mm",
+        "biofertilizante",
+        "semilla_certificada",
+        "ndvi_v6_vegetativo",
+        "ndvi_vt_floracion",
+        "ndvi_r3_llenado_grano",
+        "plagas_presentes",
+        "presion_plaga_score",
+        "control_plaga"
+      ],
+      "optimizado": {
+        "mae": 0.822540155447074,
+        "rmse": 1.0555760480278493,
+        "r2": 0.6318299005038446
+      },
+      "referencia_mismos_datos": {
+        "mae": 0.8238129354902936,
+        "rmse": 1.061586944331654,
+        "r2": 0.6276249296443166
+      },
+      "referencia_mediana": {
+        "mae": 1.4104010152284263,
+        "rmse": 1.8119105307861103,
+        "r2": -0.08478322042871578
+      },
+      "pliegues": [
+        {
+          "pliegue": 1,
+          "provincias_prueba": [
+            "Azuay",
+            "Bolívar",
+            "Loja",
+            "Morona Santiago",
+            "Napo",
+            "Orellana"
+          ],
+          "configuracion_elegida": 2,
+          "rmse_internos": [
+            1.1812643662759514,
+            1.1830204823949149,
+            1.171987023556983
+          ],
+          "optimizado": {
+            "mae": 0.762999365081198,
+            "rmse": 0.9602242320221734,
+            "r2": 0.4372422901380666
+          },
+          "referencia": {
+            "mae": 0.7709926061648659,
+            "rmse": 0.9761831904965982,
+            "r2": 0.41838073863164027
+          }
+        },
+        {
+          "pliegue": 2,
+          "provincias_prueba": [
+            "Carchi",
+            "Chimborazo",
+            "El Oro",
+            "Pichincha",
+            "Santa Elena"
+          ],
+          "configuracion_elegida": 2,
+          "rmse_internos": [
+            1.1540834733401155,
+            1.1622600782918737,
+            1.1454368016408107
+          ],
+          "optimizado": {
+            "mae": 0.8072696854518009,
+            "rmse": 1.0370550160134646,
+            "r2": 0.5264967801401905
+          },
+          "referencia": {
+            "mae": 0.8153972335452707,
+            "rmse": 1.0574735632827867,
+            "r2": 0.5076676405912897
+          }
+        },
+        {
+          "pliegue": 3,
+          "provincias_prueba": [
+            "Cañar",
+            "Cotopaxi",
+            "Esmeraldas",
+            "Manabí",
+            "Pastaza",
+            "Tungurahua"
+          ],
+          "configuracion_elegida": 2,
+          "rmse_internos": [
+            1.2830253499031816,
+            1.294435743801783,
+            1.2754198709408235
+          ],
+          "optimizado": {
+            "mae": 0.7882133204425096,
+            "rmse": 1.0138554133232087,
+            "r2": 0.7095451505315471
+          },
+          "referencia": {
+            "mae": 0.8019925410051181,
+            "rmse": 1.0452677817054818,
+            "r2": 0.6912679534065733
+          }
+        },
+        {
+          "pliegue": 4,
+          "provincias_prueba": [
+            "Guayas",
+            "Imbabura",
+            "Loja Sierra",
+            "Los Ríos",
+            "Sucumbíos"
+          ],
+          "configuracion_elegida": 1,
+          "rmse_internos": [
+            1.2538006139957447,
+            1.2284692872615628,
+            1.2368501681237243
+          ],
+          "optimizado": {
+            "mae": 0.9418885131872696,
+            "rmse": 1.2090758530736492,
+            "r2": 0.6238961291328033
+          },
+          "referencia": {
+            "mae": 0.9149919998364989,
+            "rmse": 1.1691040454608637,
+            "r2": 0.6483529048038077
+          }
+        }
+      ],
+      "parametros_candidato": {
+        "n_estimators": 450,
+        "max_depth": 3,
+        "learning_rate": 0.03,
+        "subsample": 0.8,
+        "colsample_bytree": 0.8,
+        "reg_alpha": 0.5,
+        "reg_lambda": 5.0,
+        "random_state": 42,
+        "tree_method": "hist",
+        "n_jobs": 2,
+        "objective": "reg:squarederror",
+        "min_child_weight": 5
+      },
+      "sha256_artefacto": "fe7d4f20855e9cf2fb714ac2a522ee85dd53941153817cfb6db46e8d2db264e6",
+      "por_provincia": {
+        "Azuay": {
+          "mae": 0.5224050749454302,
+          "rmse": 0.6515223559450279,
+          "r2": 0.341017175992804
+        },
+        "Bolívar": {
+          "mae": 0.6445814683702257,
+          "rmse": 0.7724126391287666,
+          "r2": 0.22190402378533336
+        },
+        "Carchi": {
+          "mae": 0.5843043158334844,
+          "rmse": 0.7148101739630979,
+          "r2": 0.5178887223823234
+        },
+        "Cañar": {
+          "mae": 0.531812258720398,
+          "rmse": 0.6411424872788738,
+          "r2": 0.2917370250772924
+        },
+        "Chimborazo": {
+          "mae": 0.5566406364002445,
+          "rmse": 0.6826369489040531,
+          "r2": 0.472750725952798
+        },
+        "Cotopaxi": {
+          "mae": 0.5755654566628592,
+          "rmse": 0.6832754949339231,
+          "r2": 0.40525226718133345
+        },
+        "El Oro": {
+          "mae": 0.9102766695832893,
+          "rmse": 1.1121123151076604,
+          "r2": 0.07539543602836285
+        },
+        "Esmeraldas": {
+          "mae": 0.9838575090302363,
+          "rmse": 1.2518998649383308,
+          "r2": 0.16504748487877796
+        },
+        "Guayas": {
+          "mae": 1.2385252118110657,
+          "rmse": 1.51485200840761,
+          "r2": 0.19192956144682627
+        },
+        "Imbabura": {
+          "mae": 0.8043016237020493,
+          "rmse": 0.9951788148375709,
+          "r2": 0.30359925877558414
+        },
+        "Loja": {
+          "mae": 0.9859137351696308,
+          "rmse": 1.2109554803484583,
+          "r2": 0.2755585583844886
+        },
+        "Loja Sierra": {
+          "mae": 0.555185824591538,
+          "rmse": 0.6942912069467367,
+          "r2": 0.08706128035273641
+        },
+        "Los Ríos": {
+          "mae": 1.1337569677262085,
+          "rmse": 1.4063481672019864,
+          "r2": 0.2511668019379567
+        },
+        "Manabí": {
+          "mae": 1.1256118916405573,
+          "rmse": 1.385530536576322,
+          "r2": 0.24628846502614676
+        },
+        "Morona Santiago": {
+          "mae": 0.710979670433149,
+          "rmse": 0.9065393568501173,
+          "r2": 0.08598069659384922
+        },
+        "Napo": {
+          "mae": 0.8141077603034252,
+          "rmse": 0.9428048661365692,
+          "r2": 0.06010012148554089
+        },
+        "Orellana": {
+          "mae": 0.7358021372467726,
+          "rmse": 0.9273366568939513,
+          "r2": -0.0065399822298868315
+        },
+        "Pastaza": {
+          "mae": 0.798009871673584,
+          "rmse": 0.9404841694061444,
+          "r2": 0.09867718875112175
+        },
+        "Pichincha": {
+          "mae": 0.7205670472067229,
+          "rmse": 0.9173347690232051,
+          "r2": 0.3636860283262885
+        },
+        "Santa Elena": {
+          "mae": 1.2863529496039112,
+          "rmse": 1.5879744040916415,
+          "r2": 0.2892898674603426
+        },
+        "Sucumbíos": {
+          "mae": 0.694415166446141,
+          "rmse": 0.8684213854406029,
+          "r2": 0.14693940767078395
+        },
+        "Tungurahua": {
+          "mae": 0.5729297405222189,
+          "rmse": 0.6806724066046709,
+          "r2": 0.32526247183269985
+        }
+      }
+    },
+    "planificacion_sin_etapas_futuras": {
+      "columnas": [
+        "zona",
+        "provincia",
+        "variedad",
+        "tipo_grano",
+        "riego_tipo",
+        "tipo_suelo",
+        "ph_suelo",
+        "materia_organica_pct",
+        "profundidad_suelo_cm",
+        "textura_arcilla_pct",
+        "textura_arena_pct",
+        "textura_limo_pct",
+        "altitud_msnm",
+        "temperatura_media_c",
+        "temperatura_min_c",
+        "temperatura_max_c",
+        "precipitacion_mm",
+        "humedad_relativa_pct",
+        "horas_luz_dia",
+        "densidad_plantas_ha",
+        "ciclo_dias",
+        "nitrogeno_kg_ha",
+        "fosforo_p2o5_kg_ha",
+        "potasio_k2o_kg_ha",
+        "magnesio_kg_ha",
+        "azufre_kg_ha",
+        "aplicaciones_nitrogeno",
+        "lamina_riego_mm",
+        "biofertilizante",
+        "semilla_certificada"
+      ],
+      "optimizado": {
+        "mae": 0.9046747786550958,
+        "rmse": 1.177355932413663,
+        "r2": 0.5419793976848766
+      },
+      "referencia_mismos_datos": {
+        "mae": 0.9121343298478779,
+        "rmse": 1.189510922842976,
+        "r2": 0.5324733954985167
+      },
+      "referencia_mediana": {
+        "mae": 1.4104010152284263,
+        "rmse": 1.8119105307861103,
+        "r2": -0.08478322042871578
+      },
+      "pliegues": [
+        {
+          "pliegue": 1,
+          "provincias_prueba": [
+            "Azuay",
+            "Bolívar",
+            "Loja",
+            "Morona Santiago",
+            "Napo",
+            "Orellana"
+          ],
+          "configuracion_elegida": 1,
+          "rmse_internos": [
+            1.3151417921275463,
+            1.295242333175375,
+            1.3044900784230866
+          ],
+          "optimizado": {
+            "mae": 0.8537369959879106,
+            "rmse": 1.0826064060579037,
+            "r2": 0.28465208491175875
+          },
+          "referencia": {
+            "mae": 0.8479214771281798,
+            "rmse": 1.0731928806344426,
+            "r2": 0.2970382468657251
+          }
+        },
+        {
+          "pliegue": 2,
+          "provincias_prueba": [
+            "Carchi",
+            "Chimborazo",
+            "El Oro",
+            "Pichincha",
+            "Santa Elena"
+          ],
+          "configuracion_elegida": 2,
+          "rmse_internos": [
+            1.2533007158314318,
+            1.251324859691039,
+            1.2484866904698428
+          ],
+          "optimizado": {
+            "mae": 0.9050590409172905,
+            "rmse": 1.1904706978209492,
+            "r2": 0.3760399789072305
+          },
+          "referencia": {
+            "mae": 0.9136413300393993,
+            "rmse": 1.2041886700801827,
+            "r2": 0.36157715797058154
+          }
+        },
+        {
+          "pliegue": 3,
+          "provincias_prueba": [
+            "Cañar",
+            "Cotopaxi",
+            "Esmeraldas",
+            "Manabí",
+            "Pastaza",
+            "Tungurahua"
+          ],
+          "configuracion_elegida": 2,
+          "rmse_internos": [
+            1.360626635288947,
+            1.3628019846967134,
+            1.345694926643531
+          ],
+          "optimizado": {
+            "mae": 0.8590315284673665,
+            "rmse": 1.1227747791875542,
+            "r2": 0.6437852650148601
+          },
+          "referencia": {
+            "mae": 0.8739463777099402,
+            "rmse": 1.1564224050227194,
+            "r2": 0.6221150655484953
+          }
+        },
+        {
+          "pliegue": 4,
+          "provincias_prueba": [
+            "Guayas",
+            "Imbabura",
+            "Loja Sierra",
+            "Los Ríos",
+            "Sucumbíos"
+          ],
+          "configuracion_elegida": 2,
+          "rmse_internos": [
+            1.3271841837757608,
+            1.3038901055328112,
+            1.303448076944995
+          ],
+          "optimizado": {
+            "mae": 1.01132038257362,
+            "rmse": 1.315882729625002,
+            "r2": 0.5545129522644932
+          },
+          "referencia": {
+            "mae": 1.0241260918917443,
+            "rmse": 1.325744023128542,
+            "r2": 0.5478109272135081
+          }
+        }
+      ],
+      "parametros_candidato": {
+        "n_estimators": 450,
+        "max_depth": 3,
+        "learning_rate": 0.03,
+        "subsample": 0.8,
+        "colsample_bytree": 0.8,
+        "reg_alpha": 0.5,
+        "reg_lambda": 5.0,
+        "random_state": 42,
+        "tree_method": "hist",
+        "n_jobs": 2,
+        "objective": "reg:squarederror",
+        "min_child_weight": 5
+      },
+      "sha256_artefacto": "620dfee07af97c8ecb177be06dec889544769f54c9cd4cf35b2e97238a077761",
+      "por_provincia": {
+        "Azuay": {
+          "mae": 0.5749016387192244,
+          "rmse": 0.7325131176819409,
+          "r2": 0.1669975802717435
+        },
+        "Bolívar": {
+          "mae": 0.6857996920744578,
+          "rmse": 0.8449882680266539,
+          "r2": 0.0688154008657299
+        },
+        "Carchi": {
+          "mae": 0.7306750362760882,
+          "rmse": 0.8768396716709332,
+          "r2": 0.2745521101917865
+        },
+        "Cañar": {
+          "mae": 0.5668781146094913,
+          "rmse": 0.7056793672842804,
+          "r2": 0.14197436522807716
+        },
+        "Chimborazo": {
+          "mae": 0.6438875174248353,
+          "rmse": 0.7614689519700948,
+          "r2": 0.34394415704897674
+        },
+        "Cotopaxi": {
+          "mae": 0.5745651828675042,
+          "rmse": 0.6830320744459616,
+          "r2": 0.40567595571165294
+        },
+        "El Oro": {
+          "mae": 0.9442276090110828,
+          "rmse": 1.1756736535410808,
+          "r2": -0.03331397896870536
+        },
+        "Esmeraldas": {
+          "mae": 1.1021077503098384,
+          "rmse": 1.4441410533879786,
+          "r2": -0.11107102059286578
+        },
+        "Guayas": {
+          "mae": 1.2863790661493937,
+          "rmse": 1.604883272662094,
+          "r2": 0.09302418543094282
+        },
+        "Imbabura": {
+          "mae": 0.9213536581397057,
+          "rmse": 1.1367227854403597,
+          "r2": 0.09141385278025171
+        },
+        "Loja": {
+          "mae": 1.1571444374475723,
+          "rmse": 1.41814905580316,
+          "r2": 0.006447792938971464
+        },
+        "Loja Sierra": {
+          "mae": 0.5959287650009679,
+          "rmse": 0.7257503395838633,
+          "r2": 0.0024543201040235774
+        },
+        "Los Ríos": {
+          "mae": 1.2529035433511886,
+          "rmse": 1.5784030042342865,
+          "r2": 0.056731819772862235
+        },
+        "Manabí": {
+          "mae": 1.2362922534236203,
+          "rmse": 1.531371598994938,
+          "r2": 0.07926609734850787
+        },
+        "Morona Santiago": {
+          "mae": 0.7913545634648571,
+          "rmse": 1.008702868918709,
+          "r2": -0.1316406850539189
+        },
+        "Napo": {
+          "mae": 0.8919911177653187,
+          "rmse": 1.0158382595628528,
+          "r2": -0.09115662533134317
+        },
+        "Orellana": {
+          "mae": 0.7691609331387195,
+          "rmse": 0.9537951776827798,
+          "r2": -0.0647960235368581
+        },
+        "Pastaza": {
+          "mae": 0.8606687076568604,
+          "rmse": 0.9958591679244665,
+          "r2": -0.0105859007219411
+        },
+        "Pichincha": {
+          "mae": 0.8315815558238905,
+          "rmse": 1.097230194103364,
+          "r2": 0.08964401746747064
+        },
+        "Santa Elena": {
+          "mae": 1.482285451889038,
+          "rmse": 1.9305289451170853,
+          "r2": -0.050408304001569704
+        },
+        "Sucumbíos": {
+          "mae": 0.703469251223973,
+          "rmse": 0.9033490143734763,
+          "r2": 0.07693983208460109
+        },
+        "Tungurahua": {
+          "mae": 0.6425526526699897,
+          "rmse": 0.7641997562852497,
+          "r2": 0.1495038248816163
+        }
+      }
+    }
+  },
+  "segundos": 38.75,
+  "motivo_no_publicacion": "Procedencia original sin acreditar y sin cosechas externas de validación. El contrato de planificación también requiere adaptar inferencia y evaluar variables realmente disponibles."
+}

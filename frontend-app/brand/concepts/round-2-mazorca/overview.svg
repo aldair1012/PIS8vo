@@ -1,0 +1,125 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1600" height="840" viewBox="0 0 1600 840"><defs><filter id="grey"><feColorMatrix type="saturate" values="0"/></filter></defs><rect width="1600" height="840" fill="#f7f7f4"/><text x="60" y="78" font-family="system-ui,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="40" font-weight="700" fill="#161616">ZeaSys · conceptos de mazorca</text><text x="60" y="116" font-family="system-ui,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="20" fill="#6b6b6b">Iteración 2 · una tinta para evaluar la silueta</text><rect x="60" y="150" width="474.667" height="630" rx="18" fill="#fff" stroke="#e4e4e0" stroke-width="1"/><g filter="url(#grey)"><svg xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc" viewBox="0 0 256 256" x="90" y="190" width="414.667" height="300" preserveAspectRatio="xMidYMid meet">
+  <title>Mazorca con hojas</title>
+  <desc>Una mazorca frontal, protegida por dos hojas de su envoltura.</desc>
+  <path fill="#000" d="M91 119C52 128 38 162 47 198c22-5 40-18 52-41l8-26zm74 0c39 9 53 43 44 79-22-5-40-18-52-41l-8-26z"/>
+  <path fill="#000" d="M128 31c-37 20-58 57-58 102 0 48 22 82 58 101 36-19 58-53 58-101 0-45-21-82-58-102z"/>
+  <g fill="#fff">
+    <ellipse cx="108" cy="73" rx="9" ry="12"/><ellipse cx="148" cy="73" rx="9" ry="12"/>
+    <ellipse cx="96" cy="105" rx="9" ry="12"/><ellipse cx="128" cy="105" rx="9" ry="12"/><ellipse cx="160" cy="105" rx="9" ry="12"/>
+    <ellipse cx="96" cy="139" rx="9" ry="12"/><ellipse cx="128" cy="139" rx="9" ry="12"/><ellipse cx="160" cy="139" rx="9" ry="12"/>
+    <ellipse cx="103" cy="173" rx="9" ry="12"/><ellipse cx="153" cy="173" rx="9" ry="12"/>
+  </g>
+</svg>
+</g><g filter="url(#grey)"><svg xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc" viewBox="0 0 256 256" x="90" y="516" width="64" height="64" preserveAspectRatio="xMidYMid meet">
+  <title>Mazorca con hojas</title>
+  <desc>Una mazorca frontal, protegida por dos hojas de su envoltura.</desc>
+  <path fill="#000" d="M91 119C52 128 38 162 47 198c22-5 40-18 52-41l8-26zm74 0c39 9 53 43 44 79-22-5-40-18-52-41l-8-26z"/>
+  <path fill="#000" d="M128 31c-37 20-58 57-58 102 0 48 22 82 58 101 36-19 58-53 58-101 0-45-21-82-58-102z"/>
+  <g fill="#fff">
+    <ellipse cx="108" cy="73" rx="9" ry="12"/><ellipse cx="148" cy="73" rx="9" ry="12"/>
+    <ellipse cx="96" cy="105" rx="9" ry="12"/><ellipse cx="128" cy="105" rx="9" ry="12"/><ellipse cx="160" cy="105" rx="9" ry="12"/>
+    <ellipse cx="96" cy="139" rx="9" ry="12"/><ellipse cx="128" cy="139" rx="9" ry="12"/><ellipse cx="160" cy="139" rx="9" ry="12"/>
+    <ellipse cx="103" cy="173" rx="9" ry="12"/><ellipse cx="153" cy="173" rx="9" ry="12"/>
+  </g>
+</svg>
+</g><text x="122" y="600" font-family="system-ui,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="12" fill="#8a8a8a" text-anchor="middle">64px</text><g filter="url(#grey)"><svg xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc" viewBox="0 0 256 256" x="180" y="548" width="32" height="32" preserveAspectRatio="xMidYMid meet">
+  <title>Mazorca con hojas</title>
+  <desc>Una mazorca frontal, protegida por dos hojas de su envoltura.</desc>
+  <path fill="#000" d="M91 119C52 128 38 162 47 198c22-5 40-18 52-41l8-26zm74 0c39 9 53 43 44 79-22-5-40-18-52-41l-8-26z"/>
+  <path fill="#000" d="M128 31c-37 20-58 57-58 102 0 48 22 82 58 101 36-19 58-53 58-101 0-45-21-82-58-102z"/>
+  <g fill="#fff">
+    <ellipse cx="108" cy="73" rx="9" ry="12"/><ellipse cx="148" cy="73" rx="9" ry="12"/>
+    <ellipse cx="96" cy="105" rx="9" ry="12"/><ellipse cx="128" cy="105" rx="9" ry="12"/><ellipse cx="160" cy="105" rx="9" ry="12"/>
+    <ellipse cx="96" cy="139" rx="9" ry="12"/><ellipse cx="128" cy="139" rx="9" ry="12"/><ellipse cx="160" cy="139" rx="9" ry="12"/>
+    <ellipse cx="103" cy="173" rx="9" ry="12"/><ellipse cx="153" cy="173" rx="9" ry="12"/>
+  </g>
+</svg>
+</g><text x="196" y="600" font-family="system-ui,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="12" fill="#8a8a8a" text-anchor="middle">32px</text><g filter="url(#grey)"><svg xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc" viewBox="0 0 256 256" x="238" y="564" width="16" height="16" preserveAspectRatio="xMidYMid meet">
+  <title>Mazorca con hojas</title>
+  <desc>Una mazorca frontal, protegida por dos hojas de su envoltura.</desc>
+  <path fill="#000" d="M91 119C52 128 38 162 47 198c22-5 40-18 52-41l8-26zm74 0c39 9 53 43 44 79-22-5-40-18-52-41l-8-26z"/>
+  <path fill="#000" d="M128 31c-37 20-58 57-58 102 0 48 22 82 58 101 36-19 58-53 58-101 0-45-21-82-58-102z"/>
+  <g fill="#fff">
+    <ellipse cx="108" cy="73" rx="9" ry="12"/><ellipse cx="148" cy="73" rx="9" ry="12"/>
+    <ellipse cx="96" cy="105" rx="9" ry="12"/><ellipse cx="128" cy="105" rx="9" ry="12"/><ellipse cx="160" cy="105" rx="9" ry="12"/>
+    <ellipse cx="96" cy="139" rx="9" ry="12"/><ellipse cx="128" cy="139" rx="9" ry="12"/><ellipse cx="160" cy="139" rx="9" ry="12"/>
+    <ellipse cx="103" cy="173" rx="9" ry="12"/><ellipse cx="153" cy="173" rx="9" ry="12"/>
+  </g>
+</svg>
+</g><text x="246" y="600" font-family="system-ui,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="12" fill="#8a8a8a" text-anchor="middle">16px</text><text x="90.0" y="636" font-family="system-ui,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="26" font-weight="700" fill="#161616">A · Mazorca con hojas</text><text x="90.0" y="670" font-family="system-ui,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="19" fill="#555">Mazorca frontal y reconocible, con sus</text><text x="90.0" y="696" font-family="system-ui,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="19" fill="#555">hojas como parte de la silueta.</text><rect x="562.667" y="150" width="474.667" height="630" rx="18" fill="#fff" stroke="#e4e4e0" stroke-width="1"/><g filter="url(#grey)"><svg xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc" viewBox="0 0 256 256" x="592.667" y="190" width="414.667" height="300" preserveAspectRatio="xMidYMid meet">
+  <title>Mazorca geométrica</title>
+  <desc>Una mazorca compacta compuesta por tres hileras de granos y una envoltura angular.</desc>
+  <path fill="#000" d="M128 27c-43 24-66 60-66 106 0 44 24 77 66 96 42-19 66-52 66-96 0-46-23-82-66-106zm0 25 42 27v96l-42 27-42-27V79z" fill-rule="evenodd"/>
+  <g fill="#000">
+    <path d="m103 78 18 12-18 12-18-12zm50 0 18 12-18 12-18-12z"/>
+    <path d="m88 111 18 12-18 12-18-12zm40 0 18 12-18 12-18-12zm40 0 18 12-18 12-18-12z"/>
+    <path d="m88 145 18 12-18 12-18-12zm40 0 18 12-18 12-18-12zm40 0 18 12-18 12-18-12z"/>
+    <path d="m103 178 18 12-18 12-18-12zm50 0 18 12-18 12-18-12z"/>
+  </g>
+  <path fill="#000" d="M68 159c-6 28 7 53 31 69-3-19-6-34-12-48zm120 0c6 28-7 53-31 69 3-19 6-34 12-48z"/>
+</svg>
+</g><g filter="url(#grey)"><svg xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc" viewBox="0 0 256 256" x="592.667" y="516" width="64" height="64" preserveAspectRatio="xMidYMid meet">
+  <title>Mazorca geométrica</title>
+  <desc>Una mazorca compacta compuesta por tres hileras de granos y una envoltura angular.</desc>
+  <path fill="#000" d="M128 27c-43 24-66 60-66 106 0 44 24 77 66 96 42-19 66-52 66-96 0-46-23-82-66-106zm0 25 42 27v96l-42 27-42-27V79z" fill-rule="evenodd"/>
+  <g fill="#000">
+    <path d="m103 78 18 12-18 12-18-12zm50 0 18 12-18 12-18-12z"/>
+    <path d="m88 111 18 12-18 12-18-12zm40 0 18 12-18 12-18-12zm40 0 18 12-18 12-18-12z"/>
+    <path d="m88 145 18 12-18 12-18-12zm40 0 18 12-18 12-18-12zm40 0 18 12-18 12-18-12z"/>
+    <path d="m103 178 18 12-18 12-18-12zm50 0 18 12-18 12-18-12z"/>
+  </g>
+  <path fill="#000" d="M68 159c-6 28 7 53 31 69-3-19-6-34-12-48zm120 0c6 28-7 53-31 69 3-19 6-34 12-48z"/>
+</svg>
+</g><text x="624.667" y="600" font-family="system-ui,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="12" fill="#8a8a8a" text-anchor="middle">64px</text><g filter="url(#grey)"><svg xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc" viewBox="0 0 256 256" x="682.667" y="548" width="32" height="32" preserveAspectRatio="xMidYMid meet">
+  <title>Mazorca geométrica</title>
+  <desc>Una mazorca compacta compuesta por tres hileras de granos y una envoltura angular.</desc>
+  <path fill="#000" d="M128 27c-43 24-66 60-66 106 0 44 24 77 66 96 42-19 66-52 66-96 0-46-23-82-66-106zm0 25 42 27v96l-42 27-42-27V79z" fill-rule="evenodd"/>
+  <g fill="#000">
+    <path d="m103 78 18 12-18 12-18-12zm50 0 18 12-18 12-18-12z"/>
+    <path d="m88 111 18 12-18 12-18-12zm40 0 18 12-18 12-18-12zm40 0 18 12-18 12-18-12z"/>
+    <path d="m88 145 18 12-18 12-18-12zm40 0 18 12-18 12-18-12zm40 0 18 12-18 12-18-12z"/>
+    <path d="m103 178 18 12-18 12-18-12zm50 0 18 12-18 12-18-12z"/>
+  </g>
+  <path fill="#000" d="M68 159c-6 28 7 53 31 69-3-19-6-34-12-48zm120 0c6 28-7 53-31 69 3-19 6-34 12-48z"/>
+</svg>
+</g><text x="698.667" y="600" font-family="system-ui,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="12" fill="#8a8a8a" text-anchor="middle">32px</text><g filter="url(#grey)"><svg xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc" viewBox="0 0 256 256" x="740.667" y="564" width="16" height="16" preserveAspectRatio="xMidYMid meet">
+  <title>Mazorca geométrica</title>
+  <desc>Una mazorca compacta compuesta por tres hileras de granos y una envoltura angular.</desc>
+  <path fill="#000" d="M128 27c-43 24-66 60-66 106 0 44 24 77 66 96 42-19 66-52 66-96 0-46-23-82-66-106zm0 25 42 27v96l-42 27-42-27V79z" fill-rule="evenodd"/>
+  <g fill="#000">
+    <path d="m103 78 18 12-18 12-18-12zm50 0 18 12-18 12-18-12z"/>
+    <path d="m88 111 18 12-18 12-18-12zm40 0 18 12-18 12-18-12zm40 0 18 12-18 12-18-12z"/>
+    <path d="m88 145 18 12-18 12-18-12zm40 0 18 12-18 12-18-12zm40 0 18 12-18 12-18-12z"/>
+    <path d="m103 178 18 12-18 12-18-12zm50 0 18 12-18 12-18-12z"/>
+  </g>
+  <path fill="#000" d="M68 159c-6 28 7 53 31 69-3-19-6-34-12-48zm120 0c6 28-7 53-31 69 3-19 6-34 12-48z"/>
+</svg>
+</g><text x="748.667" y="600" font-family="system-ui,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="12" fill="#8a8a8a" text-anchor="middle">16px</text><text x="592.6666666666667" y="636" font-family="system-ui,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="26" font-weight="700" fill="#161616">B · Mazorca geométrica</text><text x="592.6666666666667" y="670" font-family="system-ui,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="19" fill="#555">Hileras de granos ordenadas dentro de una</text><text x="592.6666666666667" y="696" font-family="system-ui,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="19" fill="#555">envoltura angular.</text><rect x="1065.33" y="150" width="474.667" height="630" rx="18" fill="#fff" stroke="#161616" stroke-width="2"/><g filter="url(#grey)"><svg xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc" viewBox="0 0 256 256" x="1095.33" y="190" width="414.667" height="300" preserveAspectRatio="xMidYMid meet">
+  <title>Mazorca Z</title>
+  <desc>Una mazorca estilizada con un surco en negativo que dibuja la letra Z.</desc>
+  <path fill="#000" d="M128 28c-44 25-66 61-66 107 0 43 24 75 66 94 42-19 66-51 66-94 0-46-22-82-66-107z"/>
+  <path fill="#fff" d="M91 79h75v18l-46 63h45v18H89v-18l46-63H91z"/>
+  <path fill="#000" d="M68 155c-7 27 7 54 31 72-4-20-7-37-13-51zm120 0c7 27-7 54-31 72 4-20 7-37 13-51z"/>
+</svg>
+</g><g filter="url(#grey)"><svg xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc" viewBox="0 0 256 256" x="1095.33" y="516" width="64" height="64" preserveAspectRatio="xMidYMid meet">
+  <title>Mazorca Z</title>
+  <desc>Una mazorca estilizada con un surco en negativo que dibuja la letra Z.</desc>
+  <path fill="#000" d="M128 28c-44 25-66 61-66 107 0 43 24 75 66 94 42-19 66-51 66-94 0-46-22-82-66-107z"/>
+  <path fill="#fff" d="M91 79h75v18l-46 63h45v18H89v-18l46-63H91z"/>
+  <path fill="#000" d="M68 155c-7 27 7 54 31 72-4-20-7-37-13-51zm120 0c7 27-7 54-31 72 4-20 7-37 13-51z"/>
+</svg>
+</g><text x="1127.33" y="600" font-family="system-ui,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="12" fill="#8a8a8a" text-anchor="middle">64px</text><g filter="url(#grey)"><svg xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc" viewBox="0 0 256 256" x="1185.33" y="548" width="32" height="32" preserveAspectRatio="xMidYMid meet">
+  <title>Mazorca Z</title>
+  <desc>Una mazorca estilizada con un surco en negativo que dibuja la letra Z.</desc>
+  <path fill="#000" d="M128 28c-44 25-66 61-66 107 0 43 24 75 66 94 42-19 66-51 66-94 0-46-22-82-66-107z"/>
+  <path fill="#fff" d="M91 79h75v18l-46 63h45v18H89v-18l46-63H91z"/>
+  <path fill="#000" d="M68 155c-7 27 7 54 31 72-4-20-7-37-13-51zm120 0c7 27-7 54-31 72 4-20 7-37 13-51z"/>
+</svg>
+</g><text x="1201.33" y="600" font-family="system-ui,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="12" fill="#8a8a8a" text-anchor="middle">32px</text><g filter="url(#grey)"><svg xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc" viewBox="0 0 256 256" x="1243.33" y="564" width="16" height="16" preserveAspectRatio="xMidYMid meet">
+  <title>Mazorca Z</title>
+  <desc>Una mazorca estilizada con un surco en negativo que dibuja la letra Z.</desc>
+  <path fill="#000" d="M128 28c-44 25-66 61-66 107 0 43 24 75 66 94 42-19 66-51 66-94 0-46-22-82-66-107z"/>
+  <path fill="#fff" d="M91 79h75v18l-46 63h45v18H89v-18l46-63H91z"/>
+  <path fill="#000" d="M68 155c-7 27 7 54 31 72-4-20-7-37-13-51zm120 0c7 27-7 54-31 72 4-20 7-37 13-51z"/>
+</svg>
+</g><text x="1251.33" y="600" font-family="system-ui,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="12" fill="#8a8a8a" text-anchor="middle">16px</text><text x="1095.3333333333335" y="636" font-family="system-ui,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="26" font-weight="700" fill="#161616">C · Mazorca Z</text><text x="1095.3333333333335" y="664" font-family="system-ui,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="15" font-weight="700" fill="#161616" letter-spacing="1.5">RECOMMENDED</text><text x="1095.3333333333335" y="698" font-family="system-ui,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="19" fill="#555">Una mazorca que guarda la Z de ZeaSys en un</text><text x="1095.3333333333335" y="724" font-family="system-ui,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="19" fill="#555">surco negativo.</text></svg>

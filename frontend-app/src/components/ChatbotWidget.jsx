@@ -18,7 +18,7 @@ const VISTAS = {
 };
 
 const SUGERENCIAS = {
-  yield: ['¿Qué nutrientes necesita mi parcela?', '¿Qué factor explica más la brecha productiva?'],
+  yield: ['¿Cuántas toneladas estima mi simulación para este lote?', '¿Cómo cambian los escenarios climáticos de mi simulación?'],
   scenarios: ['¿Qué fecha e híbrido presentan menor riesgo?', '¿Cómo cambia la probabilidad entre escenarios?'],
   climate: ['¿Cómo está el clima hoy y cómo afecta mi parcela?', '¿Qué riesgo trae el pronóstico de 7 días?'],
   finance: ['¿Cómo afecta el precio del maíz a mi margen?', '¿Qué costo afecta más al margen?'],
@@ -29,12 +29,12 @@ const SUGERENCIAS = {
 // proveedor concreto cuando el chatflow puede cambiarse sin tocar React.
 const PROVEEDOR_IA = 'ZeaSys IA';
 
-const resumirDashboard = (contextoDashboard, vistaActual, cultivoElegidoId, anioSeleccionado) => {
+const resumirDashboard = (contextoDashboard, vistaActual, cultivoElegidoId, añoSeleccionado) => {
   if (!contextoDashboard?.datos || typeof contextoDashboard.datos !== 'object') return null;
   const mismaVista = String(contextoDashboard.vista ?? '') === String(vistaActual ?? '');
   const mismaParcela = String(contextoDashboard.cultivoId ?? '') === String(cultivoElegidoId ?? '');
-  const mismoAnio = String(contextoDashboard.anio ?? '') === String(anioSeleccionado ?? '');
-  if (!mismaVista || !mismaParcela || !mismoAnio) return null;
+  const mismoAño = String(contextoDashboard.año ?? '') === String(añoSeleccionado ?? '');
+  if (!mismaVista || !mismaParcela || !mismoAño) return null;
   const datos = contextoDashboard.datos;
   const resumen = {
     vista: contextoDashboard.vista,
@@ -44,6 +44,8 @@ const resumirDashboard = (contextoDashboard, vistaActual, cultivoElegidoId, anio
     cultivo_activo: datos.cultivo_activo || null,
     percentiles: datos.percentiles || null,
     simulaciones_count: datos.simulaciones_count ?? null,
+    simulacion_seleccionada: datos.simulacion_seleccionada || null,
+    referencia_sipa: datos.referencia_sipa || null,
   };
   if (Array.isArray(datos.recomendaciones)) resumen.recomendaciones = datos.recomendaciones.slice(0, 5);
   if (Array.isArray(datos.ranking)) resumen.ranking = datos.ranking.slice(0, 5);
@@ -104,7 +106,7 @@ const ChatbotWidget = ({
   vistaActual,
   usuarioId,
   cultivoElegidoId,
-  anioSeleccionado,
+  añoSeleccionado,
   contextoDashboard,
   cultivoActivo,
   simulacion,
@@ -114,7 +116,7 @@ const ChatbotWidget = ({
   // memoria por parcela y año) y se mantiene aparte para el borrador de Nueva
   // Simulación. Así el usuario no pierde el hilo al cambiar de pestaña.
   const ambito = vistaActual === 'simular' ? 'simulacion' : 'dashboard';
-  const storageKey = `zeasys_chat_gemini_v4_${usuarioId || 'sesion'}_${ambito}_${cultivoElegidoId || 'sin-parcela'}_${anioSeleccionado || 'sin-anio'}`;
+  const storageKey = `zeasys_chat_gemini_v4_${usuarioId || 'sesion'}_${ambito}_${cultivoElegidoId || 'sin-parcela'}_${añoSeleccionado || 'sin-año'}`;
   const favoritoKey = `${storageKey}_favorito`;
   const [mensajes, setMensajes] = useState(() => leerMensajes(storageKey));
   const [favorito, setFavorito] = useState(() => leerFavorito(favoritoKey));
@@ -128,7 +130,7 @@ const ChatbotWidget = ({
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
   const vista = VISTAS[vistaActual] || { nombre: 'ZeaSys', icono: '✦' };
-  const dashboard = useMemo(() => resumirDashboard(contextoDashboard, vistaActual, cultivoElegidoId, anioSeleccionado), [contextoDashboard, vistaActual, cultivoElegidoId, anioSeleccionado]);
+  const dashboard = useMemo(() => resumirDashboard(contextoDashboard, vistaActual, cultivoElegidoId, añoSeleccionado), [contextoDashboard, vistaActual, cultivoElegidoId, añoSeleccionado]);
   const nombreParcela = cultivoActivo?.nombre_parcela
     || (vistaActual === 'simular' ? 'Sin parcela seleccionada' : 'Parcela seleccionada');
   const esSimulacion = vistaActual === 'simular' && Boolean(simulacion);
@@ -139,7 +141,7 @@ const ChatbotWidget = ({
       ? `Contexto del panel enviado a ${PROVEEDOR_IA}`
       : `Pregunta enviada a ${PROVEEDOR_IA}`;
   const detalleFuente = esSimulacion
-    ? `${PROVEEDOR_IA} recibe la pregunta, la parcela del formulario, los valores visibles de Nueva Simulación (clima de entrada, pH, textura, área y fertilizante), el clima actual, el precio de referencia y la simulación guardada si existe. El borrador no es una simulación ejecutada.`
+    ? `${PROVEEDOR_IA} recibe la pregunta, la parcela del formulario y los valores visibles de Nueva Simulación: clima del escenario con su periodo, pH, textura, área, fertilizante, fecha y datos adicionales de manejo que hayas escrito. También recibe la ficha de variedad, el clima actual, el precio de referencia y la simulación guardada si existe. El borrador no es una simulación ejecutada.`
     : dashboard
       ? `${PROVEEDOR_IA} recibe la pregunta, la parcela, el clima actual, el precio de referencia, la simulación más reciente y las cifras visibles del dashboard. Si falta una medición, debe indicarlo sin inventarla.`
       : `${PROVEEDOR_IA} recibe la pregunta y los datos autorizados de clima, precio, simulación y parcela. Si falta una medición, debe indicarlo sin inventarla.`;
@@ -198,7 +200,7 @@ const ChatbotWidget = ({
         preguntaTexto,
         vistaActual,
         cultivoElegidoId,
-        anioSeleccionado,
+        añoSeleccionado,
         dashboard,
         vistaActual === 'simular' ? simulacion : null,
       );
@@ -227,8 +229,8 @@ const ChatbotWidget = ({
         texto: sesionExpirada
           ? 'Tu sesión expiró. Vuelve a iniciar sesión para continuar usando el asistente.'
           : codigo === 502
-            ? `${PROVEEDOR_IA} no está disponible en este momento. Verifica que Flowise esté iniciado y que la credencial del proveedor tenga cuota disponible; no se mostrará una respuesta predeterminada.`
-            : `No pude conectar con el flujo de ${PROVEEDOR_IA}. Revisa el estado de Flowise e inténtalo de nuevo.`,
+            ? `${PROVEEDOR_IA} no respondió (error 502). Pulsa Reintentar; si vuelve a fallar, revisa la clave y la cuota en Flowise.`
+            : `${PROVEEDOR_IA} no pudo procesar la pregunta (error ${codigo ?? 'de conexión'}). Pulsa Reintentar.`,
         error: true,
         pregunta: preguntaTexto,
       }]);
@@ -265,7 +267,7 @@ const ChatbotWidget = ({
           conversacion_id: favorito.conversacionId,
           vista: vistaActual,
           cultivo_id: cultivoElegidoId,
-          anio: anioSeleccionado,
+          año: añoSeleccionado,
           mensajes: guardables,
         });
         setFavorito((prev) => ({ ...prev, guardado: true }));

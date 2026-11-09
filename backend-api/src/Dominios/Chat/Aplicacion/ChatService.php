@@ -8,6 +8,8 @@ use ZeaSys\Dominios\Chat\Dominio\MemoriaSesionInterface;
 use ZeaSys\Dominios\Chat\Infraestructura\GeminiFlowise;
 use ZeaSys\Dominios\Lotes\Dominio\CultivoRepositoryInterface;
 use ZeaSys\Dominios\Simulaciones\Dominio\SimulacionRepositoryInterface;
+use ZeaSys\Dominios\Simulaciones\Aplicacion\CatalogoMaiz;
+use ZeaSys\Dominios\Terreno\Aplicacion\ProvinciaParcela;
 use ZeaSys\Kernel\Errores\AccesoDenegadoException;
 
 /**
@@ -32,14 +34,14 @@ final class ChatService
     }
 
     /**
-     * @return array{texto:string,secciones:array,accion:?string,confianza:float,intencion:string,fuente_datos:array}
+     * @return array{texto:string,secciones:array,accion:?string,confianza:?float,intencion:string,fuente_datos:array}
      */
     public function preguntar(
         string $pregunta,
         ?string $vista = null,
         int $usuarioId = 0,
         ?int $cultivoId = null,
-        ?int $anio = null,
+        ?int $año = null,
         ?array $dashboard = null,
         ?array $simulacion = null,
     ): array {
@@ -65,7 +67,7 @@ final class ChatService
         $contextoPrevio = $this->memoria->contexto();
         if (array_key_exists('cultivo_id', $contextoPrevio)
             && ((int) ($contextoPrevio['cultivo_id'] ?? 0) !== (int) ($cultivoId ?? 0)
-                || ($contextoPrevio['anio'] ?? null) !== $anio
+                || ($contextoPrevio['año'] ?? null) !== $año
                 || ($contextoPrevio['ambito'] ?? 'dashboard') !== $ambito)) {
             $this->memoria->limpiar();
         }
@@ -98,11 +100,11 @@ final class ChatService
                     $cultivosUsuario = [];
                 }
 
-                $simulacionesRecientes = $this->simulaciones->obtenerRecientes($usuarioId, 12, $anio);
+                $simulacionesRecientes = $this->simulaciones->obtenerRecientes($usuarioId, 12, $año);
                 if ($cultivoId !== null) {
                     $simulacionesRecientes = array_values(array_filter(
                         $simulacionesRecientes,
-                        static fn (array $simulacion): bool => (int) ($simulacion['cultivo_id'] ?? 0) === $cultivoId,
+                        static fn (array $simulacion): bool => (int) ($simulacion['parcela_id'] ?? 0) === $cultivoId,
                     ));
                 } elseif ($vista === 'simular') {
                     $simulacionesRecientes = [];
@@ -122,7 +124,7 @@ final class ChatService
                 $contextoAgricola = $this->contextoAgricola->construir(
                     $usuarioId,
                     (int) ($cultivoSeleccionado['id'] ?? 0),
-                    $anio,
+                    $año,
                     $simulacionesRecientes,
                 );
             } catch (\Throwable) {
@@ -142,7 +144,7 @@ final class ChatService
             'fecha_local' => date('Y-m-d'),
             'panel_actual' => $vista,
             'ambito' => $ambito,
-            'anio_seleccionado' => $anio,
+            'año_seleccionado' => $año,
             'cultivo_id_seleccionado' => $cultivoId,
             'cultivo_activo' => $this->normalizar($cultivoSeleccionado),
             'cultivos_autorizados' => $this->normalizar($cultivosUsuario),
@@ -158,7 +160,7 @@ final class ChatService
         // envía al modelo únicamente cuando la pregunta las menciona.
         if ($usuarioId > 0) {
             try {
-                $favoritosContexto = $this->favoritos->recientesParaContexto($usuarioId, $cultivoId, $anio, 4);
+                $favoritosContexto = $this->favoritos->recientesParaContexto($usuarioId, $cultivoId, $año, 4);
                 if ($favoritosContexto !== []) {
                     $contexto['conversaciones_favoritas'] = $favoritosContexto;
                 }
@@ -173,7 +175,7 @@ final class ChatService
             $contexto,
             $usuarioId,
             $cultivoId,
-            $anio,
+            $año,
             $identificadorConversacion,
             $ambito,
         );
@@ -183,7 +185,7 @@ final class ChatService
         $this->memoria->registrarTema('asistente');
         $this->memoria->registrarContexto([
             'cultivo_id' => $cultivoId,
-            'anio' => $anio,
+            'año' => $año,
             'ambito' => $ambito,
             'panel_actual' => $vista,
         ]);
@@ -192,13 +194,15 @@ final class ChatService
             'texto' => $texto,
             'secciones' => [],
             'accion' => null,
-            'confianza' => 1.0,
+            // No existe una probabilidad calibrada para cada respuesta generada.
+            'confianza' => null,
             'intencion' => 'asistente',
             'fuente_datos' => [
                 'proveedor' => 'Flowise (proveedor configurado en el chatflow)',
                 'respuesta_directa_del_flujo' => true,
+                'referencias_consultadas' => array_map(static fn (array $ref): array => array_intersect_key($ref, array_flip(['archivo','pagina_pdf','año_fuente','extracto_cotejado_visualmente'])), $this->flujoIa->referenciasConsultadas()),
                 'parcela_id' => $cultivoId,
-                'anio' => $anio,
+                'año' => $año,
                 'vista' => $vista,
                 'ambito' => $ambito,
                 'conversacion_id' => $identificadorConversacion,
@@ -258,22 +262,55 @@ final class ChatService
         $texturaCodigo = is_string($simulacion['tipo_suelo'] ?? null)
             ? mb_strtolower(trim($simulacion['tipo_suelo']), 'UTF-8')
             : '';
+        $tipos = json_decode((string)file_get_contents(__DIR__.'/../../../../data/referencias/tipos-suelo.json'),true,512,JSON_THROW_ON_ERROR);
+        foreach ($tipos as $code=>$rule) $texturas[$code] ??= $rule['label'];
         $textura = $texturas[$texturaCodigo] ?? null;
 
         $areaParcela = $this->numeroRango($cultivo['area'] ?? null, 0.0001, 1000000);
         $areaSimulada = $this->numeroRango($simulacion['area_simulada'] ?? null, 0.0001, 1000000);
         $phEntrada = $this->numeroRango($simulacion['ph_suelo'] ?? null, 0, 14);
+        $lluviaCicloExplicita = array_key_exists('precipitacion_ciclo_mm', $simulacion);
+        $campos = [];
+        $schema = json_decode((string) file_get_contents(__DIR__.'/../../../../data/referencias/entradas-campo.json'), true, 512, JSON_THROW_ON_ERROR);
+        $rawCampos = is_array($simulacion['parametros_campo'] ?? null) ? $simulacion['parametros_campo'] : [];
+        foreach ($schema['campos'] as $key => $rule) {
+            $raw = $rawCampos[$key] ?? null;
+            if ($raw === null || is_bool($raw) || !is_scalar($raw) || $raw === '') continue;
+            if (isset($rule['opciones'])) {
+                if (array_key_exists((string) $raw, $rule['opciones'])) $campos[$key] = !empty($rule['entero']) ? (int) $raw : (string) $raw;
+                continue;
+            }
+            $value = $this->numeroRango($raw, $rule['min'], $rule['max']);
+            if ($value !== null && (empty($rule['entero']) || floor($value) === $value)) $campos[$key] = $value;
+        }
+        $fecha = $simulacion['fecha_siembra'] ?? null;
+        $date = is_string($fecha) && preg_match('/^\d{4}-\d{2}-\d{2}$/D', $fecha) === 1 ? \DateTimeImmutable::createFromFormat('!Y-m-d', $fecha) : false;
+        $fecha = $date && $date->format('Y-m-d') === $fecha && $date->format('Y') >= '1950' && $date->format('Y') <= '2100' ? $fecha : null;
+        $catalogo = new CatalogoMaiz();
+        $ficha = $catalogo->buscar((string) ($cultivo['variedad_maiz'] ?? ''));
 
         $salida = [
             'estado' => 'borrador_no_ejecutado',
             'origen' => 'Formulario Nueva Simulación',
             'parcela_id' => (int) ($cultivo['id'] ?? 0),
             'nombre_parcela' => (string) ($cultivo['nombre_parcela'] ?? ''),
+            'provincia_identificada' => ProvinciaParcela::resolver($cultivo),
             'area_parcela_ha' => $areaParcela,
             'area_simulada_ha' => $areaSimulada,
             'temperatura_entrada_c' => $this->numeroRango($simulacion['temperatura'] ?? null, -10, 60),
             'humedad_entrada_pct' => $this->numeroRango($simulacion['humedad'] ?? null, 0, 100),
-            'precipitacion_anual_entrada_mm' => $this->numeroRango($simulacion['precipitacion'] ?? null, 0, 20000),
+            'precipitacion_anual_entrada_mm' => $lluviaCicloExplicita ? null : $this->numeroRango($simulacion['precipitacion'] ?? null, 0, 20000),
+            'precipitacion_ciclo_entrada_mm' => $lluviaCicloExplicita ? $this->numeroRango($simulacion['precipitacion_ciclo_mm'], 0, 4000) : null,
+            'periodo_precipitacion' => $lluviaCicloExplicita ? 'mm/ciclo' : 'mm/año (contrato anterior)',
+            'parametros_campo' => $campos,
+            'fecha_siembra' => $fecha,
+            'variedad_documentada' => $ficha === null ? null : [
+                'nombre'=>$ficha['nombre'], 'usos_documentados'=>$ficha['usos_documentados'],
+                'dias_orientativos_por_uso'=>$ficha['cosecha_orientativa_dias'],
+                'simulacion_grano_habilitada'=>$ficha['simulacion_grano_habilitada'],
+                'fuentes'=>array_slice($catalogo->evaluar($cultivo)['actual']['fuentes'],0,3),
+                'nota'=>'Ficha documental. La simulación actual estima grano seco; otros destinos requieren su modelo propio. No acredita precisión de cosecha.',
+            ],
             'fertilizante_n_entrada_kg_ha' => $this->numeroRango($simulacion['fertilizante'] ?? null, 0, 2000),
             'ph_suelo_entrada' => $phEntrada,
             'textura_suelo_entrada' => $textura,
@@ -285,7 +322,7 @@ final class ChatService
             'area_simulada_ha' => 'área a simular',
             'temperatura_entrada_c' => 'temperatura media',
             'humedad_entrada_pct' => 'humedad relativa',
-            'precipitacion_anual_entrada_mm' => 'precipitación anual',
+            ($lluviaCicloExplicita ? 'precipitacion_ciclo_entrada_mm' : 'precipitacion_anual_entrada_mm') => $lluviaCicloExplicita ? 'lluvia acumulada del ciclo' : 'precipitación anual',
             'fertilizante_n_entrada_kg_ha' => 'fertilizante/nitrógeno',
             'ph_suelo_entrada' => 'pH del suelo',
             'textura_suelo_entrada' => 'textura del suelo',

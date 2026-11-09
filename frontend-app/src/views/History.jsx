@@ -1,10 +1,12 @@
-import { useCallback, useState, useEffect } from 'react';
+import { useCallback, useState, useEffect, useRef } from 'react';
 import { simulacionService } from '../services/api';
 import { Trash2, TrendingUp, Award, Activity, Database, Clock } from 'lucide-react';
 import InteractiveKPI from '../templates/Common/InteractiveKPI';
+import { historyYears } from '../utils/historyYears';
+import { precipitationPeriod } from '../utils/simulationInput';
 
 const toFiniteNumber = (value) => {
-  if (value === null || value === undefined || value === '') return null;
+  if (value === null || value === undefined || typeof value === 'boolean' || (typeof value === 'string' && value.trim() === '')) return null;
   const number = Number(value);
   return Number.isFinite(number) ? number : null;
 };
@@ -13,38 +15,63 @@ export default function History({ recargarDatos }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [anioSeleccionado, setAnioSeleccionado] = useState('');
+  const [añoSeleccionado, setAnioSeleccionado] = useState('');
+  const [añosDisponibles, setAniosDisponibles] = useState(() => historyYears());
+  const [pagina, setPagina] = useState(1);
+  const [eliminando, setEliminando] = useState(null);
+  const ultimaSolicitud = useRef(0);
+  const invalidarSolicitud = useCallback(() => {
+    ultimaSolicitud.current++;
+  }, []);
 
   const loadHistory = useCallback(async () => {
+    const solicitud = ++ultimaSolicitud.current;
     setLoading(true);
     setError(null);
     try {
-      const res = await simulacionService.historial(anioSeleccionado);
+      const res = await simulacionService.historial(añoSeleccionado, pagina);
+      if (solicitud !== ultimaSolicitud.current) return;
       setData(res);
+      if (Array.isArray(res.años_disponibles)) {
+        setAniosDisponibles([...new Set([...res.años_disponibles, new Date().getFullYear()])].sort((a, b) => a - b));
+      } else if (!añoSeleccionado) setAniosDisponibles(historyYears(res.simulaciones));
     } catch {
+      if (solicitud !== ultimaSolicitud.current) return;
+      setData(null);
       setError('Error al cargar el historial de simulaciones.');
     } finally {
-      setLoading(false);
+      if (solicitud === ultimaSolicitud.current) setLoading(false);
     }
-  }, [anioSeleccionado]);
+  }, [añoSeleccionado, pagina]);
 
   useEffect(() => {
     const refresh = setTimeout(loadHistory, 0);
-    return () => clearTimeout(refresh);
-  }, [loadHistory, recargarDatos]);
+    return () => {
+      clearTimeout(refresh);
+      invalidarSolicitud();
+    };
+  }, [loadHistory, recargarDatos, invalidarSolicitud]);
 
   const handleDelete = async (id) => {
+    if (eliminando !== null) return;
     if (!window.confirm('¿Está seguro de eliminar esta simulación del historial?')) return;
     setError(null);
+    setEliminando(id);
     try {
       await simulacionService.eliminar(id);
-      loadHistory();
+      // Si se cambió de página durante el borrado, recargar la selección vigente.
+      await recargarHistorial.current();
     } catch {
       setError('Error al eliminar la simulación.');
+    } finally {
+      setEliminando(null);
     }
   };
 
-  if (loading && !data) return <div className="flex-center" style={{ height: '70vh' }}>Cargando historial...</div>;
+  const recargarHistorial = useRef(loadHistory);
+  useEffect(() => { recargarHistorial.current = loadHistory; }, [loadHistory]);
+
+  if (loading && !data) return <div role="status" className="flex-center" style={{ height: '70vh' }}>Cargando historial...</div>;
   const { simulaciones, estadisticas } = data || { simulaciones: [], estadisticas: {} };
   const totalSimulaciones = toFiniteNumber(estadisticas.total_simulaciones);
   const rendimientoPromedio = toFiniteNumber(estadisticas.rendimiento_promedio);
@@ -63,33 +90,23 @@ export default function History({ recargarDatos }) {
         <div>
           <select 
             className="form-select" 
-            value={anioSeleccionado} 
-            onChange={(e) => setAnioSeleccionado(e.target.value)}
+            aria-label="Filtrar simulaciones por año"
+            value={añoSeleccionado} 
+            onChange={(e) => { setAnioSeleccionado(e.target.value); setPagina(1); }}
             style={{ width: '165px', padding: '0.45rem 0.75rem', borderRadius: '10px' }}
           >
             <option value="">Todos los años</option>
-            {(() => {
-              const currentYear = new Date().getFullYear();
-              const yearSet = new Set([currentYear]);
-              if (data?.simulaciones) {
-                data.simulaciones.forEach(s => {
-                  if (s.fecha_creacion) {
-                    const y = new Date(s.fecha_creacion).getFullYear();
-                    if (!isNaN(y)) yearSet.add(y);
-                  }
-                });
-              }
-              return Array.from(yearSet).sort((a, b) => a - b).map(y => (
-                <option key={y} value={String(y)}>{y}</option>
-              ));
-            })()}
+            {añosDisponibles.map(y => (
+              <option key={y} value={String(y)}>{y}</option>
+            ))}
           </select>
         </div>
       </div>
 
       {error && (
-        <div className="bg-danger-alpha text-danger" style={{ padding: '0.75rem 1rem', borderRadius: '10px', fontSize: '0.85rem', marginBottom: '1.25rem', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
+        <div role="alert" className="bg-danger-alpha text-danger" style={{ padding: '0.75rem 1rem', borderRadius: '10px', fontSize: '0.85rem', marginBottom: '1.25rem', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
           {error}
+          {!data && <button type="button" className="btn btn-secondary" onClick={loadHistory} style={{ marginLeft: '1rem' }}>Reintentar carga</button>}
         </div>
       )}
 
@@ -103,7 +120,7 @@ export default function History({ recargarDatos }) {
             value={totalSimulaciones === null ? 'No disponible' : totalSimulaciones}
             isMissing={totalSimulaciones === null}
             trend={totalSimulaciones === null ? 'Sin dato' : 'Registradas'}
-            progress={totalSimulaciones === null ? null : Math.min(100, totalSimulaciones * 10)}
+            progress={null}
             progressColor="linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%)"
             progressLabelLeft="Activas"
             delay={0}
@@ -115,12 +132,9 @@ export default function History({ recargarDatos }) {
             value={rendimientoPromedio === null ? 'No disponible' : <>{rendimientoPromedio.toFixed(2)} <span className="kpi-value-unit">t/ha</span></>}
             isMissing={rendimientoPromedio === null}
             trend={rendimientoPromedio === null ? 'Sin dato' : 'Promedio'}
-            progress={rendimientoPromedio === null ? null : Math.min(100, (rendimientoPromedio / 10) * 100)}
+            progress={null}
             progressColor="linear-gradient(90deg, #16a34a 0%, #34d399 100%)"
             progressLabelLeft="General"
-            sparklineData={[
-              ...(rendimientoPromedio === null ? [] : [rendimientoPromedio * 0.85, rendimientoPromedio * 0.95, rendimientoPromedio])
-            ]}
             delay={1}
           />
           <InteractiveKPI
@@ -130,12 +144,9 @@ export default function History({ recargarDatos }) {
             value={rendimientoMaximo === null ? 'No disponible' : <>{rendimientoMaximo.toFixed(2)} <span className="kpi-value-unit">t/ha</span></>}
             isMissing={rendimientoMaximo === null}
             trend={rendimientoMaximo === null ? 'Sin dato' : 'Récord'}
-            progress={rendimientoMaximo === null ? null : 100}
+            progress={null}
             progressColor="linear-gradient(90deg, #863bff 0%, #a855f7 100%)"
             progressLabelLeft="Límite"
-            sparklineData={[
-              ...(rendimientoMaximo === null ? [] : [rendimientoMaximo * 0.9, rendimientoMaximo * 0.95, rendimientoMaximo])
-            ]}
             delay={2}
           />
           <InteractiveKPI
@@ -145,7 +156,7 @@ export default function History({ recargarDatos }) {
             value={produccionTotal === null ? 'No disponible' : <>{produccionTotal.toLocaleString('es-EC')} <span className="kpi-value-unit">t</span></>}
             isMissing={produccionTotal === null}
             trend={produccionTotal === null ? 'Sin dato' : 'Acumulada'}
-            progress={produccionTotal === null ? null : 80}
+            progress={null}
             progressColor="linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%)"
             progressLabelLeft="Total Lotes"
             delay={3}
@@ -154,7 +165,7 @@ export default function History({ recargarDatos }) {
       )}
 
       {/* Listings table */}
-      <div className="glass-panel" style={{ width: '100%', boxSizing: 'border-box' }}>
+      {data && <div className="glass-panel" style={{ width: '100%', boxSizing: 'border-box' }}>
         <div className="glass-card-header" style={{ padding: '0.85rem 1.25rem' }}>
           <h3 style={{ fontSize: '1rem', fontWeight: 700, margin: 0 }}>Simulaciones Registradas</h3>
         </div>
@@ -184,7 +195,7 @@ export default function History({ recargarDatos }) {
                       <td style={{ padding: '0.7rem 1rem' }}>
                         <span style={{ fontWeight: 700, fontSize: '0.88rem', color: 'var(--text-primary)' }}>{sim.nombre || '-'}</span>
                         <div style={{ fontSize: '0.76rem', color: 'var(--text-subtle)', marginTop: '2px' }}>
-                          Lote: <strong style={{ color: 'var(--text-muted)' }}>{sim.nombre_parcela || 'General'}</strong> ({sim.area_simulada ?? 0} ha)
+                          Lote: <strong style={{ color: 'var(--text-muted)' }}>{sim.nombre_parcela || 'Sin parcela indicada'}</strong> ({toFiniteNumber(sim.area_simulada) === null ? 'Área no disponible' : `${toFiniteNumber(sim.area_simulada)} ha`})
                         </div>
                       </td>
                       <td style={{ padding: '0.7rem 1rem', textAlign: 'center' }}>
@@ -198,7 +209,7 @@ export default function History({ recargarDatos }) {
                             {sim.temperatura ?? '-'}°C • {sim.humedad ?? '-'}% Hum
                           </span>
                           <span style={{ background: 'var(--surface-hover)', border: '1px solid var(--border-subtle)', padding: '0.15rem 0.45rem', borderRadius: '6px', color: 'var(--text-primary)', fontWeight: 600, fontSize: '0.74rem' }}>
-                            {sim.precipitacion ?? '-'} mm Lluvia
+                            {sim.precipitacion ?? '-'} · {precipitationPeriod(sim)} Lluvia
                           </span>
                           <span style={{ background: 'var(--surface-hover)', border: '1px solid var(--border-subtle)', padding: '0.15rem 0.45rem', borderRadius: '6px', color: 'var(--text-primary)', fontWeight: 600, fontSize: '0.74rem' }}>
                             {sim.fertilizante ?? '-'} kg/ha Fert
@@ -209,8 +220,8 @@ export default function History({ recargarDatos }) {
                         </div>
                       </td>
                       <td style={{ padding: '0.7rem 1rem' }}>
-                        <div style={{ fontWeight: 800, color: '#34d399', fontSize: '0.92rem' }}>{Number(sim.rendimiento_estimado || 0).toFixed(2)} t/ha</div>
-                        <div style={{ fontSize: '0.74rem', color: 'var(--text-subtle)' }}>Total: {Number(sim.produccion_total || 0).toLocaleString()} t</div>
+                        <div style={{ fontWeight: 800, color: '#34d399', fontSize: '0.92rem' }}>{toFiniteNumber(sim.rendimiento_estimado) === null ? 'Rendimiento no disponible' : `${toFiniteNumber(sim.rendimiento_estimado).toFixed(2)} t/ha`}</div>
+                        <div style={{ fontSize: '0.74rem', color: 'var(--text-subtle)' }}>Total: {toFiniteNumber(sim.produccion_total) === null ? 'No disponible' : `${toFiniteNumber(sim.produccion_total).toLocaleString('es-EC')} t`}</div>
                       </td>
                       <td style={{ padding: '0.7rem 1rem', textAlign: 'center', fontSize: '0.8rem', color: 'var(--text-subtle)', whiteSpace: 'nowrap' }}>
                         {sim.fecha ? new Date(sim.fecha).toLocaleDateString() : '-'}
@@ -221,6 +232,8 @@ export default function History({ recargarDatos }) {
                           onClick={() => handleDelete(sim.id)} 
                           style={{ padding: '0.35rem', borderRadius: '8px', cursor: 'pointer' }}
                           title="Eliminar simulación"
+                          disabled={eliminando !== null}
+                          aria-label={`Eliminar ${sim.nombre || 'simulación'}`}
                         >
                           <Trash2 size={15} />
                         </button>
@@ -232,7 +245,14 @@ export default function History({ recargarDatos }) {
             </div>
           )}
         </div>
-      </div>
+        {data?.paginacion && <nav aria-label="Paginación del historial" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', padding: '1rem', flexWrap: 'wrap' }}>
+          <span role="status">Página {data.paginacion.pagina} de {data.paginacion.paginas} · {data.paginacion.total} simulaciones</span>
+          <div style={{ display: 'flex', gap: '.5rem' }}>
+            <button type="button" className="btn btn-secondary" disabled={loading || data.paginacion.pagina <= 1} onClick={() => setPagina(data.paginacion.pagina - 1)}>Anterior</button>
+            <button type="button" className="btn btn-secondary" disabled={loading || data.paginacion.pagina >= data.paginacion.paginas} onClick={() => setPagina(data.paginacion.pagina + 1)}>Siguiente</button>
+          </div>
+        </nav>}
+      </div>}
     </div>
   );
 }

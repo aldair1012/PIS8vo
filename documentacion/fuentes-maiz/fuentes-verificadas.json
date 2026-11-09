@@ -1,0 +1,123 @@
+[
+  {
+    "id": "INEC_ESPAC2025",
+    "institucion": "INEC",
+    "titulo": "ESPAC 2025: cultivos transitorios, datos abiertos y documentación",
+    "url": "https://www.ecuadorencifras.gob.ec/estadisticas-agropecuarias-2/",
+    "estado": "CSV, diccionarios y guía descargados y examinados",
+    "uso": "Base principal candidata de observaciones de encuesta",
+    "limite": "No contiene las 38 entradas actuales ni pesajes independientes de parcelas de ZeaSys",
+    "licencia": "CC-BY-4.0 según perfil INEC_ctnac_PM_2025.ods"
+  },
+  {
+    "id": "INEC_ESPAC2019",
+    "institucion": "INEC",
+    "titulo": "ESPAC 2019 y archivos históricos",
+    "url": "https://www.ecuadorencifras.gob.ec/encuesta-de-superficie-y-produccion-agropecuaria-continua-2019/",
+    "url_datos_identificada": "https://www.ecuadorencifras.gob.ec/documentos/web-inec/Estadisticas_agropecuarias/espac/espac-2019/Bases%20en%20formato%20CSV_ESPAC2019.zip",
+    "estado": "Portal, guía indexada y enlace a CSV identificados. Microdatos de esta edición no descargados",
+    "uso": "Candidato para reunir varios años y buscar periodos compatibles con INAMHI",
+    "limite": "Revisar el esquema de cada año y no asumir coordenadas de parcela disponibles"
+  },
+  {
+    "id": "MAG_SIPA",
+    "institucion": "Ministerio de Agricultura / SIPA",
+    "titulo": "Rendimientos objetivos de maíz amarillo duro y prácticas agropecuarias",
+    "url": "https://sipa.agricultura.gob.ec/index.php/rendimientos-de-maiz-duro-2025-cp",
+    "url_practicas": "https://sipa.agricultura.gob.ec/index.php/rendimientos-de-maiz-duro-2024-pa",
+    "url_2026": "https://sipa.agricultura.gob.ec/index.php/rendimientos-de-maiz-duro-2026-cp",
+    "url_descargas": "https://sipa.agricultura.gob.ec/index.php/sipa-estadisticas/estadisticas-descargas/estadisticas-productivas",
+    "estado": "Portales y tableros localizados. No se obtuvo una base completa por parcela en CSV",
+    "uso": "Contraste de rendimientos y manejo, y posible acceso posterior a microdatos documentados",
+    "limite": "Un indicador provincial o un gráfico no se convierte en una nueva observación de parcela"
+  },
+  {
+    "id": "MAG_SUELOS2022",
+    "institucion": "Ministerio de Agricultura",
+    "titulo": "Mapa digital de fertilidad química del Ecuador continental, 30 m, 2022",
+    "url": "https://www.datosabiertos.gob.ec/dataset/mapa-digital-de-fertilidad-quimica-de-los-suelos-del-ecuador-continental",
+    "estado": "Ficha oficial y diccionario descargado. No se descargaron ni validaron las capas de cada propiedad",
+    "uso": "Candidato de contexto espacial para pH y materia orgánica",
+    "limite": "El diccionario descargado describe clases de fertilidad. No basta para interpretar valores numéricos de cada ráster",
+    "licencia": "El catálogo declara Creative Commons Non-Commercial (Any): comprobar la licencia específica antes de redistribuir"
+  },
+  {
+    "id": "IGM_SUELOS",
+    "institucion": "IGM / Proyecto Nacional de Geoinformación",
+    "titulo": "Geopedología 1:25.000 y perfiles de suelo",
+    "url": "https://www.geoportaligm.gob.ec/proyecto_nacional/",
+    "url_ejemplo": "https://www.geoportaligm.gob.ec/geodescargas/suelos/PN1-P219.pdf",
+    "estado": "Gestor de descargas comprobado y perfil de ejemplo descargado. Texto de las tablas examinado",
+    "uso": "Ubicación, altitud, profundidad, pH, materia orgánica y fracciones de textura por horizonte",
+    "limite": "El ejemplo corresponde a pasto en Carchi en 2014. No es una cosecha de maíz ni se incorporó como tal. Transcripción numérica pendiente de revisión visual de tablas",
+    "licencia": "CC BY-NC 4.0 declarada en el gestor"
+  },
+  {
+    "id": "INAMHI_LLUVIA",
+    "institucion": "INAMHI",
+    "titulo": "Precipitación total mensual por estación",
+    "url": "https://www.datosabiertos.gob.ec/dataset/precipitacion-total-mensual/resource/98c77d18-e863-4e00-8a22-eb47f2981d9c",
+    "estado": "CSV oficial descargado y perfilado: 20588 registros estación-año, 947 códigos de estación, años presentes 1960-2019",
+    "uso": "Histórico de lluvia mensual para periodos cubiertos",
+    "limite": "No es clima observado de 2025 ni serie completa para todas las estaciones. Celdas vacías no son cero",
+    "licencia": "Creative Commons Attribution según catálogo"
+  },
+  {
+    "id": "INAMHI_TMEDIA",
+    "institucion": "INAMHI",
+    "titulo": "Temperatura media mensual por estación",
+    "url": "https://www.datosabiertos.gob.ec/dataset/temperatura-media-mensual/resource/29d46d3d-2c26-46a7-b7e2-8bed24fbba5c",
+    "estado": "CSV oficial descargado y perfilado: 6498 registros estación-año, 360 códigos de estación, años presentes 1960-2019",
+    "uso": "Histórico de temperatura media mensual para periodos cubiertos",
+    "limite": "No contiene por sí solo temperatura mínima, máxima ni humedad relativa. Cobertura incompleta",
+    "licencia": "Creative Commons Attribution según catálogo"
+  },
+  {
+    "id": "INAMHI_CATALOGO",
+    "institucion": "INAMHI",
+    "titulo": "Catálogo de estadísticas meteorológicas",
+    "url": "https://www.inamhi.gob.ec/catalogo-de-productos/",
+    "estado": "Catálogo consultado. Series adicionales no descargadas",
+    "uso": "Identificar productos de humedad relativa y temperaturas mínimas y máximas",
+    "limite": "La presencia en el catálogo no demuestra disponibilidad inmediata o gratuita en CSV"
+  },
+  {
+    "id": "INIAP_H603",
+    "institucion": "INIAP",
+    "titulo": "Development of a new maize hybrid for the Ecuadorian lowland",
+    "url": "https://repositorio.iniap.gob.ec/items/167c75ef-de78-4f29-9939-2e7e71fea5f9",
+    "estado": "Ficha y resumen consultados. No se descargó microdato por repetición",
+    "uso": "Evidencia de comparación de híbridos y condiciones de agua en ensayos multisitio 2010-2013",
+    "limite": "Las medias publicadas no equivalen a una tabla de observaciones independientes ni a rendimientos futuros garantizados"
+  },
+  {
+    "id": "INIAP_ENSAYOS",
+    "institucion": "INIAP",
+    "titulo": "Ensayos de maíz de altura y ensayos de híbridos",
+    "url": "https://repositorio.iniap.gob.ec/items/7d5c69fc-6f2f-42c5-a441-d0fd698584b4",
+    "url_complementaria": "https://repositorio.iniap.gob.ec/items/167c75ef-de78-4f29-9939-2e7e71fea5f9",
+    "estado": "Referencias de investigación identificadas. Pendiente recuperar microdatos con tratamientos y repeticiones",
+    "uso": "Buscar información de variedad, diseño de siembra, fertilización y rendimiento experimental",
+    "limite": "No asumir que cada fuente contiene todas las variables ni copiar recomendaciones como observaciones de encuesta"
+  },
+  {
+    "id": "INIAP_NUTRIENTES",
+    "institucion": "INIAP y autores de investigación realizada en Pichilingue, Ecuador",
+    "titulo": "Impact of nutrient omission technique on the formation of a simple hybrid of corn",
+    "url": "https://tecnologia.iniap.gob.ec/2025/04/28/evaluacion-de-la-tecnica-de-omision-de-nutrientes-en-la-formacion-de-hibridos-simples-de-maiz/",
+    "doi": "https://doi.org/10.15446/rfnam.v78n1.113460",
+    "estado": "Nota institucional y artículo de autores consultados. No se descargaron datos de repeticiones",
+    "uso": "Tratamientos con N, P, K, Mg, S y B, y variables agronómicas",
+    "limite": "Investiga formación de un híbrido y producción de semilla. No trasladar su rendimiento a grano comercial sin justificar compatibilidad",
+    "licencia_articulo": "CC BY-NC-SA 4.0 según la revista"
+  },
+  {
+    "id": "INIAP_SUELOS2025",
+    "institucion": "INIAP, Estación Experimental Santa Catalina",
+    "titulo": "Informe anual 2025 del Departamento de Manejo de Suelos y Aguas",
+    "url": "https://repositorio.iniap.gob.ec/items/ce5f7c93-7dc9-41ed-8000-4b92f852fb80",
+    "estado": "Ficha institucional identificada. PDF y datos experimentales completos no recuperados",
+    "uso": "Localizar ensayos de fertilización y biofertilizantes",
+    "limite": "Incluye distintos cultivos: confirmar cuáles tratamientos y tablas corresponden específicamente a maíz"
+  }
+]

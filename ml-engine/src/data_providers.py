@@ -162,8 +162,10 @@ def fetch_open_meteo(latitude: float, longitude: float, timeout: Optional[float]
         values = hourly.get(name) or []
         return values[:count]
 
-    daily_precip = daily.get("precipitation_sum") or []
-    daily_et0 = daily.get("et0_fao_evapotranspiration") or []
+    daily_precip = (daily.get("precipitation_sum") or [])[:7]
+    daily_et0 = (daily.get("et0_fao_evapotranspiration") or [])[:7]
+    valid_precip = [value for raw in daily_precip if (value := _as_number(raw)) is not None]
+    valid_et0 = [value for raw in daily_et0 if (value := _as_number(raw)) is not None]
     vpd = _mean_numbers(first_hours("vapour_pressure_deficit"))
     soil_moisture = {}
     for layer in ("0_to_1cm", "1_to_3cm", "3_to_9cm", "9_to_27cm", "27_to_81cm"):
@@ -178,8 +180,16 @@ def fetch_open_meteo(latitude: float, longitude: float, timeout: Optional[float]
         "humedad_relativa_pct": humidity,
         "viento_speed": _as_number(current.get("wind_speed_10m")),
         "lluvia_reciente": _as_number(current.get("rain")),
-        "precipitacion_pronostico_7d_mm": round(sum(v for v in (_as_number(x) for x in daily_precip) if v is not None), 2),
-        "et0_pronostico_7d_mm": round(sum(v for v in (_as_number(x) for x in daily_et0) if v is not None), 2),
+        # Un acumulado parcial no representa los siete días solicitados.
+        "precipitacion_pronostico_7d_mm": round(sum(valid_precip), 2) if len(valid_precip) == 7 else None,
+        "et0_pronostico_7d_mm": round(sum(valid_et0), 2) if len(valid_et0) == 7 else None,
+        "precipitacion_pronostico_disponible_mm": round(sum(valid_precip), 2) if valid_precip else None,
+        "et0_pronostico_disponible_mm": round(sum(valid_et0), 2) if valid_et0 else None,
+        "forecast_coverage": {
+            "expected_days": 7,
+            "precipitation_valid_days": len(valid_precip),
+            "et0_valid_days": len(valid_et0),
+        },
         "vpd_24h_kpa": round(vpd, 4) if vpd is not None else None,
         "temperatura_suelo_c": _mean_numbers(first_hours("soil_temperature_0cm")),
         "radiacion_media_24h_w_m2": _mean_numbers(first_hours("shortwave_radiation")),
@@ -189,7 +199,7 @@ def fetch_open_meteo(latitude: float, longitude: float, timeout: Optional[float]
         "source_kind": "forecast",
         "retrieved_at": _utc_now(),
         "timezone": payload.get("timezone"),
-        "forecast_days": len(daily_precip),
+        "forecast_days": min(7, len(daily.get("time") or []) or max(len(daily_precip), len(daily_et0))),
         "quality": "model",
     }
     mapped.update(soil_moisture)
@@ -225,6 +235,11 @@ def fetch_open_meteo_historical(
     et0 = daily.get("et0_fao_evapotranspiration") or []
     temperature = daily.get("temperature_2m_mean") or []
     radiation = daily.get("shortwave_radiation_sum") or []
+    expected_dates = [(start + timedelta(days=index)).isoformat() for index in range((end - start).days + 1)]
+    dates_complete = dates == expected_dates
+
+    def complete(values):
+        return dates_complete and len(values) == len(expected_dates) and all(_as_number(value) is not None for value in values)
 
     def total(values: Iterable[Any]) -> Optional[float]:
         numbers = [_as_number(value) for value in values]
@@ -233,8 +248,8 @@ def fetch_open_meteo_historical(
 
     summary = {
         "temperatura_media_c": round(_mean_numbers(temperature), 2) if _mean_numbers(temperature) is not None else None,
-        "precipitacion_total_mm": total(precipitation),
-        "et0_total_mm": total(et0),
+        "precipitacion_total_mm": total(precipitation) if complete(precipitation) else None,
+        "et0_total_mm": total(et0) if complete(et0) else None,
         "radiacion_media_mj_m2_d": round(_mean_numbers(radiation), 2) if _mean_numbers(radiation) is not None else None,
     }
     series = []
@@ -253,6 +268,12 @@ def fetch_open_meteo_historical(
         "source": "open_meteo",
         "source_kind": "historical_reanalysis",
         "quality": "reanalysis",
+        "requested_start_date": start.isoformat(),
+        "requested_end_date": end.isoformat(),
+        "coverage": {"expected_days": len(expected_dates), "returned_days": len(dates),
+                     "precipitation_valid_days": sum(_as_number(value) is not None for value in precipitation),
+                     "precipitation_complete": complete(precipitation), "dates_complete": dates_complete},
+        "summary_available": {"precipitacion_disponible_mm": total(precipitation)},
         "start_date": dates[0],
         "end_date": dates[-1],
         "retrieved_at": _utc_now(),
@@ -288,17 +309,22 @@ def fetch_nasa_power(latitude: float, longitude: float, timeout: Optional[float]
     if not dates:
         raise ProviderError("NASA POWER no devolvió fechas")
 
-    ordered_dates = sorted(dates, reverse=True)
-    latest = ordered_dates[0]
+    def value_on_date(name: str, observed_date: str) -> Optional[float]:
+        values = parameters.get(name) or {}
+        return _as_number(values.get(observed_date)) if isinstance(values, dict) else None
+
+    # Los días más recientes pueden existir con sentinelas de datos pendientes.
+    # Elegir una fecha común evita mezclar temperatura y humedad de días distintos.
+    latest = next((day for day in sorted(dates, reverse=True)
+                   if value_on_date("T2M", day) is not None and value_on_date("RH2M", day) is not None), None)
+    if latest is None:
+        raise ProviderError("NASA POWER no devolvió T2M y RH2M válidos para una misma fecha")
 
     def latest_value(name: str) -> Optional[float]:
-        values = parameters.get(name) or {}
-        return _as_number(values.get(latest)) if isinstance(values, dict) else None
+        return value_on_date(name, latest)
 
     temperature = latest_value("T2M")
     humidity = latest_value("RH2M")
-    if temperature is None or humidity is None:
-        raise ProviderError("NASA POWER no devolvió T2M o RH2M")
 
     mapped = {
         "temperatura_media_c": temperature,

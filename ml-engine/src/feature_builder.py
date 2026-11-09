@@ -3,14 +3,20 @@
 
 import os
 import re
+import unicodedata
 import json
 import numpy as np
 import pandas as pd
+from datetime import datetime, timezone, timedelta
 import urllib.request
 
 from src.data_providers import fetch_open_meteo_historical, fetch_weather_with_fallback
+from src.simulation_contract import validar_campos, calendario, ventana_historica, SCHEMA
+from src.training_quality import evaluar as evaluar_calidad_entrenamiento
+from src.model_evidence import evidence
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+MAX_FEATURE_VALUE = float(np.finfo(np.float32).max)
 
 # Las 36 columnas que esperan los modelos, en el orden exacto de entrenamiento
 COLS_ORDER = [
@@ -32,7 +38,11 @@ CATEGORICAL_COLS = [
 
 # --- Carga de datasets de referencia ---
 print("[ML Engine] Cargando dataset de referencia para baselines...")
-df_reference = pd.read_csv(os.path.join(BASE_DIR, "data", "maiz_ecuador_training_data.csv"))
+df_training = pd.read_csv(os.path.join(BASE_DIR, "data", "maiz_ecuador_training_data.csv"))
+_filas_elegibles, CALIDAD_REFERENCIAS = evaluar_calidad_entrenamiento(df_training)
+df_reference = df_training.loc[_filas_elegibles].copy()
+if df_reference.empty:
+    raise ValueError('No hay registros coherentes para completar las variables ausentes.')
 
 AGRONOMIA_JSON_PATH = os.path.join(os.path.dirname(BASE_DIR), "backend-api", "data", "agronomia_data.json")
 agronomia_data = {}
@@ -94,6 +104,20 @@ SUELO_MAP = {
     "arcilloso": "Franco arcilloso",
     "arenoso": "Franco arenoso"
 }
+SUELO_MAP.update({'franco_equilibrado':'Franco', 'arcillo_limoso':'Arcillo limoso'})
+# Conservar las tres homologaciones de la UI y aceptar nombres reales del
+# catálogo del modelo, incluyendo el alias documentado «Franco-Arcilloso».
+for _suelo in df_reference["tipo_suelo"].dropna().unique():
+    SUELO_MAP.setdefault(str(_suelo).strip().lower(), str(_suelo))
+
+
+def normalizar_tipo_suelo(value):
+    if not isinstance(value, str):
+        raise ValueError("El campo tipoSuelo debe ser un texto no vacío")
+    key = " ".join(value.strip().lower().replace("-", " ").split())
+    if key not in SUELO_MAP:
+        raise ValueError(f"El campo tipoSuelo no es válido. Tipos disponibles: {', '.join(sorted(SUELO_MAP))}")
+    return SUELO_MAP[key]
 
 
 def get_historical_baseline(provincia, zona, variedad=None):
@@ -151,6 +175,13 @@ def _parse_range(val_str, default_min, default_max):
 def generar_recomendaciones(datos, zona_ml):
     """Genera recomendaciones agronómicas comparando los datos de entrada contra los rangos del Excel."""
     recomendaciones = []
+    if datos.get('ubicacion_confirmada') is False:
+        recomendaciones.append('Ubicación no confirmada: no se atribuyen requisitos regionales ni dosis de fertilización a una provincia asumida por el modelo.')
+        if datos.get('precipitacion_ciclo_mm') is None:
+            recomendaciones.append('Precipitación del ciclo no disponible: un dato anual no permite evaluar la lluvia del periodo de cultivo.')
+        else:
+            recomendaciones.append('Lluvia del ciclo ingresada: falta confirmar la ubicación y la referencia local antes de clasificarla como adecuada o insuficiente.')
+        return recomendaciones
 
     # Mapear zona ML a zona del Excel de agronomía
     excel_zone = "Costa – Litoral (Invierno)"
@@ -213,19 +244,26 @@ def generar_recomendaciones(datos, zona_ml):
             f"Humedad relativa adecuada ({hum:.1f}%) para el cultivo."
         )
 
-    # Precipitación
-    prec = datos["precipitacion"]
-    if prec < min_prec:
+    # El contrato legacy recibe lluvia anual; el catálogo expresa mm/ciclo.
+    # Solo un acumulado explícito del ciclo permite comparar ambos periodos.
+    prec = datos.get("precipitacion_ciclo_mm")
+    if prec is None:
         recomendaciones.append(
-            f"Precipitación insuficiente ({prec:.0f} mm) frente al requerimiento ({min_prec:.0f}-{max_prec:.0f} mm). Se requiere riego complementario."
+            f"Precipitación del ciclo no disponible: la entrada anual ({datos['precipitacion']:.0f} mm/año) "
+            f"no permite evaluar el rango de referencia ({min_prec:.0f}-{max_prec:.0f} mm/ciclo). "
+            "Registrar la precipitación acumulada del ciclo; no se aplica una conversión automática."
+        )
+    elif prec < min_prec:
+        recomendaciones.append(
+            f"Precipitación del ciclo insuficiente ({prec:.0f} mm/ciclo) frente al requerimiento ({min_prec:.0f}-{max_prec:.0f} mm/ciclo). Se requiere riego complementario."
         )
     elif prec > max_prec:
         recomendaciones.append(
-            f"Precipitación ({prec:.0f} mm) supera el requerimiento óptimo ({min_prec:.0f}-{max_prec:.0f} mm). Asegurar limpieza de drenajes."
+            f"Precipitación del ciclo ({prec:.0f} mm/ciclo) supera el requerimiento óptimo ({min_prec:.0f}-{max_prec:.0f} mm/ciclo). Asegurar limpieza de drenajes."
         )
     else:
         recomendaciones.append(
-            f"Precipitación adecuada ({prec:.0f} mm) en rango óptimo ({min_prec:.0f}-{max_prec:.0f} mm)."
+            f"Precipitación del ciclo adecuada ({prec:.0f} mm/ciclo) en rango óptimo ({min_prec:.0f}-{max_prec:.0f} mm/ciclo)."
         )
 
     # Fertilizante
@@ -272,34 +310,38 @@ def generar_recomendaciones(datos, zona_ml):
         region_regla = r.get("Región", "Nacional")
         if region_regla != "Nacional" and region_regla != "Todo el país" and region_regla.lower() not in region_user.lower():
             continue
+
+        problema = r.get("Problema detectado", "").lower()
+        regla_hidrica = any(palabra in problema for palabra in ("hídrico", "lixiviación", "encharcamiento"))
+        # La variedad o una dosis baja de N tampoco acreditan estrés hídrico.
+        if regla_hidrica and prec is None:
+            continue
             
         # Evaluar coincidencia
         coincide = False
         razon = ""
 
         # 1. Deficiencia de nitrógeno
-        if "N" in r.get("Problema detectado", "") and fert < 120:
+        if regla_hidrica:
+            if "hídrico" in problema and prec < 450:
+                coincide = True
+                razon = f"Lluvia del ciclo baja ({prec:.0f} mm/ciclo)"
+            elif ("lixiviación" in problema or "encharcamiento" in problema) and prec > 1000:
+                coincide = True
+                razon = f"Alta precipitación del ciclo ({prec:.0f} mm/ciclo)"
+        elif ("nitrógeno" in problema or re.search(r"\bn\b", problema)) and fert < 120:
             coincide = True
             razon = f"Fertilización baja ({fert:.0f} kg N/ha)"
-            
-        # 2. Estrés hídrico
-        elif "hídrico" in r.get("Problema detectado", "").lower() and prec < 450:
-            coincide = True
-            razon = f"Lluvia baja ({prec:.0f} mm)"
             
         # 3. Acidez de suelo
         elif "ácido" in r.get("Condición del suelo", "").lower() and ph < 5.6:
             coincide = True
             razon = f"Suelo ácido (pH {ph:.1f})"
             
-        # 4. Encharcamiento / Lixiviación
-        elif ("lixiviación" in r.get("Problema detectado", "").lower() or "encharcamiento" in r.get("Problema detectado", "").lower()) and prec > 1000:
-            coincide = True
-            razon = f"Alta precipitación ({prec:.0f} mm)"
-            
         # 5. Coincidencia por variedad específica
         var_maiz = datos.get("variedad", "").lower()
-        if not coincide and var_maiz and r.get("Variedad", "").lower() in var_maiz:
+        variedad_regla = r.get("Variedad", "").strip().lower()
+        if not regla_hidrica and not coincide and var_maiz and variedad_regla and variedad_regla in var_maiz:
             coincide = True
             razon = f"Variedad {r.get('Variedad')}"
 
@@ -399,45 +441,36 @@ def build_features(data):
     Toma los datos crudos del usuario y arma el DataFrame de 36 columnas listo para el modelo.
     Retorna (df_features, metadata) donde metadata tiene info extra para la respuesta.
     """
+    campos_ingresados = validar_campos(data)
     temp = float(data["temperatura"])
     hum = float(data["humedad"])
-    prec = float(data["precipitacion"])
+    prec_payload = float(data["precipitacion"])
     fert = float(data["fertilizante"])
     ph = float(data["phSuelo"])
     area = float(data["area"])
-    tipo_suelo = data["tipoSuelo"].lower()
-
-    soil_type_str = SUELO_MAP.get(tipo_suelo, "Franco limoso")
+    soil_type_str = normalizar_tipo_suelo(data["tipoSuelo"])
+    prec_ciclo = float(data["precipitacion_ciclo_mm"]) if "precipitacion_ciclo_mm" in data else None
+    prec = prec_ciclo if prec_ciclo is not None else prec_payload
     variedad_maiz = data.get("variedad_maiz", "Híbrido convencional")
-    maiz_str = VARIEDAD_MAP.get(variedad_maiz.lower(), "Pioneer P4039")
+    maiz_str = VARIEDAD_MAP.get(variedad_maiz.lower())
+    advertencias = []
     altitud = float(data.get("altitud", 45.0))
     ubicacion = data.get("ubicacion", "")
 
-    # Determinar provincia y zona por la ubicación del texto
-    provincia = "Los Ríos"
-    zona = "Costa_Invierno"
+    # Resolver la provincia exacta antes de obtener referencias; no convertir
+    # provincias de Sierra/Amazonía en otra provincia representativa.
+    def normalizar(value):
+        return ''.join(c for c in unicodedata.normalize('NFD', str(value).lower()) if unicodedata.category(c) != 'Mn')
 
-    ubicacion_lower = ubicacion.lower()
-    if "manabi" in ubicacion_lower or "manabí" in ubicacion_lower:
-        provincia, zona = "Manabí", "Costa_Invierno"
-    elif "guayas" in ubicacion_lower or "guayaquil" in ubicacion_lower:
-        provincia, zona = "Guayas", "Costa_Invierno"
-    elif "los ríos" in ubicacion_lower or "los rios" in ubicacion_lower or "quevedo" in ubicacion_lower:
-        provincia, zona = "Los Ríos", "Costa_Invierno"
-    elif "loja" in ubicacion_lower:
-        provincia, zona = "Loja", "Loja_Subtropical"
-    elif "imbabura" in ubicacion_lower or "carchi" in ubicacion_lower or "pichincha" in ubicacion_lower or "quito" in ubicacion_lower:
-        provincia, zona = "Pichincha", "Sierra_Norte"
-    elif "chimborazo" in ubicacion_lower or "cotopaxi" in ubicacion_lower or "tungurahua" in ubicacion_lower:
-        provincia, zona = "Chimborazo", "Sierra_Centro"
-    elif "azuay" in ubicacion_lower or "cañar" in ubicacion_lower:
-        provincia, zona = "Azuay", "Sierra_Sur"
-    elif "napo" in ubicacion_lower or "pastaza" in ubicacion_lower or "orellana" in ubicacion_lower or "morona" in ubicacion_lower:
-        provincia, zona = "Orellana", "Amazonía"
-
-    riego_tipo = "temporal_lluvia"
-    if prec < 450:
-        riego_tipo = "gravedad"
+    coincidencias = [p for p in df_reference['provincia'].dropna().unique()
+                     if normalizar(p) in normalizar(ubicacion)]
+    if coincidencias:
+        provincia = max(coincidencias, key=len)
+        zona = str(df_reference.loc[df_reference['provincia'] == provincia, 'zona'].mode().iloc[0])
+    else:
+        # No presentar una provincia elegida por defecto como ubicación real.
+        provincia, zona = '', ''
+        advertencias.append('Provincia no identificada en el texto: se utiliza una referencia general del conjunto de entrenamiento.')
 
     tipo_maiz_input = data.get("tipo_maiz", "Duro Amarillo")
     tipo_maiz_lower = tipo_maiz_input.lower()
@@ -450,11 +483,25 @@ def build_features(data):
 
     # Baseline histórica para rellenar lo que falta
     baseline = get_historical_baseline(provincia, zona, maiz_str)
+    if not maiz_str:
+        maiz_str = baseline['variedad']
+        advertencias.append(f'Variedad no reconocida: el modelo utiliza {maiz_str} como referencia asumida, no como variedad confirmada.')
+    provincia = provincia or baseline['provincia']
+    zona = zona or baseline['zona']
+    riego_tipo = baseline['riego_tipo']
+    if prec_ciclo is None:
+        advertencias.append('La entrada precipitacion conserva el contrato anual legacy y se envía al modelo sin conversión. El catálogo de features describe precipitacion_mm como acumulado del ciclo; esta discrepancia de periodo limita la interpretación del rendimiento y no se corrige reetiquetando el dato.')
+        advertencias.append('Sin precipitación acumulada explícita del ciclo no se evalúan recomendaciones de lluvia por mm/ciclo.')
+    fuentes = {col: 'Referencia del conjunto de entrenamiento (origen sin acreditar)' for col in COLS_ORDER}
+    plan = calendario(data, campos_ingresados.get('ciclo_dias', baseline['ciclo_dias']))
+    clima_ciclo = {'estado': 'no_solicitado', 'nota': 'El clima del proveedor es contexto; el cálculo conserva el escenario ingresado.'}
+    if data.get('incluir_historico') is True:
+        clima_ciclo['estado'] = 'sin_coordenadas'
 
     # APIs de precisión (si hay coordenadas)
     lat = data.get("latitud")
     lon = data.get("longitud")
-    precision_soil = None
+    precision_soil = data.get('suelo_ubicacion') or None
     precision_weather = None
     historical_weather = None
     inamhi_info = None
@@ -463,22 +510,40 @@ def build_features(data):
             lat_f = float(lat)
             lon_f = float(lon)
             if abs(lat_f) > 0.01 or abs(lon_f) > 0.01:
-                precision_soil = fetch_precision_soil(lat_f, lon_f)
-                precision_weather = fetch_precision_weather(lat_f, lon_f)
+                if precision_soil is None and data.get('consultar_suelo',True):
+                    precision_soil = fetch_precision_soil(lat_f, lon_f)
+                if data.get('incluir_contexto_reciente',True):
+                    precision_weather = fetch_precision_weather(lat_f, lon_f)
                 if data.get("incluir_historico") is True:
                     try:
-                        historical_weather = fetch_open_meteo_historical(lat_f, lon_f, timeout=6.0)
+                        window = ventana_historica(plan, datetime.now(timezone(timedelta(hours=-5))).date())
+                        if window:
+                            historical_weather = fetch_open_meteo_historical(lat_f, lon_f, start=window[0], end=window[1], timeout=6.0)
+                            clima_ciclo.update({'estado': 'periodo_pasado_consultado', 'inicio_consultado': window[0].isoformat(),
+                                                'fin_consultado': window[1].isoformat(), 'fin_del_ciclo_incluido': window[1].isoformat() == plan['fecha_fin_estimada'],
+                                                'resumen': historical_weather['summary'], 'cobertura': historical_weather['coverage'],
+                                                'fuente': 'Open-Meteo, reanálisis histórico por coordenadas; no es una estación de la parcela'})
+                        elif plan['fecha_siembra']:
+                            clima_ciclo['estado'] = 'sin_dias_pasados_disponibles'
+                        else:
+                            clima_ciclo['estado'] = 'falta_fecha_siembra'
                     except Exception as history_ex:
+                        clima_ciclo['estado'] = 'proveedor_no_disponible'
+                        advertencias.append('No se pudo consultar el clima histórico del periodo. No se han inventado datos para completarlo.')
                         print(f"[ML Engine] Error consultando histórico Open-Meteo: {str(history_ex)}")
                 try:
                     from src.inamhi_climate import inamhi_db
                     station = inamhi_db.get_nearest_station(lat_f, lon_f)
                     if station:
                         stats = inamhi_db.get_aggregated_stats(station['id'])
-                        inamhi_info = {
-                            "estacion": station,
-                            "estadisticas": stats
-                        }
+                        if stats:
+                            inamhi_info = {
+                                "estacion": station,
+                                "estadisticas": stats
+                            }
+                            advertencias.append('INAMHI aporta una referencia histórica de estación cercana, no una medición del lote ni el clima del ciclo actual. La representatividad por altitud y relieve no está validada.')
+                    else:
+                        advertencias.append('No hay una estación INAMHI con lluvia y temperatura disponibles dentro del radio operativo de 100 km. No se asigna una referencia distante como si fuera local.')
                 except Exception as db_ex:
                     print(f"[ML Engine] Error querying INAMHI local climate DB: {str(db_ex)}")
         except Exception as ex:
@@ -494,6 +559,7 @@ def build_features(data):
         for key in ["textura_arcilla_pct", "textura_arena_pct", "textura_limo_pct", "materia_organica_pct"]:
             if key in precision_soil:
                 features_dict[key] = [precision_soil[key]]
+                fuentes[key] = 'Estimación de proveedor de suelo por coordenadas'
 
     # Sobrescribir con los inputs del usuario. Son la fuente primaria del
     # modelo porque representan el escenario que el usuario está simulando;
@@ -512,20 +578,60 @@ def build_features(data):
     features_dict["precipitacion_mm"] = [prec]
     features_dict["humedad_relativa_pct"] = [hum]
     features_dict["nitrogeno_kg_ha"] = [fert]
-    features_dict["fosforo_p2o5_kg_ha"] = [fert * 0.4]
-    features_dict["potasio_k2o_kg_ha"] = [fert * 0.3]
-    features_dict["biofertilizante"] = [1.0 if fert < 100 else 0.0]
+    # La cantidad de nitrógeno no permite inferir P, K ni biofertilizante.
+    for col in ['temperatura_media_c', 'humedad_relativa_pct', 'precipitacion_mm', 'nitrogeno_kg_ha', 'ph_suelo']:
+        fuentes[col] = 'Entrada de la simulación'
+    fuentes['precipitacion_mm'] = ('Precipitación acumulada del ciclo ingresada explícitamente (mm/ciclo)'
+                                   if prec_ciclo is not None else 'Entrada anual legacy sin conversión al periodo del modelo (mm/año)')
+    fuentes['tipo_suelo'] = 'Textura ingresada; categoría homologada del modelo'
+    if data.get('suelo_ubicacion'):
+        fuentes['tipo_suelo'] = 'Grupo de textura propuesto desde el mapa de suelo por coordenadas'
+    fuentes['temperatura_min_c'] = fuentes['temperatura_max_c'] = 'Estimación a partir de temperatura media'
+    fuentes['variedad'] = 'Variedad registrada' if variedad_maiz.lower() in VARIEDAD_MAP else 'Variedad de referencia asumida'
+    fuentes['provincia'] = fuentes['zona'] = 'Ubicación reconocida' if coincidencias else 'Referencia geográfica asumida'
+    fuentes['tipo_grano'] = 'Tipo registrado homologado al modelo'
+    fuentes['altitud_msnm'] = 'Altitud enviada por la aplicación; puede ser un valor predeterminado'
+
+    # Un cero declarado es un dato. No se sustituye por la mediana histórica.
+    for campo, valor in campos_ingresados.items():
+        features_dict[campo] = [valor]
+        fuentes[campo] = 'Ingresado por el productor para este escenario'
+    supuestos = [col for col, fuente in fuentes.items() if fuente.startswith('Referencia del conjunto')]
+    evidencia = evidence(fuentes)
+    if evidencia['variables_posteriores_asumidas']:
+        advertencias.append('El modelo también utiliza vegetación y plagas de etapas posteriores del cultivo. En esta planificación se completan con referencias, no con observaciones futuras conocidas; la salida es un escenario exploratorio.')
+    if supuestos:
+        advertencias.append(f'El modelo completa {len(supuestos)} variables sin dato propio con referencias del conjunto de entrenamiento, cuyo origen sigue sin acreditar. Revisa cuáles son en Datos utilizados; no son mediciones de la parcela.')
+    plan = calendario(data, features_dict['ciclo_dias'][0])
+    if not campos_ingresados:
+        advertencias.append('No se ingresaron parámetros adicionales de campo: la duración, densidad, riego y manejo restantes siguen siendo referencias asumidas.')
 
     df_features = pd.DataFrame(features_dict)
+    for col in COLS_ORDER:
+        if col not in CATEGORICAL_COLS:
+            value = float(df_features.iloc[0][col])
+            if not np.isfinite(value):
+                raise ValueError(f'Entrada no finita: {col}')
+            if value < df_training[col].min() or value > df_training[col].max():
+                label = SCHEMA['campos'].get(col, {}).get('label', col.replace('_',' '))
+                advertencias.append(f'{label}: {value:g} está fuera del rango observado de entrenamiento. El valor puede ser válido, pero el modelo tiene menos respaldo para estimarlo.')
 
     # Metadata extra que se usa en la respuesta final
     metadata = {
+        'trazabilidad': {'fuentes': fuentes, 'advertencias': advertencias, 'supuestos': supuestos, 'suelo_ubicacion_utilizado': bool(data.get('suelo_ubicacion')), 'calendario': plan, 'clima_ciclo': clima_ciclo, 'contrato_campo': '1.0', 'calidad_referencias': CALIDAD_REFERENCIAS, 'unidad_fertilizante': 'kg N/ha', 'periodo_precipitacion': 'mm/ciclo' if prec_ciclo is not None else 'mm/año',
+                        'periodo_precipitacion_catalogo_modelo': 'mm/ciclo',
+                        'evidencia_modelo': evidencia,
+                        'precipitacion_payload_mm': prec_payload,
+                        'precipitacion_ciclo_mm': prec_ciclo,
+                        'evaluacion_precipitacion_ciclo': 'disponible' if prec_ciclo is not None else 'no_evaluable_sin_dato_del_ciclo'},
         "zona": zona,
         "provincia": provincia,
         "datos_entrada": {
+            "ubicacion_confirmada": bool(coincidencias),
             "temperatura": temp,
             "humedad": hum,
             "precipitacion": prec,
+            "precipitacion_ciclo_mm": prec_ciclo,
             "fertilizante": fert,
             "phSuelo": ph,
             "variedad": variedad_maiz,

@@ -2,6 +2,7 @@
 # XGBoost es el único motor de simulación soportado en producción.
 
 import os
+import hashlib
 import json
 import numpy as np
 import pandas as pd
@@ -12,6 +13,8 @@ from src.feature_builder import COLS_ORDER, CATEGORICAL_COLS
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MODELS_DIR = os.path.join(BASE_DIR, "models")
+with open(os.path.join(MODELS_DIR, "xgboost.joblib"), "rb") as model_file:
+    MODEL_VERSION = hashlib.sha256(model_file.read()).hexdigest()[:16]
 
 # --- Carga de modelos al inicio ---
 print("[ML Engine] Cargando modelos e interpretadores...")
@@ -66,7 +69,7 @@ def _intervalo_rendimiento(prediccion, metricas):
         "max": round(limite_superior, 2),
         "margen_aproximado": round(margen, 2),
         "error_medio_validacion": round(mae, 2),
-        "nivel": "aproximado_95_por_validacion_agrupada",
+        "nivel": "orientativo_no_calibrado",
     }
 
 
@@ -145,6 +148,12 @@ def predict(df_features, modelo_nombre="xgboost", area=1.0):
         "area": 0.0,
         "tipoSuelo": round(float(shap_values[COLS_ORDER.index("tipo_suelo")]), 4)
     }
+    explicacion_modelo = {
+        "base": float(np.asarray(explainer.expected_value).reshape(-1)[0]),
+        "prediccion_sin_recorte": float(reg_model.predict(df_encoded)[0]),
+        "aportes": {name: float(shap_values[index]) for index, name in enumerate(COLS_ORDER)},
+        "recortada": prediccion_reg != float(reg_model.predict(df_encoded)[0]),
+    }
 
     produccion_total = round(prediccion_reg * area, 2)
     metricas_actuales = model_metrics[modelo_nombre]
@@ -172,27 +181,33 @@ def predict(df_features, modelo_nombre="xgboost", area=1.0):
     df_sequia["precipitacion_mm"] = [300.0]
     df_sequia["humedad_relativa_pct"] = [40.0]
     df_sequia["temperatura_media_c"] = [33.0]
+    df_sequia["temperatura_min_c"] = [28.5]
+    df_sequia["temperatura_max_c"] = [38.5]
     pred_sequia = float(reg_model.predict(df_sequia)[0])
     pred_sequia = max(0.5, min(12.0, pred_sequia))
 
     escenarios = {
         "lluvioso": {
             "rendimiento": round(pred_lluvioso, 2),
-            "produccion": round(pred_lluvioso * area, 2)
+            "produccion": round(pred_lluvioso * area, 2),
+            "condiciones": {"precipitacion_mm_ciclo": 1000.0, "humedad_pct": 80.0}
         },
         "verano": {
             "rendimiento": round(pred_verano, 2),
-            "produccion": round(pred_verano * area, 2)
+            "produccion": round(pred_verano * area, 2),
+            "condiciones": {"precipitacion_mm_ciclo": 700.0, "humedad_pct": 60.0}
         },
         "sequia": {
             "rendimiento": round(pred_sequia, 2),
-            "produccion": round(pred_sequia * area, 2)
+            "produccion": round(pred_sequia * area, 2),
+            "condiciones": {"precipitacion_mm_ciclo": 300.0, "humedad_pct": 40.0, "temperatura_c": 33.0}
         }
     }
 
     return {
         "success": True,
         "modelo": modelo_nombre,
+        "version_modelo": MODEL_VERSION,
         "rendimiento_estimado": round(prediccion_reg, 4),
         "produccion_total": produccion_total,
         "categoria_cosecha": prediccion_clf,
@@ -203,6 +218,8 @@ def predict(df_features, modelo_nombre="xgboost", area=1.0):
         "confianza_tipo": "calidad_global_r2",
         "intervalo_rendimiento": intervalo_rendimiento,
         "shap_values": shap_dict,
+        "explicacion_modelo": explicacion_modelo,
+        "entradas_modelo": df_features.iloc[0].to_dict(),
         "escenarios": escenarios,
         "metricas_modelo": metricas_actuales
     }

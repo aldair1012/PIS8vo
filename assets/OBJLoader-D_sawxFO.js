@@ -1,0 +1,1 @@
+export{t as OBJLoader}from"./modelo-3d-N2a5_a0f.js";

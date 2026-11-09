@@ -13,7 +13,7 @@ final class CacheArchivos implements CacheInterface
 
     public function __construct(?string $directorio = null)
     {
-        $this->directorio = $directorio ?? __DIR__ . '/../../../../data/cache';
+        $this->directorio = $directorio ?? (getenv('ZEASYS_CACHE_DIR') ?: __DIR__ . '/../../../../data/cache');
     }
 
     public function obtener(string $clave, int $ttlSegundos = 86400): ?array

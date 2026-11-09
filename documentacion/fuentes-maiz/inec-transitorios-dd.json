@@ -1,0 +1,610 @@
+[
+  [
+    "Institución",
+    "Instituto Nacional de Estadística y Censos (INEC)",
+    ""
+  ],
+  [
+    "Identificador",
+    "INEC_PDA_2026",
+    ""
+  ],
+  [
+    "Documento Referencia",
+    "INEC_DEAGA_ESPAC_2025",
+    ""
+  ],
+  [
+    "Nombre",
+    "Base de cultivos transitorios",
+    ""
+  ],
+  [
+    "Descripción",
+    "Contiene los datos de producción, ventas, uso de riego, fertilizantes y plaguicidas en cultivos transitorios",
+    ""
+  ],
+  [
+    "Nombre del campo",
+    "Descripción del campo",
+    ""
+  ],
+  [
+    "Identificador",
+    "Identificador",
+    ""
+  ],
+  [
+    "ual_prov",
+    "Provincia",
+    ""
+  ],
+  [
+    "ual_estr",
+    "Estrato",
+    ""
+  ],
+  [
+    "ual_segm",
+    "Segmento",
+    ""
+  ],
+  [
+    "al_ncues",
+    "Cuestionario",
+    ""
+  ],
+  [
+    "ct_numl",
+    "Número de línea",
+    ""
+  ],
+  [
+    "rc_clacul",
+    "Clave de cultivo_campo",
+    ""
+  ],
+  [
+    "ct_numt",
+    "Número de terreno",
+    ""
+  ],
+  [
+    "ct_k504",
+    "Condición de cultivo_campo",
+    ""
+  ],
+  [
+    "ct_k505",
+    "Orden de asociamiento",
+    ""
+  ],
+  [
+    "ct_prepa_suelo",
+    "Preparación de suelo",
+    ""
+  ],
+  [
+    "ct_k506",
+    "Semillas de más uso_campo",
+    ""
+  ],
+  [
+    "ct_k507",
+    "Mes de siembra",
+    ""
+  ],
+  [
+    "ct_k508",
+    "Año de siembra",
+    ""
+  ],
+  [
+    "ct_k509",
+    "Mes de cosecha",
+    ""
+  ],
+  [
+    "ct_k510ha",
+    "Superficie sembrada_hectáreas",
+    ""
+  ],
+  [
+    "ct_k511ha",
+    "Superficie cosechada_hectáreas",
+    ""
+  ],
+  [
+    "ct_k512",
+    "Razón de perdida de superficie_campo",
+    ""
+  ],
+  [
+    "ct_k516",
+    "Cantidad cosechada",
+    ""
+  ],
+  [
+    "ct_k517",
+    "Nombre de la unidad de cosecha",
+    ""
+  ],
+  [
+    "ct_k518",
+    "Equivalencia en libras de la unidad cosechada",
+    ""
+  ],
+  [
+    "ct_k520",
+    "Estado primario de la cosecha",
+    ""
+  ],
+  [
+    "ct_afecta_prod",
+    "Afectación en la producción",
+    ""
+  ],
+  [
+    "ct_k522",
+    "Cantidad vendida",
+    ""
+  ],
+  [
+    "ct_k523",
+    "Nombre de la unidad de venta",
+    ""
+  ],
+  [
+    "ct_k524",
+    "Equivalencia en libras de la unidad vendida",
+    ""
+  ],
+  [
+    "ct_k526",
+    "Estado primario de la venta",
+    ""
+  ],
+  [
+    "ct_venmernac",
+    "Venta mercado nacional",
+    ""
+  ],
+  [
+    "ct_venmerint",
+    "Venta mercado internacional",
+    ""
+  ],
+  [
+    "ct_vencenacop",
+    "Venta destino centro de acopio",
+    ""
+  ],
+  [
+    "ct_rdproven1",
+    "Autoconsumo",
+    ""
+  ],
+  [
+    "ct_rdproven2",
+    "Almacenamiento",
+    ""
+  ],
+  [
+    "ct_rdproven3",
+    "Desperdicio",
+    ""
+  ],
+  [
+    "ct_rdproven4",
+    "Alimento para animales",
+    ""
+  ],
+  [
+    "ct_rdproven5",
+    "Semilla",
+    ""
+  ],
+  [
+    "ct_rdproven6",
+    "Otro destino",
+    ""
+  ],
+  [
+    "ct_sdrenaje",
+    "Drenaje",
+    ""
+  ],
+  [
+    "ct_psdrenaje",
+    "Porcentaje de drenaje",
+    ""
+  ],
+  [
+    "ct_presueuti",
+    "Preparación de suelo",
+    ""
+  ],
+  [
+    "ct_riego",
+    "Uso de riego",
+    ""
+  ],
+  [
+    "ct_superf_regada_ha",
+    "Superficie regada_hectáreas",
+    ""
+  ],
+  [
+    "ct_porc_surc",
+    "Riego_ surcos",
+    ""
+  ],
+  [
+    "ct_porc_aspe",
+    "Riego_ aspersión",
+    ""
+  ],
+  [
+    "ct_porc_micr",
+    "Riego_microaspersión",
+    ""
+  ],
+  [
+    "ct_porc_gote",
+    "Riego_ goteo",
+    ""
+  ],
+  [
+    "ct_porc_nebu",
+    "Riego_nebulización",
+    ""
+  ],
+  [
+    "ct_porc_otro",
+    "Riego_ otro",
+    ""
+  ],
+  [
+    "ct_aferti",
+    "Uso de fertilizantes",
+    ""
+  ],
+  [
+    "ct_forg",
+    "Uso de fertilizantes orgánicos",
+    ""
+  ],
+  [
+    "ct_cant1_fo",
+    "Cantidad de fertilizante orgánico_ estiércoles",
+    ""
+  ],
+  [
+    "ct_umed1_fo",
+    "Tipo de abono",
+    ""
+  ],
+  [
+    "ct_cant2_fo",
+    "Cantidad de fertilizante orgánico_ fermentados",
+    ""
+  ],
+  [
+    "ct_umed2_fo",
+    "Unidad de medida_ fermentados",
+    ""
+  ],
+  [
+    "ct_cant3_fo",
+    "Cantidad de fertilizante orgánico_ líquidos",
+    ""
+  ],
+  [
+    "ct_umed3_fo",
+    "Unidad de medida_ líquidos",
+    ""
+  ],
+  [
+    "ct_fqui",
+    "Uso de fertilizantes químicos",
+    ""
+  ],
+  [
+    "ct_cantidad_npk_fq",
+    "Cantidad de fertilizante químicos_ NPK",
+    ""
+  ],
+  [
+    "ct_umed_npk_fq",
+    "Unidad de medida_ químicos_ NPK",
+    ""
+  ],
+  [
+    "ct_cantidad_nit_fq",
+    "Cantidad de fertilizante químicos_ Nitrogenado",
+    ""
+  ],
+  [
+    "ct_umed_nit_fq",
+    "Unidad de medida_ Nitrogenado",
+    ""
+  ],
+  [
+    "ct_cantidad_fq",
+    "Cantidad de fertilizante químicos_ Fosfatado",
+    ""
+  ],
+  [
+    "ct_umed_fq",
+    "Unidad de medida_ químicos_ Fosfatado",
+    ""
+  ],
+  [
+    "ct_cantidad_pot_fq",
+    "Cantidad de fertilizante químicos_ Potásico",
+    ""
+  ],
+  [
+    "ct_umed_pot_fq",
+    "Unidas de medida_ químicos_ Potásico",
+    ""
+  ],
+  [
+    "ct_apliplagui",
+    "Uso de plaguicidas",
+    ""
+  ],
+  [
+    "ct_porg",
+    "Uso de plaguicidas orgánicos",
+    ""
+  ],
+  [
+    "ct_cantidad_po",
+    "Cantidad de plaguicida orgánico",
+    ""
+  ],
+  [
+    "ct_umed_po",
+    "Unidas de medida_ plaguicida orgánico",
+    ""
+  ],
+  [
+    "ct_pqui",
+    "Uso de plaguicidas químicos",
+    ""
+  ],
+  [
+    "ct_cantidad_her_pq",
+    "Cantidad de plaguicida químicos_ herbicida",
+    ""
+  ],
+  [
+    "ct_umed_her_pq",
+    "Unidad de medida_ químicos_ herbicida",
+    ""
+  ],
+  [
+    "ct_color_her_pq",
+    "Color de la etiqueta_ herbicida",
+    ""
+  ],
+  [
+    "ct_cantidad_ins_pq",
+    "Cantidad de plaguicida químicos_ insecticida",
+    ""
+  ],
+  [
+    "ct_umed_ins_pq",
+    "Unidad de medida_ químicos_ insecticida",
+    ""
+  ],
+  [
+    "ct_color_ins_pq",
+    "Color de la etiqueta_ insecticida",
+    ""
+  ],
+  [
+    "ct_cantidad_fun_pq",
+    "Cantidad de plaguicida químicos_ fungicida",
+    ""
+  ],
+  [
+    "ct_umed_fun_pq",
+    "Unidad de medida_ químicos_ fungicida",
+    ""
+  ],
+  [
+    "ct_color_fun_pq",
+    "Color de la etiqueta_ fungicida",
+    ""
+  ],
+  [
+    "ct_cantidad_pq",
+    "Cantidad de plaguicida químicos_ otros",
+    ""
+  ],
+  [
+    "ct_umed_pq",
+    "Unidad de medida_ químicos_ otros",
+    ""
+  ],
+  [
+    "ct_color_pq",
+    "Color de la etiqueta_ otros",
+    ""
+  ],
+  [
+    "ct_trabocacont",
+    "Trabajadores ocasionales contratados",
+    ""
+  ],
+  [
+    "ct_trabfami",
+    "Trabajadores familiares",
+    ""
+  ],
+  [
+    "ct_piensasem_int",
+    "Intensión de siembra",
+    ""
+  ],
+  [
+    "ct_supersem_int",
+    "Superficie de siembra",
+    ""
+  ],
+  [
+    "ct_supersemha_int",
+    "Superficie de siembra en hectáreas",
+    ""
+  ],
+  [
+    "ct_messiem_int",
+    "Mes de siembra",
+    ""
+  ],
+  [
+    "ct_condcult_int",
+    "Condición de cultivo",
+    ""
+  ],
+  [
+    "ct_codcultiv1_int",
+    "Código de cultivo",
+    ""
+  ],
+  [
+    "ct_codcultiv2_int",
+    "Código de cultivo",
+    ""
+  ],
+  [
+    "ct_prod",
+    "Producción_toneladas métricas",
+    ""
+  ],
+  [
+    "ct_nclavr",
+    "Clave de cultivo_publicación",
+    ""
+  ],
+  [
+    "ct_trs",
+    "Sierra",
+    ""
+  ],
+  [
+    "ct_trc",
+    "Costa",
+    ""
+  ],
+  [
+    "ct_tro",
+    "Amazonía",
+    ""
+  ],
+  [
+    "ct_znd",
+    "Zona no Delimitada",
+    ""
+  ],
+  [
+    "ct_tn",
+    "Total Nacional",
+    ""
+  ],
+  [
+    "superdida",
+    "Superficie perdida",
+    ""
+  ],
+  [
+    "ct_sequia",
+    "Perdida de superficie_Sequia",
+    ""
+  ],
+  [
+    "ct_helada",
+    "Perdida de superficie_Helada",
+    ""
+  ],
+  [
+    "ct_plagas",
+    "Perdida de superficie_Plagas",
+    ""
+  ],
+  [
+    "ct_enfermedades",
+    "Perdida de superficie_Enfermedades",
+    ""
+  ],
+  [
+    "ct_inundacion",
+    "Perdida de superficie_Inundación",
+    ""
+  ],
+  [
+    "ct_otra",
+    "Perdida de superficie_Otra",
+    ""
+  ],
+  [
+    "ct_secomún",
+    "Superficie_semilla común",
+    ""
+  ],
+  [
+    "ct_semejorada",
+    "Superficie_semilla mejorada",
+    ""
+  ],
+  [
+    "ct_secertificada",
+    "Superficie_semilla certificada",
+    ""
+  ],
+  [
+    "ct_sehibrinac",
+    "Superficie_semilla híbrida nacional",
+    ""
+  ],
+  [
+    "ct_sehibrinter",
+    "Superficie_semilla híbrida internacional",
+    ""
+  ],
+  [
+    "ct_sriego",
+    "Superficie con riego",
+    ""
+  ],
+  [
+    "su_fertilizada",
+    "Superficie con fertilizantes",
+    ""
+  ],
+  [
+    "su_plaguicidas",
+    "Superficie con plaguicidas",
+    ""
+  ],
+  [
+    "Ventas",
+    "Ventas_toneladas métricas",
+    ""
+  ],
+  [
+    "ct_nuevacondicion",
+    "Condición de cultivo_publicación",
+    ""
+  ],
+  [
+    "fact_exp_fin",
+    "Factor de expansión",
+    ""
+  ],
+  [
+    ""
+  ]
+]

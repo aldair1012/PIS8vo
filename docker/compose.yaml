@@ -1,0 +1,86 @@
+name: zeasys-demo
+services:
+  database:
+    image: mariadb:10.11
+    environment:
+      MARIADB_DATABASE: agropredict_db
+      MARIADB_USER: zeasys
+      MARIADB_PASSWORD: ${ZEASYS_DEMO_DB_PASSWORD:?Ejecuta primero docker/preparar-configuracion.ps1}
+      MARIADB_ROOT_PASSWORD: ${ZEASYS_DEMO_ROOT_PASSWORD:?Ejecuta primero docker/preparar-configuracion.ps1}
+    volumes:
+      - zeasys_demo_db:/var/lib/mysql
+      - ./schema-demo.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+  motor:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.motor
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5000/health', timeout=3)"]
+      interval: 20s
+      timeout: 5s
+      retries: 8
+      start_period: 60s
+  web:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.web
+    ports:
+      - "127.0.0.1:8087:80"
+    environment:
+      ZEASYS_DB_HOST: database
+      ZEASYS_DB_NAME: agropredict_db
+      ZEASYS_DB_USER: zeasys
+      ZEASYS_DB_PASS: ${ZEASYS_DEMO_DB_PASSWORD:?Ejecuta primero docker/preparar-configuracion.ps1}
+      ZEASYS_IA_SERVER_URL: http://motor:5000
+      ZEASYS_FLOWISE_URL: http://flowise:3000
+      ZEASYS_CHROMA_URL: http://chroma:8000
+      ZEASYS_OLLAMA_URL: http://ollama:11434
+    depends_on:
+      database:
+        condition: service_healthy
+      motor:
+        condition: service_healthy
+    volumes:
+      - zeasys_demo_uploads:/var/www/html/ZeaSys/backend-api/public/uploads
+  chroma:
+    profiles: [assistant]
+    image: chromadb/chroma:0.5.23
+    environment:
+      IS_PERSISTENT: "TRUE"
+      PERSIST_DIRECTORY: /chroma/chroma
+      ANONYMIZED_TELEMETRY: "FALSE"
+    volumes:
+      - zeasys_demo_chroma:/chroma/chroma
+  ollama:
+    profiles: [assistant]
+    image: ollama/ollama:0.40.5
+    volumes:
+      - zeasys_demo_ollama:/root/.ollama
+  flowise:
+    profiles: [assistant]
+    image: flowiseai/flowise:3.1.4
+    ports:
+      - "127.0.0.1:3001:3000"
+    environment:
+      PORT: 3000
+      DATABASE_TYPE: sqlite
+      DATABASE_PATH: /home/node/.flowise
+      SECRETKEY_PATH: /home/node/.flowise
+      BLOB_STORAGE_PATH: /home/node/.flowise/storage
+      DISABLE_FLOWISE_TELEMETRY: "true"
+      LOG_SANITIZE_BODY_FIELDS: password,question,credentialData
+      LOG_SANITIZE_HEADER_FIELDS: authorization,cookie,set-cookie
+    volumes:
+      - zeasys_demo_flowise:/home/node/.flowise
+volumes:
+  zeasys_demo_db:
+  zeasys_demo_uploads:
+  zeasys_demo_chroma:
+  zeasys_demo_ollama:
+  zeasys_demo_flowise:

@@ -176,9 +176,7 @@ export default function CalendarGrid({ events = [], initialDate = new Date(), ti
     // Si la casilla está en la mitad inferior (45%), se abre hacia arriba
     const openAbove = cellRect.top > (windowHeight * 0.45);
 
-    const evt = dateEvents[0];
-    const isLongContent = (evt?.description && (evt.description.length > 75 || evt.description.includes('|')));
-    const popoverWidth = Math.min(isLongContent ? 640 : 420, windowWidth - 40);
+    const popoverWidth = Math.min(330, windowWidth - 32);
     const halfWidth = popoverWidth / 2;
 
     // Garantizar estrictamente que la tarjeta flotante quede a mínimo 20px de los bordes izquierdo y derecho
@@ -208,117 +206,6 @@ export default function CalendarGrid({ events = [], initialDate = new Date(), ti
       arrowLeft,
       width: popoverWidth
     });
-  };
-
-  const renderCalendarDescription = (rawText) => {
-    if (!rawText) return <div style={{ fontSize: '0.75rem', color: isLight ? '#334155' : 'rgba(255,255,255,0.85)' }}>Ventana climáticamente adecuada para la germinación y desarrollo del cultivo.</div>;
-    if (typeof rawText !== 'string') return rawText;
-
-    let text = rawText.trim();
-
-    if (text.includes('|') || /(?:Suelo|Densidad|Riego|Plagas|Bajo Riesgo|Riesgo Alto|Umbral|Control):/i.test(text)) {
-      let segments = [];
-      
-      if (text.includes('|')) {
-        const firstPipe = text.indexOf('|');
-        let intro = text.substring(0, firstPipe).trim();
-        let rest = text.substring(firstPipe + 1).trim();
-
-        const keyValMatches = [];
-        const keyRegex = /(Suelo|Densidad objetivo|Densidad|Riego|Plagas clave|Patógenos|Bajo Riesgo|Riesgo Alto|Umbral|Control):\s*/gi;
-        let match;
-        while ((match = keyRegex.exec(intro)) !== null) {
-          keyValMatches.push({ label: match[1], index: match.index, endIndex: match.index + match[0].length });
-        }
-
-        if (keyValMatches.length > 0) {
-          for (let i = 0; i < keyValMatches.length; i++) {
-            const curr = keyValMatches[i];
-            const next = keyValMatches[i + 1];
-            const val = intro.substring(curr.endIndex, next ? next.index : intro.length).trim().replace(/\.$/, '');
-            if (val) segments.push(`${curr.label}: ${val}`);
-          }
-        } else if (intro) {
-          segments.push(intro);
-        }
-
-        const pipeItems = rest.split('|').map(s => s.trim()).filter(Boolean);
-        segments.push(...pipeItems);
-      } else {
-        const keyRegex = /(Suelo|Densidad objetivo|Densidad|Riego|Plagas clave|Patógenos|Bajo Riesgo|Riesgo Alto|Umbral|Control):\s*/gi;
-        const keyValMatches = [];
-        let match;
-        while ((match = keyRegex.exec(text)) !== null) {
-          keyValMatches.push({ label: match[1], index: match.index, endIndex: match.index + match[0].length });
-        }
-        for (let i = 0; i < keyValMatches.length; i++) {
-          const curr = keyValMatches[i];
-          const next = keyValMatches[i + 1];
-          const val = text.substring(curr.endIndex, next ? next.index : text.length).trim().replace(/\.$/, '');
-          if (val) segments.push(`${curr.label}: ${val}`);
-        }
-      }
-
-      if (segments.length > 0) {
-        return (
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: segments.length >= 3 ? 'repeat(auto-fit, minmax(250px, 1fr))' : '1fr',
-            gap: '0.45rem',
-            margin: '0.3rem 0 0.65rem 0'
-          }}>
-            {segments.map((seg, idx) => {
-              const colonIdx = seg.indexOf(':');
-              let label = '';
-              let val = seg;
-              if (colonIdx > 0 && colonIdx < 35) {
-                label = seg.substring(0, colonIdx + 1);
-                val = seg.substring(colonIdx + 1).trim();
-              }
-
-              return (
-                <div key={idx} style={{
-                  display: 'flex',
-                  gap: '0.5rem',
-                  alignItems: 'flex-start',
-                  padding: '0.45rem 0.65rem',
-                  background: isLight ? 'rgba(15, 23, 42, 0.04)' : 'rgba(255, 255, 255, 0.05)',
-                  borderRadius: '7px',
-                  border: isLight ? '1px solid rgba(0, 0, 0, 0.08)' : '1px solid rgba(255, 255, 255, 0.09)',
-                  fontSize: '0.73rem',
-                  lineHeight: '1.4'
-                }}>
-                  <span style={{
-                    color: '#38bdf8',
-                    fontWeight: 800,
-                    fontSize: '0.75rem',
-                    lineHeight: 1,
-                    marginTop: '2px',
-                    flexShrink: 0
-                  }}>•</span>
-                  <div style={{ color: isLight ? '#0f172a' : '#f1f5f9', flex: 1 }}>
-                    {label ? (
-                      <>
-                        <strong style={{ color: '#38bdf8', fontWeight: 700 }}>{label}</strong>{' '}
-                        {val}
-                      </>
-                    ) : (
-                      val
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        );
-      }
-    }
-
-    return (
-      <div style={{ color: isLight ? '#334155' : 'rgba(255,255,255,0.88)', fontSize: '0.75rem', marginBottom: '0.65rem', lineHeight: 1.45 }}>
-        {text}
-      </div>
-    );
   };
 
   const isLight = typeof document !== 'undefined' && document.body.classList.contains('light-theme');
@@ -560,125 +447,36 @@ export default function CalendarGrid({ events = [], initialDate = new Date(), ti
         })}
       </div>
 
-      {/* Floating Popover Modal Card — Renderizado vía React Portal para evitar contención de backdrop-filter */}
       {popoverData && (() => {
-        const popoverWidth = popoverData.width || 410;
-        const leftPos = popoverData.left;
-        const arrowLeft = popoverData.arrowLeft;
-        const openAbove = popoverData.openAbove;
         const evt = popoverData.events[0];
-        const bStyle = getEventBadgeStyle(evt?.color, isLight);
-        const popBg = isLight ? 'rgba(255, 255, 255, 0.98)' : 'rgba(15, 23, 42, 0.96)';
-
+        const badge = getEventBadgeStyle(evt?.color, isLight);
+        const description = typeof evt?.description === 'string'
+          ? evt.description.replace(/\s*\|\s*/g, ' · ').trim()
+          : 'Consulta el evento seleccionado de esta simulación.';
         return createPortal(
-          <div 
+          <aside
             className="calendar-popover-portal"
+            role="status"
+            aria-label="Detalle del evento de la simulación"
             style={{
-              position: 'fixed',
-              left: `${leftPos}px`,
-              top: `${popoverData.top}px`,
-              width: `${popoverWidth}px`,
-              maxHeight: 'calc(100vh - 40px)',
-              overflowY: 'auto',
-              transform: openAbove ? 'translate(-50%, -100%)' : 'translateX(-50%)',
-              background: popBg,
-              border: `1.5px solid ${bStyle.border}`,
-              borderRadius: '14px',
-              padding: '0.85rem 1rem',
-              boxShadow: isLight 
-                ? '0 16px 36px rgba(15, 23, 42, 0.25)' 
-                : '0 24px 55px rgba(0, 0, 0, 0.95), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
-              zIndex: 999999,
-              color: isLight ? '#0f172a' : '#fff',
-              fontSize: '0.78rem',
-              lineHeight: '1.4',
-              backdropFilter: 'blur(20px)',
-              WebkitBackdropFilter: 'blur(20px)',
-              animation: 'fadeIn 0.18s cubic-bezier(0.16, 1, 0.3, 1)'
+              position: 'fixed', left: popoverData.left, top: popoverData.top,
+              width: popoverData.width, maxHeight: 'min(320px, 50dvh)', overflowY: 'auto',
+              transform: popoverData.openAbove ? 'translate(-50%, -100%)' : 'translateX(-50%)',
+              zIndex: 1002, padding: 16, borderRadius: 16,
+              background: isLight ? '#fff' : '#1b2a22',
+              color: isLight ? '#173b2c' : '#effaf3',
+              border: `1px solid ${isLight ? '#bdd4c4' : '#536d5b'}`,
+              boxShadow: '0 16px 42px #0004',
             }}
           >
-            {/* Popover Arrow */}
-            <div style={{
-              position: 'absolute',
-              top: openAbove ? 'auto' : '-6px',
-              bottom: openAbove ? '-6px' : 'auto',
-              left: `${arrowLeft}px`,
-              transform: 'translateX(-50%) rotate(45deg)',
-              width: '11px',
-              height: '11px',
-              background: popBg,
-              borderLeft: openAbove ? 'none' : `1.5px solid ${bStyle.border}`,
-              borderTop: openAbove ? 'none' : `1.5px solid ${bStyle.border}`,
-              borderRight: openAbove ? `1.5px solid ${bStyle.border}` : 'none',
-              borderBottom: openAbove ? `1.5px solid ${bStyle.border}` : 'none',
-              zIndex: 1
-            }} />
-
-            {/* Popover Header */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem', position: 'relative', zIndex: 2 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-                <span style={{ 
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.35rem',
-                  padding: '0.2rem 0.55rem',
-                  borderRadius: '6px',
-                  fontSize: '0.74rem',
-                  fontWeight: 800,
-                  background: bStyle.bg,
-                  color: bStyle.text,
-                  border: `1px solid ${bStyle.border}`,
-                  letterSpacing: '0.02em'
-                }}>
-                  <span style={{ 
-                    width: '6px', 
-                    height: '6px', 
-                    borderRadius: '50%', 
-                    background: bStyle.bar,
-                    boxShadow: `0 0 6px ${bStyle.bar}`
-                  }} />
-                  {(() => {
-                    const cName = evt?.color;
-                    if (cName === 'danger') return 'Alerta informada';
-                    if (cName === 'warning') return 'Precaución informada';
-                    return 'Evento informado';
-                  })()}
-                </span>
-              </div>
-              <button 
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setPopoverData(null);
-                }}
-                style={{
-                  background: isLight ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.08)',
-                  border: 'none',
-                  borderRadius: '50%',
-                  width: '24px',
-                  height: '24px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: isLight ? '#64748b' : 'rgba(255,255,255,0.7)',
-                  cursor: 'pointer',
-                  fontSize: '0.75rem',
-                  fontWeight: 700,
-                  transition: 'all 0.15s ease'
-                }}
-              >
-                ✕
-              </button>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+              <span style={{ flex: 1, color: badge.text, fontSize: 12, fontWeight: 750 }}>
+                {evt?.title || evt?.etapa || 'Evento del cultivo'}
+              </span>
+              <button type="button" onClick={() => setPopoverData(null)} aria-label="Cerrar información" style={{ flex: '0 0 44px', width: 44, height: 44, margin: '-10px -10px 0 0', border: 0, borderRadius: 10, background: 'transparent', color: 'inherit', cursor: 'pointer' }}>×</button>
             </div>
-
-            {/* Formatted Agronomic Description / Bullet Cards */}
-            {renderCalendarDescription(evt?.description)}
-
-            {evt?.color && (
-              <div role="note" style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: '0.5rem', fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-                Clasificación informada: {evt.color === 'danger' ? 'alerta' : (evt.color === 'warning' ? 'precaución' : 'evento')}
-              </div>
-            )}
-          </div>,
+            <p style={{ margin: '5px 0 0', fontSize: 12, lineHeight: 1.55, color: 'inherit' }}>{description}</p>
+          </aside>,
           document.body
         );
       })()}

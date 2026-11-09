@@ -11,6 +11,7 @@ declare(strict_types=1);
 namespace ZeaSys\Dominios\Autenticacion\Infraestructura;
 
 use ZeaSys\Dominios\Autenticacion\Dominio\UsuarioRepositoryInterface;
+use ZeaSys\Dominios\Autenticacion\Dominio\Contrasena;
 
 final class UsuarioRepositoryMysql implements UsuarioRepositoryInterface
 {
@@ -27,7 +28,7 @@ final class UsuarioRepositoryMysql implements UsuarioRepositoryInterface
         $stmt->execute(['correo' => $correo]);
         $usuario = $stmt->fetch();
 
-        if ($usuario && $usuario['activo'] && password_verify($contrasena, $usuario['contrasena'])) {
+        if ($usuario && $usuario['activo'] && Contrasena::verificar($contrasena, $usuario['contrasena'])) {
             $this->actualizarUltimoAcceso($usuario['id']);
             unset($usuario['contrasena']);
             return $usuario;
@@ -38,7 +39,7 @@ final class UsuarioRepositoryMysql implements UsuarioRepositoryInterface
 
     public function registrar(string $nombre, string $correo, string $contrasena): int
     {
-        $hash = password_hash($contrasena, PASSWORD_BCRYPT);
+        $hash = Contrasena::crearHash($contrasena);
 
         $stmt = $this->db->prepare(
             'INSERT INTO usuarios (nombre, correo, contrasena, es_google)
@@ -164,11 +165,11 @@ final class UsuarioRepositoryMysql implements UsuarioRepositoryInterface
 
         // Crear un nuevo usuario con contraseña aleatoria segura
         $contrasenaAleatoria = bin2hex(random_bytes(16));
-        $hash = password_hash($contrasenaAleatoria, PASSWORD_BCRYPT);
+        $hash = Contrasena::crearHash($contrasenaAleatoria);
 
         $stmtInsert = $this->db->prepare(
-            'INSERT INTO usuarios (nombre, correo, contrasena, foto_perfil, es_google, rol, activo)
-             VALUES (:nombre, :correo, :contrasena, :foto_perfil, 1, \'agricultor\', 1)'
+            'INSERT INTO usuarios (nombre, correo, contrasena, foto_perfil, es_google, activo)
+             VALUES (:nombre, :correo, :contrasena, :foto_perfil, 1, 1)'
         );
         $stmtInsert->execute([
             'nombre'      => $nombre,

@@ -8,6 +8,7 @@ use ZeaSys\Kernel\Cors;
 use ZeaSys\Kernel\Errores\ManejadorErrores;
 use ZeaSys\Kernel\Peticion;
 use ZeaSys\Kernel\Router;
+use ZeaSys\Dominios\Autenticacion\Dominio\UsuarioRepositoryInterface;
 
 require __DIR__ . '/../src/Kernel/AutoloaderPsr4.php';
 AutoloaderPsr4::registrar(__DIR__ . '/../src');
@@ -19,6 +20,7 @@ require_once __DIR__ . '/../src/Config/aplicacion.php';
 require_once __DIR__ . '/../src/Config/constantes_negocio.php';
 
 Cors::aplicar();
+Cors::verificarEscritura();
 
 if (($_SERVER['REQUEST_METHOD'] ?? '') === 'OPTIONS') {
     http_response_code(204);
@@ -45,5 +47,9 @@ ini_set('display_errors', $debug ? '1' : '0');
 $contenedor = (require __DIR__ . '/../src/Config/contenedor.php')();
 $rutas      = require __DIR__ . '/../src/Config/rutas.php';
 
-$router = new Router($contenedor, $rutas, new AutenticacionMiddleware());
+$autenticacion = new AutenticacionMiddleware(static function (int $id) use ($contenedor): bool {
+    $usuario = $contenedor->get(UsuarioRepositoryInterface::class)->obtenerPorId($id);
+    return $usuario !== null && !empty($usuario['activo']);
+});
+$router = new Router($contenedor, $rutas, $autenticacion);
 $router->despachar(Peticion::desdeGlobal());

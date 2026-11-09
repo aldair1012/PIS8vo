@@ -9,9 +9,13 @@ import {
   AlertTriangle,
   Camera,
   Trash2,
+  ShieldCheck,
+  ChevronRight,
 } from 'lucide-react';
-import { authService, simulacionService } from '../services/api';
+import { authService, parcelasService, dssService, simulacionService } from '../services/api';
+import { prepararExportacion, crearArchivoJson } from '../utils/prepararExportacion';
 import { exportarReporteAPdf } from '../utils/exportarPdf';
+import '../assets/configuracion.css';
 
 export default function Configuracion({ user, setUser, theme, setTheme, cerrarSesion, cultivos }) {
   // Datos del perfil en variables simples en español
@@ -61,9 +65,9 @@ export default function Configuracion({ user, setUser, theme, setTheme, cerrarSe
 
     setSubiendoFoto(true);
     try {
-      const respuesta = await authService.uploadAvatar(archivo);
-      if (respuesta.success) {
-        setUser(respuesta.user);
+      const respuesta = await authService.subirAvatar(archivo);
+      if (respuesta.exito) {
+        setUser(respuesta.usuario);
         setMensajeExito('¡Foto de perfil actualizada con éxito!');
       }
     } catch (err) {
@@ -83,9 +87,9 @@ export default function Configuracion({ user, setUser, theme, setTheme, cerrarSe
     setSubiendoFoto(true);
 
     try {
-      const respuesta = await authService.deleteAvatar();
-      if (respuesta.success) {
-        setUser(respuesta.user);
+      const respuesta = await authService.eliminarAvatar();
+      if (respuesta.exito) {
+        setUser(respuesta.usuario);
         setMensajeExito('Foto de perfil eliminada correctamente.');
       }
     } catch (err) {
@@ -117,9 +121,9 @@ export default function Configuracion({ user, setUser, theme, setTheme, cerrarSe
             const profile = await res.json();
             if (profile.picture) {
               const fotoHD = profile.picture.replace(/=s\d+(-c)?$/i, '=s400');
-              const resBackend = await authService.syncGoogleAvatar(fotoHD);
-              if (resBackend.success) {
-                setUser(resBackend.user);
+              const resBackend = await authService.sincronizarAvatarGoogle(fotoHD);
+              if (resBackend.exito) {
+                setUser(resBackend.usuario);
                 setMensajeExito('¡Foto de perfil sincronizada con tu cuenta de Google en Alta Definición!');
               }
             } else {
@@ -142,11 +146,14 @@ export default function Configuracion({ user, setUser, theme, setTheme, cerrarSe
   const [seccionesExportar, setSeccionesExportar] = useState({
     cultivos: true,
     simulaciones: true,
+    mediciones: false,
     kpis: true
   });
   const [formatoExportar, setFormatoExportar] = useState('json');
   const [cargandoExportar, setCargandoExportar] = useState(false);
   const [exitoExportar, setExitoExportar] = useState(false);
+  const [errorExportar, setErrorExportar] = useState(null);
+  const [progresoExportar, setProgresoExportar] = useState('');
 
   // Guardar cambios del nombre o correo
   const guardarDatosPerfil = async (e) => {
@@ -156,14 +163,14 @@ export default function Configuracion({ user, setUser, theme, setTheme, cerrarSe
     setCargando(true);
 
     try {
-      const respuesta = await authService.updateProfile({
+      const respuesta = await authService.actualizarPerfil({
         nombre,
         correo
       });
 
-      if (respuesta.success) {
-        setUser(respuesta.user);
-        setMensajeExito(respuesta.message);
+      if (respuesta.exito) {
+        setUser(respuesta.usuario);
+        setMensajeExito(respuesta.mensaje);
         setVerFormularioCorreo(false);
       }
     } catch (err) {
@@ -193,14 +200,14 @@ export default function Configuracion({ user, setUser, theme, setTheme, cerrarSe
     }
 
     try {
-      const respuesta = await authService.updateProfile({
+      const respuesta = await authService.actualizarPerfil({
         nombre: user.nombre,
         correo: user.correo,
         nueva_contrasena: nuevaClave,
         confirmar_nueva_contrasena: confirmarClave
       });
 
-      if (respuesta.success) {
+      if (respuesta.exito) {
         setMensajeExito('¡Contraseña cambiada con éxito!');
         setNuevaClave('');
         setConfirmarClave('');
@@ -223,603 +230,82 @@ export default function Configuracion({ user, setUser, theme, setTheme, cerrarSe
       setMensajeExito(null);
       setCargando(true);
       try {
-        await authService.deleteAccount();
-      } catch (err) {
-        console.warn('Procesando eliminación de cuenta:', err);
-      } finally {
+        await authService.eliminarCuenta();
         await cerrarSesion();
+      } catch (err) {
+        setErrorMsj(err.response?.data?.error || 'No se pudo eliminar la cuenta. Inténtalo de nuevo.');
+        setCargando(false);
       }
     }
   };
 
   // Exportar los datos elegidos en el formato deseado
   const procesarExportarDatos = async () => {
+    const ventanaPdf = formatoExportar === 'pdf' ? window.open('', '_blank') : null;
+    if (formatoExportar === 'pdf' && !ventanaPdf) {
+      setErrorExportar('Permite las ventanas emergentes para generar el PDF e inténtalo de nuevo.');
+      return;
+    }
+    if (ventanaPdf) ventanaPdf.document.write('<!doctype html><html lang="es"><title>Preparando informe</title><body><p>Preparando tu informe de ZeaSys…</p></body></html>');
     setCargandoExportar(true);
     setExitoExportar(false);
+    setErrorExportar(null);
     try {
-      const datosAExportar = {
-        meta: {
-          app: 'ZeaSys AgroPredict',
-          exportado_por: user.nombre,
-          fecha_exportacion: new Date().toISOString(),
-          version: '1.2.0'
-        }
-      };
-
-      if (seccionesExportar.cultivos) {
-        datosAExportar.lotes_gps = cultivos;
-      }
-
-      if (seccionesExportar.simulaciones) {
-        const respuestaSims = await simulacionService.historial();
-        datosAExportar.historial_simulaciones = respuestaSims.simulaciones || [];
-      }
-
-      if (seccionesExportar.kpis) {
-        datosAExportar.resumen_kpi = {
-          total_lotes: cultivos.length,
-          porcentaje_eficiencia: '85%',
-          analisis_clima: 'Optimizado'
-        };
-      }
-
+      const datosAExportar = await prepararExportacion({
+        secciones: seccionesExportar, usuario: user,
+        obtenerParcelas: parcelasService.listar,
+        obtenerHistorial: simulacionService.historial,
+        obtenerMediciones: dssService.getRendimientoMediciones,
+        progreso: setProgresoExportar,
+      });
       if (formatoExportar === 'json') {
-        const jsonTexto = `data:text/json;charset=utf-8,${encodeURIComponent(
-          JSON.stringify(datosAExportar, null, 2)
-        )}`;
-        const linkDescarga = document.createElement('a');
-        linkDescarga.setAttribute('href', jsonTexto);
-        linkDescarga.setAttribute('download', `datos_agropredict_${new Date().toISOString().slice(0,10)}.json`);
-        document.body.appendChild(linkDescarga);
-        linkDescarga.click();
-        linkDescarga.remove();
+        const url = URL.createObjectURL(crearArchivoJson(datosAExportar));
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `datos_zeasys_${new Date().toISOString().slice(0, 10)}.json`;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
       } else {
-        exportarReporteAPdf(datosAExportar);
+        exportarReporteAPdf(datosAExportar, ventanaPdf);
       }
-
       setExitoExportar(true);
-      setTimeout(() => setExitoExportar(false), 3000);
     } catch (err) {
-      console.error('Error al exportar datos:', err);
-      alert('Hubo un error al descargar la información.');
+      ventanaPdf?.close();
+      setErrorExportar(err.response?.data?.error || (err.response ? 'No se pudo consultar toda la información. Inténtalo de nuevo.' : err.message === 'Network Error' ? 'No se pudo conectar al servidor. Inténtalo de nuevo.' : err.message) || 'No se pudo preparar la descarga. Inténtalo de nuevo.');
     } finally {
       setCargandoExportar(false);
+      setProgresoExportar('');
     }
   };
 
-  return (
-    <div style={{ animation: 'fadeIn 0.5s ease' }}>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }} className="config-grid">
-        
-        {/* Lado izquierdo: Opciones del Perfil y Seguridad */}
-        <div className="glass-panel" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          
-          <div>
-            <div className="glass-card-header" style={{ borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.75rem', marginBottom: '1.25rem' }}>
-              <h3 style={{ fontSize: '1.1rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <User size={18} className="text-success" />
-                Configuración y Seguridad de tu Cuenta
-              </h3>
-              <p style={{ fontSize: '0.72rem', color: 'var(--muted-foreground)', marginTop: '0.2rem' }}>
-                Cambia tus datos de acceso y clave.
-              </p>
-            </div>
-
-            {mensajeExito && (
-              <div style={{
-                padding: '0.65rem 0.9rem',
-                borderRadius: '8px',
-                fontSize: '0.78rem',
-                marginBottom: '1rem',
-                background: 'rgba(16,185,129,0.1)',
-                border: '1px solid rgba(16,185,129,0.25)',
-                color: '#34d399',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem'
-              }}>
-                <Check size={16} />
-                {mensajeExito}
-              </div>
-            )}
-
-            {errorMsj && (
-              <div style={{
-                padding: '0.65rem 0.9rem',
-                borderRadius: '8px',
-                fontSize: '0.78rem',
-                marginBottom: '1rem',
-                background: 'rgba(239,68,68,0.1)',
-                border: '1px solid rgba(239,68,68,0.25)',
-                color: '#f87171',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem'
-              }}>
-                <AlertTriangle size={16} />
-                {errorMsj}
-              </div>
-            )}
-
-            {/* Panel de Datos de Cuenta */}
-            <div style={{
-              background: 'var(--surface-elevated)',
-              border: '1px solid var(--border-subtle)',
-              borderRadius: '12px',
-              padding: '1.25rem',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '1rem'
-            }}>
-              <h4 style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                Datos de Acceso
-              </h4>
-              
-              {/* Sección Foto de Perfil */}
-              <div style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'space-between', 
-                flexWrap: 'wrap', 
-                gap: '1rem', 
-                borderBottom: '1px solid var(--border-subtle)', 
-                paddingBottom: '1rem' 
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                  <div style={{
-                    width: '64px',
-                    height: '64px',
-                    borderRadius: '50%',
-                    overflow: 'hidden',
-                    background: 'rgba(59, 130, 246, 0.15)',
-                    border: '2px solid var(--accent-primary)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                    flexShrink: 0
-                  }}>
-                    {user?.foto_perfil ? (
-                      <img 
-                        src={user.foto_perfil} 
-                        alt={user.nombre} 
-                        referrerPolicy="no-referrer"
-                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                        onError={(e) => {
-                          e.currentTarget.style.display = 'none';
-                          if (e.currentTarget.nextElementSibling) {
-                            e.currentTarget.nextElementSibling.style.display = 'flex';
-                          }
-                        }}
-                      />
-                    ) : null}
-                    <span 
-                      style={{ 
-                        display: user?.foto_perfil ? 'none' : 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        width: '100%',
-                        height: '100%',
-                        fontSize: '1.5rem', 
-                        fontWeight: 800, 
-                        color: 'var(--accent-primary)' 
-                      }}
-                    >
-                      {user?.nombre ? user.nombre.charAt(0).toUpperCase() : <User size={28} />}
-                    </span>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                      Foto de Perfil
-                      {user?.es_google === 1 && (
-                        <span style={{ 
-                          fontSize: '0.62rem', 
-                          padding: '0.12rem 0.45rem', 
-                          borderRadius: '6px', 
-                          background: 'rgba(66, 133, 244, 0.15)', 
-                          color: '#60a5fa', 
-                          border: '1px solid rgba(66, 133, 244, 0.3)',
-                          fontWeight: 700 
-                        }}>
-                          Google Account
-                        </span>
-                      )}
-                    </div>
-                    <p style={{ fontSize: '0.72rem', color: 'var(--text-subtle)', marginTop: '0.15rem', margin: 0 }}>
-                      Sube o personaliza tu foto de perfil (JPG, PNG, WEBP, GIF. Máx. 5 MB).
-                    </p>
-                  </div>
-                </div>
-
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <input 
-                    type="file" 
-                    ref={fileInputRef} 
-                    accept="image/jpeg,image/png,image/webp,image/gif" 
-                    onChange={manejarSeleccionFoto} 
-                    style={{ display: 'none' }} 
-                  />
-                  <button 
-                    type="button"
-                    onClick={() => fileInputRef.current && fileInputRef.current.click()} 
-                    className="btn btn-secondary"
-                    style={{ fontSize: '0.75rem', padding: '0.4rem 0.85rem', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
-                    disabled={subiendoFoto}
-                  >
-                    <Camera size={14} />
-                    {subiendoFoto ? 'Cargando...' : (user?.foto_perfil ? 'Cambiar Foto' : 'Subir Foto')}
-                  </button>
-
-                  {window.google?.accounts?.oauth2 && (
-                    <button
-                      type="button"
-                      onClick={sincronizarFotoGoogle}
-                      className="btn btn-secondary"
-                      disabled={subiendoFoto}
-                      title="Sincronizar la foto de perfil de Google"
-                    >
-                      <User size={14} /> Sincronizar Google
-                    </button>
-                  )}
-
-                  {user?.foto_perfil && (
-                    <button 
-                      type="button"
-                      onClick={manejarEliminarFoto} 
-                      className="btn btn-secondary"
-                      style={{ fontSize: '0.75rem', padding: '0.4rem 0.6rem', color: '#f87171', borderColor: 'rgba(239,68,68,0.3)' }}
-                      title="Quitar foto de perfil"
-                      disabled={subiendoFoto}
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              {/* Correo y Nombre */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.75rem' }}>
-                <div>
-                  <span style={{ fontSize: '0.78rem', color: 'var(--text-subtle)', fontWeight: 600 }}>Correo Electrónico:</span>
-                  <div style={{ fontSize: '0.88rem', fontWeight: 600, color: 'var(--text-primary)', marginTop: '0.15rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                    {user?.correo}
-                    <span style={{ fontSize: '0.68rem', fontWeight: 600, padding: '0.1rem 0.4rem', borderRadius: '4px', background: 'var(--surface-elevated)', color: 'var(--text-subtle)', border: '1px solid var(--border-subtle)' }}>
-                      No modificable
-                    </span>
-                  </div>
-                </div>
-                <button 
-                  onClick={() => { setVerFormularioCorreo(!verFormularioCorreo); setVerFormularioClave(false); }} 
-                  className="btn btn-secondary" 
-                  style={{ fontSize: '0.75rem', padding: '0.4rem 0.85rem' }}
-                >
-                  {verFormularioCorreo ? 'Cancelar' : 'Cambiar Nombre'}
-                </button>
-              </div>
-
-              {/* Formulario de Nombre Completo */}
-              {verFormularioCorreo && (
-                <form onSubmit={guardarDatosPerfil} style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', padding: '0.5rem 0', animation: 'fadeIn 0.25s ease' }}>
-                  <div className="form-group">
-                    <label className="form-label" style={{ fontSize: '0.72rem' }}>Nombre Completo</label>
-                    <input 
-                      type="text" 
-                      className="form-input" 
-                      value={nombre} 
-                      onChange={(e) => setNombre(e.target.value)} 
-                      required
-                    />
-                  </div>
-                  <button type="submit" className="btn btn-primary" style={{ width: '100%', fontSize: '0.78rem', padding: '0.5rem' }} disabled={cargando}>
-                    {cargando ? 'Guardando Cambios...' : 'Guardar Nombre'}
-                  </button>
-                </form>
-              )}
-
-              {/* Contraseña */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', paddingTop: '0.25rem' }}>
-                <div>
-                  <span style={{ fontSize: '0.78rem', color: 'var(--text-subtle)', fontWeight: 600 }}>Contraseña:</span>
-                  <div style={{ fontSize: '0.88rem', fontWeight: 600, color: 'var(--text-primary)', marginTop: '0.15rem' }}>**********</div>
-                </div>
-                <button 
-                  onClick={() => { setVerFormularioClave(!verFormularioClave); setVerFormularioCorreo(false); }} 
-                  className="btn btn-secondary" 
-                  style={{ fontSize: '0.75rem', padding: '0.4rem 0.85rem' }}
-                >
-                  {verFormularioClave ? 'Cancelar' : 'Modificar Clave'}
-                </button>
-              </div>
-
-              {/* Formulario de Contraseña */}
-              {verFormularioClave && (
-                <form onSubmit={guardarNuevaClave} style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', padding: '0.5rem 0', animation: 'fadeIn 0.25s ease' }}>
-                  <div className="form-group">
-                    <label className="form-label" style={{ fontSize: '0.72rem' }}>Nueva Contraseña</label>
-                    <input 
-                      type="password" 
-                      className="form-input" 
-                      value={nuevaClave} 
-                      placeholder="Mínimo 8 caracteres"
-                      onChange={(e) => setNuevaClave(e.target.value)} 
-                      required
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label" style={{ fontSize: '0.72rem' }}>Confirmar Contraseña</label>
-                    <input 
-                      type="password" 
-                      className="form-input" 
-                      value={confirmarClave} 
-                      placeholder="Repite la contraseña"
-                      onChange={(e) => setConfirmarClave(e.target.value)} 
-                      required
-                    />
-                  </div>
-                  <button type="submit" className="btn btn-primary" style={{ width: '100%', fontSize: '0.78rem', padding: '0.5rem' }} disabled={cargando}>
-                    {cargando ? 'Actualizando Contraseña...' : 'Actualizar Contraseña'}
-                  </button>
-                </form>
-              )}
-
-            </div>
+  return <div className="settings-page">
+    <header className="settings-intro"><div><span className="settings-eyebrow">TU ESPACIO · ZEASYS</span><h1>Tu cuenta y preferencias</h1><p>Gestiona tu perfil, la apariencia y tus descargas en un solo lugar.</p></div></header>
+    {mensajeExito && <div className="settings-feedback settings-feedback--success" role="status"><Check size={18} aria-hidden="true" />{mensajeExito}</div>}
+    {errorMsj && <div className="settings-feedback settings-feedback--error" role="alert"><AlertTriangle size={18} aria-hidden="true" />{errorMsj}</div>}
+    <div className="settings-layout">
+      <div className="settings-main">
+        <section className="settings-card" aria-labelledby="settings-cuenta">
+          <header className="settings-card-heading"><span className="settings-icon"><User size={20} aria-hidden="true" /></span><div><h2 id="settings-cuenta">Tu perfil</h2><p>La información con la que te identificas en ZeaSys.</p></div></header>
+          <div className="settings-profile">
+            <div className="settings-avatar">{user?.foto_perfil && <img src={user.foto_perfil} alt="" referrerPolicy="no-referrer" onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.nextElementSibling.style.display = 'flex'; }} />}<span style={{ display: user?.foto_perfil ? 'none' : 'flex' }}>{user?.nombre?.charAt(0).toUpperCase() || <User size={24} />}</span></div>
+            <div className="settings-profile-copy"><strong>{user.nombre}</strong><span>{correo}</span>{Number(user.es_google) === 1 && <small>Cuenta vinculada a Google</small>}</div>
+            <div className="settings-avatar-actions"><input type="file" ref={fileInputRef} accept="image/jpeg,image/png,image/webp,image/gif" onChange={manejarSeleccionFoto} hidden /><button type="button" className="settings-button" disabled={subiendoFoto} onClick={() => fileInputRef.current?.click()}><Camera size={16} />{subiendoFoto ? 'Cargando…' : user?.foto_perfil ? 'Cambiar foto' : 'Subir foto'}</button>{user?.foto_perfil && <button type="button" className="settings-icon-button" disabled={subiendoFoto} onClick={manejarEliminarFoto} aria-label="Quitar foto de perfil" title="Quitar foto de perfil"><Trash2 size={17} /></button>}{window.google?.accounts?.oauth2 && <button type="button" className="settings-button" disabled={subiendoFoto} onClick={sincronizarFotoGoogle}>Sincronizar Google</button>}</div>
+            <p className="settings-photo-hint">JPG, PNG, WEBP o GIF · Máximo 5 MB</p>
           </div>
-
-          {/* Seguridad y Salida */}
-          <div style={{
-            background: 'var(--surface-elevated)',
-            border: '1px solid var(--border-subtle)',
-            borderRadius: '12px',
-            padding: '1.25rem',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '1rem'
-          }}>
-            <h4 style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-              Seguridad y Sesión
-            </h4>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
-                <span style={{ fontSize: '0.78rem', color: 'var(--text-subtle)' }}>Sesión de Usuario:</span>
-                <button 
-                  onClick={cerrarSesion} 
-                  className="btn btn-outline text-danger" 
-                  style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.45rem 1rem', fontSize: '0.78rem' }}
-                >
-                  <LogOut size={14} />
-                  Cerrar sesión en esta computadora
-                </button>
-              </div>
-
-              <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: '0.75rem', marginTop: '0.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
-                <span style={{ fontSize: '0.78rem', color: 'var(--text-subtle)' }}>Borrar Cuenta Permanente:</span>
-                <button 
-                  onClick={eliminarMiCuenta} 
-                  className="btn text-danger" 
-                  style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.45rem 1rem', fontSize: '0.78rem', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)' }}
-                >
-                  Eliminar mi cuenta y borrar datos
-                </button>
-              </div>
-            </div>
-          </div>
-
-        </div>
-
-        {/* Lado derecho: Tema y Exportación */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          
-          {/* Apariencia */}
-          <div className="glass-panel" style={{ padding: '1.5rem' }}>
-            <div className="glass-card-header" style={{ borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.75rem', marginBottom: '1.25rem' }}>
-              <h3 style={{ fontSize: '1.1rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                {theme === 'dark' ? <Moon size={18} className="text-secondary" /> : <Sun size={18} className="text-warning" />}
-                Apariencia del Sistema (Tema)
-              </h3>
-              <p style={{ fontSize: '0.72rem', color: 'var(--muted-foreground)', marginTop: '0.2rem' }}>
-                Cambia el tema de color a claro u oscuro.
-              </p>
-            </div>
-
-            <div style={{ display: 'flex', gap: '1rem' }}>
-              <button 
-                type="button"
-                onClick={() => setTheme('dark')} 
-                className={`theme-selector-btn ${theme === 'dark' ? 'active' : ''}`}
-                style={{
-                  flex: 1,
-                  padding: '1rem',
-                  borderRadius: '12px',
-                  border: theme === 'dark' ? '2px solid hsl(var(--primary))' : '1px solid var(--border-subtle)',
-                  background: theme === 'dark' ? 'rgba(134, 59, 255, 0.1)' : 'var(--surface-elevated)',
-                  color: '#ffffff',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  fontWeight: 600,
-                  transition: 'all 0.2s ease'
-                }}
-              >
-                <Moon size={24} color="#8b5cf6" />
-                <span>Tema Oscuro</span>
-              </button>
-
-              <button 
-                type="button"
-                onClick={() => setTheme('light')} 
-                className={`theme-selector-btn ${theme === 'light' ? 'active' : ''}`}
-                style={{
-                  flex: 1,
-                  padding: '1rem',
-                  borderRadius: '12px',
-                  border: theme === 'light' ? '2px solid hsl(var(--primary))' : '1px solid var(--border-subtle)',
-                  background: theme === 'light' ? 'rgba(134, 59, 255, 0.1)' : 'var(--surface-elevated)',
-                  color: theme === 'light' ? '#0f172a' : '#cbd5e1',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  fontWeight: 600,
-                  transition: 'all 0.2s ease'
-                }}
-              >
-                <Sun size={24} color="#eab308" />
-                <span>Tema Claro</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Exportación */}
-          <div className="glass-panel" style={{ padding: '1.5rem' }}>
-            <div className="glass-card-header" style={{ borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.75rem', marginBottom: '1.25rem' }}>
-              <h3 style={{ fontSize: '1.1rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <Download size={18} color="#10b981" />
-                Exportar Información
-              </h3>
-              <p style={{ fontSize: '0.72rem', color: 'var(--muted-foreground)', marginTop: '0.2rem' }}>
-                Descarga tus datos en formato JSON o un reporte PDF para imprimir.
-              </p>
-            </div>
-
-            {/* Checkboxes de Secciones */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1.25rem' }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', cursor: 'pointer' }}>
-                <input 
-                  type="checkbox" 
-                  checked={seccionesExportar.cultivos} 
-                  onChange={(e) => setSeccionesExportar({ ...seccionesExportar, cultivos: e.target.checked })}
-                  style={{ width: '16px', height: '16px', accentColor: 'hsl(var(--primary))' }}
-                />
-                Lotes y Parcelas GPS ({cultivos.length})
-              </label>
-
-              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', cursor: 'pointer' }}>
-                <input 
-                  type="checkbox" 
-                  checked={seccionesExportar.simulaciones} 
-                  onChange={(e) => setSeccionesExportar({ ...seccionesExportar, simulaciones: e.target.checked })}
-                  style={{ width: '16px', height: '16px', accentColor: 'hsl(var(--primary))' }}
-                />
-                Historial de Simulaciones
-              </label>
-
-              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', cursor: 'pointer' }}>
-                <input 
-                  type="checkbox" 
-                  checked={seccionesExportar.kpis} 
-                  onChange={(e) => setSeccionesExportar({ ...seccionesExportar, kpis: e.target.checked })}
-                  style={{ width: '16px', height: '16px', accentColor: 'hsl(var(--primary))' }}
-                />
-                Métricas & Resúmenes de KPI
-              </label>
-            </div>
-
-            {/* Formato de descarga */}
-            <div style={{ marginBottom: '1.25rem', borderTop: '1px solid var(--border-subtle)', paddingTop: '1rem' }}>
-              <span style={{ fontSize: '0.78rem', color: 'var(--text-subtle)', fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>
-                Elegir Formato:
-              </span>
-              <div style={{ display: 'flex', gap: '0.75rem' }}>
-                <label style={{ 
-                  flex: 1, 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: '0.4rem', 
-                  background: 'var(--surface-elevated)', 
-                  border: formatoExportar === 'json' ? '1px solid hsl(var(--primary))' : '1px solid var(--border-subtle)', 
-                  padding: '0.5rem 0.75rem', 
-                  borderRadius: '8px', 
-                  cursor: 'pointer', 
-                  fontSize: '0.8rem', 
-                  fontWeight: 600,
-                  transition: 'all 0.15s ease'
-                }}>
-                  <input 
-                    type="radio" 
-                    name="formatoExportar" 
-                    value="json" 
-                    checked={formatoExportar === 'json'} 
-                    onChange={() => setFormatoExportar('json')}
-                    style={{ accentColor: 'hsl(var(--primary))' }}
-                  />
-                  <span>Archivo JSON</span>
-                </label>
-                <label style={{ 
-                  flex: 1, 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: '0.4rem', 
-                  background: 'var(--surface-elevated)', 
-                  border: formatoExportar === 'pdf' ? '1px solid hsl(var(--primary))' : '1px solid var(--border-subtle)', 
-                  padding: '0.5rem 0.75rem', 
-                  borderRadius: '8px', 
-                  cursor: 'pointer', 
-                  fontSize: '0.8rem', 
-                  fontWeight: 600,
-                  transition: 'all 0.15s ease'
-                }}>
-                  <input 
-                    type="radio" 
-                    name="formatoExportar" 
-                    value="pdf" 
-                    checked={formatoExportar === 'pdf'} 
-                    onChange={() => setFormatoExportar('pdf')}
-                    style={{ accentColor: 'hsl(var(--primary))' }}
-                  />
-                  <span>Documento PDF</span>
-                </label>
-              </div>
-            </div>
-
-            <button 
-              onClick={procesarExportarDatos} 
-              className="btn" 
-              style={{
-                width: '100%',
-                background: 'linear-gradient(135deg, #10b981, #059669)',
-                color: 'white',
-                border: 'none',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '0.5rem',
-                padding: '0.65rem',
-                borderRadius: '10px',
-                fontWeight: 600,
-                cursor: 'pointer'
-              }}
-              disabled={cargandoExportar || (!seccionesExportar.cultivos && !seccionesExportar.simulaciones && !seccionesExportar.kpis)}
-            >
-              {cargandoExportar ? (
-                'Descargando...'
-              ) : exitoExportar ? (
-                <>
-                  <Check size={18} style={{ color: 'white' }} />
-                  ¡Listo, exportado!
-                </>
-              ) : (
-                <>
-                  <Download size={18} />
-                  Descargar ahora
-                </>
-              )}
-            </button>
-          </div>
-        </div>
+          <div className="settings-row"><div><span className="settings-label">Nombre</span><strong>{user.nombre}</strong></div><button type="button" className="settings-button" aria-expanded={verFormularioCorreo} onClick={() => { setNombre(user.nombre); setVerFormularioCorreo(!verFormularioCorreo); setVerFormularioClave(false); }}>{verFormularioCorreo ? 'Cancelar' : 'Editar nombre'}</button></div>
+          {verFormularioCorreo && <form className="settings-form" onSubmit={guardarDatosPerfil}><label htmlFor="settings-nombre">Nombre completo</label><input id="settings-nombre" type="text" placeholder="Nombre completo" value={nombre} onChange={(e) => setNombre(e.target.value)} maxLength={100} required autoComplete="name" /><button type="submit" className="settings-button settings-button--primary" disabled={cargando}>{cargando ? 'Guardando…' : 'Guardar nombre'}</button></form>}
+          <div className="settings-row"><div><span className="settings-label">Correo electrónico</span><strong className="settings-email">{correo}</strong><small>El correo no se puede modificar desde aquí.</small></div></div>
+          <div className="settings-row"><div><span className="settings-label">Contraseña</span><strong>••••••••••</strong><small>Úsala para acceder a tu cuenta.</small></div><button type="button" className="settings-button" aria-expanded={verFormularioClave} onClick={() => { setVerFormularioClave(!verFormularioClave); setVerFormularioCorreo(false); }}>{verFormularioClave ? 'Cancelar' : 'Cambiar contraseña'}</button></div>
+          {verFormularioClave && <form className="settings-form" onSubmit={guardarNuevaClave}><p>Usa al menos 8 caracteres, con mayúscula, minúscula, número y símbolo.</p><label htmlFor="settings-clave">Nueva contraseña</label><input id="settings-clave" type="password" value={nuevaClave} onChange={(e) => setNuevaClave(e.target.value)} autoComplete="new-password" minLength={8} required /><label htmlFor="settings-clave-confirmar">Confirmar contraseña</label><input id="settings-clave-confirmar" type="password" value={confirmarClave} onChange={(e) => setConfirmarClave(e.target.value)} autoComplete="new-password" minLength={8} required /><button type="submit" className="settings-button settings-button--primary" disabled={cargando}>{cargando ? 'Guardando…' : 'Actualizar contraseña'}</button></form>}
+        </section>
+        <section className="settings-card" aria-labelledby="settings-seguridad"><header className="settings-card-heading"><span className="settings-icon"><ShieldCheck size={20} aria-hidden="true" /></span><div><h2 id="settings-seguridad">Seguridad y sesión</h2><p>Controla el acceso y la permanencia de tu cuenta.</p></div></header><div className="settings-row"><div><strong>Cerrar sesión</strong><small>Sal de tu cuenta en este dispositivo.</small></div><button type="button" className="settings-button" onClick={cerrarSesion}><LogOut size={16} />Cerrar sesión</button></div><div className="settings-row settings-danger"><div><strong>Eliminar cuenta</strong><small>Elimina tu cuenta, parcelas y simulaciones de forma permanente.</small></div><button type="button" className="settings-button settings-button--danger" onClick={eliminarMiCuenta} disabled={cargando}><Trash2 size={16} />Eliminar cuenta</button></div></section>
       </div>
-
-      {/* Mobile grid styling adjustments */}
-      <style>{`
-        @media (max-width: 768px) {
-          .config-grid {
-            grid-template-columns: 1fr !important;
-          }
-        }
-      `}</style>
+      <div className="settings-aside">
+        <section className="settings-card" aria-labelledby="settings-apariencia"><header className="settings-card-heading"><span className="settings-icon"><Sun size={20} aria-hidden="true" /></span><div><h2 id="settings-apariencia">Apariencia</h2><p>Elige el tema que te resulte más cómodo.</p></div></header><div className="settings-theme-grid" role="group" aria-label="Tema de la aplicación">{[['dark', 'Oscuro', Moon], ['light', 'Claro', Sun]].map(([value, label, Icon]) => <button key={value} type="button" className={`settings-theme ${theme === value ? 'is-active' : ''}`} aria-pressed={theme === value} onClick={() => setTheme(value)}><Icon size={21} aria-hidden="true" /><span>{label}</span>{theme === value && <Check size={16} className="settings-theme-check" aria-hidden="true" />}</button>)}</div></section>
+        <section className="settings-card" aria-labelledby="settings-exportar"><header className="settings-card-heading"><span className="settings-icon"><Download size={20} aria-hidden="true" /></span><div><h2 id="settings-exportar">Descargar información</h2><p>Guarda una copia de los datos que necesites.</p></div></header><fieldset className="settings-options" disabled={cargandoExportar}><legend>¿Qué quieres incluir?</legend>{[['cultivos', `Parcelas registradas (${cultivos.length})`, 'Datos de tus lotes y ubicación.'], ['simulaciones', 'Historial de simulaciones', 'Tus simulaciones guardadas.'], ['mediciones', 'Registros de campo', 'Mediciones y observaciones de tus parcelas.'], ['kpis', 'Resumen de parcelas', 'Cantidad de parcelas registradas.']].map(([key, title, detail]) => <label className="settings-option" key={key}><input type="checkbox" checked={seccionesExportar[key]} onChange={(e) => { setSeccionesExportar({ ...seccionesExportar, [key]: e.target.checked }); setExitoExportar(false); setErrorExportar(null); }} /><span><strong>{title}</strong><small>{detail}</small></span></label>)}</fieldset><fieldset className="settings-formats" disabled={cargandoExportar}><legend>Formato</legend><div className="settings-format-grid">{[['json', 'JSON', 'Archivo de datos'], ['pdf', 'PDF', 'Para guardar o imprimir']].map(([value, label, detail]) => <label key={value} className={formatoExportar === value ? 'is-active' : ''}><input type="radio" name="formatoExportar" value={value} checked={formatoExportar === value} onChange={() => { setFormatoExportar(value); setExitoExportar(false); setErrorExportar(null); }} /><span><strong>{label}</strong><small>{detail}</small></span></label>)}</div></fieldset><p className="settings-export-note">{formatoExportar === 'json' ? 'JSON conserva los datos seleccionados para uso técnico.' : 'PDF prepara un informe resumido para imprimir o guardar.'} La copia puede incluir ubicaciones y datos de tus parcelas.</p>{cargandoExportar && <p className="settings-export-progress" role="status">{progresoExportar || 'Preparando descarga…'}</p>}{errorExportar && <p className="settings-export-error" role="alert">{errorExportar}</p>}{exitoExportar && <p className="settings-export-success" role="status">{formatoExportar === 'pdf' ? 'Se abrió la ventana de impresión. Allí puedes guardar el PDF.' : 'Tu archivo está listo.'}</p>}<button type="button" className="settings-button settings-button--primary settings-download" onClick={procesarExportarDatos} disabled={cargandoExportar || !Object.values(seccionesExportar).some(Boolean)}><Download size={17} />{cargandoExportar ? 'Preparando…' : formatoExportar === 'pdf' ? 'Preparar PDF' : 'Descargar JSON'}<ChevronRight size={16} /></button></section>
+      </div>
     </div>
-  );
+  </div>;
 }

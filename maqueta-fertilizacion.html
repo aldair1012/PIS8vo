@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Maqueta · Calculadora de fertilización — ZeaSys</title>
+<style>
+  :root{
+    --tinta:#22301f; --tinta-suave:#5a6b57; --verde:#2f6b3f; --verde-osc:#245433;
+    --csp:#f4f7f2; --tarjeta:#fff; --borde:#dde7dc; --borde-fuerte:#b9cdb9;
+    --chipsel:#e9f4ea; --lita:#9ad58b; --ambar-bg:#fdf6e3; --ambar:#8a6d1f;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--tinta);background:var(--csp);line-height:1.5}
+  header.top{padding:26px 20px 8px;max-width:1120px;margin:0 auto}
+  .kicker{color:var(--tinta-suave);font-size:.85rem;letter-spacing:.04em;text-transform:uppercase;margin:0}
+  h1{margin:.2rem 0 .3rem;font-size:1.55rem}
+  .lead{margin:0;color:var(--tinta-suave);max-width:64ch}
+  .wrap{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:20px;max-width:1120px;margin:18px auto 40px;padding:0 20px}
+  @media (max-width:900px){.wrap{grid-template-columns:1fr}}
+  .frame{background:var(--tarjeta);border:1px solid var(--borde);border-radius:16px;padding:20px}
+  .sec-head{display:flex;gap:12px;align-items:flex-start;margin-bottom:14px}
+  .num{background:var(--verde);color:#fff;border-radius:8px;font-weight:700;padding:2px 9px;font-size:.85rem;margin-top:2px}
+  h2{margin:0;font-size:1.08rem}
+  .cols{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media (max-width:720px){.cols{grid-template-columns:1fr}}
+  .mode{display:flex;gap:8px;background:var(--csp);padding:6px;border-radius:12px;margin-bottom:12px}
+  .mode-btn{flex:1;min-height:42px;border:1px solid transparent;background:transparent;border-radius:9px;font-size:.9rem;cursor:pointer;color:var(--tinta-suave)}
+  .mode-btn.activo{background:#fff;border-color:var(--verde);color:var(--verde);font-weight:700}
+  .hint{font-size:.83rem;color:var(--tinta-suave);margin:6px 0 10px}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+  .chip{border:1px solid var(--borde-fuerte);background:#fff;border-radius:999px;padding:9px 14px;min-height:40px;cursor:pointer;font-size:.86rem;color:var(--tinta)}
+  .chip:focus-visible,.mode-btn:focus-visible,.f-dosis:focus-visible,.f-unidad:focus-visible,.f-N:focus-visible,.f-precio:focus-visible,.quitar:focus-visible,#area:focus-visible,#campo-n:focus-visible{outline:2px solid var(--verde);outline-offset:2px}
+  .chip.sel{background:var(--chipsel);border-color:var(--verde);font-weight:600;color:var(--verde)}
+  .fila{border:1px solid var(--borde);border-radius:12px;padding:12px;margin-bottom:10px}
+  .fila-head{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+  .fila-head strong{font-size:.95rem}
+  .fila-head .formula{color:var(--tinta-suave);font-size:.8rem}
+  .quitar{margin-left:auto;border:none;background:transparent;color:#a33;cursor:pointer;font-size:.82rem;min-height:34px;padding:2px 8px;border-radius:8px}
+  .fila-grid{display:grid;grid-template-columns:1fr 1.3fr 0.8fr 1fr;gap:8px}
+  @media (max-width:640px){.fila-grid{grid-template-columns:1fr 1fr}}
+  .fila-grid label{font-size:.74rem;color:var(--tinta-suave);display:flex;flex-direction:column;gap:3px}
+  .fila-grid input,.fila-grid select{min-height:40px;border:1px solid var(--borde-fuerte);border-radius:9px;padding:6px 9px;font-size:.9rem;background:#fff;color:var(--tinta)}
+  .fila-res{margin:8px 0 0;font-size:.85rem;color:var(--tinta-suave)}
+  .fila-res b{color:var(--verde)}
+  .totales{margin-top:14px;border:1px solid var(--borde);border-radius:12px;overflow:hidden}
+  .totales table{width:100%;border-collapse:collapse;font-size:.9rem}
+  .totales th,.totales td{padding:8px 12px;text-align:left;border-bottom:1px solid var(--borde)}
+  .totales tr:last-child th,.totales tr:last-child td{border-bottom:none}
+  .totales th{width:46%;font-weight:600}
+  .totales td b{color:var(--verde)}
+  .nota-reg{display:block;font-size:.76rem;color:var(--tinta-suave);font-weight:400}
+  .nfield{margin-top:14px;position:relative}
+  .nfield .form-label{font-size:.86rem;font-weight:600;display:block;margin-bottom:5px}
+  .nfield .form-label em{color:#a33;font-style:normal}
+  #campo-n{width:100%;min-height:44px;border:1px solid var(--borde-fuerte);border-radius:10px;padding:9px 12px;font-size:.95rem;background:#f7fbf5;color:var(--tinta)}
+  .badge{display:inline-block;background:#eaf6e6;color:var(--verde);border-radius:999px;font-size:.75rem;padding:3px 10px;margin-top:6px}
+  .aviso{margin-top:12px;border-radius:10px;padding:10px 12px;font-size:.85rem}
+  .aviso.ok{background:var(--chipsel);color:var(--verde)}
+  .aviso.alta{background:var(--ambar-bg);color:var(--ambar)}
+  .aviso.vacia{background:#f1f4f1;color:var(--tinta-suave)}
+  .sidebar{align-self:start;background:#fdfefc;border:1px dashed var(--borde-fuerte);border-radius:16px;padding:18px;font-size:.86rem;margin-top:2px}
+  .sidebar h3{margin:0 0 8px;font-size:.95rem}
+  .sidebar ul{margin:0;padding-left:18px;color:var(--tinta-suave)}
+  .sidebar li{margin-bottom:6px}
+  .precio-nota{font-size:.78rem;color:var(--tinta-suave);margin-top:6px}
+  .chip.otro{border-style:dashed;color:var(--tinta-suave)}
+  .otro-form{border-style:dashed;background:#fbfdf8}
+  .otro-grid{grid-template-columns:2fr .8fr .8fr .8fr 1fr}
+  @media (max-width:640px){.otro-grid{grid-template-columns:1fr 1fr}}
+  .btn-mini{margin-top:10px;min-height:40px;border:none;background:var(--verde);color:#fff;border-radius:9px;padding:8px 16px;font-size:.86rem;cursor:pointer}
+  .btn-mini:hover{background:#25634a}
+  .nota-iniap{margin-top:4px}
+  .fuentes{margin-top:14px;font-size:.78rem;color:var(--tinta-suave)}
+  .fuentes summary{cursor:pointer;min-height:34px;display:flex;align-items:center;color:var(--tinta)}
+  .fuentes li{margin-bottom:8px}
+  .fuentes a{color:var(--verde)}
+</style>
+</head>
+<body>
+<header class="top">
+  <p class="kicker">Maqueta interactiva · solo prueba, no guarda nada</p>
+  <h1>Tu plan de fertilización, sin cuentas de cabeza</h1>
+  <p class="lead">Elige los productos que usarás, pon el peso de cada uno y el sistema convierte el plan en los datos que pide la simulación. Puedes tocar todo: chips, pesos, porcentajes, precios, área.</p>
+</header>
+
+<main class="wrap">
+  <form class="frame" onsubmit="return false">
+    <div class="sec-head"><span class="num">02</span><div><h2>Revisa los datos del escenario</h2><p class="hint">Recorte de la pantalla real de simulación. Todo lo demás queda igual.</p></div></div>
+
+    <div class="cols">
+      <section aria-label="Fertilización">
+        <div class="mode" role="group" aria-label="Modo de llenado">
+          <button type="button" id="m-producto" class="mode-btn activo">🧺 Por producto</button>
+          <button type="button" id="m-nutriente" class="mode-btn">✍️ Por nutriente (avanzado)</button>
+        </div>
+
+        <div id="panel-producto">
+          <p class="hint">Marca los fertilizantes que vas a aplicar. Para cada uno entra el <b>peso</b> (bolsa de 50 kg o kg por hectárea) y, si el tuyo tiene otra concentración, corrige el <b>%</b>.</p>
+          <div class="chips" id="chips"></div>
+          <div id="form-otro" class="fila otro-form" hidden>
+            <div class="fila-head"><strong>Agrega tu propio producto</strong><button type="button" class="quitar" onclick="cerrarOtro()">Cancelar</button></div>
+            <div class="fila-grid otro-grid">
+              <label>Nombre tal como aparece en la bolsa<input id="o-nombre" type="text" placeholder="Ej.: Completo del almacén de la esquina"></label>
+              <label>% N<input id="o-n" type="text" inputmode="decimal" value="0"></label>
+              <label>% P2O5<input id="o-p" type="text" inputmode="decimal" value="0"></label>
+              <label>% K2O<input id="o-k" type="text" inputmode="decimal" value="0"></label>
+              <label>Precio por bolsa (USD)<input id="o-precio" type="text" inputmode="decimal" value="0"></label>
+            </div>
+            <button type="button" class="btn-mini" onclick="agregarOtro()">Agregar a mi plan</button>
+          </div>
+          <div id="filas"></div>
+          <div class="totales">
+            <table>
+              <tr><th>Nitrógeno total</th><td><b id="r-n">0</b> kg N/ha</td></tr>
+              <tr><th>Fósforo · Potasio <span class="nota-reg">(solo registro; la predicción usa únicamente N)</span></th><td><b id="r-pk">0</b> · <b id="r-k">0</b> kg/ha</td></tr>
+              <tr><th>Costo por hectárea</th><td><b id="r-costo">0</b> USD/ha</td></tr>
+              <tr><th>Costo del plan en tu área <span class="nota-reg">(área abajo)</span></th><td><b id="r-total">0</b> USD</td></tr>
+            </table>
+          </div>
+          <div class="aviso ok" id="aviso" role="status"></div>
+          <p class="precio-nota">Los precios salen como referencia orientativa; cámbialos por los del mercado local.</p>
+          <p class="precio-nota nota-iniap">Punta del INIAP para secano: parte el nitrógeno en dos — 50 % a los 15 días de la siembra y 50 % a los 30.</p>
+        </div>
+
+        <div id="panel-nutriente" hidden>
+          <p class="hint">Modo agrónomo: escribe directo los kilos de nutriente en la casilla de <b>Nitrógeno aplicado</b> (abajo). Es la casilla que usa la pantalla de hoy.</p>
+        </div>
+
+        <div class="nfield">
+          <label class="form-label" for="campo-n">Nitrógeno aplicado (kg N/ha) <em>*</em></label>
+          <input id="campo-n" value="0" readonly oninput="manualN(this.value)">
+          <span class="badge" id="badge-n">Calculado con tus productos</span>
+          <p class="hint">Cantidad de nutriente, no peso del producto. La calculadora hace la conversión por ti.</p>
+        </div>
+
+        <div class="nfield">
+          <label class="form-label" for="area">Área a simular (ha)</label>
+          <input id="area" inputmode="decimal" value="2.5" oninput="recalcular()">
+        </div>
+      </section>
+
+    </div>
+  </form>
+  <aside class="sidebar" aria-label="Nota de la maqueta">
+    <h3>¿Qué demuestra esta maqueta?</h3>
+    <ul>
+      <li><b>Multi-selección de productos</b> con peso y % por cada uno (tu idea original).</li>
+      <li><b>➕ Otros…</b>: el productor agrega su propio producto con nombre, % y precio.</li>
+      <li>La casilla de Nitrógeno se llena <b>sola</b>, con sello "calculado": el plan <b>afecta de verdad</b> la predicción a través del nitrógeno.</li>
+      <li>P y K quedan como <b>registro</b> frente a lo que recomienda la investigación; no simulan un impacto que hoy no tiene el modelo.</li>
+      <li><b>Costo por hectárea y total</b> de todo el plan.</li>
+      <li>Catálogo basado en lo <b>usado en Ecuador</b>: urea, DAP y MOP (kits FertiUNA del Ministerio).</li>
+    </ul>
+    <details class="fuentes">
+      <summary>Fuentes certificadas</summary>
+      <ul>
+        <li><b>INIAP</b> (bloque técnica de maíz): "el fertilizante más utilizado es la Urea al 46 %"; en secano el N se fracciona 50 % a los 15 días y 50 % a los 30. <a href="https://tecnologia.iniap.gob.ec/wp-content/uploads/2023/11/6fertilizacion.pdf" target="_blank" rel="noopener">PDF oficial</a></li>
+        <li><b>MAGAP</b> — Programa FertiUNA: kits de fertilizantes para maiceros con <b>urea, muriato de potasio y DAP</b>. <a href="https://www.agricultura.gob.ec/programa-fertiuna-abre-oferta-a-maiceros-y-arroceros/" target="_blank" rel="noopener">Ministerio de Agricultura</a></li>
+        <li><b>Agripac</b> — línea edáfica en Ecuador: urea, abonos completos, sulfato/nitrato de amonio y mezclas. <a href="https://agripac.com.ec/division/fertilizantes-2/" target="_blank" rel="noopener">Catálogo del distribuidor</a></li>
+      </ul>
+    </details>
+  </aside>
+</main>
+
+<script>
+const CATALOGO = [
+  // Fuentes: INIAP Fertilización del maíz (urea 46% la más usada); MAGAP FertiUNA (kits de maíz: urea, MOP, DAP); Agripac (línea edáfica).
+  { id:'urea',    nombre:'Urea',                       formula:'46-0-0',             N:46,  P:0,    K:0,  precio:33 },
+  { id:'dap',     nombre:'Fosfato diamónico (DAP)',    formula:'18-46-0',            N:18,  P:46,   K:0,  precio:45 },
+  { id:'mop',     nombre:'Muriato de potasio (MOP)',   formula:'0-0-60',             N:0,   P:0,    K:60, precio:36 },
+  { id:'sa',      nombre:'Sulfato de amonio',          formula:'21-0-0 · 24 S',      N:21,  P:0,    K:0,  precio:29 },
+  { id:'na',      nombre:'Nitrato de amonio',          formula:'33-0-0',             N:33,  P:0,    K:0,  precio:36 },
+  { id:'sulpomag',nombre:'Sulpomag (langbeinita)',     formula:'0-0-22 · 18 S · 11 Mg', N:0, P:0,    K:22, precio:38 },
+  { id:'npk15',   nombre:'Mezcla NPK',                 formula:'15-15-15',           N:15,  P:15,   K:15, precio:48 },
+  { id:'npk12',   nombre:'Mezcla NPK',                 formula:'12-24-12 · 16 S',    N:12,  P:24,   K:16, precio:52 },
+  { id:'npk10',   nombre:'Mezcla NPK',                 formula:'10-30-10',           N:10,  P:30,   K:10, precio:55 },
+  { id:'compost', nombre:'Compost o estiercol',        formula:'~1,5-0-0',           N:1.5, P:0.5,  K:1.2, precio:8 },
+];
+let contadorOtro = 0;
+const customs = []; // productos creados por el usuario
+const todosProductos = () => CATALOGO.concat(customs);
+const plan = new Map(); // id -> {dosis, unidad, N, precio}
+const fmt = n => (Math.round(n*10)/10).toLocaleString('es');
+const num = v => { const n = parseFloat(String(v).replace(/,/g,'.').replace(/[^\d.]/g,'')); return isNaN(n)?0:n; };
+const pct = v => Math.min(Math.max(num(v),0),100);
+
+function pintarChips(){
+  const caja = document.getElementById('chips');
+  const lista = todosProductos().map(c =>
+    `<button type="button" class="chip ${plan.has(c.id)?'sel':''}" data-id="${c.id}" aria-pressed="${plan.has(c.id)}"><b>${c.nombre}</b> ${c.formula}</button>`).join('');
+  caja.innerHTML = lista + `<button type="button" class="chip otro" id="chip-otros" aria-expanded="false">➕ Otros… (agrega el tuyo)</button>`;
+  caja.querySelectorAll('.chip:not(.otro)').forEach(b => b.onclick = () => alternar(b.dataset.id));
+  document.getElementById('chip-otros').onclick = abrirOtro;
+}
+function abrirOtro(){
+  const bloque = document.getElementById('form-otro');
+  bloque.hidden = !bloque.hidden;
+  document.getElementById('chip-otros').setAttribute('aria-expanded', String(!bloque.hidden));
+  if (!bloque.hidden) document.getElementById('o-nombre').focus();
+}
+function cerrarOtro(){
+  document.getElementById('form-otro').hidden = true;
+  document.getElementById('chip-otros').setAttribute('aria-expanded','false');
+}
+function agregarOtro(){
+  const nombre = document.getElementById('o-nombre').value.trim() || 'Producto propio';
+  const producto = {
+    id: 'otro-' + (++contadorOtro), nombre,
+    formula: `${pct(document.getElementById('o-n').value)}-${pct(document.getElementById('o-p').value)}-${pct(document.getElementById('o-k').value)}`,
+    N: pct(document.getElementById('o-n').value),
+    P: pct(document.getElementById('o-p').value),
+    K: pct(document.getElementById('o-k').value),
+    precio: num(document.getElementById('o-precio').value), propio: true,
+  };
+  customs.push(producto);
+  plan.set(producto.id, { dosis:'1', unidad:'bolsa', N:producto.N, P:producto.P, K:producto.K, precio:producto.precio });
+  cerrarOtro();
+  ['o-nombre','o-n','o-p','o-k','o-precio'].forEach(c => document.getElementById(c).value = c === 'o-nombre' ? '' : '0');
+  document.getElementById('o-precio').value = '0';
+  pintarChips(); pintarFilas(); recalcular();
+}
+function alternar(id){
+  if (plan.has(id)) { plan.delete(id); }
+  else { const c = todosProductos().find(x=>x.id===id);
+    if (!c) return;
+    plan.set(id, { dosis:'1', unidad:'bolsa', N:c.N, P:c.P, K:c.K, precio:c.precio }); }
+  pintarChips(); pintarFilas(); recalcular();
+}
+function pintarFilas(){
+  const caja = document.getElementById('filas');
+  caja.innerHTML = [...plan.entries()].map(([id,r])=>{
+    const c = todosProductos().find(x=>x.id===id);
+    return `<div class="fila" data-id="${id}">
+      <div class="fila-head"><strong>${c.nombre}</strong><span class="formula">${c.formula}</span><button type="button" class="quitar" data-id="${id}" aria-label="Quitar ${c.nombre}">Quitar ✕</button></div>
+      <div class="fila-grid">
+        <label>Peso del producto<input class="f-dosis" data-id="${id}" type="text" inputmode="decimal" value="${r.dosis}"></label>
+        <label>Unidad<select class="f-unidad" data-id="${id}" aria-label="Unidad de ${c.nombre}"><option value="bolsa" ${r.unidad==='bolsa'?'selected':''}>Bolsa de 50 kg</option><option value="kg" ${r.unidad==='kg'?'selected':''}>kg/ha</option></select></label>
+        <label>% N del producto<input class="f-N" data-id="${id}" type="text" inputmode="decimal" value="${r.N}"></label>
+        <label>Precio por bolsa (USD)<input class="f-precio" data-id="${id}" type="text" inputmode="decimal" value="${r.precio}"></label>
+      </div>
+      <p class="fila-res" data-id="${id}"></p>
+    </div>`;
+  }).join('');
+  caja.querySelectorAll('.quitar').forEach(b => b.onclick = () => alternar(b.dataset.id));
+  caja.querySelectorAll('.f-dosis').forEach(inp => inp.oninput = ev => { plan.get(ev.target.dataset.id).dosis = ev.target.value; recalcular(); });
+  caja.querySelectorAll('.f-N').forEach(inp => inp.oninput = ev => { plan.get(ev.target.dataset.id).N = pct(ev.target.value); recalcular(); });
+  caja.querySelectorAll('.f-precio').forEach(inp => inp.oninput = ev => { plan.get(ev.target.dataset.id).precio = ev.target.value; recalcular(); });
+  caja.querySelectorAll('.f-unidad').forEach(sel => sel.onchange = ev => { plan.get(ev.target.dataset.id).unidad = ev.target.value; recalcular(); });
+}
+function aportes(id){
+  const r = plan.get(id); const kg = r.unidad==='bolsa' ? num(r.dosis)*50 : num(r.dosis);
+  return { kg, N: kg*pct(r.N)/100, P: kg*pct(r.P)/100, K: kg*pct(r.K)/100, costo: (r.unidad==='bolsa' ? num(r.dosis)*num(r.precio) : (kg/50)*num(r.precio)) };
+}
+function recalcular(){
+  let N=0,P=0,K=0,costo=0;
+  for (const id of plan.keys()){ const a = aportes(id); N+=a.N; P+=a.P; K+=a.K; costo+=a.costo;
+    const res = document.querySelector(`.fila-res[data-id="${id}"]`);
+    if (res) res.innerHTML = `${fmt(a.kg)} kg de producto → <b>${fmt(a.N)} kg N/ha</b> · ${fmt(a.P)} P₂O₅ · ${fmt(a.K)} K₂O · costo <b>${fmt(a.costo)} USD/ha</b>`;
+  }
+  const campo = document.getElementById('campo-n');
+  campo.value = fmt(N);
+  document.getElementById('r-n').textContent = fmt(N);
+  document.getElementById('r-pk').textContent = fmt(P);
+  document.getElementById('r-k').textContent = fmt(K);
+  document.getElementById('r-costo').textContent = fmt(costo);
+  const area = Math.max(num(document.getElementById('area').value),0);
+  document.getElementById('r-total').textContent = fmt(costo*area);
+  const aviso = document.getElementById('aviso');
+  const enRango = N>0 && N<=300;
+  aviso.className = 'aviso ' + (enRango?'ok':N>300?'alta':'vacia');
+  aviso.textContent = N===0
+    ? 'Marca al menos un producto (o pasa al modo avanzado) para armar tu plan.'
+    : N>300
+      ? `Con ${fmt(N)} kg N/ha vas por encima de lo típico en maíz (120–240). Revisa tu plan; no bloqueamos el cálculo.`
+      : `Tu plan suma ${fmt(N)} kg N/ha — dentro del rango típico del maíz (120–240). Se llena solo en la casilla del escenario.`;
+}
+function manualN(v){ document.getElementById('r-n').textContent = fmt(num(v)); document.getElementById('r-pk').textContent='0'; document.getElementById('r-k').textContent='0'; document.getElementById('r-costo').textContent='0'; document.getElementById('r-total').textContent='0'; }
+function setModo(m){
+  const prod = m==='producto';
+  document.getElementById('panel-producto').hidden = !prod;
+  document.getElementById('panel-nutriente').hidden = prod;
+  document.getElementById('m-producto').classList.toggle('activo', prod);
+  document.getElementById('m-nutriente').classList.toggle('activo', !prod);
+  document.getElementById('campo-n').readOnly = prod;
+  document.getElementById('badge-n').textContent = prod ? 'Calculado con tus productos' : 'Entra a mano: tu número manda';
+}
+document.getElementById('m-producto').onclick = () => setModo('producto');
+document.getElementById('m-nutriente').onclick = () => setModo('nutriente');
+plan.set('urea', { dosis:'2', unidad:'bolsa', N:46, P:0, K:0, precio:33 });
+plan.set('dap',  { dosis:'1', unidad:'bolsa', N:18, P:46, K:0, precio:45 });
+pintarChips(); pintarFilas(); recalcular();
+</script>
+</body>
+</html>

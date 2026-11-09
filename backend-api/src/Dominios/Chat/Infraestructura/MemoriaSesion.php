@@ -78,6 +78,7 @@ final class MemoriaSesion implements MemoriaSesionInterface
 
     public function limpiar(): void
     {
-        unset($_SESSION[self::CLAVE]);
+        // El nuevo ID invalida respuestas en vuelo, incluso al limpiar el primer mensaje.
+        $_SESSION[self::CLAVE]=['historial'=>[],'contexto'=>[],'temas'=>[],'flowise_session_id'=>bin2hex(random_bytes(16))];
     }
 }

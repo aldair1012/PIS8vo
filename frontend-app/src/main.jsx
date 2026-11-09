@@ -1,19 +1,10 @@
 import { StrictMode, Component } from 'react';
 import { createRoot } from 'react-dom/client';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
-import '@geoman-io/leaflet-geoman-free/dist/leaflet-geoman.css';
 import './index.css';
 import App from './App.jsx';
-
-// Exponer Leaflet en window y globalThis antes de que plugins dependientes se evalúen
-window.L = L;
-globalThis.L = L;
-
-// Importar Geoman dinámicamente garantizando que L ya existe en el ámbito global
-import('@geoman-io/leaflet-geoman-free').catch((err) => {
-  console.warn('Advertencia al cargar Geoman:', err);
-});
+import './assets/product-design.css';
+import './assets/kpi-design.css';
+import './assets/tailwind-pilot.css';
 
 class ErrorBoundary extends Component {
   constructor(props) {
@@ -26,7 +17,7 @@ class ErrorBoundary extends Component {
   }
 
   componentDidCatch(error, errorInfo) {
-    console.error("Critical Runtime Error in ZeaSys App:", error, errorInfo);
+    console.error("Error crítico en tiempo de ejecución de ZeaSys App:", error, errorInfo);
     this.setState({ errorInfo });
   }
 
@@ -53,13 +44,11 @@ class ErrorBoundary extends Component {
             padding: '2rem',
             boxShadow: '0 10px 30px rgba(0,0,0,0.5)'
           }}>
-            <h2 style={{ color: '#f87171', fontSize: '1.5rem', marginBottom: '1rem' }}>
-              ⚠️ Error de Ejecución en ZeaSys
-            </h2>
+            <h1 style={{ color: '#f87171', fontSize: '1.5rem', marginBottom: '1rem' }}>No se pudo mostrar esta pantalla</h1>
             <p style={{ color: '#cbd5e1', fontSize: '0.95rem', marginBottom: '1rem' }}>
-              El sistema ha detectado una excepción durante la inicialización:
+              Ocurrió un problema al cargar la aplicación. Vuelve a cargar la página. Si el problema continúa, comunícalo al responsable del sistema.
             </p>
-            <pre style={{
+            {import.meta.env.DEV && <pre style={{
               background: '#020617',
               padding: '1rem',
               borderRadius: '8px',
@@ -70,10 +59,9 @@ class ErrorBoundary extends Component {
             }}>
               {this.state.error && this.state.error.toString()}
               {this.state.errorInfo && this.state.errorInfo.componentStack}
-            </pre>
+            </pre>}
             <button
               onClick={() => {
-                localStorage.clear();
                 window.location.reload();
               }}
               style={{
@@ -87,7 +75,7 @@ class ErrorBoundary extends Component {
                 cursor: 'pointer'
               }}
             >
-              🔄 Limpiar Caché y Recargar
+              Volver a cargar
             </button>
           </div>
         </div>

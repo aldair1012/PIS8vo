@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { avatarUrl } from '../utils/avatarUrl';
 
 const getApiBaseUrl = () => {
   if (import.meta.env.VITE_API_BASE_URL) {
@@ -16,18 +17,30 @@ const getApiBaseUrl = () => {
 const API = axios.create({
   baseURL: getApiBaseUrl(),
   withCredentials: true,
+  timeout: 45000,
   headers: {
     'Content-Type': 'application/json',
   }
 });
 
+API.interceptors.response.use((response) => {
+  if (response.data?.usuario) response.data.usuario.foto_perfil = avatarUrl(response.data.usuario.foto_perfil, API.defaults.baseURL);
+  return response;
+}, (error) => {
+  const ruta = error.config?.url ?? '';
+  if (error.response?.status === 401 && !/^\/api\/auth\/(?:iniciar-sesion|registrarse|google-iniciar-sesion|yo)(?:$|\?)/.test(ruta)) {
+    window.dispatchEvent(new Event('zeasys:sesion-expirada'));
+  }
+  return Promise.reject(error);
+});
+
 export const authService = {
-  login: async (correo, contrasena, remember = false) => {
-    const response = await API.post('/api/auth/login', { correo, contrasena, remember });
+  iniciarSesion: async (correo, contrasena, recordar = false) => {
+    const response = await API.post('/api/auth/iniciar-sesion', { correo, contrasena, recordar });
     return response.data;
   },
-  register: async (nombre, correo, contrasena, confirmar_contrasena) => {
-    const response = await API.post('/api/auth/register', { 
+  registrarse: async (nombre, correo, contrasena, confirmar_contrasena) => {
+    const response = await API.post('/api/auth/registrarse', { 
       nombre, 
       correo, 
       contrasena, 
@@ -35,105 +48,110 @@ export const authService = {
     });
     return response.data;
   },
-  logout: async () => {
-    const response = await API.post('/api/auth/logout');
+  cerrarSesion: async () => {
+    const response = await API.post('/api/auth/cerrar-sesion');
     return response.data;
   },
-  googleLogin: async (idToken, remember = false) => {
-    const response = await API.post('/api/auth/google-login', { id_token: idToken, remember });
+  iniciarSesionGoogle: async (idToken, recordar = false) => {
+    const response = await API.post('/api/auth/google-iniciar-sesion', { id_token: idToken, recordar });
     return response.data;
   },
-  me: async () => {
-    const response = await API.get('/api/auth/me');
+  yo: async () => {
+    const response = await API.get('/api/auth/yo');
     return response.data;
   },
-  updateProfile: async (datos) => {
-    const response = await API.post('/api/auth/update', datos);
+  actualizarPerfil: async (datos) => {
+    const response = await API.post('/api/auth/actualizar', datos);
     return response.data;
   },
-  uploadAvatar: async (file) => {
+  subirAvatar: async (file) => {
     const formData = new FormData();
     formData.append('foto', file);
     // El navegador debe generar el boundary multipart; fijarlo manualmente puede
     // producir cargas vacías en algunos adaptadores/versiones de Axios.
-    const response = await API.post('/api/auth/upload-avatar', formData);
+    const response = await API.post('/api/auth/subir-avatar', formData);
     return response.data;
   },
-  deleteAvatar: async () => {
-    const response = await API.post('/api/auth/delete-avatar');
+  eliminarAvatar: async () => {
+    const response = await API.post('/api/auth/eliminar-avatar');
     return response.data;
   },
-  syncGoogleAvatar: async (fotoUrl) => {
-    const response = await API.post('/api/auth/sync-google-avatar', { foto_url: fotoUrl });
+  sincronizarAvatarGoogle: async (fotoUrl) => {
+    const response = await API.post('/api/auth/sincronizar-avatar-google', { foto_url: fotoUrl });
     return response.data;
   },
-  deleteAccount: async () => {
-    const response = await API.post('/api/auth/delete');
+  eliminarCuenta: async () => {
+    const response = await API.post('/api/auth/eliminar-cuenta');
     return response.data;
   }
 };
 
-export const cultivosService = {
+export const parcelasService = {
   listar: async () => {
-    const response = await API.get('/api/cultivos');
+    const response = await API.get('/api/parcelas');
     return response.data;
   },
   crear: async (datos) => {
-    const response = await API.post('/api/cultivos', datos);
+    const response = await API.post('/api/parcelas', datos);
     return response.data;
   },
   actualizar: async (datos) => {
-    const response = await API.put('/api/cultivos', datos);
+    const response = await API.put('/api/parcelas', datos);
     return response.data;
   },
   eliminar: async (id) => {
-    const response = await API.delete(`/api/cultivos?id=${id}`);
+    const response = await API.delete(`/api/parcelas?id=${id}`);
     return response.data;
   },
   obtenerMapa: async () => {
-    const response = await API.get('/api/cultivos/mapa');
+    const response = await API.get('/api/parcelas/mapa');
     return response.data;
   },
   obtenerValoresUbicacion: async (id) => {
-    const response = await API.get(`/api/cultivos/valores-ubicacion?id=${id}`);
+    const response = await API.get(`/api/parcelas/valores-ubicacion?id=${id}`);
     return response.data;
   }
 };
 
 export const simulacionService = {
+  evaluarVariedades: async (datos) => {
+    const response = await API.post('/api/simulaciones/evaluar-variedades', datos);
+    return response.data;
+  },
   simular: async (datos) => {
     const response = await API.post('/api/simulaciones/simular', datos);
     return response.data;
   },
-  historial: async (anio = null) => {
-    const url = anio ? `/api/simulaciones/historial?anio=${anio}` : '/api/simulaciones/historial';
-    const response = await API.get(url);
+  historial: async (año = null, pagina = 1, porPagina = 25) => {
+    const params = { pagina, por_pagina: porPagina };
+    if (año !== null && año !== '') params.año = año;
+    const response = await API.get('/api/simulaciones/historial', { params });
     return response.data;
   },
   eliminar: async (id) => {
     const response = await API.delete(`/api/simulaciones/eliminar?id=${id}`);
     return response.data;
   },
-  iaStatus: async () => {
-    const response = await API.get('/api/simulaciones/ia-status');
+  estadoIA: async () => {
+    const response = await API.get('/api/simulaciones/estado-ia');
     return response.data;
   },
-  explainData: async (context) => {
-    const response = await API.post('/api/simulaciones/explain', context);
+  explicarDatos: async (contexto) => {
+    const response = await API.post('/api/simulaciones/explicar', contexto);
     return response.data;
   }
 };
 
 export const chatService = {
-  preguntar: async (pregunta, vista = null, cultivoId = null, anio = null, dashboard = null, simulacion = null) => {
+  preguntar: async (pregunta, vista = null, cultivoId = null, año = null, dashboard = null, simulacion = null) => {
     const response = await API.post('/api/chat/preguntar', {
       pregunta,
       vista,
       cultivo_id: cultivoId,
-      anio,
+      año,
       dashboard,
       simulacion,
-    });
+    }, { timeout: 90000 });
     return response.data;
   },
   limpiar: async () => {
@@ -151,35 +169,43 @@ export const chatService = {
 };
 
 export const dssService = {
-  getScenarioData: async (cultivoId = null, anio = null) => {
+  getEscenarioData: async (parcelaId = null, año = null) => {
     const query = new URLSearchParams();
-    if (cultivoId !== null && cultivoId !== '') query.set('cultivo_id', cultivoId);
-    if (anio !== null && anio !== '') query.set('anio', anio);
+    if (parcelaId !== null && parcelaId !== '') query.set('parcela_id', parcelaId);
+    if (año !== null && año !== '') query.set('año', año);
     const qStr = query.size > 0 ? `?${query.toString()}` : '';
-    const response = await API.get(`/api/scenarios${qStr}`);
+    const response = await API.get(`/api/escenarios${qStr}`);
     return response.data;
   },
-  getClimateData: async (cultivoId = null, anio = null) => {
+  getClimaData: async (parcelaId = null, año = null) => {
     const query = new URLSearchParams();
-    if (cultivoId !== null && cultivoId !== '') query.set('cultivo_id', cultivoId);
-    if (anio !== null && anio !== '') query.set('anio', anio);
+    if (parcelaId !== null && parcelaId !== '') query.set('parcela_id', parcelaId);
+    if (año !== null && año !== '') query.set('año', año);
     const qStr = query.size > 0 ? `?${query.toString()}` : '';
-    const response = await API.get(`/api/climate${qStr}`);
+    const response = await API.get(`/api/clima${qStr}`);
     return response.data;
   },
-  getYieldData: async (cultivoId = null, anio = null) => {
+  getRendimientoData: async (parcelaId = null, año = null) => {
     const query = new URLSearchParams();
-    if (cultivoId !== null && cultivoId !== '') query.set('cultivo_id', cultivoId);
-    if (anio !== null && anio !== '') query.set('anio', anio);
+    if (parcelaId !== null && parcelaId !== '') query.set('parcela_id', parcelaId);
+    if (año !== null && año !== '') query.set('año', año);
     const qStr = query.size > 0 ? `?${query.toString()}` : '';
-    const response = await API.get(`/api/yield${qStr}`);
+    const response = await API.get(`/api/rendimiento${qStr}`);
     return response.data;
   },
-  getFinancialData: async (params = {}) => {
+  getRendimientoMediciones: async (parcelaId) => {
+    const response = await API.get('/api/rendimiento/mediciones/consulta', { params: { parcela_id: parcelaId } });
+    return response.data.mediciones;
+  },
+  saveRendimientoMediciones: async (parcelaId, datos) => {
+    const response = await API.post('/api/rendimiento/mediciones', { ...datos, parcela_id: parcelaId });
+    return response.data;
+  },
+  getFinancieroData: async (params = {}) => {
     const query = new URLSearchParams();
     const campos = {
-      cultivoId: 'cultivo_id',
-      anio: 'anio',
+      parcelaId: 'parcela_id',
+      año: 'año',
       precioMaizQq: 'precio_maiz_qq',
       rendimientoQq: 'rendimiento_qq',
       costoSemilla: 'costo_semilla',
@@ -197,7 +223,7 @@ export const dssService = {
     });
 
     const qStr = query.size > 0 ? `?${query.toString()}` : '';
-    const response = await API.get(`/api/financial${qStr}`);
+    const response = await API.get(`/api/financiero${qStr}`);
     return response.data;
   }
 };

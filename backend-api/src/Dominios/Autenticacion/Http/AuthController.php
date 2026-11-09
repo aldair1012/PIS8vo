@@ -14,14 +14,14 @@ final class AuthController
     {
     }
 
-    public function me(Peticion $peticion): void { RespuestaJson::enviar($this->servicio->me()); }
-    public function login(Peticion $peticion): void { RespuestaJson::enviar($this->servicio->login($peticion)); }
-    public function googleLogin(Peticion $peticion): void { RespuestaJson::enviar($this->servicio->googleLogin($peticion)); }
-    public function registro(Peticion $peticion): void { RespuestaJson::enviar($this->servicio->registro($peticion)); }
-    public function logout(Peticion $peticion): void { RespuestaJson::enviar($this->servicio->logout()); }
-    public function update(Peticion $peticion): void { RespuestaJson::enviar($this->servicio->update($peticion)); }
-    public function uploadAvatar(Peticion $peticion): void { RespuestaJson::enviar($this->servicio->uploadAvatar($_FILES['foto'] ?? [])); }
-    public function deleteAvatar(Peticion $peticion): void { RespuestaJson::enviar($this->servicio->deleteAvatar()); }
-    public function syncGoogleAvatar(Peticion $peticion): void { RespuestaJson::enviar($this->servicio->syncGoogleAvatar($peticion)); }
-    public function eliminar(Peticion $peticion): void { RespuestaJson::enviar($this->servicio->eliminar()); }
+    public function yo(Peticion $peticion): void { RespuestaJson::enviar($this->servicio->yo()); }
+    public function iniciarSesion(Peticion $peticion): void { RespuestaJson::enviar($this->servicio->iniciarSesion($peticion)); }
+    public function iniciarSesionGoogle(Peticion $peticion): void { RespuestaJson::enviar($this->servicio->iniciarSesionGoogle($peticion)); }
+    public function registrarse(Peticion $peticion): void { RespuestaJson::enviar($this->servicio->registrarse($peticion)); }
+    public function cerrarSesion(Peticion $peticion): void { RespuestaJson::enviar($this->servicio->cerrarSesion()); }
+    public function actualizar(Peticion $peticion): void { RespuestaJson::enviar($this->servicio->actualizar($peticion)); }
+    public function subirAvatar(Peticion $peticion): void { RespuestaJson::enviar($this->servicio->subirAvatar($_FILES['foto'] ?? [])); }
+    public function eliminarAvatar(Peticion $peticion): void { RespuestaJson::enviar($this->servicio->eliminarAvatar()); }
+    public function sincronizarAvatarGoogle(Peticion $peticion): void { RespuestaJson::enviar($this->servicio->sincronizarAvatarGoogle($peticion)); }
+    public function eliminarCuenta(Peticion $peticion): void { RespuestaJson::enviar($this->servicio->eliminarCuenta()); }
 }

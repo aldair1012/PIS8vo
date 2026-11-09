@@ -197,6 +197,24 @@ return static function (): Container {
             new \ZeaSys\Dominios\Analitica\Aplicacion\ServicioPrecioMaiz()
     );
     $contenedor->registrar(
+        \ZeaSys\Dominios\Analitica\Dominio\ReferenciasRendimientoInterface::class,
+        static fn (Container $c): \ZeaSys\Dominios\Analitica\Infraestructura\ProveedorReferenciasPublicas =>
+            new \ZeaSys\Dominios\Analitica\Infraestructura\ProveedorReferenciasPublicas($c->get(\ZeaSys\Dominios\Terreno\Dominio\CacheInterface::class))
+    );
+    $contenedor->registrar(
+        \ZeaSys\Dominios\Analitica\Dominio\MedicionesRendimientoRepositoryInterface::class,
+        static fn (): \ZeaSys\Dominios\Analitica\Infraestructura\MedicionesRendimientoRepositoryMysql =>
+            new \ZeaSys\Dominios\Analitica\Infraestructura\MedicionesRendimientoRepositoryMysql(getConnection())
+    );
+    $contenedor->registrar(
+        \ZeaSys\Dominios\Analitica\Aplicacion\ServicioMedicionesRendimiento::class,
+        static fn (Container $c): \ZeaSys\Dominios\Analitica\Aplicacion\ServicioMedicionesRendimiento =>
+            new \ZeaSys\Dominios\Analitica\Aplicacion\ServicioMedicionesRendimiento(
+                $c->get(\ZeaSys\Dominios\Lotes\Dominio\CultivoRepositoryInterface::class),
+                $c->get(\ZeaSys\Dominios\Analitica\Dominio\MedicionesRendimientoRepositoryInterface::class),
+            )
+    );
+    $contenedor->registrar(
         \ZeaSys\Dominios\Analitica\Aplicacion\ServicioAnaliticaYield::class,
         static fn (Container $c): \ZeaSys\Dominios\Analitica\Aplicacion\ServicioAnaliticaYield =>
             new \ZeaSys\Dominios\Analitica\Aplicacion\ServicioAnaliticaYield(
@@ -204,6 +222,8 @@ return static function (): Container {
                 $c->get(\ZeaSys\Dominios\Lotes\Dominio\CultivoRepositoryInterface::class),
                 $c->get(\ZeaSys\Dominios\Simulaciones\Dominio\SimulacionRepositoryInterface::class),
                 $c->get(\ZeaSys\Dominios\Terreno\Aplicacion\ServicioDatosTerreno::class),
+                $c->get(\ZeaSys\Dominios\Analitica\Dominio\ReferenciasRendimientoInterface::class),
+                $c->get(\ZeaSys\Dominios\Analitica\Aplicacion\ServicioMedicionesRendimiento::class),
             )
     );
     $contenedor->registrar(
@@ -227,7 +247,8 @@ return static function (): Container {
         \ZeaSys\Dominios\Analitica\Http\YieldController::class,
         static fn (Container $c): \ZeaSys\Dominios\Analitica\Http\YieldController =>
             new \ZeaSys\Dominios\Analitica\Http\YieldController(
-                $c->get(\ZeaSys\Dominios\Analitica\Aplicacion\ServicioAnaliticaYield::class)
+                $c->get(\ZeaSys\Dominios\Analitica\Aplicacion\ServicioAnaliticaYield::class),
+                $c->get(\ZeaSys\Dominios\Analitica\Aplicacion\ServicioMedicionesRendimiento::class),
             )
     );
     $contenedor->registrar(

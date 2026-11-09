@@ -1,0 +1,146 @@
+{
+  "zona": {
+    "disponibilidad": "ubicacion_o_medicion_previa",
+    "etapa": "antes_o_al_sembrar"
+  },
+  "provincia": {
+    "disponibilidad": "ubicacion_o_medicion_previa",
+    "etapa": "antes_o_al_sembrar"
+  },
+  "variedad": {
+    "disponibilidad": "ubicacion_o_medicion_previa",
+    "etapa": "antes_o_al_sembrar"
+  },
+  "tipo_grano": {
+    "disponibilidad": "ubicacion_o_medicion_previa",
+    "etapa": "antes_o_al_sembrar"
+  },
+  "riego_tipo": {
+    "disponibilidad": "manejo_planeado",
+    "etapa": "antes_o_al_sembrar"
+  },
+  "tipo_suelo": {
+    "disponibilidad": "ubicacion_o_medicion_previa",
+    "etapa": "antes_o_al_sembrar"
+  },
+  "ph_suelo": {
+    "disponibilidad": "ubicacion_o_medicion_previa",
+    "etapa": "antes_o_al_sembrar"
+  },
+  "materia_organica_pct": {
+    "disponibilidad": "ubicacion_o_medicion_previa",
+    "etapa": "antes_o_al_sembrar"
+  },
+  "profundidad_suelo_cm": {
+    "disponibilidad": "ubicacion_o_medicion_previa",
+    "etapa": "antes_o_al_sembrar"
+  },
+  "textura_arcilla_pct": {
+    "disponibilidad": "ubicacion_o_medicion_previa",
+    "etapa": "antes_o_al_sembrar"
+  },
+  "textura_arena_pct": {
+    "disponibilidad": "ubicacion_o_medicion_previa",
+    "etapa": "antes_o_al_sembrar"
+  },
+  "textura_limo_pct": {
+    "disponibilidad": "ubicacion_o_medicion_previa",
+    "etapa": "antes_o_al_sembrar"
+  },
+  "altitud_msnm": {
+    "disponibilidad": "ubicacion_o_medicion_previa",
+    "etapa": "antes_o_al_sembrar"
+  },
+  "temperatura_media_c": {
+    "disponibilidad": "clima_del_ciclo_escenario",
+    "etapa": "antes_o_al_sembrar"
+  },
+  "temperatura_min_c": {
+    "disponibilidad": "clima_del_ciclo_escenario",
+    "etapa": "antes_o_al_sembrar"
+  },
+  "temperatura_max_c": {
+    "disponibilidad": "clima_del_ciclo_escenario",
+    "etapa": "antes_o_al_sembrar"
+  },
+  "precipitacion_mm": {
+    "disponibilidad": "clima_del_ciclo_escenario",
+    "etapa": "antes_o_al_sembrar"
+  },
+  "humedad_relativa_pct": {
+    "disponibilidad": "clima_del_ciclo_escenario",
+    "etapa": "antes_o_al_sembrar"
+  },
+  "horas_luz_dia": {
+    "disponibilidad": "clima_del_ciclo_escenario",
+    "etapa": "antes_o_al_sembrar"
+  },
+  "densidad_plantas_ha": {
+    "disponibilidad": "manejo_planeado",
+    "etapa": "antes_o_al_sembrar"
+  },
+  "ciclo_dias": {
+    "disponibilidad": "manejo_planeado",
+    "etapa": "antes_o_al_sembrar"
+  },
+  "nitrogeno_kg_ha": {
+    "disponibilidad": "manejo_planeado",
+    "etapa": "antes_o_al_sembrar"
+  },
+  "fosforo_p2o5_kg_ha": {
+    "disponibilidad": "manejo_planeado",
+    "etapa": "antes_o_al_sembrar"
+  },
+  "potasio_k2o_kg_ha": {
+    "disponibilidad": "manejo_planeado",
+    "etapa": "antes_o_al_sembrar"
+  },
+  "magnesio_kg_ha": {
+    "disponibilidad": "manejo_planeado",
+    "etapa": "antes_o_al_sembrar"
+  },
+  "azufre_kg_ha": {
+    "disponibilidad": "manejo_planeado",
+    "etapa": "antes_o_al_sembrar"
+  },
+  "aplicaciones_nitrogeno": {
+    "disponibilidad": "manejo_planeado",
+    "etapa": "antes_o_al_sembrar"
+  },
+  "lamina_riego_mm": {
+    "disponibilidad": "manejo_planeado",
+    "etapa": "antes_o_al_sembrar"
+  },
+  "biofertilizante": {
+    "disponibilidad": "manejo_planeado",
+    "etapa": "antes_o_al_sembrar"
+  },
+  "semilla_certificada": {
+    "disponibilidad": "manejo_planeado",
+    "etapa": "antes_o_al_sembrar"
+  },
+  "ndvi_v6_vegetativo": {
+    "disponibilidad": "etapa_posterior",
+    "etapa": "V6"
+  },
+  "ndvi_vt_floracion": {
+    "disponibilidad": "etapa_posterior",
+    "etapa": "floracion"
+  },
+  "ndvi_r3_llenado_grano": {
+    "disponibilidad": "etapa_posterior",
+    "etapa": "llenado_grano"
+  },
+  "plagas_presentes": {
+    "disponibilidad": "etapa_posterior",
+    "etapa": "observacion_en_cultivo"
+  },
+  "presion_plaga_score": {
+    "disponibilidad": "etapa_posterior",
+    "etapa": "observacion_en_cultivo"
+  },
+  "control_plaga": {
+    "disponibilidad": "etapa_posterior",
+    "etapa": "manejo_durante_ciclo"
+  }
+}

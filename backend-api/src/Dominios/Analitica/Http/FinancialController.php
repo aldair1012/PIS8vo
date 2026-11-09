@@ -16,8 +16,8 @@ final class FinancialController
     {
         RespuestaJson::enviar($this->servicio->construir(
             $this->usuarioId(),
-            $peticion->queryEntero('cultivo_id', null, 1),
-            $peticion->queryEntero('anio', null, 2000, 2100),
+            $peticion->queryEntero('parcela_id', null, 1),
+            $peticion->queryEntero('año', null, 2000, 2100),
             $peticion,
         ));
     }

@@ -360,24 +360,24 @@ function ejecutarEscenario(string $modo, array &$temporales): array
     $ids['simulacion'] = $sim['cuerpo']['resultado']['simulacion_id'] ?? null;
     if ($ids['simulacion'] === null) { fail('No se pudo obtener el id de la simulación creada.'); exit(2); }
 
-    $registrar('historial', 'GET', '/api/simulaciones/historial?anio=' . date('Y'), null, 'exacto');
+    $registrar('historial', 'GET', '/api/simulaciones/historial?año=' . date('Y'), null, 'exacto');
 
     $registrar('explain cascada', 'POST', '/api/simulaciones/explain', [
-        'nombre' => 'Cascada de Brechas de Rendimiento', 'cultivo_id' => $ids['cultivo'], 'anio' => (int) date('Y'),
+        'nombre' => 'Cascada de Brechas de Rendimiento', 'cultivo_id' => $ids['cultivo'], 'año' => (int) date('Y'),
         'valor' => '4.2', 'unidad' => 't/ha', 'estado' => 'riesgoso',
         'datos_grafico' => ['labels' => ['Potencial', 'Nitrógeno', 'Agua', 'Final'], 'proyeccion_actual' => [11.2, 9.1, 7.4, 6.9]],
     ], 'tolerante');
     $registrar('explain ROI', 'POST', '/api/simulaciones/explain', [
-        'nombre' => 'ROI Anual', 'cultivo_id' => $ids['cultivo'], 'anio' => (int) date('Y'),
+        'nombre' => 'ROI Anual', 'cultivo_id' => $ids['cultivo'], 'año' => (int) date('Y'),
         'valor' => '35', 'unidad' => '%', 'estado' => 'optimo',
     ], 'tolerante');
     $registrar('explain probabilidad', 'POST', '/api/simulaciones/explain', [
-        'nombre' => 'Probabilidad de Cosecha', 'cultivo_id' => $ids['cultivo'], 'anio' => (int) date('Y'),
+        'nombre' => 'Probabilidad de Cosecha', 'cultivo_id' => $ids['cultivo'], 'año' => (int) date('Y'),
         'valor' => '82%', 'unidad' => '', 'estado' => 'bueno',
     ], 'tolerante');
 
     // 5) Dashboards DSS
-    $q = '?cultivo_id=' . $ids['cultivo'] . '&anio=' . date('Y');
+    $q = '?cultivo_id=' . $ids['cultivo'] . '&año=' . date('Y');
     $registrar('dashboard yield', 'GET', '/api/yield' . $q, null, 'tolerante');
     $registrar('dashboard scenarios', 'GET', '/api/scenarios' . $q, null, 'tolerante');
     $registrar('dashboard climate (externo)', 'GET', '/api/climate' . $q, null, 'estructural');

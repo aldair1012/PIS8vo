@@ -1,0 +1,66 @@
+[
+  {
+    "archivo": "inamhi_precipitacion.csv",
+    "filas": 20588,
+    "estaciones": 947,
+    "anios_min_max": [
+      1960,
+      2019
+    ],
+    "celdas_mensuales_vacias": 29170,
+    "filas_12_meses_no_vacios": 13743,
+    "claves_estacion_anio_duplicadas": 0,
+    "columnas": [
+      "Estacion",
+      "NombreEstacion",
+      "longitud2",
+      "latitud2",
+      "altitud",
+      "anio",
+      "ene",
+      "feb",
+      "mar",
+      "abr",
+      "may",
+      "jun",
+      "jul",
+      "ago",
+      "sep",
+      "oct",
+      "nov",
+      "dic"
+    ]
+  },
+  {
+    "archivo": "inamhi_temperatura.csv",
+    "filas": 6498,
+    "estaciones": 360,
+    "anios_min_max": [
+      1960,
+      2019
+    ],
+    "celdas_mensuales_vacias": 10257,
+    "filas_12_meses_no_vacios": 3998,
+    "claves_estacion_anio_duplicadas": 0,
+    "columnas": [
+      "Estacion",
+      "NombreEstacion",
+      "longitud2",
+      "latitud2",
+      "altitud",
+      "anio",
+      "ene",
+      "feb",
+      "mar",
+      "abr",
+      "may",
+      "jun",
+      "jul",
+      "ago",
+      "sep",
+      "oct",
+      "nov",
+      "dic"
+    ]
+  }
+]

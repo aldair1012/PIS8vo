@@ -1,5 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
-import { cultivosService } from '../services/api';
+import { parcelasService } from '../services/api';
+import { leerAltitud, leerPhSuelo } from '../utils/datosParcela';
+import '../utils/mapRuntime';
+import { OTRA_VARIEDAD, TIPOS_MAIZ_ECUADOR, VARIEDAD_PERSONALIZADA } from '../data/variedadesMaizEcuador';
 import { 
   Plus, 
   MapPin, 
@@ -12,9 +15,7 @@ import {
   Calendar, 
   Copy,
   Check,
-  Map,
-  Maximize2,
-  Minimize2
+  Map
 } from 'lucide-react';
 
 // Funciones auxiliares para validar inputs numéricos
@@ -44,44 +45,10 @@ export default function Cultivos({ onCultivoChanged, onboardingStep, onNextOnboa
   const [success, setSuccess] = useState(null);
   const [copiedId, setCopiedId] = useState(null);
 
-  const VARIEDADES_POR_TIPO = {
-    'Duro Amarillo': [
-      'Híbrido convencional',
-      'Pioneer P4039',
-      'INIAP H-551',
-      'Dekalb DK-7088',
-      'INIAP H-603 Superior',
-      'INIAP H-553',
-      'INIAP Renacer',
-      'Dekalb 5005',
-      'Emblema 777',
-      'INIAP H-248 Soberano',
-      'INIAP H-601',
-      'INIAP H-553 (adaptado)',
-      'Tuxpeño',
-      'Maíz Duro Amazónico (genérico)'
-    ],
-    'Suave Harinoso': [
-      'INIAP 180',
-      'INIAP 101 Blanco Harinoso',
-      'INIAP 111 Guagal',
-      'INIAP 122 Chaucho',
-      'INIAP 124 Mishca',
-      'INIAP 102 Blanco Blandito',
-      'INIAP 192 Chulpi',
-      'INIAP 199 Racimo de Uva',
-      'INIAP 103 Mishqui Sara',
-      'INIAP 153 Zhima'
-    ],
-    'Duro Amarillo / Blanco': [
-      'INIAP 198 Canguil',
-      'Bonanza Dulce'
-    ]
-  };
-
   const [nombre, setNombre] = useState('');
-  const [variedad, setVariedad] = useState('Híbrido convencional');
-  const [tipo, setTipo] = useState('Duro Amarillo');
+  const [variedad, setVariedad] = useState('');
+  const [variedadPersonalizada, setVariedadPersonalizada] = useState('');
+  const [tipo, setTipo] = useState('');
   const [ubicacion, setUbicacion] = useState('');
   const [area, setArea] = useState('');
   const [latitud, setLatitud] = useState('');
@@ -89,42 +56,40 @@ export default function Cultivos({ onCultivoChanged, onboardingStep, onNextOnboa
   const [fechaSiembra, setFechaSiembra] = useState('');
   const [altitud, setAltitud] = useState('');
   const [ph, setPh] = useState('');
+  const [estadoPh, setEstadoPh] = useState('');
+  const [estadoAltitud, setEstadoAltitud] = useState('');
+  const consultaPh = useRef(0);
+  const consultaAltitud = useRef(0);
+  const consultaUbicacion = useRef(0);
+  const [estadoUbicacion, setEstadoUbicacion] = useState('');
   const [geojson, setGeojson] = useState('');
 
   const handleTipoChange = (newTipo) => {
     setTipo(newTipo);
-    const list = VARIEDADES_POR_TIPO[newTipo] || [];
-    if (list.length > 0) {
-      setVariedad(list[0]);
-    }
+    setVariedad('');
+    setVariedadPersonalizada('');
   };
 
   const handleVariedadChange = (newVariedad) => {
     setVariedad(newVariedad);
-    for (const [t, list] of Object.entries(VARIEDADES_POR_TIPO)) {
-      if (list.includes(newVariedad)) {
-        setTipo(t);
-        break;
-      }
-    }
+    if (newVariedad !== OTRA_VARIEDAD) setVariedadPersonalizada('');
   };
+
+  const variedadesPorTipo = TIPOS_MAIZ_ECUADOR.find((item) => item.value === tipo)?.variedades ?? [];
 
   const mapContainerRef = useRef(null);
   const mapRef = useRef(null);
   const geomanLayersRef = useRef(null);
-  const soilLayerGroupRef = useRef(null);
   const currentMarkerRef = useRef(null);
   const mapActionsRef = useRef(null);
 
-  const [isMapExpanded, setIsMapExpanded] = useState(false);
-  const [mapLayerOption, setMapLayerOption] = useState('satellite');
   const [searchQuery, setSearchQuery] = useState('');
 
   const cargarCultivos = async () => {
     try {
       setLoading(true);
       setError(null);
-      const res = await cultivosService.listar();
+      const res = await parcelasService.listar();
       const list = Array.isArray(res) ? res : (res?.cultivos || []);
       setCultivos(list);
     } catch (err) {
@@ -163,9 +128,6 @@ export default function Cultivos({ onCultivoChanged, onboardingStep, onNextOnboa
 
     const geomanLayers = L.featureGroup().addTo(map);
     geomanLayersRef.current = geomanLayers;
-
-    const soilLayerGroup = L.layerGroup().addTo(map);
-    soilLayerGroupRef.current = soilLayerGroup;
 
     if (map.pm) {
       map.pm.setGlobalOptions({ tooltips: false });
@@ -220,9 +182,6 @@ export default function Cultivos({ onCultivoChanged, onboardingStep, onNextOnboa
             actions.fetchAddress(centerLat, centerLng);
             actions.fetchSoilPh(centerLat, centerLng);
 
-            if (window.activeMapLayerRef?.current === 'soil') {
-              actions.drawSoilGrid(L, map, centerLat, centerLng);
-            }
           }
           setGeojson(JSON.stringify(layer.toGeoJSON()));
         }
@@ -248,46 +207,18 @@ export default function Cultivos({ onCultivoChanged, onboardingStep, onNextOnboa
       actions.fetchAddress(lat, lng);
       actions.fetchSoilPh(lat, lng);
 
-      if (window.activeMapLayerRef?.current === 'soil') {
-        actions.drawSoilGrid(L, map, lat, lng);
-      }
     });
 
-    setTimeout(() => {
+    const resizeTimer = setTimeout(() => {
       map.invalidateSize();
     }, 250);
 
     return () => {
+      clearTimeout(resizeTimer);
       map.remove();
+      if (mapRef.current === map) mapRef.current = null;
     };
   }, []);
-
-  useEffect(() => {
-    if (mapRef.current) {
-      const timer = setTimeout(() => {
-        mapRef.current.invalidateSize();
-      }, 310);
-      return () => clearTimeout(timer);
-    }
-  }, [isMapExpanded]);
-
-  const activeMapLayerRef = useRef(mapLayerOption);
-  useEffect(() => {
-    activeMapLayerRef.current = mapLayerOption;
-    window.activeMapLayerRef = activeMapLayerRef;
-
-    if (!mapRef.current || !soilLayerGroupRef.current || !window.L) return;
-    const L = window.L;
-    const map = mapRef.current;
-    const soilLayerGroup = soilLayerGroupRef.current;
-
-    if (mapLayerOption === 'satellite') {
-      soilLayerGroup.clearLayers();
-    } else {
-      const c = map.getCenter();
-      mapActionsRef.current?.drawSoilGrid(L, map, c.lat, c.lng);
-    }
-  }, [mapLayerOption]);
 
   const handleMapSearch = async () => {
     if (!searchQuery || !searchQuery.trim() || !mapRef.current) return;
@@ -310,6 +241,8 @@ export default function Cultivos({ onCultivoChanged, onboardingStep, onNextOnboa
 
         setLatitud(lat.toFixed(7));
         setLongitud(lon.toFixed(7));
+        consultaUbicacion.current += 1;
+        setEstadoUbicacion('Ubicación seleccionada en el mapa.');
         setUbicacion(first.display_name);
         fetchAltitude(lat, lon);
         fetchSoilPh(lat, lon);
@@ -318,11 +251,6 @@ export default function Cultivos({ onCultivoChanged, onboardingStep, onNextOnboa
       console.error('Error searching map location:', err);
     }
   };
-
-  function getSimulatedSoilPh(lat, lng) {
-    const factor = Math.abs(Math.sin(lat * 80) + Math.cos(lng * 80)) / 2;
-    return (5.5 + factor * 2.3).toFixed(1);
-  }
 
   function calculatePolygonAreaHectares(latlngs) {
     if (!latlngs || latlngs.length < 3) return 0;
@@ -342,103 +270,74 @@ export default function Cultivos({ onCultivoChanged, onboardingStep, onNextOnboa
   }
 
   async function fetchAltitude(lat, lng) {
+    const solicitud = ++consultaAltitud.current;
+    setAltitud('');
+    setEstadoAltitud('Consultando altitud estimada…');
     try {
       const res = await fetch(`https://api.open-meteo.com/v1/elevation?latitude=${lat}&longitude=${lng}`);
-      const data = await res.json();
-      if (data && data.elevation && data.elevation.length > 0) {
-        setAltitud(data.elevation[0].toFixed(1));
-      } else {
-        setAltitud('45.0');
-      }
+      if (!res.ok) throw new Error('Altitud no disponible');
+      const valor = leerAltitud(await res.json());
+      if (solicitud !== consultaAltitud.current) return;
+      setAltitud(valor ?? '');
+      setEstadoAltitud(valor === null ? 'Altitud no disponible; puedes ingresarla manualmente.' : 'Estimación de Open-Meteo; puedes corregirla.');
     } catch {
-      setAltitud('45.0');
+      if (solicitud === consultaAltitud.current) setEstadoAltitud('Altitud no disponible; puedes ingresarla manualmente.');
     }
   }
 
   async function fetchAddress(lat, lng) {
+    const solicitud = ++consultaUbicacion.current;
+    setUbicacion('');
+    setEstadoUbicacion('Consultando ubicación…');
     try {
-      setUbicacion('Obteniendo ubicación...');
       const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat.toFixed(4)}&lon=${lng.toFixed(4)}&format=json&accept-language=es`);
+      if (!res.ok) throw new Error('Ubicación no disponible');
       const data = await res.json();
-      if (data && data.address) {
-        const addr = data.address;
-        const place = addr.neighbourhood || addr.suburb || addr.village || addr.hamlet || addr.subdivision || addr.county || '';
-        const city = addr.city || addr.town || addr.city_district || addr.state || '';
-        const country = addr.country || '';
-        
-        let formatted = '';
-        if (place) formatted += place;
-        if (city) formatted += (formatted ? ' - ' : '') + city;
-        if (country) formatted += (formatted ? ' - ' : '') + country;
-        
-        setUbicacion(formatted || `${lat.toFixed(4)}, ${lng.toFixed(4)}`);
-      } else {
-        setUbicacion(`${lat.toFixed(4)}, ${lng.toFixed(4)}`);
-      }
+      if (solicitud !== consultaUbicacion.current) return;
+      const addr = data?.address;
+      const place = addr?.neighbourhood || addr?.suburb || addr?.village || addr?.hamlet || addr?.subdivision || addr?.county || '';
+      const city = addr?.city || addr?.town || addr?.city_district || addr?.state || '';
+      const country = addr?.country || '';
+      const nombre = [place, city, country].filter(Boolean).join(' - ');
+      setUbicacion(nombre || `${lat.toFixed(4)}, ${lng.toFixed(4)}`);
+      setEstadoUbicacion(nombre ? 'Ubicación aproximada de OpenStreetMap.' : 'No se encontró una dirección; se muestran las coordenadas.');
     } catch {
+      if (solicitud !== consultaUbicacion.current) return;
       setUbicacion(`${lat.toFixed(4)}, ${lng.toFixed(4)}`);
+      setEstadoUbicacion('Dirección no disponible; se muestran las coordenadas.');
     }
   }
 
   async function fetchSoilPh(lat, lng) {
+    const solicitud = ++consultaPh.current;
+    setPh('');
+    setEstadoPh('Consultando pH estimado…');
     try {
-      const basePh = getSimulatedSoilPh(lat, lng);
-      setPh(basePh);
-
       const res = await fetch(`https://rest.isric.org/soilgrids/v2.0/properties/query?lon=${lng.toFixed(4)}&lat=${lat.toFixed(4)}&property=phh2o&depth=0-5cm`);
-      const data = await res.json();
-      if (data && data.properties && data.properties.layers) {
-        const phLayer = data.properties.layers.find(l => l.name === 'phh2o');
-        if (phLayer && phLayer.depths && phLayer.depths[0] && phLayer.depths[0].values) {
-          const meanPh = phLayer.depths[0].values.mean;
-          if (meanPh && meanPh > 0) {
-            setPh((meanPh / 10).toFixed(1));
-          }
-        }
-      }
+      if (!res.ok) throw new Error('pH no disponible');
+      const valor = leerPhSuelo(await res.json());
+      if (solicitud !== consultaPh.current) return;
+      setPh(valor ?? '');
+      setEstadoPh(valor === null ? 'pH no disponible; puedes ingresar el resultado de un análisis.' : 'Estimación de SoilGrids (0–5 cm); no es una medición de la parcela.');
     } catch {
-      setPh(getSimulatedSoilPh(lat, lng));
+      if (solicitud === consultaPh.current) setEstadoPh('pH no disponible; puedes ingresar el resultado de un análisis.');
     }
   }
 
-  function drawSoilGrid(L, map, centerLat, centerLng) {
-    const soilLayerGroup = soilLayerGroupRef.current;
-    if (!soilLayerGroup) return;
-    soilLayerGroup.clearLayers();
-    const step = 0.005;
-    const startLat = centerLat - 3 * step;
-    const startLng = centerLng - 3 * step;
-
-    for (let i = 0; i < 7; i++) {
-      for (let j = 0; j < 7; j++) {
-        const cellLat = startLat + i * step;
-        const cellLng = startLng + j * step;
-        const bounds = [
-          [cellLat, cellLng],
-          [cellLat + step, cellLng + step]
-        ];
-        
-        const cellPh = getSimulatedSoilPh(cellLat + step/2, cellLng + step/2);
-        let color = '#3b82f6';
-        if (cellPh < 5.5) color = '#ef4444';
-        else if (cellPh < 6.0) color = '#fbbf24';
-        else if (cellPh > 7.5) color = '#a78bfa';
-
-        L.rectangle(bounds, {
-          color: color,
-          weight: 1,
-          fillColor: color,
-          fillOpacity: 0.22,
-          interactive: false
-        }).addTo(soilLayerGroup);
-      }
-    }
-  }
+  const invalidarDatosUbicacion = () => {
+    consultaPh.current += 1;
+    consultaAltitud.current += 1;
+    consultaUbicacion.current += 1;
+    setEstadoUbicacion('Coordenadas editadas; revisa la ubicación.');
+    setPh('');
+    setAltitud('');
+    setEstadoPh('Coordenadas editadas; ingresa el pH si lo conoces.');
+    setEstadoAltitud('Coordenadas editadas; ingresa la altitud si la conoces.');
+  };
 
   useEffect(() => {
     mapActionsRef.current = {
       calculatePolygonAreaHectares,
-      drawSoilGrid,
       fetchAddress,
       fetchAltitude,
       fetchSoilPh,
@@ -470,6 +369,17 @@ export default function Cultivos({ onCultivoChanged, onboardingStep, onNextOnboa
       return;
     }
 
+    if (!tipo) {
+      setError('Selecciona el tipo de maíz de la parcela.');
+      return;
+    }
+
+    const variedadFinal = variedad === OTRA_VARIEDAD ? variedadPersonalizada.trim() : variedad;
+    if (!variedadFinal) {
+      setError(variedad === OTRA_VARIEDAD ? 'Escribe el nombre de la variedad o híbrido.' : 'Selecciona una variedad para el tipo de maíz elegido.');
+      return;
+    }
+
     const areaVal = parseNum(area);
     if (!areaVal || areaVal <= 0) {
       setError('Por favor, ingresa el área de la parcela en hectáreas (ha).');
@@ -485,7 +395,7 @@ export default function Cultivos({ onCultivoChanged, onboardingStep, onNextOnboa
 
     const payload = {
       nombre_parcela: nombre,
-      variedad_maiz: variedad,
+      variedad_maiz: variedadFinal,
       tipo_maiz: tipo,
       ubicacion: ubicacion || null,
       area: areaVal,
@@ -498,17 +408,26 @@ export default function Cultivos({ onCultivoChanged, onboardingStep, onNextOnboa
     };
 
     try {
-      await cultivosService.crear(payload);
+      await parcelasService.crear(payload);
       setSuccess('Lote registrado exitosamente.');
       
       setNombre('');
+      setVariedad('');
+      setVariedadPersonalizada('');
+      setTipo('');
+      consultaUbicacion.current += 1;
+      setEstadoUbicacion('');
       setUbicacion('');
       setArea('');
       setLatitud('');
       setLongitud('');
       setFechaSiembra('');
+      consultaAltitud.current += 1;
+      consultaPh.current += 1;
       setAltitud('');
       setPh('');
+      setEstadoPh('');
+      setEstadoAltitud('');
       setGeojson('');
 
       if (geomanLayersRef.current) geomanLayersRef.current.clearLayers();
@@ -619,38 +538,17 @@ export default function Cultivos({ onCultivoChanged, onboardingStep, onNextOnboa
               </button>
             </div>
 
-            <div className='cultivos-map-shell' style={isMapExpanded ? {
-              position: 'fixed', inset: '12px', zIndex: 10000, borderRadius: '10px', overflow: 'hidden', border: '1px solid var(--border-subtle)'
-            } : {
-              position: 'relative', flex: 1, minHeight: 0, borderRadius: '10px', overflow: 'hidden', border: '1px solid var(--border-subtle)'
-            }}>
-              <div style={{ position: 'absolute', top: '8px', right: '50px', zIndex: 1000, background: 'rgba(15, 23, 42, 0.75)', backdropFilter: 'blur(12px)', padding: '3px 6px', borderRadius: '6px', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
-                <select value={mapLayerOption} onChange={(e) => setMapLayerOption(e.target.value)} style={{ background: 'transparent', border: 'none', color: '#fff', fontSize: '0.7rem', fontWeight: 600, outline: 'none', cursor: 'pointer' }}>
-                  <option value='satellite'>Vista Satelital</option>
-                  <option value='soil'>Mapa de Suelo (pH)</option>
-                </select>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsMapExpanded(expanded => !expanded)}
-                aria-label={isMapExpanded ? 'Reducir mapa' : 'Expandir mapa'}
-                title={isMapExpanded ? 'Reducir mapa' : 'Expandir mapa'}
-                style={{ position: 'absolute', top: '8px', right: '8px', zIndex: 1001, width: '30px', height: '30px', display: 'grid', placeItems: 'center', border: '1px solid rgba(255,255,255,0.2)', borderRadius: '6px', color: '#fff', background: 'rgba(15, 23, 42, 0.8)', cursor: 'pointer' }}
-              >
-                {isMapExpanded ? <Minimize2 size={15} /> : <Maximize2 size={15} />}
-              </button>
-
-              <div style={{ position: 'absolute', top: '8px', left: '8px', zIndex: 1000, width: 'calc(100% - 110px)', maxWidth: '260px', display: 'flex', gap: '0.3rem', background: 'rgba(15, 23, 42, 0.75)', backdropFilter: 'blur(12px)', padding: '3px', borderRadius: '6px', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
+            <div className='cultivos-map-shell' style={{ position: 'relative', flex: 1, minHeight: 0, borderRadius: '10px', overflow: 'hidden', border: '1px solid var(--border-subtle)' }}>
+              <div className="cultivos-map-toolbar cultivos-map-search">
                 <input
                   type='text'
                   placeholder='Buscar ubicación...'
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleMapSearch(); } }}
-                  className='form-input'
-                  style={{ height: '26px', fontSize: '0.72rem', background: 'rgba(255, 255, 255, 0.05)', border: 'none', borderRadius: '4px', padding: '0 0.4rem', color: '#fff', flex: 1 }}
+                  className='form-input cultivos-map-search-input'
                 />
-                <button type='button' onClick={handleMapSearch} className='btn' style={{ padding: '0 0.5rem', height: '26px', fontSize: '0.7rem', borderRadius: '4px', background: 'linear-gradient(135deg, #863bff, #3b82f6)', color: '#fff', border: 'none', fontWeight: 600, cursor: 'pointer' }}>
+                <button type='button' onClick={handleMapSearch} className='btn cultivos-map-search-button'>
                   Buscar
                 </button>
               </div>
@@ -669,23 +567,23 @@ export default function Cultivos({ onCultivoChanged, onboardingStep, onNextOnboa
                 <input type='text' className='form-input' placeholder='Ej: Lote Norte' value={nombre} onChange={e => setNombre(e.target.value)} required style={{ padding: '0.45rem 0.65rem', fontSize: '0.8rem' }} />
               </div>
               <div className='form-group' style={{ marginBottom: 0 }}>
-                <label className='form-label' style={{ fontSize: '0.72rem', marginBottom: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}><Layers size={11} /> Variedad de Maíz *</label>
-                <select className='form-select' value={variedad} onChange={e => handleVariedadChange(e.target.value)} required style={{ padding: '0.45rem 0.65rem', fontSize: '0.8rem' }}>
-                  {(VARIEDADES_POR_TIPO[tipo] || []).map(v => (
-                    <option key={v} value={v}>{v}</option>
-                  ))}
+                <label className='form-label' style={{ fontSize: '0.72rem', marginBottom: '0.2rem' }}>Tipo de Maíz *</label>
+                <select className='form-select' value={tipo} onChange={e => handleTipoChange(e.target.value)} required style={{ padding: '0.45rem 0.65rem', fontSize: '0.8rem' }}>
+                  <option value=''>Selecciona el tipo de maíz</option>
+                  {TIPOS_MAIZ_ECUADOR.map(item => <option key={item.value} value={item.value}>{item.label}</option>)}
                 </select>
               </div>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem' }}>
               <div className='form-group' style={{ marginBottom: 0 }}>
-                <label className='form-label' style={{ fontSize: '0.72rem', marginBottom: '0.2rem' }}>Tipo de Maíz *</label>
-                <select className='form-select' value={tipo} onChange={e => handleTipoChange(e.target.value)} required style={{ padding: '0.45rem 0.65rem', fontSize: '0.8rem' }}>
-                  <option value='Duro Amarillo'>Duro Amarillo</option>
-                  <option value='Suave Harinoso'>Suave Harinoso</option>
-                  <option value='Duro Amarillo / Blanco'>Duro Amarillo / Blanco</option>
+                <label className='form-label' style={{ fontSize: '0.72rem', marginBottom: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}><Layers size={11} /> Variedad o híbrido *</label>
+                <select className='form-select' value={variedad} onChange={e => handleVariedadChange(e.target.value)} required disabled={!tipo} style={{ padding: '0.45rem 0.65rem', fontSize: '0.8rem' }}>
+                  <option value=''>{tipo ? 'Selecciona la variedad' : 'Selecciona primero el tipo'}</option>
+                  {variedadesPorTipo.map(v => <option key={v} value={v}>{v}</option>)}
+                  <option value={OTRA_VARIEDAD}>{VARIEDAD_PERSONALIZADA}</option>
                 </select>
+                {tipo && variedadesPorTipo.length === 0 && <p className='form-hint'>Este tipo no tiene variedades en la selección priorizada. Puedes registrar el nombre real de tu semilla; todavía no tiene una ficha de adaptación en el catálogo.</p>}
               </div>
               <div className='form-group' style={{ marginBottom: 0 }}>
                 <label className='form-label' style={{ fontSize: '0.72rem', marginBottom: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}><Grid size={11} /> Área (ha) *</label>
@@ -703,6 +601,11 @@ export default function Cultivos({ onCultivoChanged, onboardingStep, onNextOnboa
               </div>
             </div>
 
+            {variedad === OTRA_VARIEDAD && <div className='form-group' style={{ marginBottom: 0 }}>
+              <label className='form-label' style={{ fontSize: '0.72rem', marginBottom: '0.2rem' }}>Nombre tal como aparece en la semilla *</label>
+              <input type='text' className='form-input' placeholder='Ej: nombre local o marca del híbrido' value={variedadPersonalizada} onChange={e => setVariedadPersonalizada(e.target.value)} required maxLength={120} style={{ padding: '0.45rem 0.65rem', fontSize: '0.8rem' }} />
+            </div>}
+
             <div style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--text-subtle)', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.25rem', marginTop: '0.15rem' }}>
               Geolocalización y Edafología
             </div>
@@ -716,7 +619,7 @@ export default function Cultivos({ onCultivoChanged, onboardingStep, onNextOnboa
                   className='form-input' 
                   placeholder='-2.189' 
                   value={latitud} 
-                  onChange={e => setLatitud(limpiarTextoNumerico(e.target.value, true))} 
+                  onChange={e => { invalidarDatosUbicacion(); setLatitud(limpiarTextoNumerico(e.target.value, true)); }} 
                   onKeyDown={e => evitarOperadores(e, true)}
                   required 
                   style={{ padding: '0.4rem 0.5rem', fontSize: '0.78rem' }} 
@@ -730,7 +633,7 @@ export default function Cultivos({ onCultivoChanged, onboardingStep, onNextOnboa
                   className='form-input' 
                   placeholder='-79.889' 
                   value={longitud} 
-                  onChange={e => setLongitud(limpiarTextoNumerico(e.target.value, true))} 
+                  onChange={e => { invalidarDatosUbicacion(); setLongitud(limpiarTextoNumerico(e.target.value, true)); }} 
                   onKeyDown={e => evitarOperadores(e, true)}
                   required 
                   style={{ padding: '0.4rem 0.5rem', fontSize: '0.78rem' }} 
@@ -744,10 +647,11 @@ export default function Cultivos({ onCultivoChanged, onboardingStep, onNextOnboa
                   className='form-input' 
                   placeholder='6.5' 
                   value={ph} 
-                  onChange={e => setPh(limpiarTextoNumerico(e.target.value))} 
+                  onChange={e => { consultaPh.current += 1; setEstadoPh('Valor ingresado manualmente.'); setPh(limpiarTextoNumerico(e.target.value)); }} 
                   onKeyDown={evitarOperadores}
                   style={{ padding: '0.4rem 0.5rem', fontSize: '0.78rem' }} 
                 />
+                {estadoPh && <small role="status" style={{ color: 'var(--zs-muted)', fontSize: '0.7rem', lineHeight: 1.35 }}>{estadoPh}</small>}
               </div>
             </div>
 
@@ -767,7 +671,8 @@ export default function Cultivos({ onCultivoChanged, onboardingStep, onNextOnboa
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem' }}>
               <div className='form-group' style={{ marginBottom: 0 }}>
                 <label className='form-label' style={{ fontSize: '0.72rem', marginBottom: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}><MapPin size={11} /> Ubicación / Provincia</label>
-                <input type='text' className='form-input' placeholder='Guayas, Ecuador' value={ubicacion} onChange={e => setUbicacion(e.target.value)} style={{ padding: '0.45rem 0.65rem', fontSize: '0.8rem' }} />
+                <input type='text' className='form-input' placeholder='Guayas, Ecuador' value={ubicacion} onChange={e => { consultaUbicacion.current += 1; setEstadoUbicacion('Ubicación ingresada manualmente.'); setUbicacion(e.target.value); }} style={{ padding: '0.45rem 0.65rem', fontSize: '0.8rem' }} />
+                {estadoUbicacion && <small role="status" style={{ color: 'var(--zs-muted)', fontSize: '0.7rem', lineHeight: 1.35 }}>{estadoUbicacion}</small>}
               </div>
               <div className='form-group' style={{ marginBottom: 0 }}>
                 <label className='form-label' style={{ fontSize: '0.72rem', marginBottom: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}><Mountain size={11} /> Altitud (msnm)</label>
@@ -777,10 +682,11 @@ export default function Cultivos({ onCultivoChanged, onboardingStep, onNextOnboa
                   className='form-input' 
                   placeholder='45' 
                   value={altitud} 
-                  onChange={e => setAltitud(limpiarTextoNumerico(e.target.value))} 
+                  onChange={e => { consultaAltitud.current += 1; setEstadoAltitud('Valor ingresado manualmente.'); setAltitud(limpiarTextoNumerico(e.target.value)); }} 
                   onKeyDown={evitarOperadores}
                   style={{ padding: '0.45rem 0.65rem', fontSize: '0.8rem' }} 
                 />
+                {estadoAltitud && <small role="status" style={{ color: 'var(--zs-muted)', fontSize: '0.7rem', lineHeight: 1.35 }}>{estadoAltitud}</small>}
               </div>
             </div>
 

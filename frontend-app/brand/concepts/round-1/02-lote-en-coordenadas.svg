@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
+  <title>Lote en coordenadas</title>
+  <desc>Cuatro límites abiertos enmarcan el núcleo de una parcela medida.</desc>
+  <path fill="#000" d="M44 96V52q0-8 8-8h44v24H68v28zm116-52h44q8 0 8 8v44h-24V68h-28zM44 160h24v28h28v24H52q-8 0-8-8zm168 0v44q0 8-8 8h-44v-24h28v-28z"/>
+  <path fill="#000" d="m128 88 40 40-40 40-40-40z"/>
+</svg>

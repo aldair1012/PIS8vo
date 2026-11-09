@@ -1,0 +1,104 @@
+{
+  "fuente": "INEC ESPAC 2025, cultivos transitorios, cuatro grupos de maíz (excluye forrajero)",
+  "url": "https://www.ecuadorencifras.gob.ec/documentos/web-inec/Estadisticas_agropecuarias/espac/2025/2_DD_DATOS_ABIERTOS_ESPAC_2025.zip",
+  "licencia": "CC-BY-4.0 (perfil de metadatos INEC_ctnac_PM_2025.ods)",
+  "zip_sha256": "f60fb4957cf9f416ba20ff86cd0a1d968ad294803c36af97a7095870572fa8df",
+  "miembro_zip": "2_DD_DATOS ABIERTOS_ESPAC_2025/INEC_ESPAC_BD_2025.zip -> INEC_ESPAC_BD_2025/INEC_ctnac_BD_2025.csv",
+  "csv_oficial_sha256": "ba9a03ee622004cde7f540f6703c9424d09130ad764212591d3c79def8157b34",
+  "filas_transitorios": 13666,
+  "columnas_csv_oficial": 115,
+  "filas_maiz": 4976,
+  "registros_por_cultivo": {
+    "MAIZ SUAVE SECO (GRANO SECO)": 1935,
+    "MAIZ SUAVE CHOCLO (CHOCLO)": 727,
+    "MAIZ DURO SECO (GRANO SECO)": 2263,
+    "MAIZ DURO CHOCLO (CHOCLO)": 51
+  },
+  "registros_por_provincia_etiqueta_original": {
+    " AZUAY": 662,
+    "BOLÍVAR": 495,
+    "CAÑAR": 176,
+    "CARCHI": 34,
+    "COTOPAXI": 402,
+    "CHIMBORAZO": 274,
+    "EL ORO": 58,
+    "ESMERALDAS": 31,
+    "GUAYAS": 215,
+    "IMBABURA": 218,
+    "LOJA": 468,
+    "LOS RÍOS": 580,
+    "MANABÍ": 722,
+    "MORONA SANTIAGO": 69,
+    "NAPO": 20,
+    "PASTAZA": 9,
+    "PICHINCHA": 174,
+    "TUNGURAHUA": 216,
+    "ZAMORA CHINCHIPE": 11,
+    "SUCUMBÍOS": 43,
+    "ORELLANA": 19,
+    "SANTO DOMINGO DE LOS TSÁCHILAS": 10,
+    "SANTA ELENA": 68,
+    " ZONA NO DELIMITADA": 2
+  },
+  "registros_por_semilla_codigo_original": {
+    "1": 2888,
+    "2": 819,
+    "4": 143,
+    "3": 1118,
+    "5": 8
+  },
+  "registros_por_riego_etiqueta_original": {
+    "SI": 1005,
+    "NO": 3971
+  },
+  "registros_por_anio_siembra_codigo_original": {
+    "24": 1991,
+    "25": 2985
+  },
+  "recuentos_observaciones_revision_no_excluyentes": {
+    "cultivo_asociado_u_otra_condicion": 814,
+    "estado_distinto_de_grano_seco": 1798,
+    "producto_choclo": 778,
+    "superficie_cosechada_ausente_o_no_positiva": 84,
+    "produccion_ausente_o_negativa": 84
+  },
+  "cocientes_calculados_por_cultivo": {
+    "MAIZ SUAVE SECO (GRANO SECO)": 729,
+    "MAIZ DURO SECO (GRANO SECO)": 2068
+  },
+  "rangos_cocientes_t_ha_para_revision_no_validados": {
+    "MAIZ SUAVE SECO (GRANO SECO)": {
+      "min": 0.07575757575757583,
+      "max": 5.797773654916511
+    },
+    "MAIZ DURO SECO (GRANO SECO)": {
+      "min": 0.1558441558441557,
+      "max": 13.25757575757575
+    }
+  },
+  "archivos": {
+    "maiz_espac2025_original.csv": {
+      "bytes": 2383668,
+      "sha256": "47863f1a255ae3e7e695df0c1fe0a329e55c35b2acd1d2d866d4657b6bfa1ea5"
+    },
+    "revision_rendimiento_espac2025.csv": {
+      "bytes": 857444,
+      "sha256": "be05125e42ab26dacf33dff0854a32fb9cafb4adfe28a4e099caa1e54c5a6d9c"
+    }
+  },
+  "controles": {
+    "copia_fiel_de_campos": true,
+    "faltantes_rellenados": false,
+    "cruce_con_otras_fuentes": false,
+    "modelo_modificado": false,
+    "apto_para_entrenar_sin_revision": false
+  },
+  "advertencias": [
+    "Datos oficiales de encuesta; no son pesajes independientes de parcelas de ZeaSys.",
+    "4976 filas no equivalen necesariamente a 4976 parcelas o productores independientes.",
+    "El cociente ct_prod/ct_k511ha no tiene ajuste adicional de humedad ni limpieza.",
+    "Conservar unidades y factores de expansión; no promediar rendimientos sin revisar el diseño.",
+    "El CSV observado tiene 115 columnas; la guía enumera 116. Se conserva el archivo descargado.",
+    "Los códigos de año son 24 y 25; no se inventan fechas diarias ni duración exacta."
+  ]
+}

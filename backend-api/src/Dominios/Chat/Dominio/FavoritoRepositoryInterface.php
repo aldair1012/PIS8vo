@@ -21,7 +21,7 @@ interface FavoritoRepositoryInterface
      *
      * @return array<int, array<string, mixed>>
      */
-    public function obtenerRecientes(int $usuarioId, ?int $cultivoId, ?int $anio, int $limite = 4): array;
+    public function obtenerRecientes(int $usuarioId, ?int $cultivoId, ?int $año, int $limite = 4): array;
 
     public function eliminar(int $usuarioId, string $conversacionId): void;
 }

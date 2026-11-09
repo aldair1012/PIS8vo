@@ -1,6 +1,5 @@
 <?php
-// src/Dominios/Analitica/Aplicacion/ServicioAnaliticaFinancial.php — Servicio que construye los datos del dashboard Financial.
-// Port verbatim de FinancialController::index() (líneas 28-219), adaptado a return array.
+// Escenarios financieros explícitos: costos/precios son supuestos, no gastos observados.
 declare(strict_types=1);
 
 namespace ZeaSys\Dominios\Analitica\Aplicacion;
@@ -13,205 +12,180 @@ use ZeaSys\Kernel\Peticion;
 
 class ServicioAnaliticaFinancial
 {
+    private const QQ_POR_TONELADA = 22.0462;
+
     public function __construct(
         private CultivoRepositoryInterface $cultivos,
         private SimulacionRepositoryInterface $simulaciones
     ) {}
 
-    public function construir(int $usuarioId, ?int $cultivoId, ?int $anio, Peticion $p): array
+    public function construir(int $usuarioId, ?int $cultivoId, ?int $año, Peticion $p): array
     {
-        $parametrosFinancieros = ['precio_maiz_qq', 'rendimiento_qq', 'precio_maiz', 'costo_semilla', 'costo_fert', 'costo_riego', 'costo_proteccion', 'otros_var', 'costos_variables', 'costos_fijos'];
-        foreach ($parametrosFinancieros as $parametro) {
-            $valor = $p->query($parametro);
-            if ($valor !== null && $valor !== '' && (!is_numeric($valor) || !is_finite((float) $valor) || (float) $valor < 0)) {
-                throw new ValidacionException("El parámetro {$parametro} debe ser un número no negativo.");
-            }
+        $parametros = [];
+        foreach (['precio_maiz_qq', 'rendimiento_qq', 'precio_maiz', 'costo_semilla', 'costo_fert', 'costo_riego', 'costo_proteccion', 'otros_var', 'costos_variables', 'costos_fijos'] as $campo) {
+            $valor = $p->query($campo);
+            if ($valor === null || $valor === '') continue;
+            $numero = $this->numero($valor);
+            if ($numero === null || $numero < 0) throw new ValidacionException("El parámetro {$campo} debe ser un número finito no negativo.");
+            $parametros[$campo] = $numero;
         }
 
-        $recientes = $this->simulaciones->obtenerRecientes($usuarioId, 50, $anio);
-
-        $selectedCultivo = null;
-        if ($cultivoId) {
-            $selectedCultivo = $this->cultivos->obtenerPorId($cultivoId);
-            if (!$selectedCultivo || (int) $selectedCultivo['usuario_id'] !== $usuarioId) {
+        $cultivo = null;
+        if ($cultivoId !== null) {
+            $cultivo = $this->cultivos->obtenerPorId($cultivoId);
+            if (!$cultivo || (int) ($cultivo['usuario_id'] ?? 0) !== $usuarioId) {
                 throw new AccesoDenegadoException('Esta parcela no es válida o no está registrada a tu nombre.');
             }
-            $recientes = array_values(array_filter($recientes, fn($sim) => $sim['cultivo_id'] == $cultivoId));
         }
-
-        $simCount = count($recientes);
-        $avgRend = 0; $avgFert = 0;
+        $recientes = $cultivoId !== null
+            ? $this->simulaciones->obtenerRecientesPorCultivo($usuarioId, $cultivoId, 50, $año)
+            : $this->simulaciones->obtenerRecientes($usuarioId, 50, $año);
         $rendimientos = [];
-
-        $hasCustomOverrides = false;
-        foreach ($parametrosFinancieros as $parametro) {
-            if ($p->query($parametro) !== null && $p->query($parametro) !== '') {
-                $hasCustomOverrides = true;
-                break;
-            }
+        foreach ($recientes as $fila) {
+            $r = $this->numero($fila['rendimiento_estimado'] ?? null);
+            if ($r !== null && $r >= 0) $rendimientos[] = $r;
         }
-
-        if ($simCount === 0 && !$hasCustomOverrides) {
-            return [
-                'sin_datos' => true,
-                'sin_simulaciones' => true,
-                'mensaje' => 'No hay simulaciones registradas para esta parcela en este año.'
-            ];
+        $n = count($rendimientos);
+        if ($n === 0 && $parametros === []) {
+            return ['sin_datos' => true, 'sin_simulaciones' => true,
+                'mensaje' => 'No hay simulaciones con rendimiento válido para esta parcela y año. Puedes configurar un escenario hipotético explícito.'];
         }
-
-        if ($simCount > 0) {
-            foreach ($recientes as $sim) {
-                $r = floatval($sim['rendimiento_estimado'] ?? 0);
-                $rendimientos[] = $r;
-                $avgRend += $r;
-                $avgFert += floatval($sim['fertilizante'] ?? 0);
-            }
-            $avgRend = round($avgRend / $simCount, 2);
-            $avgFert = round($avgFert / $simCount, 0);
+        $media = $n > 0 ? array_sum(array_map(static fn (float $r): float => $r / $n, $rendimientos)) : null;
+        $area = $this->numero($cultivo['area'] ?? null);
+        $area = $area !== null && $area > 0 ? $area : null;
+        $nombreParcela = $cultivo['nombre_parcela'] ?? 'Sin parcela seleccionada';
+        $fuentes = [];
+        if (array_key_exists('precio_maiz_qq', $parametros)) {
+            $precioQq = $parametros['precio_maiz_qq'];
+            $fuentes['precio_maiz_qq'] = 'supuesto_ingresado_usuario';
+        } elseif (array_key_exists('precio_maiz', $parametros)) {
+            $precioQq = $parametros['precio_maiz'] / self::QQ_POR_TONELADA;
+            $fuentes['precio_maiz_qq'] = 'precio_por_tonelada_ingresado_convertido_a_qq';
         } else {
-            $avgRend = 6.25;
-            $avgFert = 160;
-            $simCount = 1;
+            $precioQq = 16.50;
+            $fuentes['precio_maiz_qq'] = 'supuesto_configurable_sin_cotizacion_mercado';
         }
+        $rendimientoQq = $parametros['rendimiento_qq'] ?? ($media !== null ? $this->resultado($media * self::QQ_POR_TONELADA) : null);
+        $fuentes['rendimiento_qq'] = array_key_exists('rendimiento_qq', $parametros)
+            ? 'supuesto_ingresado_usuario' : ($media !== null ? 'media_rendimientos_modelo_guardados' : 'no_disponible');
+        $avgRend = $rendimientoQq !== null ? $rendimientoQq / self::QQ_POR_TONELADA : null;
+        $precioMaizCalculo = $this->resultado($precioQq * self::QQ_POR_TONELADA);
+        $precioMaiz = $precioMaizCalculo !== null ? $this->resultado($precioMaizCalculo, 2) : null;
 
-        if (!$selectedCultivo) {
-            $cultivos = $this->cultivos->obtenerPorUsuario($usuarioId);
-            if (!empty($cultivos)) $selectedCultivo = $cultivos[0];
+        // Estos valores son editables para explorar un presupuesto; no provienen
+        // de comprobantes ni de multiplicar kilogramos de N por dólares supuestos.
+        $costos = [];
+        foreach (['costo_semilla' => 85.0, 'costo_fert' => 120.0, 'costo_riego' => 60.0, 'costo_proteccion' => 45.0, 'otros_var' => 80.0, 'costos_fijos' => 120.0] as $campo => $default) {
+            $alias = $campo === 'otros_var' && !array_key_exists($campo, $parametros) ? 'costos_variables' : $campo;
+            $costos[$campo] = $parametros[$alias] ?? $default;
+            $fuentes[$campo] = array_key_exists($alias, $parametros) ? 'supuesto_ingresado_usuario' : 'supuesto_configurable_sin_costo_observado';
         }
-        $areaParcela = max(0.1, floatval($selectedCultivo['area'] ?? 1.0));
-        $nombreParcela = $selectedCultivo['nombre_parcela'] ?? 'Lote Principal';
+        $costoTotal = array_sum($costos);
+        if (!is_finite($costoTotal)) throw new ValidacionException('La suma de costos supera la capacidad numérica del cálculo.');
+        $ingresoBruto = $rendimientoQq !== null ? $this->resultado($rendimientoQq * $precioQq, 2) : null;
+        $margenBruto = $ingresoBruto !== null ? $this->resultado($ingresoBruto - ($costoTotal - $costos['costos_fijos']), 2) : null;
+        $margenNeto = $ingresoBruto !== null ? $this->resultado($ingresoBruto - $costoTotal, 2) : null;
+        $breakEven = $precioMaizCalculo !== null && $precioMaizCalculo > 0 ? $this->resultado($costoTotal / $precioMaizCalculo, 3) : null;
+        $precioPisoQq = $rendimientoQq !== null && $rendimientoQq > 0 ? $this->resultado($costoTotal / $rendimientoQq, 2) : null;
+        $roi = $margenNeto !== null && $costoTotal > 0 ? $this->resultado(100 * ($margenNeto / $costoTotal), 1) : null;
+        $gananciaPorDolar = $margenNeto !== null && $costoTotal > 0 ? $this->resultado($margenNeto / $costoTotal, 2) : null;
 
-        $simAvgRend = $avgRend;
-        $simAvgFert = round($avgFert * 0.8, 0);
-        $simRendQq = round($simAvgRend * 22.0462, 1);
-
-        $precioQq = $p->query('precio_maiz_qq') !== null && $p->query('precio_maiz_qq') !== ''
-            ? max(0, floatval($p->query('precio_maiz_qq')))
-            : ($p->query('precio_maiz') !== null && $p->query('precio_maiz') !== '' ? max(0, floatval($p->query('precio_maiz')) / 22.0462) : 16.50);
-
-        $rendimientoQq = $p->query('rendimiento_qq') !== null && $p->query('rendimiento_qq') !== ''
-            ? max(0, floatval($p->query('rendimiento_qq')))
-            : ($simRendQq > 0 ? $simRendQq : 110.0);
-
-        $avgRend = round($rendimientoQq / 22.0462, 3);
-        $precioMaiz = round($precioQq * 22.0462, 2);
-
-        $costoSemilla = $p->query('costo_semilla') !== null && $p->query('costo_semilla') !== '' ? max(0, floatval($p->query('costo_semilla'))) : 85;
-        $costoFertilizacion = $p->query('costo_fert') !== null && $p->query('costo_fert') !== '' ? max(0, floatval($p->query('costo_fert'))) : ($simAvgFert > 0 ? $simAvgFert : 120);
-        $costoRiego = $p->query('costo_riego') !== null && $p->query('costo_riego') !== '' ? max(0, floatval($p->query('costo_riego'))) : 60;
-        $costoProteccion = $p->query('costo_proteccion') !== null && $p->query('costo_proteccion') !== '' ? max(0, floatval($p->query('costo_proteccion'))) : 45;
-        $costosVariables = $p->query('otros_var') !== null && $p->query('otros_var') !== ''
-            ? max(0, floatval($p->query('otros_var')))
-            : ($p->query('costos_variables') !== null && $p->query('costos_variables') !== '' ? max(0, floatval($p->query('costos_variables'))) : 80);
-        $costosFijos = $p->query('costos_fijos') !== null && $p->query('costos_fijos') !== '' ? max(0, floatval($p->query('costos_fijos'))) : 120;
-
-        $costoTotal = $costoSemilla + $costoFertilizacion + $costoRiego + $costoProteccion + $costosFijos + $costosVariables;
-        $ingresoBruto = round($avgRend * $precioMaiz, 2);
-        $margenBruto = round($ingresoBruto - ($costoSemilla + $costoFertilizacion + $costoRiego + $costoProteccion + $costosVariables), 2);
-        $margenNeto = round($ingresoBruto - $costoTotal, 2);
-        $breakEven = $costoTotal > 0 && $precioMaiz > 0 ? round($costoTotal / $precioMaiz, 2) : 0;
-        $precioPisoQq = ($avgRend * 22.0462) > 0 ? round($costoTotal / ($avgRend * 22.0462), 2) : 0;
-
-        $ingresoBrutoParcela = round($ingresoBruto * $areaParcela, 2);
-        $costoTotalParcela = round($costoTotal * $areaParcela, 2);
-        $margenNetoParcela = round($margenNeto * $areaParcela, 2);
-        $produccionTotalQq = round($rendimientoQq * $areaParcela, 1);
-
-        // No presentar una probabilidad fija como si proviniera del modelo.
-        // Con al menos cinco simulaciones del lote, se muestra la frecuencia
-        // empírica de escenarios cuyo ingreso cubre el costo configurado.
-        $probBreakEven = null;
-        $rendimientosValidos = array_values(array_filter($rendimientos, static fn (float $rendimiento): bool => $rendimiento > 0));
-        if (count($rendimientosValidos) >= 5 && $precioQq > 0) {
-            $escenariosRentables = count(array_filter(
-                $rendimientosValidos,
-                static fn (float $rendimiento): bool => ($rendimiento * 22.0462 * $precioQq) >= $costoTotal,
-            ));
-            $probBreakEven = round(100 * $escenariosRentables / count($rendimientosValidos), 1);
+        $fraccionCubreCostos = null;
+        if ($n >= 5) {
+            $rentables = count(array_filter($rendimientos, static function (float $r) use ($precioQq, $costoTotal): bool {
+                if ($precioQq === 0.0) return $costoTotal === 0.0;
+                // Comparar con el umbral evita desbordar al multiplicar grandes ingresos.
+                return $r >= ($costoTotal / $precioQq) / self::QQ_POR_TONELADA;
+            }));
+            $fraccionCubreCostos = round($rentables * 100 / $n, 1);
         }
-        $roiEsperado = $costoTotal > 0 ? round(($margenNeto / $costoTotal) * 100, 1) : 0;
-        $gananciaPorDolar = $costoTotal > 0 ? round($margenNeto / $costoTotal, 2) : 0;
-
-        $factoresSensibilidad = [0.75, 0.9, 1.0, 1.1, 1.25];
-        $preciosRange = array_map(static fn (float $factor): float => round($precioQq * $factor, 2), $factoresSensibilidad);
-        $rendRange = array_map(static fn (float $factor): float => round($rendimientoQq * $factor, 1), $factoresSensibilidad);
-
-        $sensibilidadData = [];
-        foreach ($preciosRange as $p) {
-            foreach ($rendRange as $r) {
-                $ingresoPorHa = $r * $p;
-                $net = round($ingresoPorHa - $costoTotal, 2);
-                $sensibilidadData[] = ['precio' => $p,'rendimiento' => $r,'margen' => $net];
+        $factores = [0.75, 0.9, 1.0, 1.1, 1.25];
+        $precios = $this->rango($precioQq, $factores, 2);
+        $rindes = $rendimientoQq !== null ? $this->rango($rendimientoQq, $factores, 1) : [];
+        $sensibilidad = [];
+        foreach ($precios as $precio) {
+            foreach ($rindes as $rinde) {
+                $ingreso = $this->resultado($rinde * $precio);
+                $sensibilidad[] = ['precio' => $precio, 'rendimiento' => $rinde,
+                    'margen' => $ingreso !== null ? $this->resultado($ingreso - $costoTotal, 2) : null,
+                    'tipo' => 'escenario_hipotetico'];
             }
         }
-
-        $estrategiasHipoteticas = [
-            ['nombre' => 'Escenario base', 'factor_ingreso' => 1.0, 'costo_ajuste' => 0.0, 'factor_rendimiento' => 1.0],
-            ['nombre' => 'Supuesto: 40% menos costo de fertilización', 'factor_ingreso' => 1.0, 'costo_ajuste' => -$costoFertilizacion * 0.4, 'factor_rendimiento' => 1.0],
-            ['nombre' => 'Supuesto: 15% más producción y USD 40 más de costo', 'factor_ingreso' => 1.15, 'costo_ajuste' => 40.0, 'factor_rendimiento' => 1.15],
-            ['nombre' => 'Supuesto: 6% más producción y USD 25 más de costo', 'factor_ingreso' => 1.06, 'costo_ajuste' => 25.0, 'factor_rendimiento' => 1.06],
+        $estrategias = [
+            ['nombre' => 'Escenario base', 'factor' => 1.0, 'ajuste' => 0.0],
+            ['nombre' => 'Supuesto: 40% menos costo de fertilización', 'factor' => 1.0, 'ajuste' => -$costos['costo_fert'] * 0.4],
+            ['nombre' => 'Supuesto: 15% más producción y USD 40 más de costo', 'factor' => 1.15, 'ajuste' => 40.0],
+            ['nombre' => 'Supuesto: 6% más producción y USD 25 más de costo', 'factor' => 1.06, 'ajuste' => 25.0],
         ];
-        $roiEstrategias = array_map(static function (array $estrategia) use ($ingresoBruto, $costoTotal, $avgRend): array {
-            $ingreso = $ingresoBruto * $estrategia['factor_ingreso'];
-            $costo = max(0.0, $costoTotal + $estrategia['costo_ajuste']);
-            $margen = $ingreso - $costo;
-            return [
-                'nombre' => $estrategia['nombre'],
-                'roi' => $costo > 0 ? round(100 * $margen / $costo, 1) : null,
-                'costo' => round($costo, 2),
-                'margen' => round($margen, 2),
-                'rendimiento' => round($avgRend * $estrategia['factor_rendimiento'], 2),
-            ];
-        }, $estrategiasHipoteticas);
-
-        $waterfallCosts = [
-            ['label' => 'Ingreso Bruto','amount' => $ingresoBruto,'is_total' => true],
-            ['label' => 'Semilla','amount' => -$costoSemilla],
-            ['label' => 'Fertilización','amount' => -$costoFertilizacion],
-            ['label' => 'Riego / Manejo','amount' => -$costoRiego],
-            ['label' => 'Protección Plagas','amount' => -$costoProteccion],
-            ['label' => 'Otros Costos Var.','amount' => -$costosVariables],
-            ['label' => 'Costos Fijos','amount' => -$costosFijos],
-            ['label' => 'Margen Neto','amount' => $margenNeto,'is_total' => true]
-        ];
+        $roiEstrategias = [];
+        foreach ($estrategias as $estrategia) {
+            $ingreso = $ingresoBruto !== null ? $this->resultado($ingresoBruto * $estrategia['factor']) : null;
+            $costo = $this->resultado(max(0.0, $costoTotal + $estrategia['ajuste']), 2);
+            $margen = $ingreso !== null && $costo !== null ? $this->resultado($ingreso - $costo, 2) : null;
+            $roiEstrategias[] = ['nombre' => $estrategia['nombre'], 'tipo' => 'escenario_hipotetico',
+                'roi' => $margen !== null && $costo > 0 ? $this->resultado(100 * ($margen / $costo), 1) : null,
+                'costo' => $costo, 'margen' => $margen,
+                'rendimiento' => $avgRend !== null ? $this->resultado($avgRend * $estrategia['factor'], 3) : null];
+        }
+        $waterfall = [['label' => 'Ingreso Bruto', 'amount' => $ingresoBruto, 'is_total' => true]];
+        foreach (['costo_semilla' => 'Semilla', 'costo_fert' => 'Fertilización', 'costo_riego' => 'Riego / Manejo', 'costo_proteccion' => 'Protección Plagas', 'otros_var' => 'Otros Costos Var.', 'costos_fijos' => 'Costos Fijos'] as $campo => $label) {
+            $waterfall[] = ['label' => $label, 'amount' => -$costos[$campo]];
+        }
+        $waterfall[] = ['label' => 'Margen Neto', 'amount' => $margenNeto, 'is_total' => true];
 
         return [
             'datos_base_sistema' => [
-                'precio_maiz_qq' => round($precioQq, 2),
-                'rendimiento_qq' => $rendimientoQq,
-                'costo_semilla'  => $costoSemilla,
-                'costo_fert'     => $costoFertilizacion,
-                'costo_riego'    => $costoRiego,
-                'costo_proteccion' => $costoProteccion,
-                'otros_var'      => $costosVariables,
-                'costos_fijos'    => $costosFijos,
-                'area_parcela'   => $areaParcela,
-                'nombre_parcela' => $nombreParcela,
-                'rendimiento_tha' => $avgRend
+                'precio_maiz_qq' => $precioQq, 'rendimiento_qq' => $rendimientoQq !== null ? round($rendimientoQq, 3) : null,
+                ...$costos, 'area_parcela' => $area, 'nombre_parcela' => $nombreParcela,
+                'rendimiento_tha' => $avgRend !== null ? round($avgRend, 3) : null,
             ],
             'kpis' => [
-                'margen_neto' => $margenNeto,
-                'margen_bruto' => $margenBruto,
-                'punto_equilibrio' => $breakEven,
-                'prob_superar_break_even' => $probBreakEven,
-                'roi' => $roiEsperado,
-                'precio_maiz' => $precioMaiz,
-                'precio_maiz_qq' => round($precioQq, 2),
-                'precio_piso_qq' => $precioPisoQq,
-                'ganancia_por_dolar' => $gananciaPorDolar,
-                'area_parcela' => $areaParcela,
-                'nombre_parcela' => $nombreParcela,
-                'ingreso_bruto_parcela' => $ingresoBrutoParcela,
-                'costo_total_parcela' => $costoTotalParcela,
-                'margen_neto_parcela' => $margenNetoParcela,
-                'produccion_total_qq' => $produccionTotalQq
+                'ingreso_bruto' => $ingresoBruto, 'margen_neto' => $margenNeto, 'margen_bruto' => $margenBruto,
+                'punto_equilibrio' => $breakEven, 'prob_superar_break_even' => null,
+                'roi' => $roi, 'precio_maiz' => $precioMaiz, 'precio_maiz_qq' => $precioQq,
+                'precio_piso_qq' => $precioPisoQq, 'ganancia_por_dolar' => $gananciaPorDolar,
+                'area_parcela' => $area, 'nombre_parcela' => $nombreParcela,
+                'ingreso_bruto_parcela' => $area !== null && $ingresoBruto !== null ? $this->resultado($ingresoBruto * $area, 2) : null,
+                'costo_total_parcela' => $area !== null ? $this->resultado($costoTotal * $area, 2) : null,
+                'margen_neto_parcela' => $area !== null && $margenNeto !== null ? $this->resultado($margenNeto * $area, 2) : null,
+                'produccion_total_qq' => $area !== null && $rendimientoQq !== null ? $this->resultado($rendimientoQq * $area, 3) : null,
             ],
-            'costo_total' => $costoTotal,
-            'sensibilidad' => $sensibilidadData,
-            'precios_rango' => $preciosRange,
-            'rendimientos_rango' => $rendRange,
-            'roi_estrategias' => $roiEstrategias,
-            'waterfall_costos' => $waterfallCosts
+            'costo_total' => $costoTotal, 'sensibilidad' => $sensibilidad,
+            'precios_rango' => $precios, 'rendimientos_rango' => $rindes,
+            'roi_estrategias' => $roiEstrategias, 'waterfall_costos' => $waterfall,
+            'resumen_descriptivo' => ['muestra' => $n, 'fraccion_cubre_costos_pct' => $fraccionCubreCostos,
+                'nota' => 'Fracción de al menos cinco simulaciones guardadas bajo el precio y costos supuestos; no es una probabilidad calibrada ni cosechas observadas. Incluye rendimientos cero.'],
+            'supuestos' => [
+                'tipo' => 'escenario_financiero_hipotetico', 'fuentes' => $fuentes,
+                'area_fuente' => $area !== null ? 'registro_parcela_seleccionada' : 'no_disponible',
+                'conversion_qq_por_tonelada' => self::QQ_POR_TONELADA,
+                'unidad_costos' => 'USD/ha', 'unidad_precio' => 'USD/qq', 'unidad_rendimiento' => 'qq/ha',
+                'nota' => 'Los costos y precios son supuestos configurables, no facturas ni una cotización de mercado. Los kilogramos de nitrógeno no determinan dólares. Los cambios de estrategia no aseguran respuestas agronómicas. Un resultado null no puede calcularse con los datos disponibles o excede la representación numérica.',
+            ],
         ];
+    }
+
+    private function numero(mixed $valor): ?float
+    {
+        if (is_bool($valor) || !is_numeric($valor)) return null;
+        $n = (float) $valor;
+        return is_finite($n) ? $n : null;
+    }
+
+    private function resultado(float $valor, ?int $decimales = null): ?float
+    {
+        if (!is_finite($valor)) return null;
+        $r = $decimales !== null ? round($valor, $decimales) : $valor;
+        return is_finite($r) ? $r : null;
+    }
+
+    private function rango(float $base, array $factores, int $decimales): array
+    {
+        $valores = [];
+        foreach ($factores as $factor) {
+            $valor = $this->resultado($base * $factor, $decimales);
+            if ($valor !== null && !in_array($valor, $valores, true)) $valores[] = $valor;
+        }
+        return $valores;
     }
 }

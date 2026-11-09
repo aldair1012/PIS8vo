@@ -1,5 +1,7 @@
 # ZeaSys + Gemini + Flowise
 
+> Actualización del 1 de noviembre de 2026: el asistente dispone de un flujo documental auxiliar conectado a cinco PDF en Chroma. La arquitectura, cobertura, OCR, límites y recuperación están descritos en [`rag-cinco-pdf.md`](rag-cinco-pdf.md). Las secciones históricas de esta guía que dicen que no hay recuperación vectorial en el camino principal describen el estado anterior.
+
 El chatbot usa **Flowise** como orquestador y **Google Gemini Flash Lite** como
 generador. PHP no genera respuestas ni mantiene un catálogo de respuestas
 predeterminadas: valida la sesión y la parcela, arma un contexto autorizado y lo

@@ -24,7 +24,7 @@ final class AltitudMysql implements AltitudPorCultivoInterface
     {
         // Si no se pasó la altitud, intentar recuperarla del cultivo en la BD usando coordenadas aproximadas
         try {
-            $sentencia = $this->db->prepare("SELECT altitud FROM cultivos WHERE ROUND(latitud, 3) = ROUND(:lat, 3) AND ROUND(longitud, 3) = ROUND(:lng, 3) LIMIT 1");
+            $sentencia = $this->db->prepare("SELECT altitud FROM parcelas WHERE ROUND(latitud, 3) = ROUND(:lat, 3) AND ROUND(longitud, 3) = ROUND(:lng, 3) LIMIT 1");
             $sentencia->execute(['lat' => $latitud, 'lng' => $longitud]);
             $cultivoBd = $sentencia->fetch(\PDO::FETCH_ASSOC);
             if ($cultivoBd && !empty($cultivoBd['altitud'])) {

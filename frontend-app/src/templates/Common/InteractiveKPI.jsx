@@ -1,4 +1,5 @@
 import React from 'react';
+import { indiceKpiSeguro } from '../../utils/kpiState';
 
 const MISSING_VALUE_PATTERN = /^(?:-|—|n\/a|na|sin\s+dato(?:s)?|no\s+disponible|pendiente)$/i;
 const KPI_SLIDE_HEIGHT = 104;
@@ -21,11 +22,7 @@ function isMissingMetricValue(value, slide = {}) {
 
 function getMetricState(slide) {
   if (isMissingMetricValue(slide.value, slide)) return 'empty';
-  const text = `${slide.trend || ''} ${slide.explanation?.estado || ''}`.toLowerCase();
-  if (/crít|critic|riesgo|pérd|perdid|alto|danger/.test(text)) return 'danger';
-  if (/moder|medio|bajo|alerta|regular|warning/.test(text)) return 'warning';
-  if (/favorable|óptim|optim|estable|bueno|saludable|logrado|success/.test(text)) return 'success';
-  return 'neutral';
+  return slide.severity?.level === 'danger' ? 'danger' : slide.severity?.level === 'warning' ? 'warning' : 'neutral';
 }
 
 /**
@@ -54,9 +51,6 @@ export default function InteractiveKPI({
 }) {
   const componentId = React.useId().replace(/:/g, '');
   const [activeIndex, setActiveIndex] = React.useState(0);
-  const [isHovered, setIsHovered] = React.useState(false);
-  const [popoverSide, setPopoverSide] = React.useState('right');
-  const cardRef = React.useRef(null);
 
 
 
@@ -85,6 +79,7 @@ export default function InteractiveKPI({
     isMissing: slide.isMissing ?? null,
     emptyHint: slide.emptyHint ?? null,
     explanation: slide.explanation ?? null,
+    severity: slide.severity ?? null,
     onClick: slide.onClick ?? null
   }));
 
@@ -99,61 +94,13 @@ export default function InteractiveKPI({
     ? renderableSlides
     : (normalizedSlides.length > 0 ? normalizedSlides : [{ title: 'Métrica', value: '-' }]);
 
-  const activeSlide = slides[activeIndex] || slides[0];
   const slideCount = slides.length;
+  const visibleIndex = indiceKpiSeguro(activeIndex, slideCount);
+  const activeSlide = slides[visibleIndex];
   const activeSlideIsEmpty = isMissingMetricValue(activeSlide.value, activeSlide);
   const activeMetricState = getMetricState(activeSlide);
 
   // Los indicadores no cambian de significado sin intervención del usuario.
-
-  // Generador inteligente de explicaciones concisas para el popover flotante
-  const getPopoverContent = (slide) => {
-    const exp = slide.explanation;
-    const slideTitle = slide.title || "Métrica Agrícola";
-    
-    if (exp) {
-      return {
-        title: exp.nombre || slideTitle,
-        description: exp.descripcion_tecnica || `Medición agroclimática de ${slideTitle.toLowerCase()} para el seguimiento del lote.`,
-        impact: exp.impacto_base || `Incide directamente en el desarrollo fisiológico y rendimiento esperado del cultivo.`,
-        recommendation: exp.recomendacion_base || null,
-        source: exp.fuente || null
-      };
-    }
-
-    const titleLower = slideTitle.toLowerCase();
-    let description = `Indicador de ${titleLower} calculado con los datos disponibles para este lote.`;
-    let impact = 'Úsalo como apoyo para comparar escenarios; comprueba la fuente y los supuestos antes de tomar una decisión.';
-    let recommendation = null;
-
-    if (titleLower.includes('potencial') || titleLower.includes('genético') || titleLower.includes('genetico')) {
-      description = 'Referencia de rendimiento bajo condiciones favorables para el híbrido y los supuestos del modelo.';
-      impact = 'Permite comparar el potencial con el rendimiento estimado; no representa una cosecha garantizada.';
-    } else if (titleLower.includes('alcanzable')) {
-      description = 'Estimación del rendimiento alcanzable dadas las restricciones consideradas por el modelo.';
-      impact = 'Sirve como referencia para priorizar mejoras de manejo y contrastarlas con datos medidos.';
-    } else if (titleLower.includes('predicho') || titleLower.includes('esperado')) {
-      description = 'Rendimiento proyectado para los supuestos actuales de parcela, campaña y manejo.';
-      impact = 'Ayuda a dimensionar el escenario productivo; el resultado observado puede ser diferente.';
-    } else if (titleLower.includes('pérdida') || titleLower.includes('perdida') || titleLower.includes('brecha')) {
-      description = 'Diferencia estimada entre una referencia de rendimiento y el resultado del escenario.';
-      impact = 'Señala factores que conviene revisar, sin atribuir causalidad exacta a una sola variable.';
-    } else if (titleLower.includes('acción') || titleLower.includes('accion') || titleLower.includes('prioritaria') || titleLower.includes('alerta')) {
-      description = 'Acción sugerida según los datos y reglas disponibles para el lote.';
-      impact = 'Conviene validarla con las condiciones reales de la parcela antes de aplicarla.';
-    } else if (titleLower.includes('agua') || titleLower.includes('estrés') || titleLower.includes('estres') || titleLower.includes('riego') || titleLower.includes('hídrico') || titleLower.includes('hidrico')) {
-      description = 'Indicador relacionado con agua disponible, demanda atmosférica o estrés hídrico.';
-      impact = 'Ayuda a identificar periodos que requieren seguimiento o revisión del riego.';
-    } else if (titleLower.includes('suelo') || titleLower.includes('retención') || titleLower.includes('retencion') || titleLower.includes('textura')) {
-      description = 'Estimación de una propiedad del suelo relevante para el agua y el crecimiento del cultivo.';
-      impact = 'Aporta contexto para interpretar la retención de humedad; se recomienda contrastarla con una medición local.';
-    } else if (titleLower.includes('margen') || titleLower.includes('ganancia') || titleLower.includes('ingreso') || titleLower.includes('costo') || titleLower.includes('precio') || titleLower.includes('b/c')) {
-      description = 'Indicador económico calculado con el precio, la producción y los costos del escenario configurado.';
-      impact = 'Permite explorar sensibilidad y punto de equilibrio; no garantiza un resultado financiero.';
-    }
-
-    return { title: slideTitle, description, impact, recommendation };
-  };
 
   // Helper to render versatile SVG Mini Charts (Line, Bar, Donut Ring)
   const renderMiniChart = (chartConfig, defaultColor = '#9fc862') => {
@@ -184,7 +131,7 @@ export default function InteractiveKPI({
       const center = size / 2;
       const radius = (size - strokeWidth) / 2;
       const circumference = 2 * Math.PI * radius;
-      const percent = Math.min(100, Math.max(0, (!isArray && chartConfig.percent !== undefined) ? chartConfig.percent : (data[data.length - 1] || 75)));
+      const percent = Math.min(100, Math.max(0, (!isArray && chartConfig.percent !== undefined) ? chartConfig.percent : (data[data.length - 1] ?? 0)));
       const strokeDashoffset = circumference - (percent / 100) * circumference;
 
       return (
@@ -296,71 +243,9 @@ export default function InteractiveKPI({
     );
   };
 
-  const hoverTimerRef = React.useRef(null);
-
-  React.useEffect(() => {
-    return () => {
-      if (hoverTimerRef.current) {
-        clearTimeout(hoverTimerRef.current);
-      }
-    };
-  }, []);
-
-  const handleMouseEnter = () => {
-    if (typeof document !== 'undefined' && (document.querySelector('.ia-modal-backdrop') || document.querySelector('.modal-overlay') || document.body.classList.contains('modal-open'))) {
-      setIsHovered(false);
-      return;
-    }
-
-    if (hoverTimerRef.current) {
-      clearTimeout(hoverTimerRef.current);
-    }
-
-    // Esperar 800 ms antes de desplegar la tarjeta flotante
-    hoverTimerRef.current = setTimeout(() => {
-      setIsHovered(true);
-      if (cardRef.current) {
-        const rect = cardRef.current.getBoundingClientRect();
-        const windowWidth = typeof window !== 'undefined' ? (window.innerWidth || document.documentElement.clientWidth) : 1200;
-        if (rect.right + 310 > windowWidth) {
-          setPopoverSide('left');
-        } else {
-          setPopoverSide('right');
-        }
-      }
-    }, 800);
-  };
-
-  const handleMouseLeave = () => {
-    if (hoverTimerRef.current) {
-      clearTimeout(hoverTimerRef.current);
-    }
-    setIsHovered(false);
-  };
-
-  // Helper to categorize trend badge class
-  const getBadgeClass = (trStr) => {
-    if (!trStr) return '';
-    const lower = String(trStr).toLowerCase();
-    if (lower.includes('crítico') || lower.includes('critico') || lower.includes('alto') || lower.includes('alerta de baja') || lower.includes('riesgo')) {
-      return 'badge-critical';
-    }
-    if (lower.includes('moderado') || lower.includes('medio') || lower.includes('alerta') || lower.includes('bajo')) {
-      return 'badge-warning';
-    }
-    if (trStr.startsWith('+') || lower.includes('up') || lower.includes('óptimo') || lower.includes('optimo') || lower.includes('estable') || lower.includes('favorable') || lower.includes('bueno') || lower.includes('logrado') || lower.includes('saludable')) {
-      return 'badge-success';
-    }
-    if (trStr.startsWith('-') || lower.includes('pérdida') || lower.includes('perdida')) {
-      return 'badge-danger';
-    }
-    return 'badge-neutral';
-  };
-
   const handleCardClick = (e) => {
-    setIsHovered(false);
     if (activeSlide && typeof activeSlide.onClick === 'function') {
-      activeSlide.onClick(activeSlide, activeIndex, e);
+      activeSlide.onClick(activeSlide, visibleIndex, e);
       return;
     }
     if (activeSlide && activeSlide.explanation && typeof onExplain === 'function') {
@@ -369,23 +254,15 @@ export default function InteractiveKPI({
     }
     if (typeof onClick === 'function') {
       const payload = (activeSlide && activeSlide.explanation) ? activeSlide.explanation : activeSlide;
-      onClick(payload, activeSlide, activeIndex, e);
+      onClick(payload, activeSlide, visibleIndex, e);
     }
   };
-
-  const popoverData = getPopoverContent(activeSlide);
-  const hasModalOpen = typeof document !== 'undefined' && (
-    document.querySelector('.ia-modal-backdrop') || 
-    document.querySelector('.modal-overlay') || 
-    document.body.classList.contains('modal-open')
-  );
 
   if (!hasRenderableSlides) return null;
 
   return (
     <div
-      ref={cardRef}
-      className={`glass-panel kpi-card kpi-card-state-${activeMetricState} ${activeSlideIsEmpty ? 'kpi-card-empty' : ''} ${isHovered && !hasModalOpen ? 'kpi-card-hovered' : ''}`}
+      className={`kpi-card kpi-card-state-${activeMetricState} ${activeSlideIsEmpty ? 'kpi-card-empty' : ''}`}
       data-kpi-state={activeMetricState}
       title={tooltip}
       aria-label={tooltip || activeSlide.title}
@@ -395,92 +272,17 @@ export default function InteractiveKPI({
         ...style
       }}
       onClick={handleCardClick}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
     >
 
 
-      {/* Ventana Flotante Lateral (Side Hover Popover Explicativo) */}
-      {isHovered && !hasModalOpen && (
-        <div className={`kpi-side-popover popover-${popoverSide}`}>
-          <div className="kpi-popover-header">
-            <div className="kpi-popover-title-box">
-              <span className="kpi-popover-title">{popoverData.title}</span>
-            </div>
-            {activeSlide.trend && (
-              <span className={`kpi-trend-badge ${getBadgeClass(activeSlide.trend)}`}>
-                {activeSlide.trend}
-              </span>
-            )}
-          </div>
-
-          <div className="kpi-popover-val-row">
-            <span className="kpi-popover-val">
-              {typeof activeSlide.value === 'object' ? activeSlide.value : activeSlide.value}
-            </span>
-            {slides.length > 1 && (
-              <span style={{ fontSize: '0.62rem', color: 'var(--text-subtle)', marginLeft: 'auto' }}>
-                Tema {activeIndex + 1} de {slides.length}
-              </span>
-            )}
-          </div>
-
-          <div className="kpi-popover-body">
-            <div className="kpi-popover-section">
-              <span className="kpi-popover-label">¿QUÉ ES?</span>
-              <span className="kpi-popover-text">{popoverData.description}</span>
-            </div>
-
-            <div className="kpi-popover-section">
-              <span className="kpi-popover-label" style={{ color: '#4ade80' }}>IMPACTO EN LA PLANTACIÓN:</span>
-              <div className="kpi-popover-text-impact">{popoverData.impact}</div>
-            </div>
-
-            {popoverData.recommendation && (
-              <div className="kpi-popover-section">
-                <span className="kpi-popover-label" style={{ color: '#fbbf24' }}>RECOMENDACIÓN:</span>
-                <span className="kpi-popover-text" style={{ fontStyle: 'italic' }}>{popoverData.recommendation}</span>
-              </div>
-            )}
-
-            {popoverData.source && (
-              <div className="kpi-popover-section">
-                <span className="kpi-popover-label" style={{ color: '#93c5fd' }}>PROCEDENCIA:</span>
-                <span className="kpi-popover-text">{popoverData.source}</span>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Top Row: Icon, Dots (if multi-slide), & Trend Badge */}
+      {/* Icono, nombre y alerta solo cuando existe una condición explícita. */}
       <div className="kpi-top-row">
         <div className={`kpi-icon-wrapper ${iconClass} kpi-icon-state-${activeMetricState}`}>
           {icon}
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-          {slides.length > 1 && (
-            <div className="kpi-carousel-dots" style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-              {slides.map((_, idx) => (
-                <button
-                  type="button"
-                  key={idx}
-                  className={`kpi-dot ${idx === activeIndex ? 'active' : ''}`}
-                  aria-label={`Mostrar ${slides[idx].title}, indicador ${idx + 1} de ${slideCount}`}
-                  aria-pressed={idx === activeIndex}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setActiveIndex(idx);
-                  }}
-                />
-              ))}
-            </div>
-          )}
-          {activeSlide.trend && (
-            <span className={`kpi-trend-badge ${getBadgeClass(activeSlide.trend)}`}>
-              {activeSlide.trend}
-            </span>
-          )}
+        <span className="kpi-heading-title">{activeSlide.title}</span>
+        <div className="kpi-heading-status">
+          {activeSlide.severity?.label && <span className={`kpi-severity kpi-severity--${activeSlide.severity.level}`}><span aria-hidden="true">⚠</span> {activeSlide.severity.label}</span>}
         </div>
       </div>
 
@@ -489,18 +291,14 @@ export default function InteractiveKPI({
         <div
           className="kpi-carousel-track"
           style={{
-            transform: `translateY(-${activeIndex * KPI_SLIDE_HEIGHT}px)`,
+            transform: `translateY(-${visibleIndex * KPI_SLIDE_HEIGHT}px)`,
             transition: 'transform 0.5s cubic-bezier(0.16, 1, 0.3, 1)'
           }}
         >
           {slides.map((slide, idx) => {
             return (
-              <div key={idx} className="kpi-carousel-slide">
+              <div key={idx} className="kpi-carousel-slide" aria-hidden={idx !== visibleIndex}>
                 <div className="kpi-main-body">
-                  <div className="kpi-title-row">
-                    <span className="kpi-title">{slide.title}</span>
-                  </div>
-
                   <div className={`kpi-value-row ${isMissingMetricValue(slide.value, slide) ? 'kpi-value-row-empty' : ''}`}>
                     {isMissingMetricValue(slide.value, slide) ? (
                       <span className="kpi-empty-value" style={valueStyle}>
@@ -508,7 +306,7 @@ export default function InteractiveKPI({
                         <span>Sin datos</span>
                       </span>
                     ) : (
-                      <span className={`kpi-value ${valueClass} ${typeof slide.value === 'string' ? 'kpi-value-text' : ''} ${flattenRenderableText(slide.value).length >= 18 ? 'kpi-value-long' : ''}`} style={valueStyle}>
+                      <span className={`kpi-value ${valueClass} ${typeof slide.value === 'string' ? 'kpi-value-text' : ''} ${flattenRenderableText(slide.value).length >= 18 ? 'kpi-value-long' : flattenRenderableText(slide.value).length >= 10 ? 'kpi-value-compact' : ''}`} style={valueStyle}>
                         {slide.value}
                       </span>
                     )}
@@ -557,6 +355,7 @@ export default function InteractiveKPI({
           <span>{activeSlide.explanation?.fuente ? `Fuente: ${activeSlide.explanation.fuente}` : 'Fuente pendiente de completar'}</span>
         </div>
       )}
+      {slides.length > 1 && <div className="kpi-switcher" aria-label={`Indicadores de ${activeSlide.title}`}><span>{visibleIndex + 1} / {slideCount}</span><div className="kpi-carousel-dots">{slides.map((slide, idx) => <button type="button" key={idx} className={`kpi-dot ${idx === visibleIndex ? 'active' : ''}`} aria-label={`Mostrar ${slide.title}, indicador ${idx + 1} de ${slideCount}`} aria-pressed={idx === visibleIndex} onClick={(event) => { event.stopPropagation(); setActiveIndex(idx); }} />)}</div></div>}
       {(onClick || onExplain || activeSlide.onClick || activeSlide.explanation) && (
         <button
           type="button"

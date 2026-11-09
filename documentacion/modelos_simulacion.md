@@ -1,5 +1,7 @@
 # Guía Completa y Explicación Técnica de los Modelos de Simulación de IA (ZeaSys)
 
+> Revisión del 7 de noviembre de 2026: la procedencia de `maiz_ecuador_training_data.csv` no está documentada. Las etiquetas no se han acreditado como cosechas reales verificadas. Véase [la auditoría de procedencia](procedencia-dataset-20261107.md) antes de utilizar este manual en la defensa del proyecto.
+
 > **Documento oficial de preparación para la Defensa de Proyecto de Grado y Manual Guía para el Equipo.**  
 > *Redactado en primera persona de manera técnica, didáctica y directa para la exposición ante el jurado.*
 
@@ -24,8 +26,8 @@ Si en la exposición el jurado pregunta **"¿Qué tipos o paradigmas de Aprendiz
 A continuación explico en detalle cada uno de estos paradigmas:
 
 ### 1️⃣ Aprendizaje Supervisado (Supervised Learning)
-* **¿Por qué es supervisado?** Porque los modelos fueron entrenados utilizando un dataset histórico etiquetado de cosechas en Ecuador (`maiz_ecuador_training_data.csv`), donde cada fila contenía tanto las variables de entrada (clima, suelo, fertilizante) como la **respuesta real esperada** (*ground truth*: rendimiento exacto en $t/ha$ y categoría de cosecha).
-* **Funcionamiento:** El algoritmo analiza las entradas y compara continuamente sus predicciones contra las respuestas reales de la tabla para ajustar sus parámetros matemáticos hasta minimizar el error.
+* **¿Por qué es supervisado?** Porque los modelos se entrenaron con una tabla etiquetada (`maiz_ecuador_training_data.csv`) que contiene variables de entrada y etiquetas objetivo de rendimiento en $t/ha$ y categoría de cosecha. La procedencia de esas etiquetas está pendiente de acreditación; disponer de una etiqueta no prueba que sea una medición real.
+* **Funcionamiento:** El algoritmo compara sus predicciones con las etiquetas de entrenamiento para ajustar sus parámetros y reducir el error. La evaluación frente a cosechas reales independientes es una comprobación adicional.
 
 ### 2️⃣ Subtipos de Tareas de Machine Learning Implementadas
 

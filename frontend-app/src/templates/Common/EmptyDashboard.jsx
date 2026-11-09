@@ -10,7 +10,7 @@ const CONFIG = {
   yield: {
     icon: <BarChart2 size={52} color="#8b5cf6" />,
     titulo: 'Sin predicciones de rendimiento',
-    subtitulo: 'Cuando ejecutes tu primera simulación, aquí verás el rendimiento estimado por cosecha, tendencias históricas y brechas productivas comparadas con el potencial genético de tu cultivo.',
+    subtitulo: 'Cuando ejecutes tu primera simulación, aquí verás el rendimiento estimado por cosecha, tendencias históricas y referencias disponibles para tu parcela.',
     pasos: [
       { num: '01', text: 'Registra tu parcela con datos de suelo y ubicación GPS' },
       { num: '02', text: 'Ejecuta una simulación con variables climáticas e insumos' },
@@ -22,11 +22,11 @@ const CONFIG = {
   climate: {
     icon: <Leaf size={52} color="#38bdf8" />,
     titulo: 'Sin análisis climático disponible',
-    subtitulo: 'Para ver el análisis de riesgo estacional ENSO, temperatura del suelo y estrés hídrico, primero debes registrar una parcela con coordenadas GPS para obtener datos meteorológicos en tiempo real.',
+    subtitulo: 'Para ver el análisis de riesgo estacional ENSO, temperatura del suelo y estrés hídrico, primero debes registrar una parcela con coordenadas GPS para obtener datos meteorológicos disponibles para esa ubicación.',
     pasos: [
       { num: '01', text: 'Registra una parcela con latitud y longitud exactas' },
       { num: '02', text: 'El sistema consultará Open-Meteo y SoilGrids automáticamente' },
-      { num: '03', text: 'Verás el índice de riesgo compuesto y alertas climáticas' },
+      { num: '03', text: 'Consulta las condiciones y alertas disponibles para tu parcela' },
     ],
     accentColor: '#38bdf8',
     bgGlow: 'rgba(56,189,248,0.06)',
@@ -34,7 +34,7 @@ const CONFIG = {
   finance: {
     icon: <FlaskConical size={52} color="#a78bfa" />,
     titulo: 'Sin análisis financiero todavía',
-    subtitulo: 'Cuando ejecutes simulaciones, aquí verás el ROI proyectado, punto de equilibrio, costos de producción y rentabilidad esperada basada en el precio de mercado actual del maíz.',
+    subtitulo: 'Cuando ejecutes simulaciones, aquí verás el ROI proyectado, punto de equilibrio, costos de producción y rentabilidad estimada con los precios y costos disponibles.',
     pasos: [
       { num: '01', text: 'Registra tus cultivos con área sembrada y tipo de suelo' },
       { num: '02', text: 'Ejecuta simulaciones con datos de fertilizante y clima' },
@@ -46,10 +46,10 @@ const CONFIG = {
   scenario: {
     icon: <BarChart2 size={52} color="#f59e0b" />,
     titulo: 'Sin escenarios comparativos',
-    subtitulo: 'Este panel te mostrará escenarios optimista, central y pesimista de rendimiento, junto con análisis de riesgo y probabilidades de superar tu objetivo de producción.',
+    subtitulo: 'Este panel te permitirá consultar y comparar los escenarios disponibles para tu simulación.',
     pasos: [
       { num: '01', text: 'Ejecuta al menos una simulación para generar el escenario base' },
-      { num: '02', text: 'El sistema construirá rangos P10–P50–P90 con tus datos reales' },
+      { num: '02', text: 'El sistema mostrará los escenarios calculados y sus condiciones' },
       { num: '03', text: 'Compara escenarios y ajusta tus variables antes de sembrar' },
     ],
     accentColor: '#f59e0b',
@@ -58,11 +58,11 @@ const CONFIG = {
   confidence: {
     icon: <Sprout size={52} color="#34d399" />,
     titulo: 'Sin métricas de confianza disponibles',
-    subtitulo: 'Las métricas R², MAE, RMSE y la importancia de variables SHAP se calculan una vez que el modelo haya procesado tus simulaciones reales. Ejecuta tu primera predicción para verlas aquí.',
+    subtitulo: 'Las métricas de precisión requieren comparar predicciones anteriores con cosechas observadas. Una simulación por sí sola no permite calcularlas.',
     pasos: [
       { num: '01', text: 'Registra parcelas y ejecuta simulaciones de cosecha' },
-      { num: '02', text: 'El modelo XGBoost calculará la precisión real sobre tus datos' },
-      { num: '03', text: 'Verás R², MAE, RMSE y el peso de cada variable climática' },
+      { num: '02', text: 'Registra las cosechas observadas y su procedencia para evaluar las predicciones' },
+      { num: '03', text: 'Consulta las métricas solo cuando exista una evaluación válida de las cosechas' },
     ],
     accentColor: '#34d399',
     bgGlow: 'rgba(52,211,153,0.06)',

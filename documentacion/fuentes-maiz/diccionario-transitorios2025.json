@@ -1,0 +1,1991 @@
+{
+  "xl/worksheets/sheet4.xml": [
+    {
+      "B2": "La presente pestaña tiene por objeto documentar de forma estandarizada los clasificadores oficiales empleados en la operación estadística, sean nacionales o adaptaciones de clasificadores internacionales.\n\nEs responsabilidad del equipo técnico registrar con precisión cada clasificador referenciado en el diccionario de variables."
+    },
+    {
+      "B3": "DATOS GENERALES"
+    },
+    {
+      "B5": "Nombre del clasificador:",
+      "C5": "<<Ejemplo: Clasificador Geográfico Estadístico 2019<<"
+    },
+    {
+      "B6": "Siglas del clasificador:",
+      "C6": "<<Ejemplo: DPA 2019<<"
+    },
+    {
+      "B7": "Tipo de clasificador:",
+      "C7": "<<Ejemplo: Oficial Nacional / Oficial Internacional / Adaptado<<"
+    },
+    {
+      "B8": "Variable(s) que lo utiliza(n):",
+      "C8": "<<provincia / cantón / parroquia<<"
+    },
+    {
+      "B9": "Nivel de desagregación usado:",
+      "C9": "<<Ejemplo:  2 dígitos / 4 dígitos <<"
+    },
+    {
+      "B11": "Código",
+      "C11": "Etiqueta "
+    },
+    {
+      "B12": "01",
+      "C12": "AZUAY"
+    },
+    {
+      "B13": "02",
+      "C13": "BOLIVAR"
+    },
+    {
+      "B14": "03",
+      "C14": " CAÑAR"
+    },
+    {
+      "B15": "04",
+      "C15": "CARCHI"
+    },
+    {
+      "B16": "05",
+      "C16": " COTOPAXI"
+    },
+    {
+      "B17": "06",
+      "C17": "CHIMBORAZO"
+    },
+    {
+      "B18": "07",
+      "C18": "EL ORO"
+    },
+    {
+      "B19": "08",
+      "C19": "ESMERALDAS"
+    },
+    {
+      "B20": "09",
+      "C20": "GUAYAS"
+    },
+    {
+      "B21": "10",
+      "C21": "IMBABURA"
+    },
+    {
+      "B22": "11",
+      "C22": "LOJA "
+    },
+    {
+      "B23": "12",
+      "C23": "LOS RIOS"
+    },
+    {
+      "B24": "13",
+      "C24": "MANABI"
+    },
+    {
+      "B25": "14",
+      "C25": " MORONA SANTIAGO"
+    },
+    {
+      "B26": "15",
+      "C26": " NAPO"
+    },
+    {
+      "B27": "16",
+      "C27": " PASTAZA"
+    },
+    {
+      "B28": "17",
+      "C28": "PICHINCHA"
+    },
+    {
+      "B29": "18",
+      "C29": "TUNGURAHUA"
+    },
+    {
+      "B30": "19",
+      "C30": " ZAMORA CHINCHIPE"
+    },
+    {
+      "B31": "20",
+      "C31": " GALAPAGOS"
+    },
+    {
+      "B32": "21",
+      "C32": "SUCUMBIOS"
+    },
+    {
+      "B33": "22",
+      "C33": " ORELLANA"
+    },
+    {
+      "B34": "23",
+      "C34": "SANTO DOMINGO DE LOS TSACHILAS"
+    },
+    {
+      "B35": "24",
+      "C35": "SANTA ELENA"
+    },
+    {
+      "B36": "90",
+      "C36": "ZONAS NO DELIMITADAS"
+    }
+  ],
+  "xl/worksheets/sheet2.xml": [
+    {
+      "B2": "El diccionario de variables es una herramienta que permite estandarizar y documentar las variables utilizadas en encuestas, censos, estadísticas basadas en registros administrativos o registros administrativos para mejorar la interpretación de las variables y los datos para los usuarios. \n\nEl presente instructivo es una guía sobre cómo el productor de estadísticas puede diligenciar el diccionario de variables.  Los ejemplos son referenciados de los productos publicados de la Encuesta Nacional de Empleo, Desempleo y Subempleo (ENEMDU). "
+    },
+    {
+      "B4": "Campos ",
+      "C4": "Descripciones",
+      "D4": "Ejemplos"
+    },
+    {
+      "B5": "Posición de la variable",
+      "C5": "Es la ubicación de la variable dentro de la base de datos, es decir el número de la columna contando de  izquierda a derecha.",
+      "D5": "1, 2, 3 , 4 … etc."
+    },
+    {
+      "B6": "Código de la variable",
+      "C6": "Es un identificador único que define a una variable, cuyo significado se describe en un lenguaje natural o común dentro de la base de datos. ",
+      "D6": "P2, P3, P4"
+    },
+    {
+      "B7": "Nombre de la variable",
+      "C7": "Es el nombre con el cual se identifica a la variable de acuerdo al marco conceptual y metodológico de la operación estadística o registro administrativo. ",
+      "D7": "P2: Sexo\nP3: Edad\nP4: Parentesco"
+    },
+    {
+      "B8": "Descripción de la variable",
+      "C8": "Es el enunciado interrogativo (pregunta en el formulario de la OE) asociado a una variable que permite obtener información relevante sobre la unidad de observación.\n\nNota: para el caso de registros administrativos puede omitirse este campo.",
+      "D8": "P2: Sexo\nP3: ¿Cuántos años cumplidos tiene (…)?\nP4: ¿Qué relación de parentesco tiene (…) con el jefe del hogar?"
+    },
+    {
+      "B9": "Categorías / catálogos de la variable",
+      "C9": "Categorías de la variable: Define los valores que pueden tomar las variables categóricas, mostrando su clasificación e interpretación:\n\n→ Código: Es un valor numérico o alfanumérico asignado a cada categoría.\n→ Etiqueta: Es la descripción textual asociada a un código, facilitando la interpretación y análisis de los datos.\n",
+      "D9": "1 : Jefe\n2 : Cónyuge\n3: Hijo ó hija\n4: Yerno ó nuera\n5: Nieto ó nieta\n6: Padres ó suegros\n7: Otros parientes\n8: Empleado(a) Domestico(a)\n9: Otros no parientes"
+    },
+    {
+      "C10": "Catálogos de la variable: Es aquel que hace referencia cuando la variable esta asociada al uso de un clasificador oficial, nacional, internacional estandarizado.\n\nNota: En este campo NO se enlistaran los códigos específicos del clasificador, ÚNICAMENTE se deberá registrar el nombre oficial del catálogo o clasificador utilizado. \n\nEl clasificador deberá ser desarrollo en las pestañas denominadas clasificador_1, clasificador_2, clasificador_3, clasificador.",
+      "D10": "Clasificador CIIU Rev. 4.0\nClasificador CIUO 08\nClasificador CIE-10\nClasificador DPA 2019"
+    },
+    {
+      "B11": "Origen de la variable",
+      "C11": "Describe los tipos de variables de acuerdo a su origen en la base de datos:\n\n→ Principal: Son todas las variables que se obtienen directamente de la recolección o recopilación mediante la aplicación de los instrumentos definidos. \n→ Derivada: Son todas las variables construidas o calculadas a partir de las variables originales o de otras variables derivadas mediante operaciones aritméticas o lógicas.",
+      "D11": "P2: Sexo - Principal\nP3: Edad - Principal\nDominio: Dominios - Derivada"
+    },
+    {
+      "B12": "Tipo de variable",
+      "C12": "Describe la clasificación de variables según la función que cumplen en los instrumentos de recolección/ recopilación:\n\n→ Variable identificadora: Es aquella que contiene datos para identificar la unidad de observación dentro de la operación estadística, y realizar asociaciones entre distintas bases o fuentes de datos. ",
+      "D12": "Variable identificadora\nID_hogar\nID_vivienda\nID_persona"
+    },
+    {
+      "C13": "Variable cuantitativa: Es un tipo de variable que representa una cantidad o medida numérica asociada a una unidad de análisis. Estas variables permiten realizar operaciones aritméticas y estadísticas.\n \n→ Variable cuantitativa discreta: Es aquella variable que toma valores enteros, por ejemplo número de hijos, número de cuartos, número de empleados, entre otros.\n→ Variable cuantitativa continua: Es aquella variable que toma cualquier valor dentro de un intervalo, incluyendo decimales, por ejemplo: ingresos, peso, fechas, entre otras.\n",
+      "D13": "Variable Cuantitativa discreta\nP50 - Número de trabajos\nP3 - Edad\n\nVariable Cuantitativa continua\nINGPC - Ingreso per cápita\nPeriodo\nMes"
+    },
+    {
+      "C14": "Variable cualitativa: Es un tipo de variable que expresa atributos, categorías o cualidades no numéricas de una unidad de análisis, su valor no se mide numéricamente, sino que representan una clasificación.  \n\n→ Variable cualitativa nominal: Es aquella variable donde las categorías no siguen un orden lógico, por ejemplo: estado civil, sexo, material de la vivienda, entre otros.\n→ Variable cualitativa ordinal: Es aquella variable donde las categorías siguen un orden lógico por ejemplo: nivel educativo, percepción de la satisfacción, entre otros.\n",
+      "D14": "\nVariable cualitativa nominal\nP7 - Asiste a clases\nClasificadores: CIIU, CIUO, CIE10, DPA.\n\nVariable cualitativa ordinal\nNivel de instrucción\nEstratos\nNivel de satisfacción"
+    },
+    {
+      "B15": "Formato del dato*",
+      "C15": "Describe la clasificación de variables según la función que cumplen en la base de datos:\n\n→ Cadena: Es aquel que almacena secuencias de caracteres alfabéticos, numéricos o mixtos, sin valor numérico en sí mismo. Este tipo de datos incluye texto libre (string), códigos alfanuméricos, y otros elementos simbólicos como identificadores y clasificaciones. Permite realizar operaciones de conteo, agrupación, ordenamiento alfabético, búsqueda de patrones o comparaciones categóricas.\n→ Numérico: Es aquel que representa cantidades o valores medibles, y permite realizar  operaciones aritméticas o estadísticas como suma, resta, promedio, entre otros. Incluye números enteros, decimales o valores temporales (fechas) que pueden ser tratados cuantitativamente en términos de duración.",
+      "D15": "Cadena\nUPM: 10150000304\nProv: 1, 2, 3, 4, 5 , …\nram1: Rama de Actividad CIIU\n\nNumérico\nIngreso laboral: 100, 200, 300, etc.\nIngreso por cápita: 110,12, 335, 24, etc.\nHoras de trabajo principal: 6, 8, 12, etc."
+    },
+    {
+      "B16": "Longitud del dato",
+      "C16": "Especifica la cantidad máxima de caracteres que contiene o almacena una variable. La longitud puede estar determinada por la respuesta a la pregunta o especificación que da origen al contenido de la variable."
+    },
+    {
+      "B17": "Valor mínimo**",
+      "C17": "Es el valor mínimo que registra la variable dentro de la base de datos. Aplica únicamente cuando las variables tienen formato de datos numérico.",
+      "D17": "Edad (P3): 0\nNúmeros de trabajos (P50): 1"
+    },
+    {
+      "B18": "Valor máximo**",
+      "C18": "Es el valor máximo que registra la variable dentro de la base de datos. Aplica únicamente cuando las variables tienen formato de datos numérico.",
+      "D18": "Edad (P3): 98\nNúmeros de trabajos (P50): 2"
+    },
+    {
+      "B19": "* Este campo contiene los tipos de datos de una variable agrupados en dos grandes grupos: cadena y numérico, los cuales también integran los tipos de datos referenciados en el diccionario de datos disponible en: https://www.ecuadorencifras.gob.ec/documentos/web-inec/Sistema_Estadistico_Nacional/Normativas_y_Estandares/Formato_Diccionario_de_Datos_Tecnico.xlsx.\n\nLos datos de tipo cadena incluyen los formatos char, string y bolean (SI/NO), los cuales permiten agrupar variables que contienen texto, códigos alfanuméricos o categorías representadas por caracteres (clasificadores), y no permiten realizar operaciones aritméticas, este tipo de datos son utilizados para clasificación, identificación o etiquetado. Las operaciones típicas son conteo de frecuencias, clasificación, agrupación, concatenación, búsqueda de patrones, orden alfabético, entre otros. \n\nLos datos de tipo numérico incluyen los formatos integer, float y double, los cuales incluyen valores enteros, decimales y fechas, y permiten realizar operaciones matemáticas y análisis estadísticos. Las operaciones frecuentemente empleadas son promedio, desviación estándar, comparaciones (mayor/menor), diferencias de fechas (duración),  percentiles y rangos."
+    },
+    {
+      "B20": "** Ejemplos basados en la Encuesta Nacional de Empleo, Desempleo y Subempleo (ENEMDU)mensual del periodo de marzo de 2025."
+    },
+    {
+      "B21": "Consideraciones del versionamiento\n\nEl versionamiento del diccionario de variables es un proceso esencial para garantizar la trazabilidad, control de cambios y consistencia documental en el desarrollo de la operación estadística o registro administrativo. Cada vez que se produce una modificación estructural, semántica o técnica en alguna de las variables, clasificadores o metadatos, debe generarse una nueva versión del diccionario, la cual debe seguir una nomenclatura estructurada (por ejemplo, v1.0, v1.1, v2.0) y registrar la siguiente información: fecha de modificación, responsable técnico del cambio, descripción del ajuste realizado y justificación del cambio.\n\nSe recomienda aplicar versionamiento en los siguientes casos:\n     → Inclusión o eliminación de variables del instrumento estadístico.\n     → Cambio en el nombre, definición, formato, tipo o dominio de una variable.\n     → Sustitución o actualización del clasificador utilizado (por versión oficial o adaptación).\n     → Cambios en la estructura de los tipos de datos, formatos o unidades de análisis.\n     → Revisión del documento por parte de autoridades metodológicas o equipos técnicos"
+    },
+    {
+      "B22": "Referencias bibliográficas\n\nISO/IEC 11179-3:2013. Metadata registros — Parte 3: Registry metamodel and basic attributes. Geneva: ISO.\nUNECE. (2013). Generic Statistical Information Model (GSIM): Specification. https://statswiki.unece.org/display/GSIM\nOECD. (2017). OECD Quality Framework and Metadata Guidelines. https://www.oecd.org/sdd/metadata.htm\nOPS. (2022). PAHO Core Data Portal: Data Dictionary. Washington, DC.\nDANE. (2018). Lineamientos para la documentación de variables. Bogotá, Colombia.\nPeña, D. (2002). Fundamentos de estadística. Madrid: Alianza Editorial. Referencia clave sobre los tipos de variables y escalas de medición (nominal, ordinal, intervalo, razón).\nUnited Nations Statistical Division (UNSD). (2007). Handbook on Statistical Metadata (Metadata Common Vocabulary). https://unstats.un.org/unsd/publication/seriesf/seriesf_86e.pdf\nPeña, D. (2002). Fundamentos de Estadística – Diferencia entre tipos de variables y operaciones posibles según su escala.\nISO/IEC 11179-3:2013. Metadata registres — Registry metamodel and basic attributes. Geneva: ISO. Define el uso de meta información para identificar versiones y cambios en estructuras de datos y dominios de valores.\nUNECE. (2013). Generic Statistical Information Model (GSIM): Specification. Establece que toda modificación en variables, representaciones o clasificadores debe gestionarse mediante mecanismos de versionamiento controlado. https://statswiki.unece.org/display/GSIM\nINEGI. (2020). Normas técnicas para metadatos estadísticos. México. Incluye lineamientos sobre control de versiones en fichas técnicas de variables y clasificadores.\nDANE. (2018). Lineamientos para la documentación de variables. Bogotá: Departamento Administrativo Nacional de Estadística. Establece cuándo deben actualizarse los documentos técnicos y cómo registrar cada cambio en una hoja de control de versiones."
+    }
+  ],
+  "xl/worksheets/sheet3.xml": [
+    {
+      "B2": "La presente pestaña tiene por objeto documentar de forma estandarizada los clasificadores oficiales empleados en la operación estadística, sean nacionales o adaptaciones de clasificadores internacionales.\n\nEs responsabilidad del equipo técnico registrar con precisión cada clasificador referenciado en el diccionario de variables."
+    },
+    {
+      "B3": "DATOS GENERALES"
+    },
+    {
+      "B5": "Nombre del clasificador:",
+      "C5": "<<Ejemplo: Clasificador Geográfico Estadístico 2019<<"
+    },
+    {
+      "B6": "Siglas del clasificador:",
+      "C6": "<<Ejemplo: DPA 2019<<"
+    },
+    {
+      "B7": "Tipo de clasificador:",
+      "C7": "<<Ejemplo: Oficial Nacional / Oficial Internacional / Adaptado<<"
+    },
+    {
+      "B8": "Variable(s) que lo utiliza(n):",
+      "C8": "<<provincia / cantón / parroquia<<"
+    },
+    {
+      "B9": "Nivel de desagregación usado:",
+      "C9": "<<Ejemplo:  2 dígitos / 4 dígitos <<"
+    },
+    {
+      "B11": "Código",
+      "C11": "Etiqueta "
+    },
+    {
+      "B12": "01",
+      "C12": "AZUAY"
+    },
+    {
+      "B13": "02",
+      "C13": "BOLIVAR"
+    },
+    {
+      "B14": "03",
+      "C14": " CAÑAR"
+    },
+    {
+      "B15": "04",
+      "C15": "CARCHI"
+    },
+    {
+      "B16": "05",
+      "C16": " COTOPAXI"
+    },
+    {
+      "B17": "06",
+      "C17": "CHIMBORAZO"
+    },
+    {
+      "B18": "07",
+      "C18": "EL ORO"
+    },
+    {
+      "B19": "08",
+      "C19": "ESMERALDAS"
+    },
+    {
+      "B20": "09",
+      "C20": "GUAYAS"
+    },
+    {
+      "B21": "10",
+      "C21": "IMBABURA"
+    },
+    {
+      "B22": "11",
+      "C22": "LOJA "
+    },
+    {
+      "B23": "12",
+      "C23": "LOS RIOS"
+    },
+    {
+      "B24": "13",
+      "C24": "MANABI"
+    },
+    {
+      "B25": "14",
+      "C25": " MORONA SANTIAGO"
+    },
+    {
+      "B26": "15",
+      "C26": " NAPO"
+    },
+    {
+      "B27": "16",
+      "C27": " PASTAZA"
+    },
+    {
+      "B28": "17",
+      "C28": "PICHINCHA"
+    },
+    {
+      "B29": "18",
+      "C29": "TUNGURAHUA"
+    },
+    {
+      "B30": "19",
+      "C30": " ZAMORA CHINCHIPE"
+    },
+    {
+      "B31": "20",
+      "C31": " GALAPAGOS"
+    },
+    {
+      "B32": "21",
+      "C32": "SUCUMBIOS"
+    },
+    {
+      "B33": "22",
+      "C33": " ORELLANA"
+    },
+    {
+      "B34": "23",
+      "C34": "SANTO DOMINGO DE LOS TSACHILAS"
+    },
+    {
+      "B35": "24",
+      "C35": "SANTA ELENA"
+    },
+    {
+      "B36": "90",
+      "C36": "ZONAS NO DELIMITADAS"
+    }
+  ],
+  "xl/worksheets/sheet1.xml": [
+    {
+      "A3": "Nombre de la entidad ",
+      "C3": "INSTITUTO NACIONAL DE ESTADÍSTICA Y CENSOS"
+    },
+    {
+      "A4": "Nombre de la operación estadística / registro administrativo",
+      "C4": "ENCUESTA DE SUPERFICIE Y PRODUCCIÓN AGROPECUARIA CONTINUA"
+    },
+    {
+      "A5": "Período de referencia recolección/ recopilados",
+      "C5": "ESPAC III CUATRIMESTRE 2025"
+    },
+    {
+      "A6": "Número de variables",
+      "C6": "115"
+    },
+    {
+      "A7": "Nombre de la base de datos o base de datos asociada",
+      "C7": "ctnac2025"
+    },
+    {
+      "A8": "Número de registros",
+      "C8": "13.666"
+    },
+    {
+      "A11": "⬇️  Manual",
+      "B11": "⬇️  Manual",
+      "C11": "⬇️  Manual",
+      "D11": "⬇️  Manual",
+      "E11": "⬇️  Manual",
+      "F11": "⬇️  Seleccionar",
+      "G11": "⬇️  Seleccionar",
+      "H11": "⬇️  Automático",
+      "I11": "⬇️  Manual",
+      "J11": "⬇️  Manual",
+      "K11": "⬇️  Manual"
+    },
+    {
+      "A12": "Posición de la variable",
+      "B12": "Código de la variable",
+      "C12": "Nombre de la variable",
+      "D12": "Descripción de la variable",
+      "E12": "Categorías / catálogos de la variable",
+      "F12": "Origen de la variable",
+      "G12": "Tipo de variable",
+      "H12": "Formato del dato",
+      "I12": "Longitud del dato",
+      "J12": "Valor mínimo",
+      "K12": "Valor máximo"
+    },
+    {
+      "A13": "<<Ingresar la posición de la variable en la base de datos>>",
+      "B13": "<<Ingresar el código de la variable>>",
+      "C13": "<<Ingresar el nombre de la variable>>",
+      "D13": "<<Ingresar la descripción de la variable>",
+      "E13": "<<Ingresar los códigos y etiquetas de la variable, en caso de catálogos colocar el nombre del clasificador empleado>>",
+      "F13": "<<Seleccionar el origen de la variable>",
+      "G13": "<<Seleccionar el tipo de variable>>",
+      "H13": "<<Indicar el formato de los datos que contiene la variable>>",
+      "I13": "<<Ingresar la cantidad máxima de caracteres que contiene la variable>",
+      "J13": "<<Según la base de datos indicar el rango mínimo si el formato de dato es numérico>>",
+      "K13": "<<Según la base de datos indicar el rango máximo si el formato de dato es numérico>>"
+    },
+    {
+      "A14": "1",
+      "B14": "Identificador",
+      "C14": "Identificador",
+      "D14": "*",
+      "F14": "Principal",
+      "G14": "Variable identificadora",
+      "H14": "Cadena",
+      "I14": "17",
+      "J14": "No aplica",
+      "K14": "No aplica"
+    },
+    {
+      "A15": "2",
+      "B15": "ual_prov",
+      "C15": "Provincia",
+      "D15": "*",
+      "F15": "Principal",
+      "G15": "Variable identificadora",
+      "H15": "Cadena",
+      "I15": "2",
+      "J15": "No aplica",
+      "K15": "No aplica"
+    },
+    {
+      "A16": "3",
+      "B16": "ual_estr",
+      "C16": "Estrato",
+      "D16": "*",
+      "F16": "Principal",
+      "G16": "Variable identificadora",
+      "H16": "Cadena",
+      "I16": "2",
+      "J16": "No aplica",
+      "K16": "No aplica"
+    },
+    {
+      "A17": "4",
+      "B17": "ual_segm",
+      "C17": "Segmento",
+      "D17": "*",
+      "F17": "Principal",
+      "G17": "Variable identificadora",
+      "H17": "Cadena",
+      "I17": "5",
+      "J17": "No aplica",
+      "K17": "No aplica"
+    },
+    {
+      "A18": "5",
+      "B18": "al_ncues",
+      "C18": "Cuestionario",
+      "D18": "*",
+      "F18": "Principal",
+      "G18": "Variable identificadora",
+      "H18": "Cadena",
+      "I18": "4",
+      "J18": "No aplica",
+      "K18": "No aplica"
+    },
+    {
+      "A19": "6",
+      "B19": "ct_numl",
+      "C19": "Número de línea",
+      "D19": "*",
+      "F19": "Principal",
+      "G19": "Variable cuantitativa discreta",
+      "H19": "Numérico",
+      "I19": "2",
+      "J19": "1",
+      "K19": "25"
+    },
+    {
+      "A20": "7",
+      "B20": "rc_clacul",
+      "C20": "Clave de cultivo_campo",
+      "D20": "Nombre completo del cultivo",
+      "F20": "Principal",
+      "G20": "Variable cuantitativa discreta",
+      "H20": "Numérico",
+      "I20": "3",
+      "J20": "500 o 781",
+      "K20": "600, 783-799"
+    },
+    {
+      "A21": "8",
+      "B21": "ct_numt",
+      "C21": "Número de terreno",
+      "D21": "*",
+      "F21": "Principal",
+      "G21": "Variable cuantitativa discreta",
+      "H21": "Numérico",
+      "I21": "2",
+      "J21": "1",
+      "K21": "150"
+    },
+    {
+      "A22": "9",
+      "B22": "ct_k504",
+      "C22": "Condición de cultivo_campo",
+      "D22": "Condición del cultivo 1:Solo/ 2: Asociado/3 Invernadero",
+      "F22": "Principal",
+      "G22": "Variable cuantitativa discreta",
+      "H22": "Numérico",
+      "I22": "1",
+      "J22": "1",
+      "K22": "3"
+    },
+    {
+      "A23": "10",
+      "B23": "ct_k505",
+      "C23": "Orden de asociamiento",
+      "D23": "Número de orden del asociamiento",
+      "F23": "Principal",
+      "G23": "Variable cuantitativa discreta",
+      "H23": "Numérico",
+      "I23": "2",
+      "J23": "1",
+      "K23": "40"
+    },
+    {
+      "A24": "11",
+      "B24": "ct_prepa_suelo",
+      "C24": "Preparación de suelo",
+      "D24": "¿Se practicó la quema en el terreno para la preparación del suelo, eliminación de malezas o restos de cosecha?",
+      "F24": "Principal",
+      "G24": "Variable cuantitativa discreta",
+      "H24": "Numérico",
+      "I24": "1",
+      "J24": "1",
+      "K24": "2"
+    },
+    {
+      "A25": "12",
+      "B25": "ct_k506",
+      "C25": "Semillas de más uso_campo",
+      "D25": "Semilla de más uso 1: común/ 2: mejorada/3: certificada /4: híbrida nacional/ 5: híbrida internacional",
+      "F25": "Principal",
+      "G25": "Variable cuantitativa discreta",
+      "H25": "Numérico",
+      "I25": "1",
+      "J25": "1",
+      "K25": "5"
+    },
+    {
+      "A26": "13",
+      "B26": "ct_k507",
+      "C26": "Mes de siembra",
+      "D26": "Mes de siembre",
+      "F26": "Principal",
+      "G26": "Variable cuantitativa discreta",
+      "H26": "Numérico",
+      "I26": "2",
+      "J26": "1",
+      "K26": "12"
+    },
+    {
+      "A27": "14",
+      "B27": "ct_k508",
+      "C27": "Año de siembra",
+      "D27": "Año de siembra",
+      "F27": "Principal",
+      "G27": "Variable cuantitativa discreta",
+      "H27": "Numérico",
+      "I27": "2",
+      "J27": "25",
+      "K27": "26"
+    },
+    {
+      "A28": "15",
+      "B28": "ct_k509",
+      "C28": "Mes de cosecha",
+      "D28": "Mes de cosecha",
+      "F28": "Principal",
+      "G28": "Variable cuantitativa discreta",
+      "H28": "Numérico",
+      "I28": "2",
+      "J28": "1",
+      "K28": "12"
+    },
+    {
+      "A29": "16",
+      "B29": "ct_k510ha",
+      "C29": "Superficie sembrada_hectáreas",
+      "D29": "Superficie sembrada_hectáreas",
+      "F29": "Principal",
+      "G29": "Variable cuantitativa continua",
+      "H29": "Numérico",
+      "I29": "8",
+      "J29": "0,01",
+      "K29": "9999999,99"
+    },
+    {
+      "A30": "17",
+      "B30": "ct_k511ha",
+      "C30": "Superficie cosechada_hectáreas",
+      "D30": "Superficie cosechada_hectáreas",
+      "F30": "Principal",
+      "G30": "Variable cuantitativa continua",
+      "H30": "Numérico",
+      "I30": "8",
+      "J30": "0,01",
+      "K30": "9999999,99"
+    },
+    {
+      "A31": "18",
+      "B31": "ct_k512",
+      "C31": "Razón de perdida de superficie_campo",
+      "D31": "¿Cuál es la razón principal de pérdida? 1: Sequía/ 2: Helada/ 3: Plagas/4: Enfermedades/ 5: Inundación/6: Otra",
+      "F31": "Principal",
+      "G31": "Variable cuantitativa discreta",
+      "H31": "Numérico",
+      "I31": "1",
+      "J31": "1",
+      "K31": "6"
+    },
+    {
+      "A32": "19",
+      "B32": "ct_k516",
+      "C32": "Cantidad cosechada",
+      "D32": "Cantidad cosechada",
+      "F32": "Principal",
+      "G32": "Variable cuantitativa continua",
+      "H32": "Numérico",
+      "I32": "7",
+      "J32": "0,01",
+      "K32": "9999999,99"
+    },
+    {
+      "A33": "20",
+      "B33": "ct_k517",
+      "C33": "Nombre de la unidad de cosecha",
+      "D33": "Nombre de la unidad de cosecha",
+      "F33": "Principal",
+      "G33": "Variable cuantitativa discreta",
+      "H33": "Numérico",
+      "I33": "2",
+      "J33": "10",
+      "K33": "51 o 99"
+    },
+    {
+      "A34": "21",
+      "B34": "ct_k518",
+      "C34": "Equivalencia en libras de la unidad cosechada",
+      "D34": "Equivalencia en libras de la unidad cosechada",
+      "F34": "Principal",
+      "G34": "Variable cuantitativa continua",
+      "H34": "Numérico",
+      "I34": "5",
+      "J34": "0,01",
+      "K34": "2200,00"
+    },
+    {
+      "A35": "22",
+      "B35": "ct_k520",
+      "C35": "Estado primario de la cosecha",
+      "D35": "Estado primario de la cosecha",
+      "F35": "Principal",
+      "G35": "Variable cuantitativa discreta",
+      "H35": "Numérico",
+      "I35": "2",
+      "J35": "Ingrese el dato",
+      "K35": "Ingrese el dato"
+    },
+    {
+      "A36": "23",
+      "B36": "ct_afecta_prod",
+      "C36": "Afectación en la producción",
+      "D36": "¿Cuál es la afectación principal en la producción? 1: Sequía/ 2: Plagas/ 3: Inundación/4: Semilla/ 5: Prácticas inadecuadas/ 6: Edad de la plantación/ 7: Otra",
+      "F36": "Principal",
+      "G36": "Variable cuantitativa discreta",
+      "H36": "Numérico",
+      "I36": "1",
+      "J36": "1",
+      "K36": "7"
+    },
+    {
+      "A37": "24",
+      "B37": "ct_k522",
+      "C37": "Cantidad vendida",
+      "D37": "Cantidad vendida",
+      "F37": "Principal",
+      "G37": "Variable cuantitativa continua",
+      "H37": "Numérico",
+      "I37": "7",
+      "J37": "0,01",
+      "K37": "9999999,99"
+    },
+    {
+      "A38": "25",
+      "B38": "ct_k523",
+      "C38": "Nombre de la unidad de venta",
+      "D38": "Nombre de la unidad de venta",
+      "F38": "Principal",
+      "G38": "Variable cuantitativa discreta",
+      "H38": "Numérico",
+      "I38": "2",
+      "J38": "10",
+      "K38": "51"
+    },
+    {
+      "A39": "26",
+      "B39": "ct_k524",
+      "C39": "Equivalencia en libras de la unidad vendida",
+      "D39": "Equivalencia en libras de la unidad vendida",
+      "F39": "Principal",
+      "G39": "Variable cuantitativa continua",
+      "H39": "Numérico",
+      "I39": "5",
+      "J39": "0,01",
+      "K39": "2200,00"
+    },
+    {
+      "A40": "27",
+      "B40": "ct_k526",
+      "C40": "Estado primario de la venta",
+      "D40": "Estado primario de la venta",
+      "F40": "Principal",
+      "G40": "Variable cuantitativa discreta",
+      "H40": "Numérico",
+      "I40": "2",
+      "J40": "[2 - 4], 12, 15 [17 - 28] o 90",
+      "K40": "[2 - 4], 12, 15 [17 - 28] o 90"
+    },
+    {
+      "A41": "28",
+      "B41": "ct_venmernac",
+      "C41": "Venta mercado nacional",
+      "D41": "Venta mercado nacional",
+      "F41": "Principal",
+      "G41": "Variable cuantitativa discreta",
+      "H41": "Numérico",
+      "I41": "3",
+      "J41": "0",
+      "K41": "100"
+    },
+    {
+      "A42": "29",
+      "B42": "ct_venmerint",
+      "C42": "Venta mercado internacional",
+      "D42": "Venta mercado internacional",
+      "F42": "Principal",
+      "G42": "Variable cuantitativa discreta",
+      "H42": "Numérico",
+      "I42": "3",
+      "J42": "0",
+      "K42": "100"
+    },
+    {
+      "A43": "30",
+      "B43": "ct_vencenacop",
+      "C43": "Venta destino centro de acopio",
+      "D43": "Las ventas se destinaron a un centro de acopio. 1: Si 2: No",
+      "F43": "Principal",
+      "G43": "Variable cuantitativa discreta",
+      "H43": "Numérico",
+      "I43": "1",
+      "J43": "1",
+      "K43": "2"
+    },
+    {
+      "A44": "32",
+      "B44": "ct_rdproven1",
+      "C44": "Autoconsumo",
+      "D44": "Otro destino de la producción_autoconsumo",
+      "F44": "Principal",
+      "G44": "Variable cuantitativa continua",
+      "H44": "Numérico",
+      "I44": "5",
+      "J44": "0",
+      "K44": "999999999,99"
+    },
+    {
+      "A45": "33",
+      "B45": "ct_rdproven2",
+      "C45": "Almacenamiento",
+      "D45": "Otro destino de la producción_almacenamiento",
+      "F45": "Principal",
+      "G45": "Variable cuantitativa continua",
+      "H45": "Numérico",
+      "I45": "5",
+      "J45": "0",
+      "K45": "999999999,99"
+    },
+    {
+      "A46": "34",
+      "B46": "ct_rdproven3",
+      "C46": "Desperdicio",
+      "D46": "Otro destino de la producción_desperdicio",
+      "F46": "Principal",
+      "G46": "Variable cuantitativa continua",
+      "H46": "Numérico",
+      "I46": "4",
+      "J46": "0",
+      "K46": "999999999,99"
+    },
+    {
+      "A47": "35",
+      "B47": "ct_rdproven4",
+      "C47": "Alimento para animales",
+      "D47": "Otro destino de la producción_alimento para animales",
+      "F47": "Principal",
+      "G47": "Variable cuantitativa continua",
+      "H47": "Numérico",
+      "I47": "5",
+      "J47": "0",
+      "K47": "999999999,99"
+    },
+    {
+      "A48": "36",
+      "B48": "ct_rdproven5",
+      "C48": "Semilla",
+      "D48": "Otro destino de la producción_semilla",
+      "F48": "Principal",
+      "G48": "Variable cuantitativa continua",
+      "H48": "Numérico",
+      "I48": "4",
+      "J48": "0",
+      "K48": "999999999,99"
+    },
+    {
+      "A49": "37",
+      "B49": "ct_rdproven6",
+      "C49": "Otro destino",
+      "D49": "Otro destino de la producción_autotro destino",
+      "F49": "Principal",
+      "G49": "Variable cuantitativa continua",
+      "H49": "Numérico",
+      "I49": "5",
+      "J49": "0",
+      "K49": "999999999,99"
+    },
+    {
+      "A50": "38",
+      "B50": "ct_sdrenaje",
+      "C50": "Drenaje",
+      "D50": "Dispone de drenaje 1:Si/2:No",
+      "F50": "Principal",
+      "G50": "Variable cuantitativa discreta",
+      "H50": "Numérico",
+      "I50": "1",
+      "J50": "1",
+      "K50": "2"
+    },
+    {
+      "A51": "39",
+      "B51": "ct_psdrenaje",
+      "C51": "Porcentaje de drenaje",
+      "D51": "Porcentaje de drenaje en los terrenos",
+      "F51": "Principal",
+      "G51": "Variable cuantitativa discreta",
+      "H51": "Numérico",
+      "I51": "3",
+      "J51": "0",
+      "K51": "100"
+    },
+    {
+      "A52": "40",
+      "B52": "ct_presueuti",
+      "C52": "Preparación de suelo",
+      "D52": "Para la preparación del suelo, usted utilizo??? 1. Tractor, 2. Moto cultor, 3. Yunta, 4. Azadón, pala, pico, 5. Machete, 6. Otro, 7. Ninguno",
+      "F52": "Principal",
+      "G52": "Variable cuantitativa discreta",
+      "H52": "Numérico",
+      "I52": "1",
+      "J52": "1",
+      "K52": "7"
+    },
+    {
+      "A53": "41",
+      "B53": "ct_riego",
+      "C53": "Uso de riego",
+      "D53": "Uso de riego 1:Si/ 2: No",
+      "F53": "Principal",
+      "G53": "Variable cuantitativa discreta",
+      "H53": "Numérico",
+      "I53": "1",
+      "J53": "1",
+      "K53": "2"
+    },
+    {
+      "A54": "42",
+      "B54": "ct_superf_regada_ha",
+      "C54": "Superficie regada_hectáreas",
+      "D54": "¿Cuál fue la superficie efectivamente regada?",
+      "F54": "Principal",
+      "G54": "Variable cuantitativa continua",
+      "H54": "Numérico",
+      "I54": "8",
+      "J54": "0,01",
+      "K54": "9999999,99"
+    },
+    {
+      "A55": "43",
+      "B55": "ct_porc_surc",
+      "C55": "Riego_ surcos",
+      "D55": "¿Qué método de riego utiliza en sus cultivos? 1: surcos",
+      "F55": "Principal",
+      "G55": "Variable cuantitativa discreta",
+      "H55": "Numérico",
+      "I55": "3",
+      "J55": "0",
+      "K55": "100"
+    },
+    {
+      "A56": "44",
+      "B56": "ct_porc_aspe",
+      "C56": "Riego_  aspersión",
+      "D56": "¿Qué método de riego utiliza en sus cultivos? 2: aspersión",
+      "F56": "Principal",
+      "G56": "Variable cuantitativa discreta",
+      "H56": "Numérico",
+      "I56": "3",
+      "J56": "0",
+      "K56": "100"
+    },
+    {
+      "A57": "45",
+      "B57": "ct_porc_micr",
+      "C57": "Riego_microaspersión",
+      "D57": "¿Qué método de riego utiliza en sus cultivos? 3: microaspersión",
+      "F57": "Principal",
+      "G57": "Variable cuantitativa discreta",
+      "H57": "Numérico",
+      "I57": "3",
+      "J57": "0",
+      "K57": "100"
+    },
+    {
+      "A58": "46",
+      "B58": "ct_porc_gote",
+      "C58": "Riego_ goteo",
+      "D58": "¿Qué método de riego utiliza en sus cultivos? 4: goteo",
+      "F58": "Principal",
+      "G58": "Variable cuantitativa discreta",
+      "H58": "Numérico",
+      "I58": "3",
+      "J58": "0",
+      "K58": "100"
+    },
+    {
+      "A59": "47",
+      "B59": "ct_porc_nebu",
+      "C59": "Riego_nebulización",
+      "D59": "¿Qué método de riego utiliza en sus cultivos? 5: nebulización",
+      "F59": "Principal",
+      "G59": "Variable cuantitativa discreta",
+      "H59": "Numérico",
+      "I59": "3",
+      "J59": "0",
+      "K59": "100"
+    },
+    {
+      "A60": "48",
+      "B60": "ct_porc_otro",
+      "C60": "Riego_ otro",
+      "D60": "¿Qué método de riego utiliza en sus cultivos? 1: otro",
+      "F60": "Principal",
+      "G60": "Variable cuantitativa discreta",
+      "H60": "Numérico",
+      "I60": "3",
+      "J60": "0",
+      "K60": "100"
+    },
+    {
+      "A61": "49",
+      "B61": "ct_aferti",
+      "C61": "Uso de fertilizantes",
+      "D61": "¿Utiliza en sus cultivos fertilizantes? 1:Si/ 2: No",
+      "F61": "Principal",
+      "G61": "Variable cuantitativa discreta",
+      "H61": "Numérico",
+      "I61": "1",
+      "J61": "1",
+      "K61": "2"
+    },
+    {
+      "A62": "50",
+      "B62": "ct_forg",
+      "C62": "Uso de fertilizantes orgánicos",
+      "D62": "¿Utiliza en sus cultivos fertilizantes orgánicos? 1:Si/ 2: No",
+      "F62": "Principal",
+      "G62": "Variable cuantitativa discreta",
+      "H62": "Numérico",
+      "I62": "1",
+      "J62": "1",
+      "K62": "2"
+    },
+    {
+      "A63": "51",
+      "B63": "ct_cant1_fo",
+      "C63": "Cantidad de fertilizante orgánico_ estiércoles",
+      "D63": "Cantidad de fertilizante orgánico_ estiércoles",
+      "F63": "Principal",
+      "G63": "Variable cuantitativa continua",
+      "H63": "Numérico",
+      "I63": "6",
+      "J63": "0,01",
+      "K63": "999999,99"
+    },
+    {
+      "A64": "52",
+      "B64": "ct_umed1_fo",
+      "C64": "Tipo de abono",
+      "D64": "Tipo de abono: Registre le código del principal abono 1 al 6",
+      "F64": "Principal",
+      "G64": "Variable cuantitativa discreta",
+      "H64": "Numérico",
+      "I64": "1",
+      "J64": "1",
+      "K64": "6"
+    },
+    {
+      "A65": "53",
+      "B65": "ct_cant2_fo",
+      "C65": "Cantidad de fertilizante orgánico_ fermentados",
+      "D65": "Cantidad de fertilizante orgánico_ fermentados",
+      "F65": "Principal",
+      "G65": "Variable cuantitativa continua",
+      "H65": "Numérico",
+      "I65": "6",
+      "J65": "0,01",
+      "K65": "999999,99"
+    },
+    {
+      "A66": "54",
+      "B66": "ct_umed2_fo",
+      "C66": "Unidad de medida_ fermentados",
+      "D66": "Unidad de medida_ fermentados 1: libra/ 2: kilogramo/ 3: quintal/ 4: tonelada",
+      "F66": "Principal",
+      "G66": "Variable cuantitativa discreta",
+      "H66": "Numérico",
+      "I66": "1",
+      "J66": "1",
+      "K66": "4"
+    },
+    {
+      "A67": "55",
+      "B67": "ct_cant3_fo",
+      "C67": "Cantidad de fertilizante orgánico_ líquidos",
+      "D67": "Cantidad de fertilizante orgánico_ líquidos",
+      "F67": "Principal",
+      "G67": "Variable cuantitativa continua",
+      "H67": "Numérico",
+      "I67": "5",
+      "J67": "0,01",
+      "K67": "999999,99"
+    },
+    {
+      "A68": "56",
+      "B68": "ct_umed3_fo",
+      "C68": "Unidad de medida_ líquidos",
+      "D68": "Unidad de medida_ líquidos 1: libra/ 2: kilogramo/ 3: quintal/ 4: tonelada",
+      "F68": "Principal",
+      "G68": "Variable cuantitativa discreta",
+      "H68": "Numérico",
+      "I68": "1",
+      "J68": "1",
+      "K68": "4"
+    },
+    {
+      "A69": "57",
+      "B69": "ct_fqui",
+      "C69": "Uso de fertilizantes químicos",
+      "D69": "¿Utiliza en sus cultivos fertilizantes químicos? 1:Si/ 2: No",
+      "F69": "Principal",
+      "G69": "Variable cuantitativa discreta",
+      "H69": "Numérico",
+      "I69": "1",
+      "J69": "1",
+      "K69": "2"
+    },
+    {
+      "A70": "58",
+      "B70": "ct_cantidad_npk_fq",
+      "C70": "Cantidad de fertilizante químicos_ NPK",
+      "D70": "Cantidad de fertilizante químicos_ NPK",
+      "F70": "Principal",
+      "G70": "Variable cuantitativa continua",
+      "H70": "Numérico",
+      "I70": "6",
+      "J70": "0,01",
+      "K70": "999999,99"
+    },
+    {
+      "A71": "59",
+      "B71": "ct_umed_npk_fq",
+      "C71": "Unidad de medida_ químicos_ NPK",
+      "D71": "Unidad de medida_ químicos_ NPK 1: libra/ 2: kilogramo/ 3: quintal/ 4: tonelada",
+      "F71": "Principal",
+      "G71": "Variable cuantitativa continua",
+      "H71": "Numérico",
+      "I71": "1",
+      "J71": "1",
+      "K71": "4"
+    },
+    {
+      "A72": "60",
+      "B72": "ct_cantidad_nit_fq",
+      "C72": "Cantidad de fertilizante químicos_ Nitrogenado",
+      "D72": "Cantidad de fertilizante químicos_ Nitrogenado",
+      "F72": "Principal",
+      "G72": "Variable cuantitativa continua",
+      "H72": "Numérico",
+      "I72": "6",
+      "J72": "0,01",
+      "K72": "999999,99"
+    },
+    {
+      "A73": "61",
+      "B73": "ct_umed_nit_fq",
+      "C73": "Unidad de medida_ Nitrogenado",
+      "D73": "Unidad de medida_Nitrogenado_ N 1: libra/ 2: kilogramo/ 3: quintal/ 4: tonelada/ 5: litro",
+      "F73": "Principal",
+      "G73": "Variable cuantitativa discreta",
+      "H73": "Numérico",
+      "I73": "1",
+      "J73": "1",
+      "K73": "5"
+    },
+    {
+      "A74": "62",
+      "B74": "ct_cantidad_fq",
+      "C74": "Cantidad de fertilizante químicos_ Fosfatado",
+      "D74": "Cantidad de fertilizante químicos_ Fosfatado",
+      "F74": "Principal",
+      "G74": "Variable cuantitativa continua",
+      "H74": "Numérico",
+      "I74": "6",
+      "J74": "0,01",
+      "K74": "999999,99"
+    },
+    {
+      "A75": "63",
+      "B75": "ct_umed_fq",
+      "C75": "Unidad de medida_ químicos_ Fosfatado",
+      "D75": "Unidad de medida_ químicos_ Fosfatado 1: libra/ 2: kilogramo/ 3: quintal/ 4: tonelada",
+      "F75": "Principal",
+      "G75": "Variable cuantitativa discreta",
+      "H75": "Numérico",
+      "I75": "1",
+      "J75": "1",
+      "K75": "4"
+    },
+    {
+      "A76": "64",
+      "B76": "ct_cantidad_pot_fq",
+      "C76": "Cantidad de fertilizante químicos_ Potásico",
+      "D76": "Cantidad de fertilizante químicos_ Potásico",
+      "F76": "Principal",
+      "G76": "Variable cuantitativa continua",
+      "H76": "Numérico",
+      "I76": "5",
+      "J76": "0,01",
+      "K76": "999999,99"
+    },
+    {
+      "A77": "65",
+      "B77": "ct_umed_pot_fq",
+      "C77": "Unidas de medida_ químicos_ Potásico",
+      "D77": "Unidad de medida_ químicos_ Potásico 1: libra/ 2: kilogramo/ 3: quintal/ 4: tonelada",
+      "F77": "Principal",
+      "G77": "Variable cuantitativa discreta",
+      "H77": "Numérico",
+      "I77": "1",
+      "J77": "1",
+      "K77": "4"
+    },
+    {
+      "A78": "66",
+      "B78": "ct_apliplagui",
+      "C78": "Uso de plaguicidas",
+      "D78": "¿Utiliza en sus cultivos plaguicidas? 1:Si/ 2: No",
+      "F78": "Principal",
+      "G78": "Variable cuantitativa discreta",
+      "H78": "Numérico",
+      "I78": "1",
+      "J78": "1",
+      "K78": "2"
+    },
+    {
+      "A79": "67",
+      "B79": "ct_porg",
+      "C79": "Uso de plaguicidas orgánicos",
+      "D79": "¿Utiliza en sus cultivos plaguicidas orgánicos? 1:Si/ 2: No",
+      "F79": "Principal",
+      "G79": "Variable cuantitativa discreta",
+      "H79": "Numérico",
+      "I79": "1",
+      "J79": "1",
+      "K79": "2"
+    },
+    {
+      "A80": "68",
+      "B80": "ct_cantidad_po",
+      "C80": "Cantidad de plaguicida orgánico",
+      "D80": "Cantidad de plaguicida orgánico",
+      "F80": "Principal",
+      "G80": "Variable cuantitativa continua",
+      "H80": "Numérico",
+      "I80": "6",
+      "J80": "0,01",
+      "K80": "999999,99"
+    },
+    {
+      "A81": "69",
+      "B81": "ct_umed_po",
+      "C81": "Unidas de medida_  plaguicida orgánico",
+      "D81": "Unidas de medida_  plaguicida orgánico",
+      "F81": "Principal",
+      "G81": "Variable cuantitativa discreta",
+      "H81": "Numérico",
+      "I81": "1",
+      "J81": "1",
+      "K81": "5"
+    },
+    {
+      "A82": "70",
+      "B82": "ct_pqui",
+      "C82": "Uso de plaguicidas químicos",
+      "D82": "¿Utiliza en sus cultivos plaguicidas químicos? 1:Si/ 2: No",
+      "F82": "Principal",
+      "G82": "Variable cuantitativa discreta",
+      "H82": "Numérico",
+      "I82": "1",
+      "J82": "1",
+      "K82": "2"
+    },
+    {
+      "A83": "71",
+      "B83": "ct_cantidad_her_pq",
+      "C83": "Cantidad de plaguicida químicos_ herbicida",
+      "D83": "Cantidad de plaguicida químicos_ herbicida",
+      "F83": "Principal",
+      "G83": "Variable cuantitativa continua",
+      "H83": "Numérico",
+      "I83": "6",
+      "J83": "0,01",
+      "K83": "999999,99"
+    },
+    {
+      "A84": "72",
+      "B84": "ct_umed_her_pq",
+      "C84": "Unidad de medida_ químicos_ herbicida",
+      "D84": "Unidad de medida_ químicos_ herbicida 1: libra/ 2: kilogramo/ 3: quintal/ 4: tonelada/ 5:litro",
+      "F84": "Principal",
+      "G84": "Variable cuantitativa discreta",
+      "H84": "Numérico",
+      "I84": "1",
+      "J84": "1",
+      "K84": "5"
+    },
+    {
+      "A85": "73",
+      "B85": "ct_color_her_pq",
+      "C85": "Color de la etiqueta_ herbicida",
+      "D85": "Color de la etiqueta_ herbicida 1: rojo/ 2: amarillo/ 3: azul/ 4:verde/ 5: no sabe",
+      "F85": "Principal",
+      "G85": "Variable cuantitativa discreta",
+      "H85": "Numérico",
+      "I85": "1",
+      "J85": "1",
+      "K85": "5"
+    },
+    {
+      "A86": "74",
+      "B86": "ct_cantidad_ins_pq",
+      "C86": "Cantidad de plaguicida químicos_ insecticida",
+      "D86": "Cantidad de plaguicida químicos_ insecticida",
+      "F86": "Principal",
+      "G86": "Variable cuantitativa continua",
+      "H86": "Numérico",
+      "I86": "6",
+      "J86": "0,01",
+      "K86": "999999,99"
+    },
+    {
+      "A87": "75",
+      "B87": "ct_umed_ins_pq",
+      "C87": "Unidad de medida_ químicos_ insecticida",
+      "D87": "Unidad de medida_ químicos_ insecticida 1: libra/ 2: kilogramo/ 3: quintal/ 4: tonelada/ 5:litro",
+      "F87": "Principal",
+      "G87": "Variable cuantitativa discreta",
+      "H87": "Numérico",
+      "I87": "1",
+      "J87": "1",
+      "K87": "5"
+    },
+    {
+      "A88": "76",
+      "B88": "ct_color_ins_pq",
+      "C88": "Color de la etiqueta_ insecticida",
+      "D88": "Color de la etiqueta_ insecticida 1: rojo/ 2: amarillo/ 3: azul/ 4:verde/ 5: no sabe",
+      "F88": "Principal",
+      "G88": "Variable cuantitativa discreta",
+      "H88": "Numérico",
+      "I88": "1",
+      "J88": "1",
+      "K88": "5"
+    },
+    {
+      "A89": "77",
+      "B89": "ct_cantidad_fun_pq",
+      "C89": "Cantidad de plaguicida químicos_ fungicida",
+      "D89": "Cantidad de plaguicida químicos_ fungicida",
+      "F89": "Principal",
+      "G89": "Variable cuantitativa continua",
+      "H89": "Numérico",
+      "I89": "6",
+      "J89": "0,01",
+      "K89": "999999,99"
+    },
+    {
+      "A90": "78",
+      "B90": "ct_umed_fun_pq",
+      "C90": "Unidad de medida_ químicos_ fungicida",
+      "D90": "Unidad de medida_ químicos_ fungicida 1: libra/ 2: kilogramo/ 3: quintal/ 4: tonelada/ 5:litro",
+      "F90": "Principal",
+      "G90": "Variable cuantitativa discreta",
+      "H90": "Numérico",
+      "I90": "1",
+      "J90": "1",
+      "K90": "5"
+    },
+    {
+      "A91": "79",
+      "B91": "ct_color_fun_pq",
+      "C91": "Color de la etiqueta_ fungicida",
+      "D91": "Color de la etiqueta_ fungicida 1: rojo/ 2: amarillo/ 3: azul/ 4:verde/ 5: no sabe",
+      "F91": "Principal",
+      "G91": "Variable cuantitativa discreta",
+      "H91": "Numérico",
+      "I91": "1",
+      "J91": "1",
+      "K91": "5"
+    },
+    {
+      "A92": "80",
+      "B92": "ct_cantidad_pq",
+      "C92": "Cantidad de plaguicida químicos_ otros",
+      "D92": "Cantidad de plaguicida químicos_ otros",
+      "F92": "Principal",
+      "G92": "Variable cuantitativa continua",
+      "H92": "Numérico",
+      "I92": "4",
+      "J92": "0,01",
+      "K92": "999999,99"
+    },
+    {
+      "A93": "81",
+      "B93": "ct_umed_pq",
+      "C93": "Unidad de medida_ químicos_ otros",
+      "D93": "Unidad de medida_ químicos_ otros 1: libra/ 2: kilogramo/ 3: quintal/ 4: tonelada/ 5:litro",
+      "F93": "Principal",
+      "G93": "Variable cuantitativa discreta",
+      "H93": "Numérico",
+      "I93": "1",
+      "J93": "1",
+      "K93": "5"
+    },
+    {
+      "A94": "82",
+      "B94": "ct_color_pq",
+      "C94": "Color de la etiqueta_ otros",
+      "D94": "Color de la etiqueta_ otros 1: rojo/ 2: amarillo/ 3: azul/ 4:verde/ 5: no sabe",
+      "F94": "Principal",
+      "G94": "Variable cuantitativa discreta",
+      "H94": "Numérico",
+      "I94": "1",
+      "J94": "1",
+      "K94": "5"
+    },
+    {
+      "A95": "83",
+      "B95": "ct_trabocacont",
+      "C95": "Trabajadores ocasionales contratados",
+      "D95": "Trabajadores ocasionales contratados",
+      "F95": "Principal",
+      "G95": "Variable cuantitativa discreta",
+      "H95": "Numérico",
+      "I95": "3",
+      "J95": "0",
+      "K95": "9999"
+    },
+    {
+      "A96": "84",
+      "B96": "ct_trabfami",
+      "C96": "Trabajadores familiares",
+      "D96": "Trabajadores familiares",
+      "F96": "Principal",
+      "G96": "Variable cuantitativa discreta",
+      "H96": "Numérico",
+      "I96": "2",
+      "J96": "0",
+      "K96": "9999"
+    },
+    {
+      "A97": "85",
+      "B97": "ct_piensasem_int",
+      "C97": "Intensión de siembra",
+      "D97": "Piensa sembrar el próximo año en este terreno??",
+      "F97": "Principal",
+      "G97": "Variable cuantitativa discreta",
+      "H97": "Numérico",
+      "I97": "1",
+      "J97": "1",
+      "K97": "2"
+    },
+    {
+      "A98": "86",
+      "B98": "ct_supersem_int",
+      "C98": "Superficie de siembra",
+      "D98": "En que superficie piensa sembrar??",
+      "F98": "Principal",
+      "G98": "Variable cuantitativa continua",
+      "H98": "Numérico",
+      "I98": "6",
+      "J98": "0,01",
+      "K98": "9999999,99"
+    },
+    {
+      "A99": "87",
+      "B99": "ct_supersemha_int",
+      "C99": "Superficie de siembra en hectáreas",
+      "D99": "En que superficie piensa sembrar??_hectáreas",
+      "F99": "Principal",
+      "G99": "Variable cuantitativa continua",
+      "H99": "Numérico",
+      "I99": "8",
+      "J99": "0,01",
+      "K99": "9999999,99"
+    },
+    {
+      "A100": "88",
+      "B100": "ct_messiem_int",
+      "C100": "Mes de siembra",
+      "D100": "Mes de siembra",
+      "F100": "Principal",
+      "G100": "Variable cuantitativa discreta",
+      "H100": "Numérico",
+      "I100": "2",
+      "J100": "1",
+      "K100": "12"
+    },
+    {
+      "A101": "89",
+      "B101": "ct_condcult_int",
+      "C101": "Condición de cultivo",
+      "D101": "1. Solo; 2. Asociado",
+      "F101": "Principal",
+      "G101": "Variable cuantitativa discreta",
+      "H101": "Numérico",
+      "I101": "1",
+      "J101": "1",
+      "K101": "2"
+    },
+    {
+      "A102": "90",
+      "B102": "ct_codcultiv1_int",
+      "C102": "Código de cultivo",
+      "D102": "Nombre del cultivo",
+      "F102": "Principal",
+      "G102": "Variable cuantitativa discreta",
+      "H102": "Numérico",
+      "I102": "3",
+      "J102": "500 o 781",
+      "K102": "600, 783-799"
+    },
+    {
+      "A103": "91",
+      "B103": "ct_codcultiv2_int",
+      "C103": "Código de cultivo",
+      "D103": "Nombre del cultivo",
+      "F103": "Principal",
+      "G103": "Variable cuantitativa discreta",
+      "H103": "Numérico",
+      "I103": "3",
+      "J103": "500 o 781",
+      "K103": "600, 783-799"
+    },
+    {
+      "A104": "92",
+      "B104": "ct_prod",
+      "C104": "Producción_toneladas métricas",
+      "D104": "Producción_toneladas métricas",
+      "F104": "Principal",
+      "G104": "Variable cuantitativa continua",
+      "H104": "Numérico",
+      "I104": "8",
+      "J104": "Ingrese el dato",
+      "K104": "Ingrese el dato"
+    },
+    {
+      "A105": "93",
+      "B105": "ct_nclavr",
+      "C105": "Clave de cultivo_publicación",
+      "D105": "Clave de cultivo_publicación",
+      "F105": "Principal",
+      "G105": "Variable cuantitativa discreta",
+      "H105": "Numérico",
+      "I105": "8",
+      "J105": "500 o 781",
+      "K105": "600, 783-799"
+    },
+    {
+      "A106": "94",
+      "B106": "ct_trs",
+      "C106": "Sierra",
+      "D106": "Sierra",
+      "F106": "Principal",
+      "G106": "Variable cualitativa nominal",
+      "H106": "Cadena",
+      "I106": "8",
+      "J106": "No aplica",
+      "K106": "No aplica"
+    },
+    {
+      "A107": "95",
+      "B107": "ct_trc",
+      "C107": "Costa",
+      "D107": "Costa",
+      "F107": "Principal",
+      "G107": "Variable cualitativa nominal",
+      "H107": "Cadena",
+      "I107": "8",
+      "J107": "No aplica",
+      "K107": "No aplica"
+    },
+    {
+      "A108": "96",
+      "B108": "ct_tro",
+      "C108": "Amazonía",
+      "D108": "Amazonía",
+      "F108": "Principal",
+      "G108": "Variable cualitativa nominal",
+      "H108": "Cadena",
+      "I108": "8",
+      "J108": "No aplica",
+      "K108": "No aplica"
+    },
+    {
+      "A109": "97",
+      "B109": "ct_znd",
+      "C109": "Zona no Delimitada",
+      "D109": "Zona no Delimitada",
+      "F109": "Principal",
+      "G109": "Variable cualitativa nominal",
+      "H109": "Cadena",
+      "I109": "8",
+      "J109": "No aplica",
+      "K109": "No aplica"
+    },
+    {
+      "A110": "98",
+      "B110": "ct_tn",
+      "C110": "Total Nacional",
+      "D110": "Total Nacional",
+      "F110": "Principal",
+      "G110": "Variable cuantitativa continua",
+      "H110": "Numérico",
+      "I110": "8",
+      "J110": "Ingrese el dato",
+      "K110": "Ingrese el dato"
+    },
+    {
+      "A111": "99",
+      "B111": "superdida",
+      "C111": "Superficie perdida",
+      "D111": "Superficie perdida",
+      "F111": "Principal",
+      "G111": "Variable cuantitativa continua",
+      "H111": "Numérico",
+      "I111": "8",
+      "J111": "0,01",
+      "K111": "9999999,99"
+    },
+    {
+      "A112": "100",
+      "B112": "ct_sequia",
+      "C112": "Perdida de superficie_Sequia",
+      "D112": "Perdida de superficie_Sequia",
+      "F112": "Principal",
+      "G112": "Variable cuantitativa continua",
+      "H112": "Numérico",
+      "I112": "8",
+      "J112": "0,01",
+      "K112": "9999999,99"
+    },
+    {
+      "A113": "101",
+      "B113": "ct_helada",
+      "C113": "Perdida de superficie_Helada",
+      "D113": "Perdida de superficie_Helada",
+      "F113": "Principal",
+      "G113": "Variable cuantitativa continua",
+      "H113": "Numérico",
+      "I113": "8",
+      "J113": "0,01",
+      "K113": "9999999,99"
+    },
+    {
+      "A114": "102",
+      "B114": "ct_plagas",
+      "C114": "Perdida de superficie_Plagas",
+      "D114": "Perdida de superficie_Plagas",
+      "F114": "Principal",
+      "G114": "Variable cuantitativa continua",
+      "H114": "Numérico",
+      "I114": "8",
+      "J114": "0,01",
+      "K114": "9999999,99"
+    },
+    {
+      "A115": "103",
+      "B115": "ct_enfermedades",
+      "C115": "Perdida de superficie_Enfermedades",
+      "D115": "Perdida de superficie_Enfermedades",
+      "F115": "Principal",
+      "G115": "Variable cuantitativa continua",
+      "H115": "Numérico",
+      "I115": "8",
+      "J115": "0,01",
+      "K115": "9999999,99"
+    },
+    {
+      "A116": "104",
+      "B116": "ct_inundacion",
+      "C116": "Perdida de superficie_Inundación",
+      "D116": "Perdida de superficie_Inundación",
+      "F116": "Principal",
+      "G116": "Variable cuantitativa continua",
+      "H116": "Numérico",
+      "I116": "8",
+      "J116": "0,01",
+      "K116": "9999999,99"
+    },
+    {
+      "A117": "105",
+      "B117": "ct_otra",
+      "C117": "Perdida de superficie_Otra",
+      "D117": "Perdida de superficie_Otra",
+      "F117": "Principal",
+      "G117": "Variable cuantitativa continua",
+      "H117": "Numérico",
+      "I117": "8",
+      "J117": "0,01",
+      "K117": "9999999,99"
+    },
+    {
+      "A118": "106",
+      "B118": "ct_secomún",
+      "C118": "Superficie_semilla común",
+      "D118": "Superficie_semilla común",
+      "F118": "Principal",
+      "G118": "Variable cuantitativa continua",
+      "H118": "Numérico",
+      "I118": "8",
+      "J118": "0,01",
+      "K118": "9999999,99"
+    },
+    {
+      "A119": "107",
+      "B119": "ct_semejorada",
+      "C119": "Superficie_semilla mejorada",
+      "D119": "Superficie_semilla mejorada",
+      "F119": "Principal",
+      "G119": "Variable cuantitativa continua",
+      "H119": "Numérico",
+      "I119": "8",
+      "J119": "0,01",
+      "K119": "9999999,99"
+    },
+    {
+      "A120": "108",
+      "B120": "ct_secertificada",
+      "C120": "Superficie_semilla certificada",
+      "D120": "Superficie_semilla certificada",
+      "F120": "Principal",
+      "G120": "Variable cuantitativa continua",
+      "H120": "Numérico",
+      "I120": "8",
+      "J120": "0,01",
+      "K120": "9999999,99"
+    },
+    {
+      "A121": "109",
+      "B121": "ct_sehibrinac",
+      "C121": "Superficie_semilla híbrida nacional",
+      "D121": "Superficie_semilla híbrida nacional",
+      "F121": "Principal",
+      "G121": "Variable cuantitativa continua",
+      "H121": "Numérico",
+      "I121": "8",
+      "J121": "0,01",
+      "K121": "9999999,99"
+    },
+    {
+      "A122": "110",
+      "B122": "ct_sehibrinter",
+      "C122": "Superficie_semilla híbrida internacional",
+      "D122": "Superficie_semilla híbrida internacional",
+      "F122": "Principal",
+      "G122": "Variable cuantitativa continua",
+      "H122": "Numérico",
+      "I122": "8",
+      "J122": "0,01",
+      "K122": "9999999,99"
+    },
+    {
+      "A123": "111",
+      "B123": "ct_sriego",
+      "C123": "Superficie con riego",
+      "D123": "Superficie con riego",
+      "F123": "Principal",
+      "G123": "Variable cuantitativa continua",
+      "H123": "Numérico",
+      "I123": "8",
+      "J123": "0,01",
+      "K123": "9999999,99"
+    },
+    {
+      "A124": "112",
+      "B124": "su_fertilizada",
+      "C124": "Superficie con fertilizantes",
+      "D124": "Superficie con fertilizantes",
+      "F124": "Principal",
+      "G124": "Variable cuantitativa continua",
+      "H124": "Numérico",
+      "I124": "8",
+      "J124": "0,01",
+      "K124": "9999999,99"
+    },
+    {
+      "A125": "113",
+      "B125": "su_plaguicidas",
+      "C125": "Superficie con plaguicidas",
+      "D125": "Superficie con plaguicidas",
+      "F125": "Principal",
+      "G125": "Variable cuantitativa continua",
+      "H125": "Numérico",
+      "I125": "8",
+      "J125": "0,01",
+      "K125": "9999999,99"
+    },
+    {
+      "A126": "114",
+      "B126": "Ventas",
+      "C126": "Ventas_toneladas métricas",
+      "D126": "Ventas_toneladas métricas",
+      "F126": "Principal",
+      "G126": "Variable cuantitativa continua",
+      "H126": "Numérico",
+      "I126": "8",
+      "J126": "Ingrese el dato",
+      "K126": "Ingrese el dato"
+    },
+    {
+      "A127": "115",
+      "B127": "ct_nuevacondicion",
+      "C127": "Condición de cultivo_publicación",
+      "D127": "Condición de cultivo_publicación 1: Solo/ 2: Asociado",
+      "F127": "Principal",
+      "G127": "Variable cuantitativa discreta",
+      "H127": "Numérico",
+      "I127": "8",
+      "J127": "1",
+      "K127": "2"
+    },
+    {
+      "A128": "116",
+      "B128": "fact_exp_fin",
+      "C128": "Factor de expansión ",
+      "D128": "Factor de expansión",
+      "F128": "Principal",
+      "G128": "Variable cuantitativa continua",
+      "H128": "Numérico",
+      "I128": "18",
+      "J128": "Ingrese el dato",
+      "K128": "Ingrese el dato"
+    },
+    {
+      "A135": "Elaborado por:",
+      "B135": "Diego Amaya",
+      "C135": "Analista Senior de Calidad en Encuestas Ambientales ",
+      "D135": "46148"
+    },
+    {
+      "A136": "Revisado por:",
+      "B136": "Maritza Carina Cuichan Sanipatin",
+      "C136": "Responsable de Proyecto Encuesta de Superficie y Producción Agropecuaria Continua ESPAC",
+      "D136": "46156"
+    },
+    {
+      "A137": "Aprobado por:",
+      "B137": "Armando David Salazar Mendez",
+      "C137": "Director de Estadisticas Agropecuarias y Ambientales",
+      "D137": "46156"
+    },
+    {
+      "A139": "CONTROL E HISTORIAL DE VERSIONES"
+    },
+    {
+      "A141": "Versión",
+      "B141": "Descripción",
+      "C141": "Fecha"
+    },
+    {
+      "A142": "1",
+      "B142": "Creación del documento",
+      "C142": "46148"
+    }
+  ],
+  "xl/worksheets/sheet5.xml": [
+    {
+      "B2": "La presente pestaña tiene por objeto documentar de forma estandarizada los clasificadores oficiales empleados en la operación estadística, sean nacionales o adaptaciones de clasificadores internacionales.\n\nEs responsabilidad del equipo técnico registrar con precisión cada clasificador referenciado en el diccionario de variables."
+    },
+    {
+      "B3": "DATOS GENERALES"
+    },
+    {
+      "B5": "Nombre del clasificador:",
+      "C5": "<<Ejemplo: Clasificador Geográfico Estadístico 2019<<"
+    },
+    {
+      "B6": "Siglas del clasificador:",
+      "C6": "<<Ejemplo: DPA 2019<<"
+    },
+    {
+      "B7": "Tipo de clasificador:",
+      "C7": "<<Ejemplo: Oficial Nacional / Oficial Internacional / Adaptado<<"
+    },
+    {
+      "B8": "Variable(s) que lo utiliza(n):",
+      "C8": "<<provincia / cantón / parroquia<<"
+    },
+    {
+      "B9": "Nivel de desagregación usado:",
+      "C9": "<<Ejemplo:  2 dígitos / 4 dígitos <<"
+    },
+    {
+      "B11": "Código",
+      "C11": "Etiqueta "
+    },
+    {
+      "B12": "01",
+      "C12": "AZUAY"
+    },
+    {
+      "B13": "02",
+      "C13": "BOLIVAR"
+    },
+    {
+      "B14": "03",
+      "C14": " CAÑAR"
+    },
+    {
+      "B15": "04",
+      "C15": "CARCHI"
+    },
+    {
+      "B16": "05",
+      "C16": " COTOPAXI"
+    },
+    {
+      "B17": "06",
+      "C17": "CHIMBORAZO"
+    },
+    {
+      "B18": "07",
+      "C18": "EL ORO"
+    },
+    {
+      "B19": "08",
+      "C19": "ESMERALDAS"
+    },
+    {
+      "B20": "09",
+      "C20": "GUAYAS"
+    },
+    {
+      "B21": "10",
+      "C21": "IMBABURA"
+    },
+    {
+      "B22": "11",
+      "C22": "LOJA "
+    },
+    {
+      "B23": "12",
+      "C23": "LOS RIOS"
+    },
+    {
+      "B24": "13",
+      "C24": "MANABI"
+    },
+    {
+      "B25": "14",
+      "C25": " MORONA SANTIAGO"
+    },
+    {
+      "B26": "15",
+      "C26": " NAPO"
+    },
+    {
+      "B27": "16",
+      "C27": " PASTAZA"
+    },
+    {
+      "B28": "17",
+      "C28": "PICHINCHA"
+    },
+    {
+      "B29": "18",
+      "C29": "TUNGURAHUA"
+    },
+    {
+      "B30": "19",
+      "C30": " ZAMORA CHINCHIPE"
+    },
+    {
+      "B31": "20",
+      "C31": " GALAPAGOS"
+    },
+    {
+      "B32": "21",
+      "C32": "SUCUMBIOS"
+    },
+    {
+      "B33": "22",
+      "C33": " ORELLANA"
+    },
+    {
+      "B34": "23",
+      "C34": "SANTO DOMINGO DE LOS TSACHILAS"
+    },
+    {
+      "B35": "24",
+      "C35": "SANTA ELENA"
+    },
+    {
+      "B36": "90",
+      "C36": "ZONAS NO DELIMITADAS"
+    }
+  ],
+  "xl/worksheets/sheet6.xml": [
+    {
+      "A1": "TIPO VARIABLES",
+      "B1": "ORIGEN DE VARIABLES"
+    },
+    {
+      "A2": ">>Seleccione ☑<<",
+      "B2": ">>Seleccione ☑<<",
+      "C2": "Cadena"
+    },
+    {
+      "A3": "Variable identificadora",
+      "B3": "Principal",
+      "C3": "Numérico"
+    },
+    {
+      "A4": "Variable cuantitativa discreta",
+      "B4": "Derivada"
+    },
+    {
+      "A5": "Variable cuantitativa continua"
+    },
+    {
+      "A6": "Variable cualitativa nominal"
+    },
+    {
+      "A7": "Variable cualitativa ordinal"
+    }
+  ]
+}
