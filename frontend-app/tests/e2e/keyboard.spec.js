@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { waitForWorkspace } from './workspace-ready.js';
 
 test.beforeEach(async ({ page }) => {
   await page.route('**/backend-api/public/index.php/api/**', route => route.fulfill({ json: {} }));
@@ -8,7 +9,7 @@ test.beforeEach(async ({ page }) => {
 
 test('menú móvil mantiene el foco y vuelve al botón al pulsar Escape', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 900 });
-  await page.goto('/');
+  await page.goto('/');await waitForWorkspace(page);
   await page.getByRole('button', { name: 'Expandir barra lateral' }).click();
   await expect(page.getByRole('button', { name: 'Mis parcelas', exact: true })).toBeFocused();
   await page.keyboard.press('Shift+Tab');
@@ -22,7 +23,7 @@ test('menú móvil mantiene el foco y vuelve al botón al pulsar Escape', async 
 
 test('selector de parcelas devuelve el foco y permite saltar al contenido', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
-  await page.goto('/');
+  await page.goto('/');await waitForWorkspace(page);
   const trigger = page.getByRole('button', { name: 'Seleccionar parcela. Actual: Parcela de prueba' });
   await trigger.click();
   await expect(page.getByRole('textbox', { name: 'Buscar parcela' })).toBeFocused();

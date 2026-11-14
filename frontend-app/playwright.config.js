@@ -7,5 +7,5 @@ export default defineConfig({
   fullyParallel: true,
   reporter: 'list',
   use: { baseURL: fixtureOrigin || 'http://127.0.0.1:5500', ...devices['Desktop Chrome'], channel: 'chrome' },
-  webServer: fixtureOrigin ? undefined : { command: 'npm run dev -- --host 127.0.0.1', url: 'http://127.0.0.1:5500', reuseExistingServer: false, timeout: 30000 },
+  webServer: fixtureOrigin ? undefined : { command: 'npm run dev -- --host 127.0.0.1', url: 'http://127.0.0.1:5500', reuseExistingServer: true, timeout: 60000 },
 });

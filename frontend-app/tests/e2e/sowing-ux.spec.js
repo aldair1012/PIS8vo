@@ -2,6 +2,7 @@ import {test,expect} from '@playwright/test';
 import {existsSync,mkdirSync} from 'node:fs';
 import path from 'node:path';
 import {plot,sowing,yieldData} from '../fixtures/explanationData.mjs';
+import { waitForWorkspace } from './workspace-ready.js';
 const output='../documentacion/fuentes-maiz/descargas/siembra-ux-pro-max';
 const axe=path.resolve('../documentacion/fuentes-maiz/descargas/ui-audit/node_modules/axe-core/axe.min.js');
 async function prepare(page,{width=1440,height=950,theme='light',empty=false,legacy=false,trace=false,saveFails=false,saveReloadFails=false,overlap=false}={}){
@@ -26,7 +27,7 @@ async function prepare(page,{width=1440,height=950,theme='light',empty=false,leg
       calendario_parcela:trace?{fecha_siembra:'2024-02-01',ciclo_dias:120,tipo_fecha_siembra:'prevista'}:{},percentiles:{p10:0,p50:3,p90:5,muestra:noResults?0:3}}});
   });
   await page.route('**/api/simulaciones/explicar',r=>r.fulfill({status:503,json:{error:'Sin conexión'}}));
-  await page.goto('/');const nav=page.getByRole('button',{name:'Siembra',exact:true});if(!await nav.isVisible())await page.getByRole('button',{name:'Expandir barra lateral'}).click();await nav.click();
+  await page.goto('/');await waitForWorkspace(page);const nav=page.getByRole('button',{name:'Siembra',exact:true});if(!await nav.isVisible())await page.getByRole('button',{name:'Expandir barra lateral'}).click();await nav.click();
   await expect(page.getByRole('heading',{name:'Tu plan de siembra',exact:true})).toBeVisible();return posted;
 }
 async function history(page){await page.getByRole('button',{name:/Consultar simulaciones guardadas/}).click();}

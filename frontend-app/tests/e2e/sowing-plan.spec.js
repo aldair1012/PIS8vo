@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { plot, sowing, yieldData } from '../fixtures/explanationData.mjs';
+import { waitForWorkspace } from './workspace-ready.js';
 
 async function prepare(page,{empty=false,width=1440}={}) {
   await page.setViewportSize({width,height:950});await page.emulateMedia({reducedMotion:'reduce'});
@@ -17,7 +18,7 @@ async function prepare(page,{empty=false,width=1440}={}) {
   });
   await page.route('**/api/rendimiento?*',r=>r.fulfill({json:yieldData}));
   await page.route('**/api/escenarios?*',r=>r.fulfill({json:payload()}));
-  await page.goto('/');
+  await page.goto('/');await waitForWorkspace(page);
   if(!await page.getByRole('button',{name:'Siembra',exact:true}).isVisible())await page.getByRole('button',{name:'Expandir barra lateral'}).click();
   await page.getByRole('button',{name:'Siembra',exact:true}).click();await expect(page.getByRole('heading',{name:'Tu plan de siembra',exact:true})).toBeVisible();
   return posted;

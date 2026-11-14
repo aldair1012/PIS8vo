@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { waitForWorkspace } from './workspace-ready.js';
 
 const plot = { id:1,nombre_parcela:'Parcela A',area:2,ubicacion:'Manabí',latitud:-1,longitud:-80,fecha_siembra:'2024-01-01' };
 const otherPlot = { ...plot,id:2,nombre_parcela:'Parcela B' };
@@ -12,7 +13,7 @@ async function prepare(page,{data=payload(),handler}={}) {
   await page.route('**/api/auth/yo',route=>route.fulfill({json:{autenticado:true,usuario:{id:987,nombre:'Prueba'}}}));
   await page.route('**/api/parcelas',route=>route.fulfill({json:[plot,otherPlot]}));
   await page.route('**/api/escenarios?*',route=>handler?handler(route):route.fulfill({json:data}));
-  await page.goto('/');await page.getByRole('button',{name:'Siembra',exact:true}).click();
+  await page.goto('/');await waitForWorkspace(page);await page.getByRole('button',{name:'Siembra',exact:true}).click();
   await expect(page.getByRole('heading',{name:'Tu plan de siembra',exact:true}).or(page.getByRole('alert'))).toBeVisible();
   if (await page.getByRole('button',{name:/Consultar simulaciones guardadas/}).isVisible()) await openResults(page);
 }

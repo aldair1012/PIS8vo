@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
+import { waitForWorkspace } from './workspace-ready.js';
 
 const fixtureOrigin = process.env.ZEASYS_E2E_ORIGIN || '';
 test.skip(!/^http:\/\/127\.0\.0\.1:\d+$/.test(fixtureOrigin), 'Requiere la base desechable de integración.');
@@ -12,7 +13,7 @@ test.beforeEach(async ({ page }) => {
   });
   expect(response.ok()).toBeTruthy();
   await page.setViewportSize({ width: 1440, height: 1000 });
-  await page.goto('/');
+  await page.goto('/');await waitForWorkspace(page);
   await expect(page.locator('.navbar')).toBeVisible();
 });
 

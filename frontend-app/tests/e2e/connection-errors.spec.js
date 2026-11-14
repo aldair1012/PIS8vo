@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { waitForWorkspace } from './workspace-ready.js';
 
 test('permite recuperar la conexión al validar la sesión', async ({ page }) => {
   let requests = 0;
@@ -24,7 +25,7 @@ test('permite reintentar la carga de parcelas sin mostrar un estado vacío falso
     requests += 1;
     return !available ? route.fulfill({ status: 503, json: { error: 'no disponible' } }) : route.fulfill({ json: [] });
   });
-  await page.goto('/');
+  await page.goto('/');await waitForWorkspace(page);
   await expect(page.getByRole('alert')).toContainText('No se pudieron cargar tus parcelas');
   available = true;
   await page.getByRole('button', { name: 'Reintentar carga' }).click();
@@ -41,7 +42,7 @@ test('muestra carga mientras se consultan las parcelas', async ({ page }) => {
     await pending;
     await route.fulfill({ json: [] });
   });
-  await page.goto('/');
+  await page.goto('/');await waitForWorkspace(page);
   await expect(page.getByRole('status').filter({ hasText: 'Cargando tus parcelas' })).toBeVisible();
   release();
   await expect(page.getByText('Cargando tus parcelas…')).toHaveCount(0);
@@ -61,7 +62,7 @@ test('ignora un fallo atrasado tras seleccionar otra parcela', async ({ page }) 
       await route.fulfill({ status: 503, json: { error: 'respuesta antigua' } });
     } else await route.fulfill({ json: parcelas });
   });
-  await page.goto('/');
+  await page.goto('/');await waitForWorkspace(page);
   await expect(page.getByRole('button', { name: 'Seleccionar parcela. Actual: Parcela uno' })).toBeVisible();
   await expect.poll(() => requests).toBeGreaterThanOrEqual(2);
   await page.getByRole('button', { name: 'Seleccionar parcela. Actual: Parcela uno' }).click();
@@ -84,7 +85,7 @@ test('el historial distingue un fallo de conexión de una lista vacía', async (
     ? route.fulfill({ status: 503, json: { error: 'no disponible' } })
     : route.fulfill({ json: { simulaciones: [], estadisticas: {}, años_disponibles: [] } }));
   await page.setViewportSize({ width: 1440, height: 900 });
-  await page.goto('/');
+  await page.goto('/');await waitForWorkspace(page);
   await expect(page.getByText('Cargando tus parcelas…')).toHaveCount(0);
   await page.getByRole('button', { name: 'Simulaciones guardadas' }).click();
   await expect(page.getByRole('alert')).toContainText('Error al cargar el historial');
@@ -104,7 +105,7 @@ test('el historial distingue mediciones ausentes de cero', async ({ page }) => {
     simulaciones: [{ id: 1, nombre: 'Sin mediciones', area_simulada: null, rendimiento_estimado: null, produccion_total: null }, { id: 2, nombre: 'Con cero', area_simulada: 0, rendimiento_estimado: 0, produccion_total: 0 }], estadisticas: {}, años_disponibles: [],
   } }));
   await page.setViewportSize({ width: 1440, height: 900 });
-  await page.goto('/');
+  await page.goto('/');await waitForWorkspace(page);
   await expect(page.getByText('Cargando tus parcelas…')).toHaveCount(0);
   await page.getByRole('button', { name: 'Simulaciones guardadas' }).click();
   const missing = page.getByRole('row').filter({ hasText: 'Sin mediciones' });

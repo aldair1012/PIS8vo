@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 import { plot, sowing, yieldData } from '../fixtures/explanationData.mjs';
+import { waitForWorkspace } from './workspace-ready.js';
 
 async function prepare(page, { view = 'Siembra', data = sowing, width = 1440, handler } = {}) {
   await page.setViewportSize({ width, height: 950 });
@@ -12,7 +13,7 @@ async function prepare(page, { view = 'Siembra', data = sowing, width = 1440, ha
   await page.route('**/api/rendimiento?*', route => route.fulfill({ json: yieldData }));
   await page.route('**/api/escenarios?*', route => route.fulfill({ json: data }));
   await page.route('**/api/simulaciones/explicar', handler || (route => route.fulfill({ json: { que_significa: 'Detalle adicional del servidor.' } })));
-  await page.goto('/');
+  await page.goto('/');await waitForWorkspace(page);
   if (view === 'Siembra') {
     if (!await page.getByRole('button', { name: 'Siembra', exact: true }).isVisible()) await page.getByRole('button', { name: 'Expandir barra lateral' }).click();
     await page.getByRole('button', { name: 'Siembra', exact: true }).click();

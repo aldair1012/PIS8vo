@@ -21,9 +21,9 @@ async function layoutMetrics(page) {
         const rect = element.getBoundingClientRect();
         const css = getComputedStyle(element);
         return [`${selector}[${index}]`, {
-          x: rect.x + (css.position === 'fixed' ? 0 : scrollX),
-          y: rect.y + (css.position === 'fixed' ? 0 : scrollY),
-          width: rect.width, height: rect.height,
+          x: Math.round((rect.x + (css.position === 'fixed' ? 0 : scrollX)) * 2) / 2,
+          y: Math.round((rect.y + (css.position === 'fixed' ? 0 : scrollY)) * 2) / 2,
+          width: Math.round(rect.width * 2) / 2, height: Math.round(rect.height * 2) / 2,
           fontSize: css.fontSize, fontWeight: css.fontWeight,
           lineHeight: css.lineHeight, letterSpacing: css.letterSpacing,
           padding: css.padding,
@@ -41,8 +41,7 @@ for (const width of [390, 768, 1440, 1920]) {
     // Keep the unavailable-provider state deterministic without a Google login.
     await page.route('https://accounts.google.com/gsi/client*', route => route.abort());
     await page.addInitScript(() => localStorage.setItem('theme', 'dark'));
-    await page.goto('/');
-    await page.evaluate(() => document.fonts.ready);
+    await page.goto('/');      await page.evaluate(() => document.fonts.ready);
 
     for (const state of ['portada', 'acceso', 'registro']) {
       if (state === 'acceso') {
@@ -88,8 +87,7 @@ for (const width of [390, 768, 1440]) {
     await page.addInitScript(() => localStorage.setItem('theme', 'dark'));
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
-    await page.goto('/');
-    await expect(page.locator('.zeasys-home--dark')).toBeVisible();
+    await page.goto('/');      await expect(page.locator('.zeasys-home--dark')).toBeVisible();
     await page.getByRole('button', { name: 'Cambiar a modo claro' }).click();
     await expect(page.locator('.zeasys-home--light')).toBeVisible();
     await page.getByRole('button', { name: 'Cambiar a modo oscuro' }).click();

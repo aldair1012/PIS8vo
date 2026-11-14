@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { waitForWorkspace } from './workspace-ready.js';
 
 const fixtureOrigin = process.env.ZEASYS_E2E_ORIGIN || '';
 test.skip(!/^http:\/\/127\.0\.0\.1:\d+$/.test(fixtureOrigin), 'Requiere el entorno de integración desechable de ZeaSys.');
@@ -14,7 +15,7 @@ for (const [width, theme] of [[390, 'dark'], [390, 'light'], [768, 'dark'], [768
     await page.addInitScript(value => localStorage.setItem('theme', value), theme);
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
-    await page.goto('/');
+    await page.goto('/');await waitForWorkspace(page);
     await expect(page.locator('.navbar')).toBeVisible();
     for (const name of ['Mis parcelas', 'Simular cosecha', 'Rendimiento', 'Siembra', 'Clima y cultivo', 'Finanzas', 'Mapa de parcelas', 'Simulaciones guardadas']) {
       if (await page.locator('#workspace-sidebar').evaluate(node => node.inert)) {
@@ -41,7 +42,7 @@ for (const [width, theme] of [[390, 'dark'], [390, 'light'], [768, 'dark'], [768
 test('Siembra guarda el plan con la API real y lo conserva al recargar',async({page})=>{
   const login=await page.request.post('/backend-api/public/index.php/api/auth/iniciar-sesion',{data:{correo:'a@example.test',contrasena:' ClavePrueba-2026! '}});expect(login.ok()).toBeTruthy();
   const me=await (await page.request.get('/backend-api/public/index.php/api/auth/yo')).json();await page.addInitScript(id=>localStorage.setItem(`onboarding_done_${id}`,'true'),me.usuario.id);
-  await page.setViewportSize({width:1440,height:950});await page.goto('/');await page.getByRole('button',{name:'Siembra',exact:true}).click();await expect(page.getByRole('heading',{name:'Tu plan de siembra',exact:true})).toBeVisible({timeout:30000});
+  await page.setViewportSize({width:1440,height:950});await page.goto('/');await waitForWorkspace(page);await page.getByRole('button',{name:'Siembra',exact:true}).click();await expect(page.getByRole('heading',{name:'Tu plan de siembra',exact:true})).toBeVisible({timeout:30000});
   await page.getByRole('button',{name:/^(Editar|Completar) mi plan$/}).click();await page.getByLabel('¿Ya sembraste en esa fecha?').selectOption('prevista');await page.getByLabel('Duración del cultivo en días').fill('150');await page.getByLabel('Agua o riego del cultivo').selectOption('goteo');await page.getByRole('button',{name:'Guardar mi plan',exact:true}).click();
   await expect(page.getByText('Tu plan quedó guardado.',{exact:true})).toBeVisible({timeout:30000});await expect(page.locator('.sowing-campaign-summary')).toContainText('150 días');
   await page.reload();await page.getByRole('button',{name:'Siembra',exact:true}).click();await expect(page.locator('.sowing-campaign-summary')).toContainText('150 días',{timeout:30000});await expect(page.locator('.sowing-campaign-summary')).toContainText('Riego por goteo');

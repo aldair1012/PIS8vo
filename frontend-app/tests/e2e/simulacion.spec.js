@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import fixture from '../fixtures/simulacion-prueba.json' with { type: 'json' };
+import { waitForWorkspace } from './workspace-ready.js';
 
 // Parcela ficticia; resultado calculado offline con XGBoost. Nada se guarda en la cuenta.
 const crop = { id: 91, nombre_parcela: 'Parcela de prueba', area: 1, ph: 6.2, variedad_maiz: 'INIAP 101 Blanco Harinoso Precoz', tipo_maiz: 'Suave Harinoso', ubicacion: 'Comunidad sin provincia en el nombre', latitud: -.18, longitud: -78.47, fecha_siembra: '2024-02-28' };
@@ -24,7 +25,7 @@ async function abrir(page, theme, width, deferredLocation = null) {
   await page.route('**/backend-api/public/index.php/api/auth/yo', route => route.fulfill({ json: { autenticado: true, usuario: { id: 987, nombre: 'Prueba', rol: 'productor' } } }));
   await page.route('**/backend-api/public/index.php/api/parcelas', route => route.fulfill({ json: [crop] }));
   await page.route('**/backend-api/public/index.php/api/parcelas/valores-ubicacion*', async route => { if (deferredLocation) await deferredLocation; await route.fulfill({ json: location }); });
-  await page.goto('/');
+  await page.goto('/');await waitForWorkspace(page);
   const nav = page.getByRole('button', { name: 'Simular cosecha', exact: true });
   await page.locator('.navbar').waitFor();
   if (await page.locator('#workspace-sidebar').evaluate(node => node.inert)) await page.getByRole('button', { name: 'Expandir barra lateral' }).click();

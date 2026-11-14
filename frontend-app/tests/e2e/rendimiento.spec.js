@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { waitForWorkspace } from './workspace-ready.js';
 
 const plot = { id: 1, nombre_parcela: 'Parcela A', tipo_maiz: 'Duro Amarillo', variedad_maiz: 'INIAP H-551', area: 2, latitud: -1, longitud: -80, provincia: 'Manabí', ubicacion: 'Manabí' };
 const secondPlot = { ...plot, id: 2, nombre_parcela: 'Parcela B' };
@@ -17,7 +18,7 @@ async function prepare(page, { data=payload(), handler, width=1440, expectError=
     if(id==='2')return r.fulfill({json:{sin_datos:true,cultivo_activo:secondPlot,simulaciones_rendimiento:[]}});
     return handler ? handler(r) : r.fulfill({json:data});
   });
-  await page.goto('/');
+  await page.goto('/');await waitForWorkspace(page);
   if(expectError)await expect(page.getByRole('alert')).toContainText('No se pudieron cargar');
   else await expect(page.getByRole('heading',{name:'Parcela A',exact:true})).toBeVisible();
 }
@@ -28,7 +29,7 @@ test('Rendimiento permite recuperar un fallo de conexión sin salir de la pesta�
   await page.route('**/api/parcelas',r=>r.fulfill({json:[plot]}));
   let available=false;
   await page.route('**/api/rendimiento?*',r=>available?r.fulfill({json:payload()}):r.fulfill({status:503,json:{error:'sin conexión'}}));
-  await page.goto('/');await expect(page.getByRole('alert')).toContainText('No se pudieron cargar');
+  await page.goto('/');await waitForWorkspace(page);await expect(page.getByRole('alert')).toContainText('No se pudieron cargar');
   const retry=page.getByRole('button',{name:'Reintentar rendimiento'});await expect(retry).toBeVisible({timeout:1500});
   available=true;await retry.click();await expect(page.getByRole('heading',{name:'Parcela A',exact:true})).toBeVisible();
 });

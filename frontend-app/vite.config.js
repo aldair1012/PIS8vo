@@ -1,6 +1,5 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-import tailwindcss from '@tailwindcss/vite'
 
 // Plugin para inyectar import L from 'leaflet' en Geoman antes de evaluarse
 function leafletGeomanPlugin() {
@@ -21,7 +20,7 @@ function leafletGeomanPlugin() {
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [leafletGeomanPlugin(), react(), tailwindcss()],
+  plugins: [leafletGeomanPlugin(), react()],
   server: {
     port: 5500,
     strictPort: true

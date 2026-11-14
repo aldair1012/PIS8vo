@@ -1052,3 +1052,127 @@
 @media (max-width: 600px) { .zeasys-home .zeasys-hero-steps { gap: .65rem; max-width: 32ch; } }
 
 .zeasys-home .zeasys-preview-chart { height: 110px; min-height: 0; }
+
+/* --------------------------------------------------------------------------
+   6. Snap por sección y últimas secciones en modo claro
+   -------------------------------------------------------------------------- */
+
+/* Snap nativo: cada giro de la rueda asienta la vista en la sección en curso. */
+html.landing-snap { scroll-snap-type: y mandatory; scroll-padding-top: 0; }
+.zeasys-home #inicio,
+.zeasys-home #capacidades,
+.zeasys-home #datos,
+.zeasys-home #contacto {
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+}
+
+/* En pantallas cortas o estrechas no cabe una sección exacta en 100svh:
+   se mantiene el snap pero permitiendo posicionados intermedios (proximity). */
+@media (max-width: 1024px), (max-height: 760px) {
+  html.landing-snap { scroll-snap-type: y proximity; }
+}
+
+/* En escritorio con altura suficiente, las dos últimas secciones son
+   exactamente la pantalla y nada más. */
+@media (min-width: 1025px) and (min-height: 761px) {
+  .zeasys-home .zeasys-capabilities-section,
+  .zeasys-home .zeasys-data-section {
+    height: 100svh;
+    min-height: 100svh !important;
+    max-height: 100svh;
+    overflow: hidden;
+    padding-block: clamp(1.4rem, 2.6vh, 2.4rem) !important;
+  }
+  .zeasys-home .zeasys-section-heading {
+    margin-bottom: clamp(1.1rem, 2.2vh, 2rem);
+    padding-bottom: var(--zs-space-4);
+  }
+  .zeasys-home .zeasys-capability-grid > .zeasys-capability-flip {
+    min-height: clamp(280px, 46vh, 420px) !important;
+  }
+  .zeasys-home .zeasys-data-card--with-model {
+    min-height: 0;
+  }
+}
+
+/* Modo claro: las dos últimas páginas son blancas con texto verde bosque. */
+.zeasys-home.zeasys-home--light .zeasys-capabilities-section,
+.zeasys-home.zeasys-home--light .zeasys-data-section {
+  background: #ffffff !important;
+}
+.zeasys-home.zeasys-home--light .zeasys-data-section .zeasys-data-card {
+  background: #ffffff !important;
+  border-color: var(--zs-border-strong) !important;
+}
+.zeasys-home.zeasys-home--light :is(.zeasys-section-heading h2, .zeasys-data-card-copy h2) {
+  color: hsl(var(--zs-h-forest) 60% 13%) !important;
+}
+.zeasys-home.zeasys-home--light .zeasys-section-kicker {
+  color: var(--zs-forest-600) !important;
+}
+.zeasys-home.zeasys-home--light :is(.zeasys-section-heading p, .zeasys-data-card-copy p, .zeasys-data-card-copy li) {
+  color: hsl(var(--zs-h-forest) 52% 24%) !important;
+}
+.zeasys-home.zeasys-home--light .zeasys-section-heading {
+  border-bottom-color: var(--zs-border-strong);
+}
+.zeasys-home.zeasys-home--light .zeasys-agro-pattern--capabilities,
+.zeasys-home.zeasys-home--light .zeasys-agro-pattern--data {
+  opacity: .3 !important;
+}
+
+/* --------------------------------------------------------------------------
+   7. Inicio — comprobaciones honestas y entrada del gráfico demostrativo
+   -------------------------------------------------------------------------- */
+
+.zeasys-home .zeasys-hero-proof {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .45rem 1.4rem;
+  list-style: none;
+  margin: 1.15rem 0 0;
+  padding: 0;
+  color: var(--home-muted);
+  font-size: .74rem;
+}
+.zeasys-home .zeasys-hero-proof li {
+  display: inline-flex;
+  align-items: center;
+  gap: .45rem;
+}
+.zeasys-home .zeasys-hero-proof svg { color: var(--home-green); flex: 0 0 auto; }
+.zeasys-home .zeasys-hero-proof em { font-style: italic; }
+
+.zeasys-home .zeasys-preview-chart .chart-bar {
+  transform-origin: center bottom;
+  animation: zeasys-bar-grow .8s cubic-bezier(.2, .7, .3, 1) backwards;
+}
+.zeasys-home .zeasys-preview-chart .chart-bar-1 { animation-delay: .12s; }
+.zeasys-home .zeasys-preview-chart .chart-bar-2 { animation-delay: .2s; }
+.zeasys-home .zeasys-preview-chart .chart-bar-3 { animation-delay: .28s; }
+.zeasys-home .zeasys-preview-chart .chart-bar-4 { animation-delay: .36s; }
+.zeasys-home .zeasys-preview-chart .chart-bar-5 { animation-delay: .44s; }
+.zeasys-home .zeasys-preview-chart .chart-bar-6 { animation-delay: .52s; }
+.zeasys-home .zeasys-preview-chart .chart-line {
+  transform-origin: left center;
+  animation: zeasys-line-draw 1.05s .58s cubic-bezier(.2, .7, .3, 1) backwards;
+}
+@keyframes zeasys-bar-grow { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+@keyframes zeasys-line-draw { from { transform: rotate(-9deg) scaleX(0); } to { transform: rotate(-9deg) scaleX(1); } }
+
+@media (max-width: 600px) {
+  .zeasys-home .zeasys-hero-proof { gap: .4rem .9rem; font-size: .68rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .zeasys-home .zeasys-preview-chart :is(.chart-bar, .chart-line) { animation: none; }
+}
+
+/* El margen de anclaje heredado (92px, styles.css) ya no aplica: las
+   secciones son exactamente 100svh y el snap alinea el inicio de cada una. */
+.zeasys-home #inicio,
+.zeasys-home #capacidades,
+.zeasys-home #datos,
+.zeasys-home #contacto {
+  scroll-margin-top: 0;
+}

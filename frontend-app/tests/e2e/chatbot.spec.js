@@ -1,11 +1,12 @@
 import { test, expect } from '@playwright/test';
+import { waitForWorkspace } from './workspace-ready.js';
 
 test('los documentos consultados conservan la página PDF y descartan referencias desconocidas',async({page})=>{
   await page.route('**/backend-api/public/index.php/api/**',r=>r.fulfill({json:{}}));
   await page.route('**/api/auth/yo',r=>r.fulfill({json:{autenticado:true,usuario:{id:987,nombre:'Prueba'}}}));
   await page.route('**/api/parcelas',r=>r.fulfill({json:[{id:1,nombre_parcela:'Prueba',area:1}]}));
   await page.route('**/api/chat/preguntar',r=>r.fulfill({json:{texto:'Consulta el manual en la página indicada.',fuente_datos:{referencias_consultadas:[{archivo:'iniap-manual-produccion-maiz-2007.pdf',pagina_pdf:7},{archivo:'archivo-ajeno.pdf',pagina_pdf:1},{archivo:'iniap-manual-produccion-maiz-2007.pdf',pagina_pdf:24}]}}}));
-  await page.goto('/');
+  await page.goto('/');await waitForWorkspace(page);
   await page.getByRole('button',{name:'Abrir asistente ZeaSys'}).click();
   await page.getByRole('textbox',{name:'Escribe tu pregunta al asistente'}).fill('Consulta una referencia');
   await page.getByRole('button',{name:'Enviar pregunta'}).click();
@@ -26,7 +27,7 @@ test('limpiar una conversación descarta la respuesta que seguía en curso', asy
     started(); await gate;
     await route.fulfill({json:{texto:'Respuesta antigua que debe descartarse'}}).catch(()=>{});
   });
-  await page.goto('/');
+  await page.goto('/');await waitForWorkspace(page);
   await page.getByRole('button',{name:'Abrir asistente ZeaSys'}).click();
   await page.getByRole('textbox',{name:'Escribe tu pregunta al asistente'}).fill('Explica mi parcela');
   await page.getByRole('button',{name:'Enviar pregunta'}).click();

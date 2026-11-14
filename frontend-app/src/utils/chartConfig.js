@@ -1,7 +1,6 @@
 // Paleta de gráficos del espacio interno, alineada con el informe técnico
 // de ZeaSys: un acento agro-técnico apagado, verdes grisáceos y un latón
 // discreto para el caso destacado. Evita saturación y brillo.
-import { graphic } from 'echarts/core';
 
 export const chartPalette = ['#8FBB9A', '#C7A24E', '#9CC6E6', '#6FA98B', '#D08B6F', '#82A68E'];
 
@@ -25,24 +24,6 @@ export function getDashboardChartAnimation() {
   return typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
     ? false
     : { duration: 520, easing: 'easeOutCubic' };
-}
-
-/** Degradado horizontal suave para barras (de translúcido al color pleno). */
-export function barGradient(hex, alpha = 0.6) {
-  const hexAlpha = Math.round(alpha * 255).toString(16).padStart(2, '0');
-  return new graphic.LinearGradient(0, 0, 1, 0, [
-    { offset: 0, color: `${hex}${hexAlpha}` },
-    { offset: 1, color: hex },
-  ]);
-}
-
-/** Degradado vertical para áreas bajo líneas (color pleno arriba → casi transparente abajo). */
-export function areaGradient(hex, topAlpha = 0.42, bottomAlpha = 0.02) {
-  const alpha = (value) => Math.round(value * 255).toString(16).padStart(2, '0');
-  return new graphic.LinearGradient(0, 0, 0, 1, [
-    { offset: 0, color: `${hex}${alpha(topAlpha)}` },
-    { offset: 1, color: `${hex}${alpha(bottomAlpha)}` },
-  ]);
 }
 
 /** Tooltip ECharts coherente con el tema: fondo elevado, sombra y radio amplio. */

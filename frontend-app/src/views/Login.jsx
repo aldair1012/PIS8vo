@@ -20,11 +20,10 @@ import {
 import { authService } from '../services/api';
 import CornCobModel from '../templates/Common/CornCobModel';
 import PlatformLogo from '../templates/Common/PlatformLogo';
-import useSectionSnap from './landing/useSectionSnap';
-import heroPhoto from '../assets/landing/maize-hero.png';
-import yieldPhoto from '../assets/landing/yield.jpg';
-import climateSoilPhoto from '../assets/landing/climate-soil.jpg';
-import decisionsPhoto from '../assets/landing/field-decisions.jpg';
+import heroPhoto from '../assets/landing/maize-hero.webp';
+import yieldPhoto from '../assets/landing/yield.webp';
+import climateSoilPhoto from '../assets/landing/climate-soil.webp';
+import decisionsPhoto from '../assets/landing/field-decisions.webp';
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '200107748008-3j1itt8eobnbec6ur1n4vguj4r999k3d.apps.googleusercontent.com';
 const HERO_FLIP_DURATION_MS = 1020;
@@ -48,7 +47,7 @@ function CapabilityFlipCard({ icon, tone, title, summary, details, href, linkLab
     >
       <div className="zeasys-capability-flip-inner">
         <div className="zeasys-capability-face zeasys-capability-front">
-          <img className="zeasys-capability-image" src={image} alt="" style={{ objectPosition: imagePosition }} aria-hidden="true" />
+          <img className="zeasys-capability-image" src={image} alt="" style={{ objectPosition: imagePosition }} aria-hidden="true" loading="lazy" decoding="async" />
           <div className={`zeasys-capability-icon is-${tone}`}>{icon}</div>
           <h3>{title}</h3>
           <p>{summary}</p>
@@ -201,7 +200,12 @@ export default function Login({ onLoginSuccess, switchToRegister, switchToLogin,
   const scrollDistanceRef = useRef(0);
   const scrollFrameRef = useRef(null);
 
-  useSectionSnap(!authCardOpen && !mobileMenuOpen);
+  // CSS scroll snap (html.landing-snap, ver landing-system.css) se encarga de
+  // que la ventana siempre termine asentada sobre la sección visible.
+  useEffect(() => {
+    document.documentElement.classList.add('landing-snap');
+    return () => document.documentElement.classList.remove('landing-snap');
+  }, []);
 
   useEffect(() => {
     lastScrollYRef.current = window.scrollY;
@@ -309,8 +313,13 @@ export default function Login({ onLoginSuccess, switchToRegister, switchToLogin,
     googleCallbackRef.current = handleGoogleAuth;
   }, [handleGoogleAuth]);
 
+  // El SDK de Google pesa ~270 kB: solo se descarga cuando el usuario abre el
+  // acceso, no en la primera vista de la portada.
   useEffect(() => {
     if (!GOOGLE_CLIENT_ID) {
+      return undefined;
+    }
+    if (!authCardOpen) {
       return undefined;
     }
     let active = true;
@@ -365,7 +374,7 @@ export default function Login({ onLoginSuccess, switchToRegister, switchToLogin,
       script.removeEventListener('load', init);
       script.removeEventListener('error', fail);
     };
-  }, []);
+  }, [authCardOpen]);
 
   useEffect(() => {
     if (!authCardOpen || googleStatus !== 'ready') return undefined;
@@ -588,6 +597,7 @@ export default function Login({ onLoginSuccess, switchToRegister, switchToLogin,
             <h1>Decisiones mejores para <span>cada parcela.</span></h1>
             <p className="zeasys-home-lead">Ubica tu parcela, prepara una campaña de maíz y compara escenarios de cosecha con sus fuentes y límites a la vista.</p>
             <ol className="zeasys-hero-steps" aria-label="Cómo empezar"><li><span>01</span> Ubica tu parcela</li><li><span>02</span> Define la campaña</li><li><span>03</span> Revisa escenarios</li></ol>
+            <ul className="zeasys-hero-proof" aria-label="Compromisos de la plataforma"><li><CheckCircle2 size={15} aria-hidden="true" /> Fuentes y periodos visibles</li><li><CheckCircle2 size={15} aria-hidden="true" /> Sin datos inventados</li><li><CheckCircle2 size={15} aria-hidden="true" /> Maíz <span aria-hidden="true">·</span> <em>Zea mays</em></li></ul>
             <div className="zeasys-hero-actions"><button type="button" className="zeasys-primary-btn" onClick={() => document.getElementById('capacidades')?.scrollIntoView({ behavior: 'smooth' })}>Ver capacidades <ArrowRight size={17} /></button><button ref={heroAccessButtonRef} type="button" className="zeasys-secondary-link zeasys-secondary-button" onClick={irAlAcceso} aria-controls="zeasys-login-card" aria-expanded={authCardOpen}>Ingresar <ArrowRight size={15} /></button></div>
           </div>
           <div className="zeasys-hero-visual">

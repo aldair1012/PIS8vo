@@ -612,7 +612,7 @@ body.light-theme .zeasys-workspace .zeasys-chat-chips button { background: var(-
 .zeasys-workspace .annual-rain-reference a:focus-visible { outline: 2px solid var(--accent-primary); outline-offset: 3px; }
 .zeasys-workspace .ydp-rain-origin { display: block; margin-top: 4px; font-size: .75rem; color: var(--text-muted); }
 
-/* Clima: tendencias sem·nticas, badge neutral y foco visible de los interactivos. */
+/* Clima: tendencias sem√°nticas, badge neutral y foco visible de los interactivos. */
 .zeasys-workspace .dss-metric-trend.warn { color: var(--zs-warning); }
 .zeasys-workspace .dss-risk-badge-box.level-neutral { background: color-mix(in srgb, var(--zs-muted) 8%, transparent); border-color: var(--zs-border-strong); }
 .zeasys-workspace .dss-risk-icon-wrap.level-neutral { background: color-mix(in srgb, var(--zs-muted) 14%, transparent); color: var(--zs-muted); }

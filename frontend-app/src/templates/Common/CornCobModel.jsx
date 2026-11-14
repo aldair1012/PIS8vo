@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import fallbackPhoto from '../../assets/landing/field-decisions.jpg';
+import fallbackPhoto from '../../assets/landing/field-decisions.webp';
 
 const MODEL_DIRECTORY = './models/maiz/';
 
@@ -274,7 +274,7 @@ export default function CornCobModel() {
       />
       <div className="zeasys-corn-model-glow" aria-hidden="true" />
       {status === 'loading' && <span className="zeasys-corn-model-loading">Preparando modelo 3D</span>}
-      {status === 'error' && <img className="zeasys-corn-model-fallback" src={fallbackPhoto} alt="Cultivo de maíz" />}
+      {status === 'error' && <img className="zeasys-corn-model-fallback" src={fallbackPhoto} alt="Cultivo de maíz" loading="lazy" decoding="async" />}
     </div>
   );
 }

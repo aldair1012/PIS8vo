@@ -36,8 +36,7 @@ async function expectContentFits(page, state) {
 for (const [width, height] of sizes) {
   test(`portada, acceso y registro sin recortes a ${width}×${height}`, async ({ page }) => {
     await page.setViewportSize({ width, height });
-    await page.goto('/');
-    await page.evaluate(() => document.fonts.ready);
+    await page.goto('/');      await page.evaluate(() => document.fonts.ready);
     for (const state of ['portada', 'acceso', 'registro']) {
       if (state === 'acceso') {
         await page.locator('.zeasys-hero-actions button').filter({ hasText: 'Ingresar' }).click();
@@ -67,8 +66,7 @@ for (const [width, height] of sizes) {
 test('la rueda permite leer el final de secciones largas sin saltos automáticos', async ({ page }) => {
   await page.setViewportSize({ width: 944, height: 994 });
   await page.emulateMedia({ reducedMotion: 'no-preference' });
-  await page.goto('/');
-  await page.evaluate(() => document.fonts.ready);
+  await page.goto('/');    await page.evaluate(() => document.fonts.ready);
   await page.evaluate(() => {
     const nextTop = document.getElementById('capacidades').getBoundingClientRect().top + scrollY;
     scrollTo({ top: nextTop - innerHeight * .6 - 5, behavior: 'instant' });

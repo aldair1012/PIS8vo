@@ -1,6 +1,7 @@
 import {test,expect} from '@playwright/test';
 import {mkdirSync} from 'node:fs';
 import {plot,sowing,yieldData} from '../fixtures/explanationData.mjs';
+import { waitForWorkspace } from './workspace-ready.js';
 const reference={valor:537.4,unidad:'mm/año',fuente:'INAMHI',periodo:'2000–2019',años_completos:18,estacion:'PORTOVIEJO-UTM',distancia_km:2,url:'https://www.datosabiertos.gob.ec/'};
 async function prepare(page,{width=1440,theme='light'}={}){
   await page.setViewportSize({width,height:950});await page.emulateMedia({reducedMotion:'reduce'});
@@ -12,7 +13,7 @@ async function prepare(page,{width=1440,theme='light'}={}){
   await page.route('**/api/rendimiento?*',r=>r.fulfill({json:data}));
   await page.route('**/api/escenarios?*',r=>r.fulfill({json:{...sowing,cultivo_activo:{...plot,tipo_fecha_siembra:'prevista',ciclo_dias:120,riego_tipo:'goteo'}}}));
   await page.route('**/api/parcelas/valores-ubicacion?*',r=>r.fulfill({json:{exito:true,lluvia_anual_referencia:reference,precipitacion:537.4,temperatura:25,humedad:75,ph_suelo:6.2,tipo_suelo:'franco'}}));
-  await page.goto('/');await expect(page.locator('.ydp-metrics')).toBeVisible();
+  await page.goto('/');await waitForWorkspace(page);await expect(page.locator('.ydp-metrics')).toBeVisible();
 }
 async function navigate(page,name){const button=page.getByRole('button',{name,exact:true});if(!await button.isVisible())await page.getByRole('button',{name:'Expandir barra lateral'}).click();await button.click();}
 test('la comparación publica la referencia anual sin modificar las entradas de la ejecución',async({page})=>{

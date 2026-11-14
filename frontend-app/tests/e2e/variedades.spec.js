@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { waitForWorkspace } from './workspace-ready.js';
 
 // Datos ficticios de parcela. Las fichas y la evaluación salen del servicio real.
 const root = fileURLToPath(new URL('../../../', import.meta.url)).replaceAll('\\', '/');
@@ -35,7 +36,7 @@ for (const theme of ['light', 'dark']) {
         requests.push(payload);
         return route.fulfill({ json: { exito: true, evaluacion: evaluations[payload.objetivo] } });
       });
-      await page.goto('/');
+      await page.goto('/');await waitForWorkspace(page);
       const navigation = page.getByRole('button', { name: 'Simular cosecha', exact: true });
       if (!await navigation.isVisible()) await page.getByRole('button', { name: 'Expandir barra lateral' }).click();
       await navigation.click();
@@ -85,7 +86,7 @@ test('canguil ofrece su ficha y evita una simulación específica sin soporte', 
   await page.route('**/backend-api/public/index.php/api/parcelas', route => route.fulfill({ json: [{ id: 2, nombre_parcela: 'Canguil ficticio', area: 1, variedad_maiz: 'INIAP 198 Canguil', tipo_maiz: 'Duro Amarillo / Blanco', ubicacion: 'Pichincha', altitud: 2700, ph: 6.2 }] }));
   await page.route('**/backend-api/public/index.php/api/parcelas/valores-ubicacion*', route => route.fulfill({ json: { exito: true, area_simulada: 1 } }));
   await page.route('**/backend-api/public/index.php/api/simulaciones/evaluar-variedades', route => route.fulfill({ json: { exito: true, evaluacion: evaluations.perfil_canguil } }));
-  await page.goto('/');
+  await page.goto('/');await waitForWorkspace(page);
   await page.getByRole('button', { name: 'Simular cosecha', exact: true }).click();
   await page.locator('#simular-parcela').selectOption('2');
   await expect(page.getByRole('button', { name: 'Ejecutar Simulación', exact: true })).toBeDisabled();
