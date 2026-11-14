@@ -92,6 +92,12 @@ export default function DashboardScenario({ cultivoElegidoId, añoSeleccionado, 
     requestAnimationFrame(() => planButton.current?.focus({ preventScroll: true }));
   }, [editingKey]);
 
+  useEffect(() => {
+    if (!notice) return undefined;
+    const timer = setTimeout(() => setNotice(null), 6000);
+    return () => clearTimeout(timer);
+  }, [notice]);
+
   if (loading) {
     return <div className="dashboard-view dashboard-view--scenario ydp-dashboard sowing-dashboard"><div className="sowing-loading" role="status" aria-busy="true"><span className="ydp-loader" aria-hidden="true"/><p>Cargando el plan de tu parcela…</p><div className="sowing-loading-placeholder" aria-hidden="true"/></div></div>;
   }
@@ -156,7 +162,7 @@ export default function DashboardScenario({ cultivoElegidoId, añoSeleccionado, 
 
     {current?.refreshError&&<div className="sowing-refresh-error" role="alert"><p>{current.refreshError}</p><button type="button" className="sowing-secondary" onClick={()=>setReload(value=>value+1)}>Volver a cargar los datos</button></div>}
 
-    <DashboardPanel id="sowing-main-plan" title="Tu plan de siembra" subtitle="Estas son las fechas y los datos de esta parcela." icon={Sprout} action={!editing&&<button ref={planButton} data-plot-id={lot.id} type="button" className="ydp-primary-action" aria-expanded={false} aria-controls="sowing-plan-editor" onClick={openPlan}><Pencil size={18} aria-hidden="true"/>{hasPlan?'Editar mi plan':'Completar mi plan'}</button>}>
+    <DashboardPanel id="sowing-main-plan" title="Tu plan de siembra" subtitle="Estas son las fechas y los datos de esta parcela." icon={Sprout} action={!editing&&<button ref={planButton} data-plot-id={lot.id} type="button" className="ydp-primary-action" onClick={openPlan}><Pencil size={18} aria-hidden="true"/>{hasPlan?'Editar mi plan':'Completar mi plan'}</button>}>
       {notice?.key===requestKey&&<p className="sowing-saved" role="status"><Check size={20} aria-hidden="true"/>{notice.message}</p>}
       {editing?<div id="sowing-plan-editor"><SowingPlanForm key={`${lot.id}:${reload}`} plot={lot} suggestion={plan} onCancel={closePlan} onSaved={patch=>{
         setResponse(previous=>previous?.key===requestKey?{...previous,data:{...previous.data,cultivo_activo:{...previous.data.cultivo_activo,...patch},calendario_parcela:null}}:previous);

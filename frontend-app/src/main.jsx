@@ -4,6 +4,7 @@ import './index.css';
 import App from './App.jsx';
 import './assets/product-design.css';
 import './assets/kpi-design.css';
+import './assets/chart-panel.css';
 import './assets/tailwind-pilot.css';
 
 class ErrorBoundary extends Component {

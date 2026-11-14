@@ -1,0 +1,85 @@
+/* Paneles de gráficos premium (sello ZeaSys): encabezados con chip de acento,
+   riel superior con degradado, entrada escalonada y realces de hover.
+   Vivo en la capa interna; no afecta a la landing pública. */
+
+.zeasys-workspace .ydp-panel,
+.zeasys-workspace .ydp-reference-panel,
+.zeasys-workspace .sowing-disclosure,
+.zeasys-workspace .glass-panel.chart-panel-interactive {
+  position: relative;
+}
+
+/* Chip de icono para los paneles con encabezado (DashboardPanel). */
+.zeasys-workspace .ydp-panel-heading > svg {
+  flex: 0 0 38px;
+  width: 38px;
+  height: 38px;
+  padding: 9px;
+  box-sizing: border-box;
+  border-radius: 12px;
+  color: var(--ydp-accent);
+  background: radial-gradient(circle at 30% 30%, color-mix(in srgb, var(--ydp-accent) 22%, transparent), color-mix(in srgb, var(--ydp-accent) 6%, transparent));
+  border: 1px solid color-mix(in srgb, var(--ydp-accent) 26%, transparent);
+}
+
+/* Riel superior con degradado que cruza el panel. */
+.zeasys-workspace .ydp-panel::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 22px;
+  right: 22px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, color-mix(in srgb, var(--ydp-accent) 60%, transparent) 35%, color-mix(in srgb, var(--ydp-accent) 90%, #fff 10%) 50%, color-mix(in srgb, var(--ydp-accent) 60%, transparent) 65%, transparent 100%);
+  opacity: .75;
+  pointer-events: none;
+}
+
+/* Riel de acento lateral para los paneles interactivos (explicación IA). */
+.zeasys-workspace .chart-panel-interactive::after {
+  content: "";
+  position: absolute;
+  top: 14px;
+  bottom: 14px;
+  left: 0;
+  width: 3px;
+  border-radius: 0 4px 4px 0;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--zs-accent) 85%, #fff 15%), color-mix(in srgb, var(--zs-accent) 55%, transparent));
+  opacity: .9;
+}
+
+.zeasys-workspace .chart-panel-interactive { cursor: pointer; transition: transform .22s ease, border-color .22s ease, box-shadow .22s ease; }
+.zeasys-workspace .chart-panel-interactive:hover { transform: translateY(-2px); border-color: var(--zs-border-strong); }
+
+/* Entrada escalonada de los paneles de gráficos. */
+.zeasys-workspace .ydp-chart-grid > .ydp-panel:nth-child(1) { animation-delay: 40ms; }
+.zeasys-workspace .ydp-chart-grid > .ydp-panel:nth-child(2) { animation-delay: 120ms; }
+.zeasys-workspace .ydp-chart-grid > .ydp-panel:nth-child(3) { animation-delay: 200ms; }
+.zeasys-workspace .ydp-chart-grid > .ydp-panel:nth-child(4) { animation-delay: 280ms; }
+.zeasys-workspace .chart-grid > .glass-panel:nth-child(1) { animation: page-fade-in .5s ease both; }
+.zeasys-workspace .chart-grid > .glass-panel:nth-child(2) { animation: page-fade-in .5s .12s ease both; }
+
+/* El hint «Toca el gráfico…» se repite en cada panel; uno por vista basta. */
+.zeasys-workspace .ydp-panel .dashboard-explain-hint { display: none; }
+
+/* Barras de simulaciones: degradado y halo agrícola. */
+.zeasys-workspace .ydp-run-track > span {
+  background: linear-gradient(90deg, color-mix(in srgb, var(--ydp-accent) 55%, transparent), var(--ydp-accent));
+  box-shadow: 0 0 14px color-mix(in srgb, var(--ydp-accent) 45%, transparent);
+  transition: width .6s cubic-bezier(.22, .61, .36, 1);
+}
+
+/* Barras de suelo / agua: degradado sobrio dentro de la paleta agro. */
+.zeasys-workspace .soil-meter-fill {
+  background: linear-gradient(90deg, color-mix(in srgb, var(--zs-info) 55%, transparent), color-mix(in srgb, var(--zs-info) 75%, #fff 20%)) !important;
+  box-shadow: 0 0 10px color-mix(in srgb, var(--zs-info) 35%, transparent);
+}
+
+/* KPI enfocado dentro de la rejilla de estado: anillo de precisión. */
+.zeasys-workspace .ydp-metric--feature { outline: 1px solid color-mix(in srgb, var(--ydp-accent) 55%, transparent); outline-offset: -1px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .zeasys-workspace .chart-panel-interactive { transition: none; }
+  .zeasys-workspace .chart-panel-interactive:hover { transform: none; }
+  .zeasys-workspace .chart-grid > .glass-panel { animation: none; }
+}

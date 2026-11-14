@@ -7,6 +7,7 @@ import InteractiveKPI from '../templates/Common/InteractiveKPI';
 import SimulationInfoCard from '../templates/Common/SimulationInfoCard';
 import { DashboardSectionHeading } from '../templates/Common/DashboardSectionHeading';
 import useExplicacionIA from '../hooks/usarExplicacionIA';
+import useTema from '../hooks/useTema';
 import { financeNumber as toFiniteNumber, financeInputNumber, financeInputText, financeBudgetPreview, financeSourceLabel } from '../utils/financeBudget';
 
 ChartJS.register(...registerables);
@@ -24,6 +25,7 @@ const formatCurrency = (value) => toFiniteNumber(value) === null
 const formatNumber = (value, digits = 2) => toFiniteNumber(value) === null ? 'No disponible' : Number(value).toLocaleString('es-EC', { maximumFractionDigits: digits });
 
 export default function DashboardFinance({ cultivoElegidoId, añoSeleccionado, onNavigate, onDashboardData }) {
+  const temaClaro = useTema();
   const [snapshot, setSnapshot] = useState(null);
   const selectionKey = JSON.stringify([cultivoElegidoId ?? null, añoSeleccionado ?? null]);
   const data = snapshot?.key === selectionKey ? snapshot.data : null;
@@ -289,7 +291,7 @@ export default function DashboardFinance({ cultivoElegidoId, añoSeleccionado, o
   const riesgoEstado = /alto|elevado|critico|crítico/i.test(riesgoFinanciero) ? 'riesgoso' : (/bajo/i.test(riesgoFinanciero) ? 'favorable' : 'regular');
 
   const getSensibilidadCardStyle = (marginVal) => {
-    const isLight = typeof document !== 'undefined' && document.body.classList.contains('light-theme');
+    const isLight = temaClaro;
     if (marginVal === null) return { background: 'var(--surface-elevated)', border: '1px solid var(--border-subtle)', color: 'var(--text-muted)', boxShadow: 'none' };
     if (marginVal < 0) {
       return {
@@ -465,7 +467,7 @@ export default function DashboardFinance({ cultivoElegidoId, añoSeleccionado, o
                 PRECIO MAÍZ ($/qq)
                 <span title="Precio de venta estimado en finca por quintal (45.36 kg / 100 lb) de grano seco." style={{ cursor: 'help', color: 'var(--text-subtle)', fontWeight: 'bold' }}>ⓘ</span>
               </label>
-              <input type="number" min="0" step="any" onKeyDown={preventNegativeKeys} className="form-input" style={{ padding: '0.45rem 0.6rem', fontSize: '0.82rem' }} value={precioMaizQq} onChange={handleInput(setPrecioMaizQq)} placeholder="Sin dato" />
+              <input type="text" inputMode="decimal" onKeyDown={preventNegativeKeys} className="form-input" style={{ padding: '0.45rem 0.6rem', fontSize: '0.82rem' }} value={precioMaizQq} onChange={handleInput(setPrecioMaizQq)} placeholder="Sin dato" />
             </div>
 
             <div className="form-group" style={{ marginBottom: 0 }}>
@@ -473,7 +475,7 @@ export default function DashboardFinance({ cultivoElegidoId, añoSeleccionado, o
                 RENDIMIENTO (qq/ha)
                 <span title="Rendimiento supuesto por hectárea en quintales; puede provenir de simulaciones guardadas o de tu entrada manual." style={{ cursor: 'help', color: 'var(--text-subtle)', fontWeight: 'bold' }}>ⓘ</span>
               </label>
-              <input type="number" min="0" step="any" onKeyDown={preventNegativeKeys} className="form-input" style={{ padding: '0.45rem 0.6rem', fontSize: '0.82rem' }} value={rendimientoQq} onChange={handleInput(setRendimientoQq)} placeholder="Sin dato" />
+              <input type="text" inputMode="decimal" onKeyDown={preventNegativeKeys} className="form-input" style={{ padding: '0.45rem 0.6rem', fontSize: '0.82rem' }} value={rendimientoQq} onChange={handleInput(setRendimientoQq)} placeholder="Sin dato" />
             </div>
 
             <div className="form-group" style={{ marginBottom: 0 }}>
@@ -481,7 +483,7 @@ export default function DashboardFinance({ cultivoElegidoId, añoSeleccionado, o
                 SEMILLAS ($/ha)
                 <span title="Costo de adquisición del híbrido de maíz seleccionado y curado de semilla por hectárea." style={{ cursor: 'help', color: 'var(--text-subtle)', fontWeight: 'bold' }}>ⓘ</span>
               </label>
-              <input type="number" min="0" step="any" onKeyDown={preventNegativeKeys} className="form-input" style={{ padding: '0.45rem 0.6rem', fontSize: '0.82rem' }} value={costoSemilla} onChange={handleInput(setCostoSemilla)} placeholder="Sin dato" />
+              <input type="text" inputMode="decimal" onKeyDown={preventNegativeKeys} className="form-input" style={{ padding: '0.45rem 0.6rem', fontSize: '0.82rem' }} value={costoSemilla} onChange={handleInput(setCostoSemilla)} placeholder="Sin dato" />
             </div>
 
             <div className="form-group" style={{ marginBottom: 0 }}>
@@ -489,7 +491,7 @@ export default function DashboardFinance({ cultivoElegidoId, añoSeleccionado, o
                 FERTILIZACIÓN ($/ha)
                 <span title="Inversión en fertilizantes edáficos y foliares (Urea, DAP, KCl, micronutrientes) por hectárea." style={{ cursor: 'help', color: 'var(--text-subtle)', fontWeight: 'bold' }}>ⓘ</span>
               </label>
-              <input type="number" min="0" step="any" onKeyDown={preventNegativeKeys} className="form-input" style={{ padding: '0.45rem 0.6rem', fontSize: '0.82rem' }} value={costoFert} onChange={handleInput(setCostoFert)} placeholder="Sin dato" />
+              <input type="text" inputMode="decimal" onKeyDown={preventNegativeKeys} className="form-input" style={{ padding: '0.45rem 0.6rem', fontSize: '0.82rem' }} value={costoFert} onChange={handleInput(setCostoFert)} placeholder="Sin dato" />
             </div>
 
             <div className="form-group" style={{ marginBottom: 0 }}>
@@ -497,7 +499,7 @@ export default function DashboardFinance({ cultivoElegidoId, añoSeleccionado, o
                 RIEGO ($/ha)
                 <span title="Costo operativo del agua: energía de bombeo, mantenimiento de tuberías o canon de riego por hectárea." style={{ cursor: 'help', color: 'var(--text-subtle)', fontWeight: 'bold' }}>ⓘ</span>
               </label>
-              <input type="number" min="0" step="any" onKeyDown={preventNegativeKeys} className="form-input" style={{ padding: '0.45rem 0.6rem', fontSize: '0.82rem' }} value={costoRiego} onChange={handleInput(setCostoRiego)} placeholder="Sin dato" />
+              <input type="text" inputMode="decimal" onKeyDown={preventNegativeKeys} className="form-input" style={{ padding: '0.45rem 0.6rem', fontSize: '0.82rem' }} value={costoRiego} onChange={handleInput(setCostoRiego)} placeholder="Sin dato" />
             </div>
 
             <div className="form-group" style={{ marginBottom: 0 }}>
@@ -505,7 +507,7 @@ export default function DashboardFinance({ cultivoElegidoId, añoSeleccionado, o
                 FITOSANITARIOS ($/ha)
                 <span title="Inversión en plaguicidas, herbicidas pre y post-emergentes, fungicidas e insecticidas por hectárea." style={{ cursor: 'help', color: 'var(--text-subtle)', fontWeight: 'bold' }}>ⓘ</span>
               </label>
-              <input type="number" min="0" step="any" onKeyDown={preventNegativeKeys} className="form-input" style={{ padding: '0.45rem 0.6rem', fontSize: '0.82rem' }} value={costoProteccion} onChange={handleInput(setCostoProteccion)} placeholder="Sin dato" />
+              <input type="text" inputMode="decimal" onKeyDown={preventNegativeKeys} className="form-input" style={{ padding: '0.45rem 0.6rem', fontSize: '0.82rem' }} value={costoProteccion} onChange={handleInput(setCostoProteccion)} placeholder="Sin dato" />
             </div>
 
             <div className="form-group" style={{ marginBottom: 0 }}>
@@ -513,7 +515,7 @@ export default function DashboardFinance({ cultivoElegidoId, añoSeleccionado, o
                 OTROS C. VAR. ($/ha)
                 <span title="Costos variables operativos: mano de obra, alquiler de tractor o cosechadora combinada, flete del grano." style={{ cursor: 'help', color: 'var(--text-subtle)', fontWeight: 'bold' }}>ⓘ</span>
               </label>
-              <input type="number" min="0" step="any" onKeyDown={preventNegativeKeys} className="form-input" style={{ padding: '0.45rem 0.6rem', fontSize: '0.82rem' }} value={otrosVar} onChange={handleInput(setOtrosVar)} placeholder="Sin dato" />
+              <input type="text" inputMode="decimal" onKeyDown={preventNegativeKeys} className="form-input" style={{ padding: '0.45rem 0.6rem', fontSize: '0.82rem' }} value={otrosVar} onChange={handleInput(setOtrosVar)} placeholder="Sin dato" />
             </div>
 
             <div className="form-group" style={{ marginBottom: 0 }}>
@@ -521,7 +523,7 @@ export default function DashboardFinance({ cultivoElegidoId, añoSeleccionado, o
                 C. FIJOS ($/ha)
                 <span title="Gastos fijos obligatorios: arriendo de tierra, administración y supervisión del lote." style={{ cursor: 'help', color: 'var(--text-subtle)', fontWeight: 'bold' }}>ⓘ</span>
               </label>
-              <input type="number" min="0" step="any" onKeyDown={preventNegativeKeys} className="form-input" style={{ padding: '0.45rem 0.6rem', fontSize: '0.82rem' }} value={costosFijos} onChange={handleInput(setCostosFijos)} placeholder="Sin dato" />
+              <input type="text" inputMode="decimal" onKeyDown={preventNegativeKeys} className="form-input" style={{ padding: '0.45rem 0.6rem', fontSize: '0.82rem' }} value={costosFijos} onChange={handleInput(setCostosFijos)} placeholder="Sin dato" />
             </div>
 
             <button type="submit" className="btn btn-primary" style={{ padding: '0.48rem 0.75rem', fontSize: '0.82rem', fontWeight: 700 }}>Calcular</button>
@@ -980,19 +982,19 @@ export default function DashboardFinance({ cultivoElegidoId, añoSeleccionado, o
               </div>
               <div className="glass-card-body" style={{ padding: '0.6rem 0.85rem 1rem 0.85rem' }}>
                 <div className="table-responsive-container" tabIndex={0} role="region" aria-label="Tabla de sensibilidad económica, desplazable">
-                  <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '6px 7px', textAlign: 'center' }}>
+                  <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '3px 4px', textAlign: 'center' }}>
                     <thead>
                       <tr>
-                        <th style={{ padding: '0.45rem 0.35rem', color: 'var(--text-subtle)', fontSize: '0.72rem', fontWeight: 700, textAlign: 'left' }}>Rend. ↓ | Precio →</th>
+                        <th style={{ padding: '0.4rem 0.15rem', color: 'var(--text-subtle)', fontSize: '0.68rem', fontWeight: 700, textAlign: 'left' }}>Rend. ↓ | Precio →</th>
                         {precios_rango.map(p => (
-                          <th key={p} style={{ padding: '0.45rem 0.35rem', color: 'var(--text-primary)', fontSize: '0.82rem', fontWeight: 800 }}>${p}/qq</th>
+                          <th key={p} style={{ padding: '0.4rem 0.15rem', color: 'var(--text-primary)', fontSize: '0.76rem', fontWeight: 800, whiteSpace: 'nowrap' }}>${p}/qq</th>
                         ))}
                       </tr>
                     </thead>
                     <tbody>
                       {rendimientos_rango.map(r => (
                         <tr key={r}>
-                          <td style={{ padding: '0.5rem 0.35rem', fontWeight: 700, textAlign: 'left', color: 'var(--text-muted)', fontSize: '0.8rem', whiteSpace: 'nowrap' }}>{r} qq/ha</td>
+                          <td style={{ padding: '0.4rem 0.15rem', fontWeight: 700, textAlign: 'left', color: 'var(--text-muted)', fontSize: '0.72rem', whiteSpace: 'nowrap' }}>{r} qq/ha</td>
                           {precios_rango.map(p => {
                             const item = sensibilidad.find(s => s.precio === p && s.rendimiento === r);
                             const marginVal = toFiniteNumber(item?.margen);
@@ -1000,8 +1002,8 @@ export default function DashboardFinance({ cultivoElegidoId, añoSeleccionado, o
                             return (
                               <td 
                                 key={p} 
-                                style={{ 
-                                  padding: '0.65rem 0.35rem', 
+                                style={{
+                                  padding: '0.5rem 0.15rem',
                                   background: cardSt.background,
                                   border: cardSt.border,
                                   borderRadius: '10px',
@@ -1009,11 +1011,11 @@ export default function DashboardFinance({ cultivoElegidoId, añoSeleccionado, o
                                   transition: 'transform 0.15s ease, box-shadow 0.15s ease'
                                 }}
                               >
-                                <div style={{ display: 'inline-flex', alignItems: 'baseline', justifyContent: 'center', gap: '2px' }}>
-                                  <span style={{ fontWeight: 800, fontSize: '0.88rem', color: cardSt.color }}>
+                                <div style={{ display: 'inline-flex', alignItems: 'baseline', justifyContent: 'center', gap: '1px' }}>
+                                  <span style={{ fontWeight: 800, fontSize: '0.8rem', color: cardSt.color, whiteSpace: 'nowrap' }}>
                                     {formatCurrency(marginVal)}
                                   </span>
-                                  <span style={{ fontSize: '0.62rem', fontWeight: 600, color: cardSt.color, opacity: 0.85 }}>/ha</span>
+                                  <span style={{ fontSize: '0.58rem', fontWeight: 600, color: cardSt.color, opacity: 0.85 }}>/ha</span>
                                 </div>
                               </td>
                             );
@@ -1060,27 +1062,41 @@ export default function DashboardFinance({ cultivoElegidoId, añoSeleccionado, o
                     datasets: [{
                       data: expenseItems.map(item => Math.abs(item.amount)),
                       backgroundColor: expenseItems.map((_, idx) => colorPalette[idx % colorPalette.length]),
-                      borderColor: 'transparent',
-                      borderWidth: 2,
-                      hoverOffset: 8
+                      borderColor: temaClaro ? '#f6f9f4' : '#0b2417',
+                      borderWidth: 3,
+                      spacing: 3,
+                      hoverOffset: 14,
+                      hoverBorderWidth: 3,
                     }]
                   };
 
                   const chartOptions = {
                     responsive: true,
                     maintainAspectRatio: false,
-                    cutout: '70%',
+                    cutout: '72%',
+                    animation: { duration: 650, easing: 'easeOutQuart' },
                     plugins: {
                       legend: {
                         display: false
                       },
                       tooltip: {
+                        backgroundColor: temaClaro ? '#FBFCFA' : '#141F17',
+                        borderColor: temaClaro ? 'rgba(31, 92, 56, .22)' : 'rgba(160, 185, 170, .30)',
+                        borderWidth: 1,
+                        padding: 12,
+                        cornerRadius: 10,
+                        boxPadding: 6,
+                        usePointStyle: true,
+                        titleColor: temaClaro ? '#14231A' : '#E8EDE8',
+                        bodyColor: temaClaro ? '#3A4A41' : '#9DB09F',
+                        titleFont: { size: 12, weight: 'bold' },
+                        bodyFont: { size: 12, weight: 'bold' },
                         callbacks: {
                           label: (context) => {
                             const label = context.label || '';
                             const val = context.raw || 0;
                             const pct = totalExpenses > 0 ? (val / totalExpenses) * 100 : 0;
-                            return ` ${label}: $${val.toLocaleString('es-EC')} (${formatNumber(pct, 1)}%)`;
+                            return ` $${val.toLocaleString('es-EC')} (${formatNumber(pct, 1)} %) · ${label}`;
                           }
                         }
                       }
@@ -1126,7 +1142,7 @@ export default function DashboardFinance({ cultivoElegidoId, añoSeleccionado, o
                                 </div>
                               </div>
                               <div style={{ width: '100%', height: '5px', background: 'var(--border-subtle)', borderRadius: '99px', overflow: 'hidden' }}>
-                                <div style={{ width: `${Math.min(100, (absVal / totalExpenses) * 100)}%`, height: '100%', background: itemColor, borderRadius: '99px' }} />
+                                <div style={{ width: `${Math.min(100, (absVal / totalExpenses) * 100)}%`, height: '100%', background: itemColor, borderRadius: '99px', transition: 'width .65s cubic-bezier(.22,.61,.36,1)' }} />
                               </div>
                             </div>
                           );

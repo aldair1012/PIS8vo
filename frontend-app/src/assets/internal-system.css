@@ -225,6 +225,10 @@ body.light-theme .zeasys-workspace .zeasys-chat-chips button { background: var(-
 }
 .zeasys-workspace .navbar-title { color: var(--zs-text); font-size: 1rem; letter-spacing: -.025em; }
 .zeasys-workspace .content-body:has(.dashboard-view) { padding: clamp(.9rem, 2vw, 2rem) !important; }
+/* Deja un carril para la pestaña fija del asistente en escritorio/tablet. */
+@media (min-width: 769px) {
+  .zeasys-workspace .content-body:has(.dashboard-view) { padding-right: clamp(4rem, 6vw, 4.75rem) !important; }
+}
 .zeasys-workspace .dashboard-view { width: 100%; min-width: 0; padding-bottom: 2rem; }
 
 .zeasys-workspace .dashboard-intro {
@@ -535,6 +539,11 @@ body.light-theme .zeasys-workspace .zeasys-chat-chips button { background: var(-
 .zeasys-workspace .simulation-info-card-value { margin: 14px 0 4px; color: var(--zs-text); font-size: 25px; font-weight: 750; font-variant-numeric: tabular-nums; }
 .zeasys-workspace .simulation-info-card-value span { color: var(--zs-muted); font-size: 12px; font-weight: 600; }
 .zeasys-workspace .simulation-info-card p { margin: 12px 0 0; color: var(--zs-muted); font-size: 13px; line-height: 1.55; }
+/* Mobile: la tarjeta de explicación se apoya sobre el botón redondo del chat. */
+@media (max-width: 768px) {
+  .zeasys-workspace .simulation-info-card { bottom: 4.5rem; }
+}
+
 .zeasys-workspace .simulation-info-card-head { position:sticky;top:-18px;z-index:2;padding-block:8px 12px;background:var(--zs-surface); }
 .zeasys-workspace .simulation-info-section { margin-top:18px; }
 .zeasys-workspace .simulation-info-section h4 { margin:0;color:var(--zs-text);font-size:14px;font-weight:700; }
@@ -602,3 +611,11 @@ body.light-theme .zeasys-workspace .zeasys-chat-chips button { background: var(-
 .zeasys-workspace .annual-rain-reference a { display: inline-flex; align-items: center; min-height: 44px; color: var(--accent-primary); text-decoration: underline; }
 .zeasys-workspace .annual-rain-reference a:focus-visible { outline: 2px solid var(--accent-primary); outline-offset: 3px; }
 .zeasys-workspace .ydp-rain-origin { display: block; margin-top: 4px; font-size: .75rem; color: var(--text-muted); }
+
+/* Clima: tendencias sem�nticas, badge neutral y foco visible de los interactivos. */
+.zeasys-workspace .dss-metric-trend.warn { color: var(--zs-warning); }
+.zeasys-workspace .dss-risk-badge-box.level-neutral { background: color-mix(in srgb, var(--zs-muted) 8%, transparent); border-color: var(--zs-border-strong); }
+.zeasys-workspace .dss-risk-icon-wrap.level-neutral { background: color-mix(in srgb, var(--zs-muted) 14%, transparent); color: var(--zs-muted); }
+.zeasys-workspace :is(.dss-metric-col, .dss-risk-badge-box, .chart-panel-interactive, .dss-timeline-item, .phase-step-card):focus-visible { outline: 3px solid var(--zs-focus); outline-offset: 3px; scroll-margin-block: 32px; }
+@media (prefers-reduced-motion: reduce) { .zeasys-workspace :is(.dss-metric-col, .dss-risk-badge-box, .chart-panel-interactive, .dss-timeline-item, .phase-step-card) { transition: none; } }
+.zeasys-workspace .dashboard-section-heading-inner { min-width: 0; }

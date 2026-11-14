@@ -3,7 +3,7 @@ import { comparisonAnnualRain } from '../utils/annualRain';
 import { useEffect, useMemo, useState } from 'react';
 import { Activity, ArrowUpRight, BarChart3, CalendarDays, MapPin, Play, Plus, Sprout, Wheat } from 'lucide-react';
 import { dssService } from '../services/api';
-import { getDashboardChartColors } from '../utils/chartConfig';
+import { getDashboardChartColors, getChartTooltip } from '../utils/chartConfig';
 import { escapeChartText, validarRespuestaRendimiento, isYieldNumber, provinceFromLocation, regionalHistory, simulationHistory, yieldAnalysis } from '../utils/yieldDashboard';
 import sipa from '../data/sipa-maiz-duro-2020-2025.json';
 import ecuadorProvincias from '../data/ecuador-provincias.json';
@@ -11,7 +11,9 @@ import EChart from '../components/EChart';
 import ReferenciasMaiz from '../components/ReferenciasMaiz';
 import { DashboardMetric as MetricCard, DashboardPanel as Panel } from '../templates/Common/DashboardPrimitives';
 import useExplicacionIA from '../hooks/usarExplicacionIA';
+import useTema from '../hooks/useTema';
 import SimulationInfoCard from '../templates/Common/SimulationInfoCard';
+import { graphic } from 'echarts/core';
 
 const number = (value, digits = 2) => isYieldNumber(value)
   ? new Intl.NumberFormat('es-EC', { minimumFractionDigits: digits, maximumFractionDigits: digits }).format(value)
@@ -22,6 +24,12 @@ const validDate = (value) => {
   return Number.isNaN(parsed.getTime()) ? null : parsed;
 };
 const shortDate = (value) => validDate(value)?.toLocaleDateString('es-EC') ?? 'Fecha no registrada';
+const formatCell = (value) => {
+  if (isYieldNumber(value)) return number(value);
+  if (typeof value === 'boolean') return value ? 'Sí' : 'No';
+  if (value === null || value === undefined || String(value).trim() === '') return '—';
+  return String(value);
+};
 const latestYear = Math.max(...sipa.periodos.map(({ año }) => año));
 const geocodingCache = new Map();
 const inputLabels = {
@@ -37,13 +45,8 @@ const inputLabels = {
 };
 
 function useYieldChartColors() {
-  const [light, setLight] = useState(() => document.body.classList.contains('light-theme'));
-  useEffect(() => {
-    const observer = new MutationObserver(() => setLight(document.body.classList.contains('light-theme')));
-    observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
-    return () => observer.disconnect();
-  }, []);
-  return getDashboardChartColors(light);
+  const temaClaro = useTema();
+  return getDashboardChartColors(temaClaro);
 }
 
 function Legend({ items }) {
@@ -186,6 +189,29 @@ export default function DashboardRendimiento({ cultivoElegidoId, onNavigate, onD
   const selectedScenario = scenarioRows.find((row) => row.key === scenarioKey) ?? scenarioRows[0];
   const scenarioAxisUnit = scenarioUnit === 'yield' ? 't/ha' : 't';
   const shapExtent = Math.ceil(Math.max(0.1, ...contributionRows.map((row) => Math.abs(row.value))) * 10) / 10;
+  const visibleContributionSum = contributionRows.reduce((sum, row) => sum + row.value, 0);
+  const waterfallBase = isYieldNumber(simulation?.rendimiento_t_ha) ? simulation.rendimiento_t_ha - visibleContributionSum : null;
+  const showWaterfall = isYieldNumber(waterfallBase) && waterfallBase >= 0;
+  const wfCategoryLabels = ['Base', ...contributionRows.map((row) => row.name), 'Predicción'];
+  const wfBase = [waterfallBase ?? 0];
+  const wfIncrement = ['-'];
+  const wfDecrement = ['-'];
+  const wfTotal = ['-'];
+  let wfCursor = waterfallBase ?? 0;
+  contributionRows.forEach((row) => {
+    const start = wfCursor;
+    wfCursor += row.value;
+    wfBase.push(Math.min(start, wfCursor));
+    if (row.value >= 0) { wfIncrement.push(row.value); wfDecrement.push('-'); } else { wfDecrement.push(-row.value); wfIncrement.push('-'); }
+    wfTotal.push('-');
+  });
+  wfBase.push(0);
+  wfIncrement.push('-');
+  wfDecrement.push('-');
+  wfTotal.push(simulation?.rendimiento_t_ha ?? '-');
+  const withAlpha = (hex, alpha) => `${hex}${Math.round(alpha * 255).toString(16).padStart(2, '0')}`;
+  const wfGradient = (hex) => new graphic.LinearGradient(0, 0, 1, 0, [{ offset: 0, color: withAlpha(hex, 0.35) }, { offset: 1, color: hex }]);
+  const barGradient = (hex) => new graphic.LinearGradient(0, 0, 1, 0, [{ offset: 0, color: withAlpha(hex, 0.55) }, { offset: 1, color: hex }]);
   const historyYears = sipa.periodos.map((item) => item.año);
 
 
@@ -268,52 +294,85 @@ export default function DashboardRendimiento({ cultivoElegidoId, onNavigate, onD
           <EChart
             ariaLabel="Comparación del rendimiento estimado en distintos escenarios climáticos"
             option={{
-              tooltip: { trigger: 'axis', axisPointer: { type: 'shadow', shadowStyle: { color: colors.grid } }, backgroundColor: colors.tooltipBg, borderColor: colors.tooltipBorder, borderWidth: 1, padding: [10, 12], textStyle: { color: colors.text, fontSize: 12 }, formatter: (params) => { const item = params[0]; const row = scenarioRows[item.dataIndex]; const total = row.produccion_total_t ?? (isYieldNumber(areaValue) ? row.rendimiento_t_ha * areaValue : null); return `<strong>${escapeChartText(item.name)}</strong><br/>Rendimiento: <b>${number(row.rendimiento_t_ha)} t/ha</b><br/>Producción: <b>${number(total)} t</b>`; } },
+              tooltip: getChartTooltip(colors, { formatter: (params) => { const item = params[0]; const row = scenarioRows[item.dataIndex]; const total = row.produccion_total_t ?? (isYieldNumber(areaValue) ? row.rendimiento_t_ha * areaValue : null); return `<strong>${escapeChartText(item.name)}</strong><br/>Rendimiento: <b>${number(row.rendimiento_t_ha)} t/ha</b><br/>Producción: <b>${number(total)} t</b>`; } }),
               grid: { left: 8, right: 64, top: 6, bottom: 34, containLabel: true },
               xAxis: { type: 'value', boundaryGap: [0, 0.12], axisLine: { show: false }, axisTick: { show: false }, splitLine: { lineStyle: { color: colors.grid, type: 'dashed' } }, axisLabel: { color: colors.muted, fontSize: 11 } },
               yAxis: { type: 'category', inverse: true, data: scenarioRows.map((row) => row.label), axisLine: { show: false }, axisTick: { show: false }, axisLabel: { color: colors.text, fontWeight: 600, fontSize: 12, margin: 14, width: 130, align: 'right' } },
               series: [{
                 type: 'bar',
-                data: scenarioRows.map((row) => ({
-                  value: scenarioUnit === 'yield' ? row.rendimiento_t_ha : row.produccion_total_t ?? (isYieldNumber(areaValue) ? row.rendimiento_t_ha * areaValue : null),
-                  itemStyle: {
-                    color: row.key === 'base' ? colors.primary : row.key === 'lluvioso' ? colors.sky : row.key === 'verano' ? colors.maize : colors.risk,
-                    borderRadius: [0, 6, 6, 0],
-                    borderColor: selectedScenario?.key === row.key ? colors.text : 'transparent',
-                    borderWidth: selectedScenario?.key === row.key ? 2 : 0,
-                  },
-                })),
-                barWidth: 36,
+                animationDuration: 620,
+                animationDelay: (idx) => idx * 90,
+                data: scenarioRows.map((row) => {
+                  const baseColor = row.key === 'base' ? colors.primary : row.key === 'lluvioso' ? colors.sky : row.key === 'verano' ? colors.maize : colors.risk;
+                  return {
+                    value: scenarioUnit === 'yield' ? row.rendimiento_t_ha : row.produccion_total_t ?? (isYieldNumber(areaValue) ? row.rendimiento_t_ha * areaValue : null),
+                    itemStyle: {
+                      color: barGradient(baseColor),
+                      borderRadius: [0, 7, 7, 0],
+                      borderColor: selectedScenario?.key === row.key ? colors.text : 'transparent',
+                      borderWidth: selectedScenario?.key === row.key ? 2 : 0,
+                      shadowBlur: selectedScenario?.key === row.key ? 12 : 0,
+                      shadowColor: withAlpha(baseColor, 0.5),
+                    },
+                  };
+                }),
+                barWidth: 30,
                 label: { show: true, position: 'right', distance: 10, color: colors.text, fontWeight: 650, fontSize: 12.5, formatter: (item) => `${number(item.value)} ${scenarioAxisUnit}` },
-                emphasis: { itemStyle: { shadowBlur: 10, shadowColor: 'rgba(0,0,0,0.45)' } },
+                emphasis: { itemStyle: { shadowBlur: 12, shadowColor: 'rgba(0,0,0,0.45)' } },
               }],
+              textStyle: { fontFamily: 'Plus Jakarta Sans, sans-serif' },
             }}
             onClick={(params) => setScenarioKey(scenarioRows[params.dataIndex]?.key)}
           />
         </div>
         <div className="ydp-scenario-buttons" role="group" aria-label="Consultar escenario">{scenarioRows.map((row) => <button key={row.key} type="button" aria-pressed={selectedScenario?.key === row.key} onClick={() => setScenarioKey(row.key)}>{row.label}</button>)}</div>
-        {selectedScenario && <div className="ydp-scenario-result" aria-live="polite"><strong>{selectedScenario.label}</strong><span>{number(selectedScenario.rendimiento_t_ha)} t/ha · {number(selectedScenario.produccion_total_t ?? (isYieldNumber(areaValue) ? selectedScenario.rendimiento_t_ha * areaValue : null))} t</span><p>{selectedScenario.key === 'base' ? 'Condiciones de tu simulación.' : Object.entries(selectedScenario.condiciones ?? {}).map(([name, value]) => `${({ precipitacion_mm_ciclo: 'Lluvia del ciclo (mm)', precipitacion_mm_año: 'Lluvia anual legacy (mm)', humedad_pct: 'Humedad (%)', temperatura_c: 'Temperatura (°C)' })[name] ?? name}: ${value}`).join(' · ') || 'Condiciones no guardadas.'}</p></div>}
+        {selectedScenario && <div className="ydp-scenario-result" aria-live="polite"><strong>{selectedScenario.label}</strong><span>{number(selectedScenario.rendimiento_t_ha)} t/ha · {number(selectedScenario.produccion_total_t ?? (isYieldNumber(areaValue) ? selectedScenario.rendimiento_t_ha * areaValue : null))} t</span><p>{selectedScenario.key === 'base' ? 'Condiciones de tu simulación.' : Object.entries(selectedScenario.condiciones ?? {}).map(([name, value]) => `${({ precipitacion_mm_ciclo: 'Lluvia del ciclo (mm)', precipitacion_mm_año: 'Lluvia anual (mm/año)', humedad_pct: 'Humedad (%)', temperatura_c: 'Temperatura (°C)' })[name] ?? name}: ${value}`).join(' · ') || 'Condiciones no guardadas.'}</p></div>}
 
       </Panel>}
 
       {contributionRows.length > 0 && <Panel title="Qué influyó en la estimación" subtitle="Aportes del modelo · SHAP" icon={Activity} onExplain={()=>explain('Qué influyó en la estimación',null,'','Muestra cuánto empujó cada variable el resultado del modelo hacia arriba o hacia abajo.',['Las barras positivas aumentan la estimación del modelo; las negativas la reducen.','Una barra más larga indica un aporte mayor dentro de este cálculo. «Otros factores» agrupa las variables que no se muestran por separado.'],'SHAP explica el cálculo del modelo. No demuestra causas en el campo ni indica cuánto recuperarías al cambiar una sola variable.',contributionRows.map(row=>({nombre:row.name,valor:row.value})))} action={<button className="ydp-chart-control" type="button" aria-pressed={showAllFactors} onClick={() => setShowAllFactors((value) => !value)}>{showAllFactors ? 'Ver principales' : 'Ver todos'}</button>}>
-        <p className="ydp-chart-note">{!simulation.explicacion_modelo && 'Explicación antigua parcial: solo incluye seis variables. '}Valores positivos elevan la estimación del modelo y negativos la reducen; no prueban causalidad agronómica.</p>
-        <div className="ydp-chart ydp-factors-region" tabIndex={0} role="region" aria-label="Aportes del modelo, gráfico desplazable" style={{ height: Math.min(520, Math.max(220, contributionRows.length * 38 + 60)), overflowY: 'auto' }}>
+        <p className="ydp-chart-note">{!simulation.explicacion_modelo && 'Explicación antigua parcial: solo incluye seis variables. '}{showWaterfall ? 'La cascada parte de la base del modelo y suma o resta cada factor hasta llegar a la predicción.' : 'Valores positivos elevan la estimación del modelo y negativos la reducen; no prueban causalidad agronómica.'}</p>
+        <div className="ydp-chart ydp-factors-region" tabIndex={0} role="region" aria-label="Aportes del modelo, gráfico desplazable" style={{ height: Math.min(520, Math.max(220, contributionRows.length * 38 + (showWaterfall ? 96 : 60))), overflowY: 'auto' }}>
           <EChart
             ariaLabel="Aportes de cada variable al rendimiento estimado por el modelo"
-            style={{ height: Math.max(220, contributionRows.length * 38 + 60) }}
-            option={{
-              tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' }, backgroundColor: colors.tooltipBg, borderColor: colors.tooltipBorder, borderWidth: 1, padding: [10, 12], textStyle: { color: colors.text, fontSize: 12 }, formatter: (params) => { const item = params[0]; return `<strong>${escapeChartText(item.name)}</strong><br/>Aporte: <b>${item.value > 0 ? '+' : ''}${number(item.value)} t/ha</b>`; } },
-              grid: { left: 8, right: 74, top: 6, bottom: 38, containLabel: true },
-              xAxis: { type: 'value', min: -shapExtent, max: shapExtent, splitNumber: 4, axisLine: { show: false }, axisTick: { show: false }, splitLine: { lineStyle: { color: colors.grid, type: 'dashed' } }, axisLabel: { color: colors.muted, fontSize: 11, formatter: (value) => (value > 0 ? '+' : '') + value } },
+            style={{ height: Math.max(220, contributionRows.length * 38 + (showWaterfall ? 96 : 60)) }}
+            option={showWaterfall ? {
+              tooltip: getChartTooltip(colors, {
+                axisPointer: { type: 'shadow' },
+                formatter: (params) => {
+                  const tick = params[0].name;
+                  if (tick === 'Base') return `<strong>Base</strong><br/>Punto de partida del modelo: <b>${number(waterfallBase)} t/ha</b>`;
+                  if (tick === 'Predicción') return `<strong>Predicción</strong><br/>${number(simulation.rendimiento_t_ha)} t/ha`;
+                  const row = contributionRows.find((item) => item.name === tick);
+                  const value = row?.value ?? 0;
+                  return `<strong>${escapeChartText(tick)}</strong><br/>Aporte: <b>${value > 0 ? '+' : ''}${number(value)} t/ha</b>`;
+                },
+              }),
+              grid: { left: 8, right: 88, top: 8, bottom: 8, containLabel: true },
+              xAxis: { type: 'value', min: 0, axisLine: { show: false }, axisTick: { show: false }, splitLine: { lineStyle: { color: colors.grid, type: 'dashed' } }, axisLabel: { color: colors.muted, fontSize: 11, formatter: (value) => number(value, 1) } },
+              yAxis: { type: 'category', inverse: true, data: wfCategoryLabels, axisLine: { show: false }, axisTick: { show: false }, axisLabel: { color: colors.text, fontWeight: 600, fontSize: 12, margin: 12, width: 124, overflow: 'break', lineHeight: 14, align: 'right' } },
+              series: [
+                { name: 'Base del modelo', type: 'bar', stack: 'wf', barWidth: 18, itemStyle: { color: 'transparent' }, emphasis: { itemStyle: { color: withAlpha(colors.primary, 0.85) } }, tooltip: { show: false }, data: wfBase.map((value, index) => index === 0 ? { value, itemStyle: { color: wfGradient(colors.primary), borderRadius: 5 } } : value) },
+                { name: 'Aporte positivo', type: 'bar', stack: 'wf', barWidth: 18, animationDelay: (index) => index * 60, animationDuration: 560, itemStyle: { color: wfGradient(colors.leaf), borderRadius: 4 }, emphasis: { itemStyle: { shadowBlur: 8, shadowColor: 'rgba(0,0,0,0.4)' } }, data: wfIncrement, label: { show: true, position: 'right', distance: 6, color: colors.text, fontWeight: 650, fontSize: 11, formatter: (params) => { const row = contributionRows[params.dataIndex - 1]; return row ? `+${number(row.value)}` : ''; } } },
+                { name: 'Aporte negativo', type: 'bar', stack: 'wf', barWidth: 18, animationDelay: (index) => index * 60, animationDuration: 560, itemStyle: { color: wfGradient(colors.risk), borderRadius: 4 }, emphasis: { itemStyle: { shadowBlur: 8, shadowColor: 'rgba(0,0,0,0.4)' } }, data: wfDecrement, label: { show: true, position: 'left', distance: 6, color: colors.text, fontWeight: 650, fontSize: 11, formatter: (params) => { const row = contributionRows[params.dataIndex - 1]; return row ? number(row.value) : ''; } } },
+                { name: 'Predicción', type: 'bar', stack: 'wf', barWidth: 20, animationDelay: (index) => index * 60 + 240, animationDuration: 720, itemStyle: { color: wfGradient(colors.maize), borderRadius: 6 }, emphasis: { itemStyle: { shadowBlur: 10, shadowColor: 'rgba(0,0,0,0.45)' } }, data: wfTotal, label: { show: true, position: 'right', distance: 8, color: colors.text, fontWeight: 750, fontSize: 12, formatter: () => `${number(simulation.rendimiento_t_ha)} t/ha` } },
+              ],
+              legend: { show: false },
+              textStyle: { fontFamily: 'Plus Jakarta Sans, sans-serif' },
+            } : {
+              tooltip: getChartTooltip(colors, { axisPointer: { type: 'shadow' }, formatter: (params) => { const item = params[0]; return `<strong>${escapeChartText(item.name)}</strong><br/>Aporte: <b>${item.value > 0 ? '+' : ''}${number(item.value)} t/ha</b>`; } }),
+              grid: { left: 8, right: 74, top: 8, bottom: 38, containLabel: true },
+              xAxis: { type: 'value', min: -shapExtent, max: shapExtent, splitNumber: 4, axisLine: { show: false }, axisTick: { show: false }, splitLine: { lineStyle: { color: colors.grid, type: 'dashed' } }, axisLabel: { color: colors.muted, fontSize: 11, formatter: (value) => (value > 0 ? '+' : '') + number(value, 1) } },
               yAxis: { type: 'category', inverse: true, data: contributionRows.map((row) => row.name), axisLine: { show: false }, axisTick: { show: false }, axisLabel: { color: colors.text, fontWeight: 600, fontSize: 12, margin: 12, width: 120, overflow: 'break', lineHeight: 14, align: 'right' } },
               series: [{
                 type: 'bar',
+                animationDuration: 620,
+                animationDelay: (index) => index * 70,
                 data: contributionRows.map((row) => ({
                   value: row.value,
                   itemStyle: {
-                    color: row.value >= 0 ? colors.leaf : colors.risk,
-                    borderRadius: row.value >= 0 ? [0, 6, 6, 0] : [6, 0, 0, 6],
+                    color: barGradient(row.value >= 0 ? colors.leaf : colors.risk),
+                    borderRadius: row.value >= 0 ? [0, 7, 7, 0] : [7, 0, 0, 7],
                   },
                   label: {
                     show: true,
@@ -325,13 +384,14 @@ export default function DashboardRendimiento({ cultivoElegidoId, onNavigate, onD
                     formatter: () => `${row.value > 0 ? '+' : ''}${number(row.value)}`,
                   },
                 })),
-                barWidth: 24,
+                barWidth: 22,
                 emphasis: { itemStyle: { shadowBlur: 8, shadowColor: 'rgba(0,0,0,0.4)' } },
               }],
+              textStyle: { fontFamily: 'Plus Jakarta Sans, sans-serif' },
             }}
           />
         </div>
-        <Legend items={[{ label: 'Aporte positivo', color: colors.leaf }, { label: 'Aporte negativo', color: colors.risk }]} />
+        <Legend items={showWaterfall ? [{ label: 'Base del modelo', color: colors.primary }, { label: 'Predicción', color: colors.maize }, { label: 'Aporte positivo', color: colors.leaf }, { label: 'Aporte negativo', color: colors.risk }] : [{ label: 'Aporte positivo', color: colors.leaf }, { label: 'Aporte negativo', color: colors.risk }]} />
       </Panel>}
 
       {classScores.length > 0 && <Panel title="¿Cómo clasifica el modelo tu rendimiento?" subtitle="Mayor puntaje significa mayor afinidad con esa categoría" icon={Activity} onExplain={()=>explain('Clasificación del rendimiento',null,'','Muestra cuánto se parece este resultado a cada categoría del clasificador.',['Un puntaje mayor indica más afinidad del modelo con esa categoría.','Los porcentajes son puntajes del clasificador, no porcentajes de cosecha que vas a obtener.'],'No son probabilidades físicas de éxito, pérdida o rendimiento real de tu cultivo.',classScores.map(([categoria,valor])=>({categoria,valor})))}>
@@ -340,27 +400,30 @@ export default function DashboardRendimiento({ cultivoElegidoId, onNavigate, onD
           <EChart
             ariaLabel="Puntajes del clasificador de rendimiento por categoría"
             option={{
-              tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' }, backgroundColor: colors.tooltipBg, borderColor: colors.tooltipBorder, borderWidth: 1, padding: [10, 12], textStyle: { color: colors.text, fontSize: 12 }, formatter: (params) => { const item = params[0]; return `<strong>${escapeChartText(item.name)}</strong><br/>Puntaje: <b>${number(item.value, 1)} %</b>`; } },
-              grid: { left: 8, right: 58, top: 6, bottom: 34, containLabel: true },
-              xAxis: { type: 'value', min: 0, max: 100, axisLine: { show: false }, axisTick: { show: false }, splitLine: { lineStyle: { color: colors.grid, type: 'dashed' } }, axisLabel: { color: colors.muted, fontSize: 11, formatter: '{value}%' } },
+              tooltip: getChartTooltip(colors, { axisPointer: { type: 'shadow' }, formatter: (params) => { const item = params[0]; return `<strong>${escapeChartText(item.name)}</strong><br/>Puntaje: <b>${number(item.value, 1)} %</b>`; } }),
+              grid: { left: 8, right: 62, top: 6, bottom: 34, containLabel: true },
+              xAxis: { type: 'value', min: 0, max: 100, axisLine: { show: false }, axisTick: { show: false }, splitLine: { lineStyle: { color: colors.grid, type: 'dashed' } }, axisLabel: { color: colors.muted, fontSize: 11, formatter: (value) => number(value, 0) } },
               yAxis: { type: 'category', inverse: true, data: classScores.map(([name]) => name), axisLine: { show: false }, axisTick: { show: false }, axisLabel: { color: colors.text, fontWeight: 600, fontSize: 12, margin: 12, width: 130, overflow: 'break', lineHeight: 14, align: 'right' } },
               series: [{
                 type: 'bar',
+                animationDuration: 620,
+                animationDelay: (index) => index * 80,
                 data: classScores.map(([, value], index) => ({
                   value,
-                  itemStyle: { color: classColors[index], borderRadius: [0, 5, 5, 0] },
+                  itemStyle: { color: barGradient(classColors[index]), borderRadius: [0, 6, 6, 0] },
                 })),
-                barWidth: 24,
+                barWidth: 22,
                 label: { show: true, position: 'right', distance: 8, color: colors.text, fontWeight: 690, fontSize: 12, formatter: (item) => `${number(item.value, 1)} %` },
                 emphasis: { itemStyle: { shadowBlur: 8, shadowColor: 'rgba(0,0,0,0.4)' } },
               }],
+              textStyle: { fontFamily: 'Plus Jakarta Sans, sans-serif' },
             }}
           />
         </div>
       </Panel>}
 
       {runs.length > 1 && <Panel title="Simulaciones guardadas de esta parcela" subtitle="Predicciones anteriores del sistema, no cosechas reales" icon={BarChart3} onExplain={()=>explain('Simulaciones guardadas de esta parcela',runs.length,'ejecuciones','Permite revisar los resultados anteriores de esta misma parcela.',[yieldUnit,'Cada barra corresponde a una ejecución. La fecha indica cuándo se hizo el cálculo. Pulsa la barra para consultar sus indicadores.'],simulationLimit,runs.map(row=>({id:row.id,fecha:row.fecha,rendimiento:row.rendimiento_t_ha})))}>
-        <p className="ydp-chart-note">Estos registros proceden del historial de simulaciones de tu cuenta para este lote. La fecha indica cuándo se ejecutó el cálculo. Pulsa una barra para consultar sus indicadores. Se muestran {runs.length} de {simulations.length} ejecuciones cargadas; Rendimiento consulta las 50 más recientes.</p>
+        <p className="ydp-chart-note">Estos registros proceden del historial de simulaciones de tu cuenta para este lote. La fecha indica cuándo se ejecutó el cálculo. Pulsa una barra para consultar sus indicadores. Se muestran {runs.length} de {simulations.length} ejecuciones cargadas; el análisis usa hasta las 50 más recientes.</p>
         <div className="ydp-run-bars">{runs.map((item) => <button key={item.id} type="button" className="ydp-run-bar" aria-pressed={item.id === simulation?.id} onClick={() => setSelection({ lot: key, id: String(item.id) })}>
           <span className="ydp-run-label"><span>#{item.id} · {shortDate(item.fecha)}</span><strong>{number(item.rendimiento_t_ha)} <small>t/ha</small></strong></span>
           <span className="ydp-run-track" aria-hidden="true"><span style={{ width: `${Math.max(0, item.rendimiento_t_ha) / Math.max(0.1, ...runs.map((row) => row.rendimiento_t_ha)) * 100}%` }} /></span>
@@ -376,7 +439,7 @@ export default function DashboardRendimiento({ cultivoElegidoId, onNavigate, onD
     }}>{simulations.map((item) => <option key={item.id} value={item.id}>#{item.id} · {shortDate(item.fecha)}{item.id === simulation.id ? ' · actual (intercambiar)' : ''}</option>)}</select></label>}>
       <p className="ydp-chart-note">La simulación actual también aparece en la lista. Si la eliges, se intercambian las columnas para que puedas revisar ambas.</p>
       <div className="ydp-table-scroll" tabIndex={0} role="region" aria-label="Comparación de simulaciones, tabla desplazable"><table><thead><tr><th>Dato</th><th>Seleccionada · #{simulation.id}</th><th>Comparación · #{comparison.id}</th></tr></thead><tbody>
-      {[['Rendimiento (t/ha)', simulation.rendimiento_t_ha, comparison.rendimiento_t_ha], ['Producción (t)', simulation.produccion_total_t, comparison.produccion_total_t], ['Área (ha)', simulation.area_simulada_ha, comparison.area_simulada_ha], ...[...new Set([...Object.keys(simulation.entradas ?? {}), ...Object.keys(comparison.entradas ?? {})])].filter(name => simulation.entradas?.[name] != null || comparison.entradas?.[name] != null).map((name) => [inputLabels[name] ?? name.replaceAll('_', ' '), simulation.entradas?.[name], comparison.entradas?.[name]])].map(([label, a, b]) => <tr key={label}><th scope="row">{label}</th><td>{isYieldNumber(a) ? number(a) : a ?? '—'}</td><td>{isYieldNumber(b) ? number(b) : b ?? '—'}</td></tr>)}
+      {[['Rendimiento (t/ha)', simulation.rendimiento_t_ha, comparison.rendimiento_t_ha], ['Producción (t)', simulation.produccion_total_t, comparison.produccion_total_t], ['Área (ha)', simulation.area_simulada_ha, comparison.area_simulada_ha], ...[...new Set([...Object.keys(simulation.entradas ?? {}), ...Object.keys(comparison.entradas ?? {})])].filter(name => simulation.entradas?.[name] != null || comparison.entradas?.[name] != null).map((name) => [inputLabels[name] ?? name.replaceAll('_', ' '), simulation.entradas?.[name], comparison.entradas?.[name]])].map(([label, a, b]) => <tr key={label}><th scope="row">{label}</th><td>{formatCell(a)}</td><td>{formatCell(b)}</td></tr>)}
       <tr><th scope="row">Lluvia anual de referencia (mm/año)</th>{[simulation,comparison].map(run => {
         const item=comparisonAnnualRain(run,data?.lluvia_anual_referencia);
         return <td key={run.id}>{item ? <>{number(item.reference.valor)}<small className="ydp-rain-origin">{item.saved ? 'Referencia conservada con esta ejecución' : 'Referencia actual de la parcela'}</small></> : 'Sin referencia disponible'}</td>;
@@ -393,19 +456,23 @@ export default function DashboardRendimiento({ cultivoElegidoId, onNavigate, onD
           <div><span>Serie SIPA</span><strong>{history.coverage} <small>años publicados</small></strong></div>
         </div>
         <p className="ydp-chart-note">Referencia regional de maíz duro seco; no es una medición ni una predicción de esta parcela y puede no corresponder al tipo de maíz registrado.</p>
-        <div className="ydp-history-layout"><div className="ydp-chart ydp-chart--history" style={{ height: 262 }}>
+        <div className="ydp-history-layout"><div className="ydp-chart ydp-chart--history">
           <EChart
             ariaLabel={`Histórico de rendimiento de ${province} comparado con Ecuador`}
             option={{
-              tooltip: { trigger: 'axis', axisPointer: { type: 'cross', label: { backgroundColor: colors.tooltipBg, borderColor: colors.tooltipBorder, borderWidth: 1, color: colors.text } }, backgroundColor: colors.tooltipBg, borderColor: colors.tooltipBorder, borderWidth: 1, padding: [10, 12], textStyle: { color: colors.text, fontSize: 12 }, formatter: (params) => params.map((item) => `${item.marker} <b>${item.seriesName}</b>: ${number(item.value)} t/ha`).join('<br/>') },
-              legend: { bottom: 0, icon: 'roundRect', itemWidth: 14, itemHeight: 6, textStyle: { color: colors.text, fontSize: 11 } },
-              grid: { left: 4, right: 8, top: 10, bottom: 34, containLabel: true },
+              tooltip: getChartTooltip(colors, {
+                axisPointer: { type: 'cross', label: { backgroundColor: colors.tooltipBg, borderColor: colors.tooltipBorder, borderWidth: 1, color: colors.text } },
+                formatter: (params) => params.map((item) => `${item.marker} <b>${item.seriesName}</b>: ${item.value == null ? 'Sin dato' : `${number(item.value)} t/ha`}`).join('<br/>'),
+              }),
+              legend: { bottom: 0, icon: 'roundRect', itemWidth: 16, itemHeight: 6, textStyle: { color: colors.text, fontSize: 11 } },
+              grid: { left: 4, right: 10, top: 10, bottom: 34, containLabel: true },
               xAxis: { type: 'category', boundaryGap: false, data: history.rows.map((row) => row.year), axisLine: { show: false }, axisTick: { show: false }, axisLabel: { color: colors.muted } },
-              yAxis: { type: 'value', name: 't/ha', nameTextStyle: { color: colors.muted, padding: [0, 0, 4, 24] }, scale: true, splitLine: { lineStyle: { color: colors.grid, type: 'dashed' } }, axisLabel: { color: colors.muted, formatter: (value) => value.toLocaleString('es-EC') } },
+              yAxis: { type: 'value', name: 't/ha', nameTextStyle: { color: colors.muted, padding: [0, 0, 4, 24] }, scale: true, splitLine: { lineStyle: { color: colors.grid, type: 'dashed' } }, axisLabel: { color: colors.muted, formatter: (value) => number(value, 1) } },
               series: [
-                { name: province, type: 'line', smooth: true, symbol: 'circle', symbolSize: 8, lineStyle: { width: 3, color: colors.maize }, itemStyle: { color: colors.maize, borderColor: colors.tooltipBg, borderWidth: 2 }, emphasis: { focus: 'series' }, areaStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: 'rgba(200,162,78,0.38)' }, { offset: 1, color: 'rgba(200,162,78,0.02)' }] } }, data: chartPeriodData.map((row) => row.province) },
+                { name: province, type: 'line', smooth: true, symbol: 'circle', symbolSize: 8, lineStyle: { width: 3, color: colors.maize, shadowBlur: 8, shadowColor: withAlpha(colors.maize, 0.4) }, itemStyle: { color: colors.maize, borderColor: colors.tooltipBg, borderWidth: 2 }, emphasis: { focus: 'series' }, areaStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: withAlpha(colors.maize, 0.38) }, { offset: 1, color: withAlpha(colors.maize, 0.02) }] } }, data: chartPeriodData.map((row) => row.province) },
                 { name: 'Ecuador', type: 'line', smooth: true, symbol: 'none', lineStyle: { width: 2, type: 'dashed', color: colors.leaf }, itemStyle: { color: colors.leaf }, data: chartPeriodData.map((row) => row.national) },
               ],
+              textStyle: { fontFamily: 'Plus Jakarta Sans, sans-serif' },
             }}
             onClick={(params) => { if (history.rows[params.dataIndex]) setYear(history.rows[params.dataIndex].year); }}
           />
