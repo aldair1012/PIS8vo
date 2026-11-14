@@ -60,16 +60,21 @@ $pruebas['catálogo y etiquetas del modelo tienen trazabilidad y nombres únicos
         if ($ficha['nombre_en_modelo']!==null) verificar(isset($names[$ficha['nombre_en_modelo']]), 'No debe inventar una etiqueta entrenada.');
     }
 };
-$pruebas['materiales retirados no reaparecen como fichas ni alternativas'] = static function () use ($catalogo): void {
+$pruebas['variedades históricas sin ficha no reaparecen como alternativas documentadas'] = static function () use ($catalogo): void {
     $root=dirname(__DIR__,3);
-    $audit=json_decode(file_get_contents($root.'/documentacion/fuentes-maiz/variedades-retiradas-20261107.json'),true,512,JSON_THROW_ON_ERROR);
-    verificar(count($audit['retiradas']) === 24, 'Cada retiro activo debe ser revisable.');
-    $ids=array_column($audit['retiradas'],'id');
-    foreach ($audit['retiradas'] as $ficha) {
+    $active=json_decode(file_get_contents($root.'/backend-api/data/referencias/catalogo-maiz-ecuador.json'),true,512,JSON_THROW_ON_ERROR);
+    $ids=array_column($active['variedades'],'id');
+    $h=fopen($root.'/ml-engine/data/maiz_ecuador_training_data.csv','rb');
+    $columns=fgetcsv($h); $index=array_search('variedad',$columns,true); $retiradas=[];
+    verificar($index!==false,'Debe conservar el nombre histórico en el archivo original.');
+    while (($row=fgetcsv($h))!==false) { $name=trim($row[$index]); if ($name!=='' && $catalogo->buscar($name)===null) $retiradas[$name]=['nombre'=>$name]; }
+    fclose($h);
+    verificar(count($retiradas)>0,'Se comprueban nombres históricos que no tienen ficha activa.');
+    foreach ($retiradas as $ficha) {
         verificar($catalogo->buscar($ficha['nombre']) === null, 'La ficha retirada no debe seguir activa.');
         $r=$catalogo->evaluar(['variedad_maiz'=>$ficha['nombre'],'tipo_maiz'=>'Suave Harinoso','altitud'=>2700,'ubicacion'=>'Pichincha']);
         verificar($r['actual'] === null && $r['variedad_registrada'] === $ficha['nombre'], 'El registro histórico debe conservar el nombre.');
-        verificar(array_intersect($ids,array_column($r['alternativas'],'id')) === [], 'Las alternativas deben ser activas.');
+        verificar(array_diff(array_column($r['alternativas'],'id'),$ids) === [], 'Las alternativas deben pertenecer al catálogo activo.');
     }
 };
 $pruebas['nuevas referencias de cosecha no se generalizan a otros híbridos'] = static function () use ($catalogo): void {

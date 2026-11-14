@@ -191,7 +191,7 @@ $pruebas['parcela: actualizar conserva campos omitidos o null y permite vaciar f
 $pruebas['simulación: conserva defaults omitidos o null y guarda el resultado'] = static function () use ($servicioSimulaciones, $simulaciones, $simulacionValida): void {
     foreach ([[], ['nombre' => null, 'modelo_usado' => null, 'tipo_suelo' => null], ['nombre' => '  Ensayo válido  ']] as $opcionales) {
         $r = $servicioSimulaciones->simular(7, peticion(array_replace($simulacionValida, $opcionales)));
-        comprobar($r['success'] && $r['resultado']['simulacion_id'] === 2, 'Debe completar la simulación válida.');
+        comprobar($r['exito'] && $r['resultado']['simulacion_id'] === 2, 'Debe completar la simulación válida.');
         comprobar($simulaciones->datos['modelo_usado'] === 'xgboost' && $simulaciones->datos['tipo_suelo'] === 'franco', 'Debe conservar los defaults de modelo y suelo.');
         comprobar(isset($opcionales['nombre']) ? $simulaciones->datos['nombre'] === 'Ensayo válido' : str_starts_with($simulaciones->datos['nombre'], 'Simulación '), 'Debe conservar el nombre por defecto o recortar el recibido.');
     }

@@ -7,6 +7,7 @@ namespace ZeaSys\Dominios\Lotes\Aplicacion;
 
 use ZeaSys\Dominios\Lotes\Dominio\CultivoRepositoryInterface;
 use ZeaSys\Dominios\Lotes\Dominio\ValidadorLimitesEcuador;
+use ZeaSys\Dominios\Lotes\Dominio\PlanificacionParcela;
 use ZeaSys\Dominios\Terreno\Aplicacion\ServicioDatosTerreno;
 use ZeaSys\Dominios\Terreno\Aplicacion\ProvinciaParcela;
 use ZeaSys\Dominios\Terreno\Aplicacion\TexturaSuelo;
@@ -53,6 +54,7 @@ final class CultivoService
             'fertilizacion_tipo'  => $this->tipoFertilizacionAlCrear($data['fertilizacion_tipo'] ?? null)
         ];
 
+        $datos += PlanificacionParcela::completar($data, [], $datos['fecha_siembra']);
         $this->validarTextos($datos);
 
         if ($datos['area'] <= 0) {
@@ -111,6 +113,7 @@ final class CultivoService
             'fertilizacion_tipo'  => isset($data['fertilizacion_tipo']) ? $this->texto($data['fertilizacion_tipo'], 'fertilizacion_tipo') : $cultivo['fertilizacion_tipo']
         ];
 
+        $datos += PlanificacionParcela::completar($data, $cultivo, $datos['fecha_siembra']);
         $this->validarTextos($datos);
 
         if ($datos['area'] <= 0) {
@@ -226,6 +229,9 @@ final class CultivoService
             }
         }
 
+        $lluviaAnual = $this->terreno->referenciaLluvia($cultivo);
+        $clima['precipitacion'] = $lluviaAnual['valor'] ?? null;
+        if ($lluviaAnual !== null) $procedencia['precipitacion'] = $lluviaAnual['fuente'];
         return [
             'exito' => true,
             'source' => $fuente,
@@ -244,7 +250,8 @@ final class CultivoService
             'ph_suelo' => $suelo['ph'],
             'tipo_suelo' => $suelo['tipo_suelo'],
             'area_simulada' => isset($cultivo['area']) ? (float) $cultivo['area'] : null,
-            'periodo_precipitacion' => 'mm/año estimados; no equivale al ciclo',
+            'periodo_precipitacion' => 'mm/año de referencia histórica; no equivale al ciclo',
+            'lluvia_anual_referencia' => $lluviaAnual,
             'procedencia' => $procedencia,
         ];
     }

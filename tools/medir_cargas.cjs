@@ -9,7 +9,7 @@ if (!/^http:\/\/127\.0\.0\.1:\d+$/.test(origin)) throw Error('Indica ZEASYS_E2E_
   try {
     const context = await browser.newContext({ viewport: { width: 1440, height: 900 }, serviceWorkers: 'block' });
     await context.route('**/*', route => route.request().url().startsWith(origin + '/') ? route.continue() : route.abort());
-    const login = await context.request.post(origin + '/backend-api/public/index.php/api/auth/login', { data: { correo: 'a@example.test', contrasena: ' ClavePrueba-2026! ' } });
+    const login = await context.request.post(origin + '/backend-api/public/index.php/api/auth/iniciar-sesion', { data: { correo: 'a@example.test', contrasena: ' ClavePrueba-2026! ' } });
     if (!login.ok()) throw Error('No se pudo iniciar la cuenta ficticia');
     const page = await context.newPage();
     const start = Date.now();

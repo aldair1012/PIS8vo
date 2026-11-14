@@ -123,7 +123,7 @@ function AccessCard({
   ariaHidden = false,
 }) {
   return (
-    <div ref={containerRef} id="zeasys-login-card" className={`zeasys-login-card${registering ? ' zeasys-login-card--register' : ''}${className ? ` ${className}` : ''}`} aria-hidden={ariaHidden}>
+    <div ref={containerRef} id="zeasys-login-card" className={`zeasys-login-card${registering ? ' zeasys-login-card--register' : ''}${className ? ` ${className}` : ''}`} aria-hidden={ariaHidden} inert={ariaHidden}>
       {onClose && <button type="button" className="zeasys-auth-close" onClick={onClose} aria-label="Volver a la vista de parcela"><X size={18} /></button>}
       <div className={`zeasys-auth-mode-card${modeAnimating ? ' is-switching' : ''}`}>
         <div className="zeasys-login-card-head">
@@ -584,21 +584,23 @@ export default function Login({ onLoginSuccess, switchToRegister, switchToLogin,
           style={{ '--hero-photo': `url("${heroPhoto}")` }}
         >
           <div className="zeasys-home-hero-copy">
+            <p className="zeasys-hero-kicker">CLIMA · SUELO · PLANIFICACIÓN</p>
             <h1>Decisiones mejores para <span>cada parcela.</span></h1>
-            <p className="zeasys-home-lead">ZeaSys reúne clima, suelo, rendimiento y finanzas para entender qué está pasando en tu cultivo y actuar a tiempo.</p>
+            <p className="zeasys-home-lead">Ubica tu parcela, prepara una campaña de maíz y compara escenarios de cosecha con sus fuentes y límites a la vista.</p>
+            <ol className="zeasys-hero-steps" aria-label="Cómo empezar"><li><span>01</span> Ubica tu parcela</li><li><span>02</span> Define la campaña</li><li><span>03</span> Revisa escenarios</li></ol>
             <div className="zeasys-hero-actions"><button type="button" className="zeasys-primary-btn" onClick={() => document.getElementById('capacidades')?.scrollIntoView({ behavior: 'smooth' })}>Ver capacidades <ArrowRight size={17} /></button><button ref={heroAccessButtonRef} type="button" className="zeasys-secondary-link zeasys-secondary-button" onClick={irAlAcceso} aria-controls="zeasys-login-card" aria-expanded={authCardOpen}>Ingresar <ArrowRight size={15} /></button></div>
           </div>
           <div className="zeasys-hero-visual">
             <div className={`zeasys-hero-flip${authCardOpen ? ' is-open' : ''}${registering ? ' is-registering' : ''}`}>
               <div className="zeasys-hero-flip-inner">
-                <div className="zeasys-hero-flip-face zeasys-hero-flip-front" aria-hidden={authCardOpen}>
-                  <div className="zeasys-visual-heading"><span>Vista de parcela</span><h2>La señal del campo, en una sola lectura.</h2><p>Rendimiento, clima y brecha productiva con datos del sistema.</p></div>
+                <div className="zeasys-hero-flip-face zeasys-hero-flip-front" aria-hidden={authCardOpen} inert={authCardOpen}>
+                  <div className="zeasys-visual-heading"><span>Vista de parcela</span><h2>Tu campaña, en una sola lectura.</h2><p>Vista ilustrativa de la organización del panel; no muestra resultados reales.</p></div>
                   <div className="zeasys-dashboard-preview">
-                    <div className="zeasys-preview-topline"><span><Leaf size={14} /> Parcela monitoreada</span><span className="zeasys-status-pill"><span /> Datos sincronizados</span></div>
-                    <div className="zeasys-preview-location"><MapPin size={13} /> Finca La Esperanza <small>·</small> Lote MZ-04</div>
-                    <div className="zeasys-preview-main-kpi"><div><span>Rendimiento previsto</span><strong>3.26 <small>t/ha</small></strong></div><div className="zeasys-kpi-up"><TrendingUp size={16} /> +8.4%</div></div>
+                    <div className="zeasys-preview-topline"><span><Leaf size={14} /> Vista de ejemplo</span><span className="zeasys-status-pill"><span /> Demostración visual</span></div>
+                    <div className="zeasys-preview-location"><MapPin size={13} /> Tu parcela <small>·</small> Tu campaña</div>
+                    <div className="zeasys-preview-main-kpi"><div><span>Rendimiento previsto</span><strong>— <small>t/ha</small></strong></div><div className="zeasys-kpi-up"><TrendingUp size={16} /> Por calcular</div></div>
                     <div className="zeasys-preview-chart" aria-hidden="true"><span className="chart-bar chart-bar-1" /><span className="chart-bar chart-bar-2" /><span className="chart-bar chart-bar-3" /><span className="chart-bar chart-bar-4" /><span className="chart-bar chart-bar-5" /><span className="chart-bar chart-bar-6" /><span className="chart-line" /></div>
-                    <div className="zeasys-preview-grid"><div><span><CloudSun size={13} /> Riesgo climático</span><strong>Moderado</strong><em>Con datos locales</em></div><div><span><Activity size={13} /> Brecha productiva</span><strong>27%</strong><em>Oportunidad de mejora</em></div></div>
+                    <div className="zeasys-preview-grid"><div><span><CloudSun size={13} /> Riesgo climático</span><strong>Por consultar</strong><em>Según ubicación y fecha</em></div><div><span><Activity size={13} /> Brecha productiva</span><strong>Con referencias</strong><em>Fuente y periodo visibles</em></div></div>
                     <div className="zeasys-preview-meta"><span>Última lectura <strong>Hoy, 08:40</strong></span><span>Ciclo <strong>Maíz 2026</strong></span></div>
                   </div>
                 </div>
@@ -647,8 +649,8 @@ export default function Login({ onLoginSuccess, switchToRegister, switchToLogin,
               imagePosition="58% center"
               icon={<BarChart3 size={21} />}
               title="Rendimiento y brecha"
-              summary="Compara el potencial genético, el rendimiento alcanzable y lo que realmente puede entregar tu parcela."
-              details={['Potencial y rendimiento alcanzable', 'Brecha productiva por parcela', 'Escenarios comparables de manejo']}
+              summary="Consulta la estimación del modelo y compárala con simulaciones guardadas y referencias agrícolas identificadas."
+              details={['Rendimiento y producción estimados', 'Referencias con fuente y periodo', 'Comparación de simulaciones guardadas']}
               href="#datos"
               linkLabel="Ver indicadores"
             />

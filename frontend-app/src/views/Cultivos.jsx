@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { parcelasService } from '../services/api';
-import { leerAltitud, leerPhSuelo } from '../utils/datosParcela';
+import { leerAltitud, leerPhSuelo, urlPhSuelo } from '../utils/datosParcela';
 import '../utils/mapRuntime';
+import { nombrarControlesMapa, observarTamanoMapa } from '../utils/mapAccessibility';
 import { OTRA_VARIEDAD, TIPOS_MAIZ_ECUADOR, VARIEDAD_PERSONALIZADA } from '../data/variedadesMaizEcuador';
 import { 
   Plus, 
@@ -38,7 +39,7 @@ const evitarOperadores = (e, permiteNegativo = false) => {
   }
 };
 
-export default function Cultivos({ onCultivoChanged, onboardingStep, onNextOnboardingStep }) {
+export default function Cultivos({ onCultivoChanged, onboardingStep, onNextOnboardingStep, onAbrirRegistroCampo }) {
   const [cultivos, setCultivos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -114,6 +115,7 @@ export default function Cultivos({ onCultivoChanged, onboardingStep, onNextOnboa
       scrollWheelZoom: true
     }).setView([-1.8312, -78.1834], 6);
     mapRef.current = map;
+    observarTamanoMapa(map);
 
     L.control.zoom({ position: 'topright' }).addTo(map);
 
@@ -130,6 +132,7 @@ export default function Cultivos({ onCultivoChanged, onboardingStep, onNextOnboa
     geomanLayersRef.current = geomanLayers;
 
     if (map.pm) {
+      map.pm.setLang('es');
       map.pm.setGlobalOptions({ tooltips: false });
       map.pm.addControls({
         position: 'topleft',
@@ -139,11 +142,14 @@ export default function Cultivos({ onCultivoChanged, onboardingStep, onNextOnboa
         drawCircle: false,
         drawCircleMarker: false,
         drawRectangle: true,
+        drawText: false,
+        rotateMode: false,
         editMode: true,
         dragMode: false,
         cutPolygon: false,
         removalMode: true
       });
+      nombrarControlesMapa(map);
 
       map.on('pm:create', (e) => {
         const actions = mapActionsRef.current;
@@ -313,7 +319,7 @@ export default function Cultivos({ onCultivoChanged, onboardingStep, onNextOnboa
     setPh('');
     setEstadoPh('Consultando pH estimado…');
     try {
-      const res = await fetch(`https://rest.isric.org/soilgrids/v2.0/properties/query?lon=${lng.toFixed(4)}&lat=${lat.toFixed(4)}&property=phh2o&depth=0-5cm`);
+      const res = await fetch(urlPhSuelo(lat, lng), { signal: AbortSignal.timeout(8000) });
       if (!res.ok) throw new Error('pH no disponible');
       const valor = leerPhSuelo(await res.json());
       if (solicitud !== consultaPh.current) return;
@@ -462,28 +468,29 @@ export default function Cultivos({ onCultivoChanged, onboardingStep, onNextOnboa
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 110px)', overflow: 'hidden' }}>
+    <div className="cultivos-workspace" style={{ display: 'flex', flexDirection: 'column', height: 'var(--cultivos-page-height, calc(100vh - 110px))', overflow: 'var(--cultivos-page-overflow, hidden)' }}>
       <div className='dashboard-title-row' style={{ marginBottom: '0.75rem', flexShrink: 0 }}>
         <div>
           <h1 style={{ fontSize: '1.35rem', fontWeight: 800, margin: 0 }}>Gestionar Lotes y Parcelas</h1>
-          <p className='dashboard-title-desc' style={{ margin: '0.15rem 0 0 0', fontSize: '0.78rem' }}>
+          <p className='dashboard-title-desc' style={{ margin: '0.15rem 0 0 0', fontSize: '0.8125rem' }}>
             Registra tus lotes de producción mediante linderos satelitales o posicionamiento manual.
           </p>
-          <span role="status" style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+          <span role="status" style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>
             {loading ? 'Actualizando parcelas...' : `${cultivos.length} parcelas registradas`}
           </span>
         </div>
+        {onAbrirRegistroCampo && <button type="button" className="btn btn-secondary" onClick={onAbrirRegistroCampo} disabled={!cultivos.length}>Registro de campo</button>}
       </div>
 
       {success && (
-        <div className='bg-success-alpha text-success' style={{ padding: '0.6rem 0.9rem', borderRadius: '8px', fontSize: '0.8rem', marginBottom: '0.75rem', border: '1px solid rgba(22, 163, 74, 0.25)', display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
+        <div className='bg-success-alpha text-success' style={{ padding: '0.6rem 0.9rem', borderRadius: '8px', fontSize: '0.9375rem', marginBottom: '0.75rem', border: '1px solid rgba(22, 163, 74, 0.25)', display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
           <Info size={15} />
           <span>{success}</span>
         </div>
       )}
 
       {error && (
-        <div className='bg-danger-alpha text-danger' style={{ padding: '0.6rem 0.9rem', borderRadius: '8px', fontSize: '0.8rem', marginBottom: '0.75rem', border: '1px solid rgba(239, 68, 68, 0.25)', display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
+        <div className='bg-danger-alpha text-danger' style={{ padding: '0.6rem 0.9rem', borderRadius: '8px', fontSize: '0.9375rem', marginBottom: '0.75rem', border: '1px solid rgba(239, 68, 68, 0.25)', display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
           <Info size={15} />
           <span>{error}</span>
         </div>
@@ -506,7 +513,7 @@ export default function Cultivos({ onCultivoChanged, onboardingStep, onNextOnboa
             <h4 style={{ fontSize: '0.85rem', fontWeight: 800, margin: '0 0 0.15rem 0', color: 'var(--text-primary)' }}>
               ¡Bienvenido a ZeaSys! Paso 1 de 3: Registra tu Primera Parcela
             </h4>
-            <p style={{ fontSize: '0.75rem', margin: 0, color: 'var(--text-muted)' }}>
+            <p style={{ fontSize: '0.8125rem', margin: 0, color: 'var(--text-muted)' }}>
               Dibuja los linderos en el mapa o completa los datos para guardar tu lote y pasar automáticamente a tu primera simulación.
             </p>
           </div>
@@ -516,14 +523,14 @@ export default function Cultivos({ onCultivoChanged, onboardingStep, onNextOnboa
       <div className='glass-panel' style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         <div className='glass-card-header' style={{ padding: '0.75rem 1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem', borderBottom: '1px solid var(--border-subtle)', flexShrink: 0 }}>
           <Plus size={18} className='text-secondary' />
-          <h3 style={{ fontSize: '1rem', fontWeight: 700, margin: 0 }}>Registrar Nueva Parcela</h3>
+          <h2 style={{ fontSize: '1rem', fontWeight: 700, margin: 0 }}>Registrar Nueva Parcela</h2>
         </div>
 
-        <form onSubmit={handleSubmit} style={{ flex: 1, display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '1.25rem', padding: '1rem 1.25rem', overflow: 'hidden' }}>
+        <form className="cultivos-create-form" onSubmit={handleSubmit} style={{ flex: 1, display: 'grid', gridTemplateColumns: 'var(--cultivos-form-columns, minmax(0, 1.2fr) minmax(0, 1fr))', gap: '1.25rem', padding: '1rem 1.25rem', overflow: 'hidden' }}>
           
           <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem', flexShrink: 0 }}>
-              <label className='form-label' style={{ marginBottom: 0, fontSize: '0.78rem', display: 'flex', alignItems: 'center', gap: '0.35rem', fontWeight: 700 }}>
+              <label className='form-label' style={{ marginBottom: 0, fontSize: '0.8125rem', display: 'flex', alignItems: 'center', gap: '0.35rem', fontWeight: 700 }}>
                 <Map size={13} color='#3b82f6' /> Trazado Satelital y Selección de Terreno
               </label>
               <button
@@ -538,7 +545,7 @@ export default function Cultivos({ onCultivoChanged, onboardingStep, onNextOnboa
               </button>
             </div>
 
-            <div className='cultivos-map-shell' style={{ position: 'relative', flex: 1, minHeight: 0, borderRadius: '10px', overflow: 'hidden', border: '1px solid var(--border-subtle)' }}>
+            <div className='cultivos-map-shell' style={{ position: 'relative', flex: 'var(--cultivos-map-flex, 1)', minHeight: 'var(--cultivos-map-height, 0)', borderRadius: '10px', overflow: 'hidden', border: '1px solid var(--border-subtle)' }}>
               <div className="cultivos-map-toolbar cultivos-map-search">
                 <input
                   type='text'
@@ -557,18 +564,18 @@ export default function Cultivos({ onCultivoChanged, onboardingStep, onNextOnboa
             </div>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', overflowY: 'auto', paddingRight: '0.25rem' }}>
-            <div style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--text-subtle)', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.25rem' }}>
+          <div className="cultivos-form-fields" style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', overflowY: 'var(--cultivos-fields-overflow, auto)', paddingRight: '0.25rem' }}>
+            <div style={{ fontSize: '0.8125rem', fontWeight: 800, color: 'var(--text-subtle)', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.25rem' }}>
               Información del Lote
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem' }}>
               <div className='form-group' style={{ marginBottom: 0 }}>
-                <label className='form-label' style={{ fontSize: '0.72rem', marginBottom: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}><Sprout size={11} /> Nombre del Lote *</label>
-                <input type='text' className='form-input' placeholder='Ej: Lote Norte' value={nombre} onChange={e => setNombre(e.target.value)} required style={{ padding: '0.45rem 0.65rem', fontSize: '0.8rem' }} />
+                <label htmlFor="parcela-nombre" className='form-label' style={{ fontSize: '0.8125rem', marginBottom: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}><Sprout size={11} /> Nombre del Lote *</label>
+                <input id="parcela-nombre" type='text' className='form-input' placeholder='Ej: Lote Norte' value={nombre} onChange={e => setNombre(e.target.value)} required style={{ padding: '0.45rem 0.65rem', fontSize: '0.9375rem' }} />
               </div>
               <div className='form-group' style={{ marginBottom: 0 }}>
-                <label className='form-label' style={{ fontSize: '0.72rem', marginBottom: '0.2rem' }}>Tipo de Maíz *</label>
-                <select className='form-select' value={tipo} onChange={e => handleTipoChange(e.target.value)} required style={{ padding: '0.45rem 0.65rem', fontSize: '0.8rem' }}>
+                <label htmlFor="parcela-tipo" className='form-label' style={{ fontSize: '0.8125rem', marginBottom: '0.2rem' }}>Tipo de Maíz *</label>
+                <select id="parcela-tipo" className='form-select' value={tipo} onChange={e => handleTipoChange(e.target.value)} required style={{ padding: '0.45rem 0.65rem', fontSize: '0.9375rem' }}>
                   <option value=''>Selecciona el tipo de maíz</option>
                   {TIPOS_MAIZ_ECUADOR.map(item => <option key={item.value} value={item.value}>{item.label}</option>)}
                 </select>
@@ -577,8 +584,8 @@ export default function Cultivos({ onCultivoChanged, onboardingStep, onNextOnboa
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem' }}>
               <div className='form-group' style={{ marginBottom: 0 }}>
-                <label className='form-label' style={{ fontSize: '0.72rem', marginBottom: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}><Layers size={11} /> Variedad o híbrido *</label>
-                <select className='form-select' value={variedad} onChange={e => handleVariedadChange(e.target.value)} required disabled={!tipo} style={{ padding: '0.45rem 0.65rem', fontSize: '0.8rem' }}>
+                <label htmlFor="parcela-variedad" className='form-label' style={{ fontSize: '0.8125rem', marginBottom: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}><Layers size={11} /> Variedad o híbrido *</label>
+                <select id="parcela-variedad" className='form-select' value={variedad} onChange={e => handleVariedadChange(e.target.value)} required disabled={!tipo} style={{ padding: '0.45rem 0.65rem', fontSize: '0.9375rem' }}>
                   <option value=''>{tipo ? 'Selecciona la variedad' : 'Selecciona primero el tipo'}</option>
                   {variedadesPorTipo.map(v => <option key={v} value={v}>{v}</option>)}
                   <option value={OTRA_VARIEDAD}>{VARIEDAD_PERSONALIZADA}</option>
@@ -586,8 +593,8 @@ export default function Cultivos({ onCultivoChanged, onboardingStep, onNextOnboa
                 {tipo && variedadesPorTipo.length === 0 && <p className='form-hint'>Este tipo no tiene variedades en la selección priorizada. Puedes registrar el nombre real de tu semilla; todavía no tiene una ficha de adaptación en el catálogo.</p>}
               </div>
               <div className='form-group' style={{ marginBottom: 0 }}>
-                <label className='form-label' style={{ fontSize: '0.72rem', marginBottom: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}><Grid size={11} /> Área (ha) *</label>
-                <input 
+                <label htmlFor="parcela-area" className='form-label' style={{ fontSize: '0.8125rem', marginBottom: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}><Grid size={11} /> Área (ha) *</label>
+                <input id="parcela-area" 
                   type='text' 
                   inputMode='decimal' 
                   className='form-input' 
@@ -596,24 +603,24 @@ export default function Cultivos({ onCultivoChanged, onboardingStep, onNextOnboa
                   onChange={e => setArea(limpiarTextoNumerico(e.target.value))} 
                   onKeyDown={evitarOperadores}
                   required 
-                  style={{ padding: '0.45rem 0.65rem', fontSize: '0.8rem' }} 
+                  style={{ padding: '0.45rem 0.65rem', fontSize: '0.9375rem' }} 
                 />
               </div>
             </div>
 
             {variedad === OTRA_VARIEDAD && <div className='form-group' style={{ marginBottom: 0 }}>
-              <label className='form-label' style={{ fontSize: '0.72rem', marginBottom: '0.2rem' }}>Nombre tal como aparece en la semilla *</label>
-              <input type='text' className='form-input' placeholder='Ej: nombre local o marca del híbrido' value={variedadPersonalizada} onChange={e => setVariedadPersonalizada(e.target.value)} required maxLength={120} style={{ padding: '0.45rem 0.65rem', fontSize: '0.8rem' }} />
+              <label htmlFor="parcela-semilla" className='form-label' style={{ fontSize: '0.8125rem', marginBottom: '0.2rem' }}>Nombre tal como aparece en la semilla *</label>
+              <input id="parcela-semilla" type='text' className='form-input' placeholder='Ej: nombre local o marca del híbrido' value={variedadPersonalizada} onChange={e => setVariedadPersonalizada(e.target.value)} required maxLength={120} style={{ padding: '0.45rem 0.65rem', fontSize: '0.9375rem' }} />
             </div>}
 
-            <div style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--text-subtle)', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.25rem', marginTop: '0.15rem' }}>
+            <div style={{ fontSize: '0.8125rem', fontWeight: 800, color: 'var(--text-subtle)', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.25rem', marginTop: '0.15rem' }}>
               Geolocalización y Edafología
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.5rem' }}>
+            <div className="cultivos-location-fields" style={{ display: 'grid', gridTemplateColumns: 'var(--cultivos-location-columns, repeat(3, minmax(0, 1fr)))', gap: '0.5rem' }}>
               <div className='form-group' style={{ marginBottom: 0 }}>
-                <label className='form-label' style={{ fontSize: '0.7rem', marginBottom: '0.2rem' }}>Latitud *</label>
-                <input 
+                <label htmlFor="parcela-latitud" className='form-label' style={{ fontSize: '0.8125rem', marginBottom: '0.2rem' }}>Latitud *</label>
+                <input id="parcela-latitud" 
                   type='text' 
                   inputMode='decimal' 
                   className='form-input' 
@@ -622,12 +629,12 @@ export default function Cultivos({ onCultivoChanged, onboardingStep, onNextOnboa
                   onChange={e => { invalidarDatosUbicacion(); setLatitud(limpiarTextoNumerico(e.target.value, true)); }} 
                   onKeyDown={e => evitarOperadores(e, true)}
                   required 
-                  style={{ padding: '0.4rem 0.5rem', fontSize: '0.78rem' }} 
+                  style={{ padding: '0.4rem 0.5rem', fontSize: '0.8125rem' }} 
                 />
               </div>
               <div className='form-group' style={{ marginBottom: 0 }}>
-                <label className='form-label' style={{ fontSize: '0.7rem', marginBottom: '0.2rem' }}>Longitud *</label>
-                <input 
+                <label htmlFor="parcela-longitud" className='form-label' style={{ fontSize: '0.8125rem', marginBottom: '0.2rem' }}>Longitud *</label>
+                <input id="parcela-longitud" 
                   type='text' 
                   inputMode='decimal' 
                   className='form-input' 
@@ -636,12 +643,12 @@ export default function Cultivos({ onCultivoChanged, onboardingStep, onNextOnboa
                   onChange={e => { invalidarDatosUbicacion(); setLongitud(limpiarTextoNumerico(e.target.value, true)); }} 
                   onKeyDown={e => evitarOperadores(e, true)}
                   required 
-                  style={{ padding: '0.4rem 0.5rem', fontSize: '0.78rem' }} 
+                  style={{ padding: '0.4rem 0.5rem', fontSize: '0.8125rem' }} 
                 />
               </div>
               <div className='form-group' style={{ marginBottom: 0 }}>
-                <label className='form-label' style={{ fontSize: '0.7rem', marginBottom: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.2rem' }}><Droplet size={10} /> pH Suelo</label>
-                <input 
+                <label htmlFor="parcela-ph" className='form-label' style={{ fontSize: '0.8125rem', marginBottom: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.2rem' }}><Droplet size={10} /> pH Suelo</label>
+                <input id="parcela-ph" 
                   type='text' 
                   inputMode='decimal' 
                   className='form-input' 
@@ -649,9 +656,9 @@ export default function Cultivos({ onCultivoChanged, onboardingStep, onNextOnboa
                   value={ph} 
                   onChange={e => { consultaPh.current += 1; setEstadoPh('Valor ingresado manualmente.'); setPh(limpiarTextoNumerico(e.target.value)); }} 
                   onKeyDown={evitarOperadores}
-                  style={{ padding: '0.4rem 0.5rem', fontSize: '0.78rem' }} 
+                  style={{ padding: '0.4rem 0.5rem', fontSize: '0.8125rem' }} 
                 />
-                {estadoPh && <small role="status" style={{ color: 'var(--zs-muted)', fontSize: '0.7rem', lineHeight: 1.35 }}>{estadoPh}</small>}
+                {estadoPh && <small role="status" style={{ color: 'var(--zs-muted)', fontSize: '0.8125rem', lineHeight: 1.35 }}>{estadoPh}</small>}
               </div>
             </div>
 
@@ -661,7 +668,7 @@ export default function Cultivos({ onCultivoChanged, onboardingStep, onNextOnboa
               const isOutside = latVal !== null && lngVal !== null && (latVal < -5.2 || latVal > 1.6 || lngVal < -81.6 || lngVal > -75.0);
               if (!isOutside) return null;
               return (
-                <div className='bg-danger-alpha text-danger' style={{ padding: '0.4rem 0.6rem', borderRadius: '6px', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <div className='bg-danger-alpha text-danger' style={{ padding: '0.4rem 0.6rem', borderRadius: '6px', fontSize: '0.8125rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                   <Info size={14} style={{ flexShrink: 0 }} />
                   <span><strong>Ubicación fuera de Ecuador:</strong> Coordenadas no válidas.</span>
                 </div>
@@ -670,13 +677,13 @@ export default function Cultivos({ onCultivoChanged, onboardingStep, onNextOnboa
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem' }}>
               <div className='form-group' style={{ marginBottom: 0 }}>
-                <label className='form-label' style={{ fontSize: '0.72rem', marginBottom: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}><MapPin size={11} /> Ubicación / Provincia</label>
-                <input type='text' className='form-input' placeholder='Guayas, Ecuador' value={ubicacion} onChange={e => { consultaUbicacion.current += 1; setEstadoUbicacion('Ubicación ingresada manualmente.'); setUbicacion(e.target.value); }} style={{ padding: '0.45rem 0.65rem', fontSize: '0.8rem' }} />
-                {estadoUbicacion && <small role="status" style={{ color: 'var(--zs-muted)', fontSize: '0.7rem', lineHeight: 1.35 }}>{estadoUbicacion}</small>}
+                <label htmlFor="parcela-ubicacion" className='form-label' style={{ fontSize: '0.8125rem', marginBottom: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}><MapPin size={11} /> Ubicación / Provincia</label>
+                <input id="parcela-ubicacion" type='text' className='form-input' placeholder='Guayas, Ecuador' value={ubicacion} onChange={e => { consultaUbicacion.current += 1; setEstadoUbicacion('Ubicación ingresada manualmente.'); setUbicacion(e.target.value); }} style={{ padding: '0.45rem 0.65rem', fontSize: '0.9375rem' }} />
+                {estadoUbicacion && <small role="status" style={{ color: 'var(--zs-muted)', fontSize: '0.8125rem', lineHeight: 1.35 }}>{estadoUbicacion}</small>}
               </div>
               <div className='form-group' style={{ marginBottom: 0 }}>
-                <label className='form-label' style={{ fontSize: '0.72rem', marginBottom: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}><Mountain size={11} /> Altitud (msnm)</label>
-                <input 
+                <label htmlFor="parcela-altitud" className='form-label' style={{ fontSize: '0.8125rem', marginBottom: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}><Mountain size={11} /> Altitud (msnm)</label>
+                <input id="parcela-altitud" 
                   type='text' 
                   inputMode='decimal' 
                   className='form-input' 
@@ -684,19 +691,19 @@ export default function Cultivos({ onCultivoChanged, onboardingStep, onNextOnboa
                   value={altitud} 
                   onChange={e => { consultaAltitud.current += 1; setEstadoAltitud('Valor ingresado manualmente.'); setAltitud(limpiarTextoNumerico(e.target.value)); }} 
                   onKeyDown={evitarOperadores}
-                  style={{ padding: '0.45rem 0.65rem', fontSize: '0.8rem' }} 
+                  style={{ padding: '0.45rem 0.65rem', fontSize: '0.9375rem' }} 
                 />
-                {estadoAltitud && <small role="status" style={{ color: 'var(--zs-muted)', fontSize: '0.7rem', lineHeight: 1.35 }}>{estadoAltitud}</small>}
+                {estadoAltitud && <small role="status" style={{ color: 'var(--zs-muted)', fontSize: '0.8125rem', lineHeight: 1.35 }}>{estadoAltitud}</small>}
               </div>
             </div>
 
-            <div style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--text-subtle)', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.25rem', marginTop: '0.15rem' }}>
+            <div style={{ fontSize: '0.8125rem', fontWeight: 800, color: 'var(--text-subtle)', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.25rem', marginTop: '0.15rem' }}>
               Planificación Agrónoma
             </div>
 
             <div className='form-group' style={{ marginBottom: '0.2rem' }}>
-              <label className='form-label' style={{ fontSize: '0.72rem', marginBottom: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}><Calendar size={11} /> Fecha de Siembra *</label>
-              <input type='date' className='form-input' value={fechaSiembra} onChange={e => setFechaSiembra(e.target.value)} required style={{ padding: '0.45rem 0.65rem', fontSize: '0.8rem' }} />
+              <label htmlFor="parcela-fecha" className='form-label' style={{ fontSize: '0.8125rem', marginBottom: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}><Calendar size={11} /> Fecha de Siembra *</label>
+              <input id="parcela-fecha" type='date' className='form-input' value={fechaSiembra} onChange={e => setFechaSiembra(e.target.value)} required style={{ padding: '0.45rem 0.65rem', fontSize: '0.9375rem' }} />
             </div>
 
             <div style={{ marginTop: 'auto', paddingTop: '0.4rem' }}>

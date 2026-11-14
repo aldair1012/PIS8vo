@@ -170,6 +170,7 @@ to {opacity:1;transform:translateY(0)}
 .ydp-dashboard .ydp-measured-results {grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:12px;margin:16px 0;display:grid}
 .ydp-dashboard .ydp-measured-results>div {border:1px solid var(--ydp-border);background:var(--ydp-raised);border-radius:12px;align-content:start;gap:8px;min-width:0;padding:14px;display:grid}
 .ydp-dashboard .ydp-measured-results small {color:var(--zs-muted);font-size:13px;line-height:1.5}
+.ydp-dashboard .ydp-measured-results a {color:var(--ydp-accent);min-height:44px;display:inline-flex;align-items:center;text-decoration:underline;text-underline-offset:3px}
 .ydp-dashboard .ydp-record-link {border:1px solid var(--ydp-border);background:var(--ydp-surface);border-radius:12px;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px;padding:14px 16px;display:flex}
 .ydp-dashboard .ydp-record-link p {color:var(--zs-muted);margin-top:4px;font-size:13px}
 .ydp-dashboard .ydp-record-link button,.ydp-dashboard .ydp-reference-details>summary {border:1px solid var(--ydp-border);min-height:44px;color:var(--zs-text);background:var(--ydp-raised);font:inherit;cursor:pointer;border-radius:10px;align-items:center;gap:7px;padding:8px 14px;font-size:13px;display:inline-flex}
@@ -202,7 +203,7 @@ to {opacity:1;transform:translateY(0)}
 .ydp-dashboard h1 { font-weight: 780; letter-spacing: -.028em; line-height: 1.18; }
 .ydp-dashboard .ydp-chart { height: 252px; }
 .ydp-dashboard .ydp-chart--history { height: 300px; }
-.ydp-dashboard .ydp-chart-grid { gap: 18px; }
+.ydp-dashboard .ydp-chart-grid { gap: 18px; align-items: stretch; }
 .ydp-dashboard :is(.ydp-segmented, .ydp-scenario-buttons) { gap: 5px; }
 .ydp-dashboard :is(.ydp-segmented, .ydp-scenario-buttons) button,
 .ydp-dashboard .ydp-chart-control,

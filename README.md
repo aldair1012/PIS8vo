@@ -32,7 +32,7 @@ Sí son descartables y están ignorados por Git: `frontend-app/dist/`, `node_mod
 
 ## Puesta en marcha rápida
 
-1. En una instalación nueva, crea `agropredict_db` e importa `database/schema-demo.sql` en MySQL. No sobrescribas una base existente. El paquete académico usa su propia base `zeasys_revision`. Para compartir el proyecto, no distribuyas `database/agropredict_db.sql`, pues puede contener datos personales.
+1. En una instalación nueva, crea `agropredict_db` e importa `database/schema-demo.sql` en MySQL. No sobrescribas una base existente. La guía vigente para la entrega académica está en [REVISION_DOCENTES.md](documentacion/REVISION_DOCENTES.md); la base de revisión se configura al instalar, sin sustituir una existente. Para compartir el proyecto, no distribuyas `database/agropredict_db.sql`, pues puede contener datos personales.
 2. Si actualizas una base existente, aplica las migraciones pendientes:
    ```cmd
    mysql -u root agropredict_db < database\migraciones\20261018_solo_xgboost.sql

@@ -6,6 +6,7 @@ from pathlib import Path
 import platform
 import sys
 import time
+import argparse
 import numpy as np
 import pandas as pd
 import sklearn
@@ -30,8 +31,9 @@ def metrics(y,p,weights):
 
 
 def main():
-    frame,quality=prepare(ROOT/'documentacion/fuentes-maiz/candidatos/maiz_espac2025_original.csv')
-    run=ML/'experimentos'/('espac2025-'+datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S%fZ')); run.mkdir(parents=True)
+    parser=argparse.ArgumentParser(); parser.add_argument('--producto',choices=['grano_seco','choclo'],default='grano_seco'); args=parser.parse_args()
+    frame,quality=prepare(ROOT/'documentacion/fuentes-maiz/candidatos/maiz_espac2025_original.csv',producto=args.producto)
+    run=ML/'experimentos'/('espac2025-'+args.producto+'-'+datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S%fZ')); run.mkdir(parents=True)
     configs=[{'n_estimators':250,'max_depth':2,'learning_rate':.04,'min_child_weight':10,'reg_lambda':8},
              {'n_estimators':350,'max_depth':3,'learning_rate':.03,'min_child_weight':10,'reg_lambda':5}]
     params={'objective':'reg:squarederror','tree_method':'hist','n_jobs':2,'random_state':42,'subsample':.8,'colsample_bytree':.8}

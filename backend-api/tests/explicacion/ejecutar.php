@@ -219,4 +219,5 @@ foreach ($pruebas as $nombre => $prueba) {
     catch (Throwable $e) { $fallos++; echo "[FAIL] {$nombre}: {$e->getMessage()}\n"; }
 }
 echo "\n" . (count($pruebas) - $fallos) . ' passed, ' . $fallos . " failed\n";
-exit($fallos > 0 ? 1 : 0);
+// Success also permits a caller to validate additional frontend contexts.
+if ($fallos > 0) exit(1);

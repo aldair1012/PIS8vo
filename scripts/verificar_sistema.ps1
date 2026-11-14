@@ -45,6 +45,8 @@ foreach ($suite in @('clima-escenarios', 'finanzas', 'mediciones')) {
     Invoke-ZeaCheck "PHP / $suite" $projectDir $PhpPath @("backend-api/tests/analitica/$suite.php")
 }
 Invoke-ZeaCheck 'PHP / origen de escrituras' $projectDir $PhpPath @('backend-api/tests/kernel/origen.php')
+Invoke-ZeaCheck 'PHP / planificación de parcela' $projectDir $PhpPath @('backend-api/tests/validacion/planificacion.php')
+Invoke-ZeaCheck 'PHP / lluvia anual histórica' $projectDir $PhpPath @('backend-api/tests/terreno/lluvia-anual.php')
 Invoke-ZeaCheck 'Python / motor y proveedores' (Join-Path $projectDir 'ml-engine') $pythonPath @('-m', 'unittest', 'discover', '-s', 'tests', '-v')
 if (-not $OmitirBuild) {
     Invoke-ZeaCheck 'Frontend / build y copia a XAMPP' $frontendDir $npmPath @('run', 'build')

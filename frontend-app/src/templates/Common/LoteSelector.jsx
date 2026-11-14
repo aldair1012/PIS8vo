@@ -31,6 +31,7 @@ export default function LoteSelector({
   setCultivoElegidoId,
   añoSeleccionado,
   setAnioSeleccionado,
+  aniosDisponibles,
   vistaActual,
   setVistaActual
 }) {
@@ -44,6 +45,7 @@ export default function LoteSelector({
   // Extraer dinámicamente todos los años únicos de las parcelas del usuario
   const years = React.useMemo(() => {
     const yearSet = new Set();
+    if (Array.isArray(aniosDisponibles)) for (const year of aniosDisponibles) if (Number.isInteger(year) && year >= 2000 && year <= 2100) yearSet.add(year);
     const currentYear = new Date().getFullYear();
 
     (cultivos || []).forEach(c => {
@@ -69,12 +71,12 @@ export default function LoteSelector({
     }
 
     // Asegurar que el año seleccionado actualmente esté presente
-    if (vistaActual !== 'yield' && añoSeleccionado) {
+    if (!['yield','scenarios'].includes(vistaActual) && añoSeleccionado) {
       yearSet.add(Number(añoSeleccionado));
     }
 
     return Array.from(yearSet).sort((a, b) => a - b);
-  }, [cultivos, añoSeleccionado, vistaActual]);
+  }, [cultivos, añoSeleccionado, vistaActual, aniosDisponibles]);
 
   // Close on click outside
   useEffect(() => {
@@ -136,7 +138,7 @@ export default function LoteSelector({
         ref={triggerRef}
         className={`lote-selector-trigger ${isOpen ? 'active' : ''}`}
         onClick={() => setIsOpen(!isOpen)}
-        title={vistaActual === 'yield' ? 'Seleccionar parcela' : 'Seleccionar parcela y año'}
+        title={['yield','scenarios'].includes(vistaActual) ? 'Seleccionar parcela' : 'Seleccionar parcela y año'}
         aria-label={cultivoActivo ? `Seleccionar parcela. Actual: ${cultivoActivo.nombre_parcela}` : 'Seleccionar parcela'}
         aria-expanded={isOpen}
         aria-controls={isOpen ? 'selector-parcelas' : undefined}
@@ -151,7 +153,7 @@ export default function LoteSelector({
           </span>
           <span className="lote-selector-trigger-sub">
             {cultivoActivo 
-              ? `${cultivoActivo.area} ha${vistaActual === 'yield' ? '' : ` · ${añoSeleccionado}`}`
+              ? `${cultivoActivo.area} ha${['yield','scenarios'].includes(vistaActual) ? '' : ` · ${añoSeleccionado}`}`
               : 'Elige un lote'
             }
           </span>
@@ -196,7 +198,7 @@ export default function LoteSelector({
           </div>
 
           {/* Year Selector */}
-          {vistaActual !== 'yield' && <div className="lote-selector-year-row">
+          {!['yield','scenarios'].includes(vistaActual) && <div className="lote-selector-year-row">
             <span className="lote-selector-year-label">
               <Calendar size={13} />
               Año:

@@ -7,6 +7,7 @@ namespace ZeaSys\Dominios\Chat\Aplicacion;
 use ZeaSys\Dominios\Analitica\Aplicacion\ServicioAnaliticaClimate;
 use ZeaSys\Dominios\Analitica\Aplicacion\ServicioAnaliticaFinancial;
 use ZeaSys\Dominios\Analitica\Aplicacion\ServicioAnaliticaYield;
+use ZeaSys\Dominios\Analitica\Aplicacion\ServicioAnaliticaScenario;
 use ZeaSys\Dominios\Analitica\Aplicacion\ServicioPrecioMaiz;
 use ZeaSys\Kernel\Peticion;
 
@@ -24,6 +25,7 @@ final class ContextoAgricolaService
         private ServicioAnaliticaYield $rendimiento,
         private ServicioAnaliticaFinancial $finanzas,
         private ServicioPrecioMaiz $precioMaiz,
+        private ?ServicioAnaliticaScenario $siembra = null,
     ) {
     }
 
@@ -31,9 +33,25 @@ final class ContextoAgricolaService
      * @param array<int, array<string, mixed>> $simulacionesRecientes
      * @return array<string, mixed>
      */
-    public function construir(int $usuarioId, int $cultivoId, ?int $año, array $simulacionesRecientes = []): array
+    public function construir(int $usuarioId, int $cultivoId, ?int $año, array $simulacionesRecientes = [], bool $incluirSiembra = false): array
     {
         $contexto = [];
+        if ($incluirSiembra && $this->siembra !== null) {
+            $siembra = $this->seguro(fn (): mixed => $this->siembra->construir($usuarioId, $cultivoId, $año));
+            if (is_array($siembra)) {
+                $contexto['siembra'] = [
+                    'año'=>$año, 'sin_simulaciones'=>(bool)($siembra['sin_simulaciones']??true),
+                    'kpis'=>$siembra['kpis']??null, 'percentiles'=>$siembra['percentiles']??null,
+                    'resumen_descriptivo'=>$siembra['resumen_descriptivo']??null,
+                    'provincia'=>$siembra['cultivo_activo']['provincia']??null,
+                    'limite_muestra'=>50,
+                    'fechas_parcela'=>$siembra['calendario_parcela']['eventos']??[],
+                    'viabilidad_siembra'=>array_values(array_map(static fn(array $row):array=>array_intersect_key($row,array_flip(['rango','estado','fuente'])),$siembra['viabilidad_siembra']??[])),
+                    'ranking'=>array_map(static fn(array $row):array=>array_intersect_key($row,array_flip(['simulacion_id','combinacion','valor','unidad'])),array_slice($siembra['ranking']??[],0,5)),
+                    'nota'=>'Calendario de catálogo local y muestra de predicciones guardadas; no son probabilidades de cosecha ni fechas óptimas calculadas.',
+                ];
+            }
+        }
         $precio = $this->precioMaiz->obtener();
         $contexto['precio_maiz'] = $this->compactarPrecio($precio);
 
@@ -71,6 +89,16 @@ final class ContextoAgricolaService
      * @param array<string, mixed> $clima
      * @return array<string, mixed>
      */
+    private function compactarLluvia(mixed $reference): ?array
+    {
+        if (!is_array($reference) || !isset($reference['valor'])) return null;
+        $summary = [];
+        foreach (['valor','unidad','periodo','fuente','tipo','estacion','distancia_km','años_completos','uso'] as $key) {
+            if (array_key_exists($key, $reference)) $summary[$key] = $reference[$key];
+        }
+        return $summary;
+    }
+
     private function compactarClima(array $clima): array
     {
         $hoy = is_array($clima['clima_hoy'] ?? null) ? $clima['clima_hoy'] : [];
@@ -132,11 +160,12 @@ final class ContextoAgricolaService
                 'tmax_rango_c' => $tmax !== [] ? [min($tmax), max($tmax)] : null,
                 'tmin_rango_c' => $tmin !== [] ? [min($tmin), max($tmin)] : null,
             ],
+            'lluvia_anual_referencia' => $this->compactarLluvia($clima['lluvia_anual_referencia'] ?? null),
             'promedio_30d' => [
                 'temperatura_c' => $promedio['temperatura'] ?? null,
                 'humedad_pct' => $promedio['humedad'] ?? null,
                 'precipitacion_30d_mm' => $promedio['precipitacion_30d'] ?? null,
-                'precipitacion_anual_estimada_mm' => $promedio['precipitacion_anual_estimada'] ?? ($promedio['precipitacion'] ?? null),
+
             ],
             'fuente' => $hoy['fuente'] ?? null,
         ];

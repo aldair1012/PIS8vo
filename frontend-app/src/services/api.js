@@ -143,7 +143,7 @@ export const simulacionService = {
 };
 
 export const chatService = {
-  preguntar: async (pregunta, vista = null, cultivoId = null, año = null, dashboard = null, simulacion = null) => {
+  preguntar: async (pregunta, vista = null, cultivoId = null, año = null, dashboard = null, simulacion = null, signal = undefined) => {
     const response = await API.post('/api/chat/preguntar', {
       pregunta,
       vista,
@@ -151,7 +151,7 @@ export const chatService = {
       año,
       dashboard,
       simulacion,
-    }, { timeout: 90000 });
+    }, { timeout: 90000, signal });
     return response.data;
   },
   limpiar: async () => {

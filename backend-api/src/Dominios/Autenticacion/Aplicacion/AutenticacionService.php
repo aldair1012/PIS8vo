@@ -60,7 +60,7 @@ final class AutenticacionService
             throw new ValidacionException('El formato del correo no es válido.');
         }
 
-        $usuario = $this->usuarios->iniciarSesion($correo, $contrasena);
+        $usuario = $this->usuarios->login($correo, $contrasena);
 
         if ($usuario) {
             $this->sesion->iniciar($usuario);

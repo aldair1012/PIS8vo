@@ -1,0 +1,825 @@
+{
+  "fecha_revision": "2026-11-10",
+  "titulo": "Fuentes, campos y usos de datos en ZeaSys",
+  "fuentes": [
+    {
+      "id": "MET-01",
+      "institucion": "Open-Meteo",
+      "titulo": "Weather Forecast API",
+      "url": "https://open-meteo.com/en/docs",
+      "campos": "Temperatura a 2 m (°C), humedad relativa (%), precipitación (mm), probabilidad de precipitación (%) y pronóstico de corto plazo.",
+      "pantallas": "Clima y cultivo; valores de ubicación de la parcela; contexto del asistente.",
+      "codigo": [
+        "ml-engine/src/data_providers.py",
+        "backend-api/src/Dominios/Lotes/Aplicacion/CultivoService.php"
+      ],
+      "limite": "Salida de modelos meteorológicos interpolados; no una estación instalada en la parcela. No cubre todo el ciclo futuro.",
+      "estado": "Fuente institucional identificada"
+    },
+    {
+      "id": "MET-02",
+      "institucion": "Open-Meteo / ECMWF",
+      "titulo": "Historical Weather API",
+      "url": "https://open-meteo.com/en/docs/historical-weather-api",
+      "campos": "Lluvia acumulada de un periodo; lluvia anual de referencia ERA5 1991–2020 (promedio de 30 totales anuales completos); temperatura y humedad recientes; radiación solar.",
+      "pantallas": "Clima y cultivo; comparación con periodos anteriores; referencias de rendimiento; simulación si se solicita el periodo histórico.",
+      "codigo": [
+        "ml-engine/src/data_providers.py",
+        "backend-api/src/Dominios/Analitica/Infraestructura/ProveedorReferenciasPublicas.php",
+        "backend-api/src/Dominios/Terreno/Infraestructura/ProveedorLluviaAnual.php"
+      ],
+      "limite": "Reanálisis/modelos en malla. Se conserva el periodo consultado; un promedio anual no sustituye la lluvia del ciclo.",
+      "estado": "Fuente institucional identificada"
+    },
+    {
+      "id": "MET-03",
+      "institucion": "NASA POWER",
+      "titulo": "Daily point API",
+      "url": "https://power.larc.nasa.gov/docs/services/api/",
+      "campos": "Variables meteorológicas diarias de respaldo para series históricas compatibles.",
+      "pantallas": "Motor de datos climáticos, cuando falla el proveedor principal y el periodo permite respaldo.",
+      "codigo": [
+        "ml-engine/src/data_providers.py"
+      ],
+      "limite": "Recurso de respaldo; su uso depende de disponibilidad y contrato del periodo. No añade cosechas reales.",
+      "estado": "Fuente institucional identificada"
+    },
+    {
+      "id": "MET-04",
+      "institucion": "INAMHI / portal de datos abiertos de Ecuador",
+      "titulo": "Series mensuales históricas conservadas en el proyecto",
+      "url": "https://www.datosabiertos.gob.ec/dataset/eaa8894f-68d1-4a15-80f8-1a6f528f946c/resource/98c77d18-e863-4e00-8a22-eb47f2981d9c/download/inamhi-precipitacion-2019diciembre.csv",
+      "campos": "Código/nombre/coordenadas de estación, mes/año, precipitación mensual (mm); temperatura media en el archivo de temperatura.",
+      "pantallas": "Simular cosecha: referencia anual automática; Rendimiento: comparación por ejecución; Clima y cultivo; contexto del asistente y metadatos de nuevas simulaciones.",
+      "codigo": [
+        "ml-engine/data/inamhi-precipitacion-2019diciembre.csv",
+        "ml-engine/data/inamhi-temperaturamedia-2019diciembre.csv",
+        "backend-api/src/Dominios/Analitica/Infraestructura/ProveedorReferenciasPublicas.php",
+        "backend-api/src/Dominios/Terreno/Infraestructura/ProveedorLluviaAnual.php"
+      ],
+      "limite": "Estación más cercana a no más de 100 km y con al menos ocho años completos. La referencia anual es el promedio de totales de años con doce meses. Subconjunto local 2000–2019 verificado fila por fila contra la descarga oficial, sin modificar valores. Mes ausente no es cero; la estación no mide necesariamente la parcela.",
+      "estado": "Fuente institucional identificada"
+    },
+    {
+      "id": "MET-05",
+      "institucion": "Open-Meteo / GeoNames",
+      "titulo": "Geocoding API",
+      "url": "https://open-meteo.com/en/docs/geocoding-api",
+      "campos": "Coordenadas del centro de una localidad ecuatoriana cuando la parcela no tiene GPS.",
+      "pantallas": "Consulta de lluvia anual de referencia; se etiqueta como centro aproximado de localidad.",
+      "codigo": [
+        "backend-api/src/Dominios/Terreno/Infraestructura/ProveedorLluviaAnual.php"
+      ],
+      "limite": "Sólo coincidencia exacta y única en Ecuador. Localidades homónimas sin resolver no generan una referencia. No reemplaza el polígono de la parcela.",
+      "estado": "Fuente institucional identificada"
+    },
+    {
+      "id": "SUE-01",
+      "institucion": "ISRIC",
+      "titulo": "SoilGrids 2.0: propiedades del suelo y unidades",
+      "url": "https://docs.isric.org/globaldata/soilgrids/SoilGrids_faqs_01.html",
+      "campos": "pH en agua; arcilla, arena y limo (%); carbono orgánico y materia orgánica derivada; profundidad 0–5 cm para autocompletado.",
+      "pantallas": "Mis parcelas (pH); Simular cosecha (textura, pH y apoyo opcional); trazabilidad del resultado.",
+      "codigo": [
+        "frontend-app/src/utils/datosParcela.js",
+        "backend-api/src/Dominios/Terreno/Infraestructura/ProveedorSoilGrids.php",
+        "backend-api/src/Dominios/Terreno/Aplicacion/TexturaSuelo.php"
+      ],
+      "limite": "Predicción espacial de una malla, no análisis de laboratorio. Se divide pH por 10 y las fracciones por 10. Materia orgánica es una conversión, no medición. El agricultor puede corregir el dato.",
+      "estado": "Fuente institucional identificada"
+    },
+    {
+      "id": "SUE-02",
+      "institucion": "FAO",
+      "titulo": "Crop evapotranspiration: total available water",
+      "url": "https://www.fao.org/4/x0490e/x0490e0e.htm",
+      "campos": "Agua útil del perfil (mm), derivada de capacidad de campo, punto de marchitez y espesor de capas.",
+      "pantallas": "Clima y cultivo; referencias de suelo; registro de campo para mediciones declaradas.",
+      "codigo": [
+        "backend-api/src/Dominios/Analitica/Infraestructura/ProveedorReferenciasPublicas.php"
+      ],
+      "limite": "Agua útil de SoilGrids es estimada; agua útil del registro depende de los datos declarados. No es humedad actual medida ni riego aplicado.",
+      "estado": "Fuente institucional identificada"
+    },
+    {
+      "id": "REF-01",
+      "institucion": "FAO / IIASA",
+      "titulo": "Global Agro-Ecological Zones v4 (2021)",
+      "url": "https://www.fao.org/gaez/gaezv4/en",
+      "campos": "Potencial zonal y rendimiento alcanzable, t de materia seca/ha; capas de maíz y condiciones de manejo/clima.",
+      "pantallas": "Rendimiento → Consultar referencias de la zona.",
+      "codigo": [
+        "backend-api/data/referencias/gaez-v4-ecuador-maiz.json",
+        "backend-api/src/Dominios/Analitica/Infraestructura/ProveedorReferenciasPublicas.php"
+      ],
+      "limite": "Malla aproximada de 9 km; periodos climáticos históricos de las capas. No es potencial genético de la variedad ni cosecha de esta parcela. No comparar con choclo ni grano húmedo sin una base común.",
+      "estado": "Fuente institucional identificada"
+    },
+    {
+      "id": "EST-01",
+      "institucion": "INEC",
+      "titulo": "ESPAC 2025: microdatos de cultivos transitorios",
+      "url": "https://anda.inec.gob.ec/anda5/index.php/catalog/1319",
+      "campos": "Tipo de maíz; estado de cosecha; provincia; mes de siembra; clase de semilla; área sembrada/cosechada (ha); producción (t); factor de expansión y segmentos.",
+      "pantallas": "Rendimiento → referencias separadas de grano y choclo; investigación de modelos de grano seco y choclo.",
+      "codigo": [
+        "backend-api/data/referencias/espac2025-productos-maiz.json",
+        "tools/preparar_referencias_maiz.py",
+        "ml-engine/src/espac_dataset.py",
+        "ml-engine/scripts/evaluar_espac2025.py"
+      ],
+      "limite": "Resumen calculado por ZeaSys sobre registros filtrados, distinto de un tabulado oficial completo. La fuente no acredita color, variedad comercial ni coordenadas individuales. Los ensayos no sustituyen al modelo activo.",
+      "estado": "Fuente institucional identificada"
+    },
+    {
+      "id": "EST-02",
+      "institucion": "MAG / SIPA",
+      "titulo": "Estadísticas de maíz: serie 2020–2025",
+      "url": "https://sipa.agricultura.gob.ec/index.php/maiz",
+      "campos": "Superficie cosechada (ha), producción bruta (t) y rendimiento de maíz duro seco (t/ha), nacional/provincial, por año.",
+      "pantallas": "Rendimiento → histórico provincial; contexto del chatbot cuando corresponde al tipo registrado.",
+      "codigo": [
+        "frontend-app/src/data/sipa-maiz-duro-2020-2025.json",
+        "scripts/import_sipa_maiz.py",
+        "frontend-app/src/views/DashboardRendimiento.jsx"
+      ],
+      "limite": "Solo maíz duro seco. La nota de fuente indica estandarización a 13% de humedad y 1% de impurezas. No es la cosecha de la cuenta ni una serie de choclo.",
+      "estado": "Fuente institucional identificada"
+    },
+    {
+      "id": "ECO-01",
+      "institucion": "MAGP",
+      "titulo": "Precio de sustentación de maíz amarillo duro, campaña 2026",
+      "url": "https://www.agricultura.gob.ec/establecido-el-precio-minimo-de-sustentacion-del-quintal-de-maiz-amarillo-duro-para-la-cosecha-de-2026/",
+      "campos": "Piso y techo publicados por quintal; punto medio calculado y calidad comercial indicada en el archivo.",
+      "pantallas": "Finanzas → referencia de precio; el agricultor introduce precio y presupuesto del escenario.",
+      "codigo": [
+        "backend-api/data/precio_maiz_referencia.json",
+        "backend-api/src/Dominios/Analitica/Aplicacion/ServicioAnaliticaFinancial.php"
+      ],
+      "limite": "Referencia con año y calidad; no es precio de mercado en tiempo real. El punto medio no acredita una transacción. No aplicar directamente a choclo o canguil.",
+      "estado": "Fuente institucional identificada"
+    },
+    {
+      "id": "GEO-01",
+      "institucion": "INEC / HDX / geoBoundaries",
+      "titulo": "Límites provinciales simplificados, referencia 2018",
+      "url": "https://github.com/wmgeolab/geoBoundaries/raw/9469f09/releaseData/gbHumanitarian/ECU/ADM1/geoBoundaries-ECU-ADM1_simplified.geojson",
+      "campos": "Provincia inferida mediante coordenadas; límite administrativo simplificado.",
+      "pantallas": "Formulario de simulación; evaluación documental de variedades por territorio.",
+      "codigo": [
+        "backend-api/data/referencias/provincias-ecuador.json"
+      ],
+      "limite": "CC BY 3.0 IGO según metadatos. No delimita propiedad ni certifica linderos; una zona no delimitada no se asigna forzosamente.",
+      "estado": "Fuente institucional identificada"
+    },
+    {
+      "id": "GEO-02",
+      "institucion": "OpenStreetMap Foundation",
+      "titulo": "Nominatim: reverse geocoding",
+      "url": "https://nominatim.org/release-docs/latest/api/Reverse/",
+      "campos": "Nombre aproximado de localidad y provincia a partir de latitud/longitud.",
+      "pantallas": "Mis parcelas y apoyo de ubicación del histórico provincial.",
+      "codigo": [
+        "frontend-app/src/views/Cultivos.jsx",
+        "frontend-app/src/views/DashboardRendimiento.jsx"
+      ],
+      "limite": "Geocodificación de apoyo, no dato catastral ni medición agrícola.",
+      "estado": "Proveedor cartográfico; no certificación agrícola"
+    },
+    {
+      "id": "MET-05",
+      "institucion": "Open-Meteo",
+      "titulo": "Elevation API",
+      "url": "https://open-meteo.com/en/docs/elevation-api",
+      "campos": "Altitud estimada sobre el nivel del mar (m).",
+      "pantallas": "Mis parcelas: altitud de apoyo y consulta de compatibilidad del catálogo.",
+      "codigo": [
+        "frontend-app/src/views/Cultivos.jsx",
+        "frontend-app/src/utils/datosParcela.js"
+      ],
+      "limite": "Modelo de elevación; dato corregible por el agricultor, no un levantamiento topográfico.",
+      "estado": "Fuente institucional identificada"
+    },
+    {
+      "id": "PDF-01",
+      "institucion": "MAG Ecuador",
+      "titulo": "mag-guia-productores-maiz-amarillo-2026.pdf",
+      "url": "https://www.agricultura.gob.ec/wp-content/uploads/2026/05/Gui%CC%81a-de-mai%CC%81z-amarillo-edit.pdf",
+      "campos": "Riesgos climáticos y medidas preventivas para maíz amarillo",
+      "pantallas": "Asistente: recuperación documental y citas de páginas PDF.",
+      "codigo": [
+        "backend-api/data/referencias/rag-corpus.json",
+        "backend-api/src/Dominios/Chat/Infraestructura/RecuperadorChroma.php"
+      ],
+      "limite": "Conocimiento de referencia de la edición citada; no datos actuales del lote. Se recuperan páginas relevantes y la respuesta generativa debe respetarlas.",
+      "estado": "Fuente institucional identificada"
+    },
+    {
+      "id": "PDF-02",
+      "institucion": "INIAP, Manual 122",
+      "titulo": "iniap-guia-produccion-maiz-sierra-2021.pdf",
+      "url": "https://repositorio.iniap.gob.ec/bitstream/41000/5796/1/GUIA%20CULTIVO%20DE%20MAIZ%202021-1.pdf",
+      "campos": "Producción sustentable, suelo, nutrición y manejo del maíz",
+      "pantallas": "Asistente: recuperación documental y citas de páginas PDF.",
+      "codigo": [
+        "backend-api/data/referencias/rag-corpus.json",
+        "backend-api/src/Dominios/Chat/Infraestructura/RecuperadorChroma.php"
+      ],
+      "limite": "Conocimiento de referencia de la edición citada; no datos actuales del lote. Se recuperan páginas relevantes y la respuesta generativa debe respetarlas.",
+      "estado": "Fuente institucional identificada"
+    },
+    {
+      "id": "PDF-03",
+      "institucion": "INIAP, Boletín 353",
+      "titulo": "iniap-guia-maiz-amarillo-litoral-2014.pdf",
+      "url": "https://repositorio.iniap.gob.ec/bitstreams/56568b25-3420-47d1-b824-2b0a44195155/download",
+      "campos": "Manejo del maíz amarillo duro del Litoral ecuatoriano",
+      "pantallas": "Asistente: recuperación documental y citas de páginas PDF.",
+      "codigo": [
+        "backend-api/data/referencias/rag-corpus.json",
+        "backend-api/src/Dominios/Chat/Infraestructura/RecuperadorChroma.php"
+      ],
+      "limite": "Conocimiento de referencia de la edición citada; no datos actuales del lote. Se recuperan páginas relevantes y la respuesta generativa debe respetarlas.",
+      "estado": "Fuente institucional identificada"
+    },
+    {
+      "id": "PDF-04",
+      "institucion": "INIAP/FAO",
+      "titulo": "iniap-manual-produccion-maiz-2007.pdf",
+      "url": "https://repositorio.iniap.gob.ec/bitstreams/6bae1e3d-6b39-4606-9210-608a49734ac1/download",
+      "campos": "Prácticas generales y variedades de maíz en Ecuador",
+      "pantallas": "Asistente: recuperación documental y citas de páginas PDF.",
+      "codigo": [
+        "backend-api/data/referencias/rag-corpus.json",
+        "backend-api/src/Dominios/Chat/Infraestructura/RecuperadorChroma.php"
+      ],
+      "limite": "Conocimiento de referencia de la edición citada; no datos actuales del lote. Se recuperan páginas relevantes y la respuesta generativa debe respetarlas.",
+      "estado": "Fuente institucional identificada"
+    },
+    {
+      "id": "PDF-05",
+      "institucion": "INEC, ESPAC",
+      "titulo": "inec-espac-resultados-2025.pdf",
+      "url": "https://www.ecuadorencifras.gob.ec/documentos/web-inec/Estadisticas_agropecuarias/espac/2025/Presentacion_de_resultados_ESPAC_2025.pdf",
+      "campos": "Estadísticas nacionales y provinciales; siempre deben citar su año",
+      "pantallas": "Asistente: recuperación documental y citas de páginas PDF.",
+      "codigo": [
+        "backend-api/data/referencias/rag-corpus.json",
+        "backend-api/src/Dominios/Chat/Infraestructura/RecuperadorChroma.php"
+      ],
+      "limite": "Conocimiento de referencia de la edición citada; no datos actuales del lote. Se recuperan páginas relevantes y la respuesta generativa debe respetarlas.",
+      "estado": "Fuente institucional identificada"
+    },
+    {
+      "id": "VAR-sierra2021",
+      "institucion": "INIAP / MAG / FAO, según publicación",
+      "titulo": "INIAP / KOPIA, guía de maíz de la Sierra, 2021",
+      "url": "https://repositorio.iniap.gob.ec/bitstream/41000/5796/1/GUIA%20CULTIVO%20DE%20MAIZ%202021-1.pdf",
+      "campos": "Nombre de variedad, uso documentado, región/provincia, altitud y ciclo cuando existen; condiciones de manejo que figuran en la ficha.",
+      "pantallas": "Mis parcelas → variedad; Simular → consultar variedades y compatibilidad documental; contexto del asistente.",
+      "codigo": [
+        "backend-api/data/referencias/catalogo-maiz-ecuador.json",
+        "frontend-app/src/data/variedadesMaizEcuador.js",
+        "backend-api/src/Dominios/Analitica/Infraestructura/RepositorioCatalogoAgronomico.php"
+      ],
+      "limite": "No se completa una condición ausente con valores inventados. Compatibilidad documental no equivale a ensayo local ni precisión predictiva.",
+      "estado": "Publicación institucional identificada en catálogo"
+    },
+    {
+      "id": "VAR-ficha101",
+      "institucion": "INIAP / MAG / FAO, según publicación",
+      "titulo": "INIAP, ficha técnica de INIAP 101",
+      "url": "https://tecnologia.iniap.gob.ec/wp-content/uploads/2023/11/iniap1011.pdf",
+      "campos": "Nombre de variedad, uso documentado, región/provincia, altitud y ciclo cuando existen; condiciones de manejo que figuran en la ficha.",
+      "pantallas": "Mis parcelas → variedad; Simular → consultar variedades y compatibilidad documental; contexto del asistente.",
+      "codigo": [
+        "backend-api/data/referencias/catalogo-maiz-ecuador.json",
+        "frontend-app/src/data/variedadesMaizEcuador.js",
+        "backend-api/src/Dominios/Analitica/Infraestructura/RepositorioCatalogoAgronomico.php"
+      ],
+      "limite": "No se completa una condición ausente con valores inventados. Compatibilidad documental no equivale a ensayo local ni precisión predictiva.",
+      "estado": "Publicación institucional identificada en catálogo"
+    },
+    {
+      "id": "VAR-duro",
+      "institucion": "INIAP / MAG / FAO, según publicación",
+      "titulo": "INIAP, fichas de maíz duro",
+      "url": "https://tecnologia.iniap.gob.ec/wp-content/uploads/2023/11/fichasmaizduro.pdf",
+      "campos": "Nombre de variedad, uso documentado, región/provincia, altitud y ciclo cuando existen; condiciones de manejo que figuran en la ficha.",
+      "pantallas": "Mis parcelas → variedad; Simular → consultar variedades y compatibilidad documental; contexto del asistente.",
+      "codigo": [
+        "backend-api/data/referencias/catalogo-maiz-ecuador.json",
+        "frontend-app/src/data/variedadesMaizEcuador.js",
+        "backend-api/src/Dominios/Analitica/Infraestructura/RepositorioCatalogoAgronomico.php"
+      ],
+      "limite": "No se completa una condición ausente con valores inventados. Compatibilidad documental no equivale a ensayo local ni precisión predictiva.",
+      "estado": "Publicación institucional identificada en catálogo"
+    },
+    {
+      "id": "VAR-h603",
+      "institucion": "INIAP / MAG / FAO, según publicación",
+      "titulo": "INIAP, ensayos de H-603, publicación 2018",
+      "url": "https://repositorio.iniap.gob.ec/items/167c75ef-de78-4f29-9939-2e7e71fea5f9",
+      "campos": "Nombre de variedad, uso documentado, región/provincia, altitud y ciclo cuando existen; condiciones de manejo que figuran en la ficha.",
+      "pantallas": "Mis parcelas → variedad; Simular → consultar variedades y compatibilidad documental; contexto del asistente.",
+      "codigo": [
+        "backend-api/data/referencias/catalogo-maiz-ecuador.json",
+        "frontend-app/src/data/variedadesMaizEcuador.js",
+        "backend-api/src/Dominios/Analitica/Infraestructura/RepositorioCatalogoAgronomico.php"
+      ],
+      "limite": "No se completa una condición ausente con valores inventados. Compatibilidad documental no equivale a ensayo local ni precisión predictiva.",
+      "estado": "Publicación institucional identificada en catálogo"
+    },
+    {
+      "id": "VAR-renacer",
+      "institucion": "INIAP / MAG / FAO, según publicación",
+      "titulo": "INIAP, H-554 Renacer, 2020",
+      "url": "https://repositorio.iniap.gob.ec/items/828559c2-f344-4463-bfa7-50e93276aa09",
+      "campos": "Nombre de variedad, uso documentado, región/provincia, altitud y ciclo cuando existen; condiciones de manejo que figuran en la ficha.",
+      "pantallas": "Mis parcelas → variedad; Simular → consultar variedades y compatibilidad documental; contexto del asistente.",
+      "codigo": [
+        "backend-api/data/referencias/catalogo-maiz-ecuador.json",
+        "frontend-app/src/data/variedadesMaizEcuador.js",
+        "backend-api/src/Dominios/Analitica/Infraestructura/RepositorioCatalogoAgronomico.php"
+      ],
+      "limite": "No se completa una condición ausente con valores inventados. Compatibilidad documental no equivale a ensayo local ni precisión predictiva.",
+      "estado": "Publicación institucional identificada en catálogo"
+    },
+    {
+      "id": "VAR-mag2019",
+      "institucion": "INIAP / MAG / FAO, según publicación",
+      "titulo": "MAG/SIPA, rendimientos objetivos de maíz duro amarillo, 2019",
+      "url": "https://sipa.agricultura.gob.ec/descargas/estudios/rendimientos/maiz/rendimiento_maiz_duro_2019.pdf",
+      "campos": "Nombre de variedad, uso documentado, región/provincia, altitud y ciclo cuando existen; condiciones de manejo que figuran en la ficha.",
+      "pantallas": "Mis parcelas → variedad; Simular → consultar variedades y compatibilidad documental; contexto del asistente.",
+      "codigo": [
+        "backend-api/data/referencias/catalogo-maiz-ecuador.json",
+        "frontend-app/src/data/variedadesMaizEcuador.js",
+        "backend-api/src/Dominios/Analitica/Infraestructura/RepositorioCatalogoAgronomico.php"
+      ],
+      "limite": "No se completa una condición ausente con valores inventados. Compatibilidad documental no equivale a ensayo local ni precisión predictiva.",
+      "estado": "Publicación institucional identificada en catálogo"
+    },
+    {
+      "id": "VAR-semillas2024",
+      "institucion": "INIAP / MAG / FAO, según publicación",
+      "titulo": "INIAP, rendición de cuentas EETP 2024: producción de semilla H-551, H-553 y H-554",
+      "url": "https://www.iniap.gob.ec/wp-content/uploads/2025/08/informe_narrativo_eetp__rdc_2024.pdf",
+      "campos": "Nombre de variedad, uso documentado, región/provincia, altitud y ciclo cuando existen; condiciones de manejo que figuran en la ficha.",
+      "pantallas": "Mis parcelas → variedad; Simular → consultar variedades y compatibilidad documental; contexto del asistente.",
+      "codigo": [
+        "backend-api/data/referencias/catalogo-maiz-ecuador.json",
+        "frontend-app/src/data/variedadesMaizEcuador.js",
+        "backend-api/src/Dominios/Analitica/Infraestructura/RepositorioCatalogoAgronomico.php"
+      ],
+      "limite": "No se completa una condición ausente con valores inventados. Compatibilidad documental no equivale a ensayo local ni precisión predictiva.",
+      "estado": "Publicación institucional identificada en catálogo"
+    },
+    {
+      "id": "VAR-h551ficha",
+      "institucion": "INIAP / MAG / FAO, según publicación",
+      "titulo": "INIAP, ficha original de maíz duro H-551",
+      "url": "https://repositorio.iniap.gob.ec/bitstreams/b9ed1623-a3f2-4fcf-b9ec-d28c2833b6cf/download",
+      "campos": "Nombre de variedad, uso documentado, región/provincia, altitud y ciclo cuando existen; condiciones de manejo que figuran en la ficha.",
+      "pantallas": "Mis parcelas → variedad; Simular → consultar variedades y compatibilidad documental; contexto del asistente.",
+      "codigo": [
+        "backend-api/data/referencias/catalogo-maiz-ecuador.json",
+        "frontend-app/src/data/variedadesMaizEcuador.js",
+        "backend-api/src/Dominios/Analitica/Infraestructura/RepositorioCatalogoAgronomico.php"
+      ],
+      "limite": "No se completa una condición ausente con valores inventados. Compatibilidad documental no equivale a ensayo local ni precisión predictiva.",
+      "estado": "Publicación institucional identificada en catálogo"
+    },
+    {
+      "id": "VAR-dkecuador",
+      "institucion": "Bayer / DEKALB",
+      "titulo": "DEKALB/Bayer, ficha de DK-7088 para Ecuador",
+      "url": "https://www.dekalb.com.mx/es-co/portafolio_dekalb/hibridos_ecuador/dk-7088_ecu.html",
+      "campos": "Nombre de variedad, uso documentado, región/provincia, altitud y ciclo cuando existen; condiciones de manejo que figuran en la ficha.",
+      "pantallas": "Mis parcelas → variedad; Simular → consultar variedades y compatibilidad documental; contexto del asistente.",
+      "codigo": [
+        "backend-api/data/referencias/catalogo-maiz-ecuador.json",
+        "frontend-app/src/data/variedadesMaizEcuador.js",
+        "backend-api/src/Dominios/Analitica/Infraestructura/RepositorioCatalogoAgronomico.php"
+      ],
+      "limite": "No se completa una condición ausente con valores inventados. Compatibilidad documental no equivale a ensayo local ni precisión predictiva.",
+      "estado": "Fuente comercial del fabricante; no organismo certificador"
+    },
+    {
+      "id": "VAR-i198",
+      "institucion": "INIAP / MAG / FAO, según publicación",
+      "titulo": "INIAP, INIAP-198: variedad mejorada de canguil para la Sierra",
+      "url": "https://repositorio.iniap.gob.ec/handle/41000/2556",
+      "campos": "Nombre de variedad, uso documentado, región/provincia, altitud y ciclo cuando existen; condiciones de manejo que figuran en la ficha.",
+      "pantallas": "Mis parcelas → variedad; Simular → consultar variedades y compatibilidad documental; contexto del asistente.",
+      "codigo": [
+        "backend-api/data/referencias/catalogo-maiz-ecuador.json",
+        "frontend-app/src/data/variedadesMaizEcuador.js",
+        "backend-api/src/Dominios/Analitica/Infraestructura/RepositorioCatalogoAgronomico.php"
+      ],
+      "limite": "No se completa una condición ausente con valores inventados. Compatibilidad documental no equivale a ensayo local ni precisión predictiva.",
+      "estado": "Publicación institucional identificada en catálogo"
+    },
+    {
+      "id": "VAR-i198agris",
+      "institucion": "INIAP / MAG / FAO, según publicación",
+      "titulo": "FAO AGRIS, registro del plegable original de INIAP-198",
+      "url": "https://agris.fao.org/search/es/records/6878df7e5d9ad5f58d60424c",
+      "campos": "Nombre de variedad, uso documentado, región/provincia, altitud y ciclo cuando existen; condiciones de manejo que figuran en la ficha.",
+      "pantallas": "Mis parcelas → variedad; Simular → consultar variedades y compatibilidad documental; contexto del asistente.",
+      "codigo": [
+        "backend-api/data/referencias/catalogo-maiz-ecuador.json",
+        "frontend-app/src/data/variedadesMaizEcuador.js",
+        "backend-api/src/Dominios/Analitica/Infraestructura/RepositorioCatalogoAgronomico.php"
+      ],
+      "limite": "No se completa una condición ausente con valores inventados. Compatibilidad documental no equivale a ensayo local ni precisión predictiva.",
+      "estado": "Publicación institucional identificada en catálogo"
+    }
+  ],
+  "pdf_originales": [
+    {
+      "id": "PDF-01",
+      "archivo": "mag-guia-productores-maiz-amarillo-2026.pdf",
+      "anio": 2026,
+      "sha256": "bef200ecd8208dd6b1fa115b06756c1ae20cd08e79e4b7ce6f794d23090d8d88"
+    },
+    {
+      "id": "PDF-02",
+      "archivo": "iniap-guia-produccion-maiz-sierra-2021.pdf",
+      "anio": 2021,
+      "sha256": "cc41ccee362b5c597011b55a06ad9423da4b40afaa01490a5cc6d1d2f9122a84"
+    },
+    {
+      "id": "PDF-03",
+      "archivo": "iniap-guia-maiz-amarillo-litoral-2014.pdf",
+      "anio": 2014,
+      "sha256": "f67624033de373428407870bec85eda141aef8e9d4b80a2f1b7798f032b73572"
+    },
+    {
+      "id": "PDF-04",
+      "archivo": "iniap-manual-produccion-maiz-2007.pdf",
+      "anio": 2007,
+      "sha256": "75074137f0eea75ca88a193364a6653d377d2e34cddf95031652492979cd8f34"
+    },
+    {
+      "id": "PDF-05",
+      "archivo": "inec-espac-resultados-2025.pdf",
+      "anio": 2025,
+      "sha256": "63c3a463eabe842aacc6ae915e876cc3c93fbe654a4b740438a0a3a67460ce08"
+    }
+  ],
+  "variedades": [
+    {
+      "nombre": "INIAP H-551",
+      "tipo_grano_documentado": "Duro amarillo",
+      "usos_documentados": [
+        "grano_seco"
+      ],
+      "categorias_consumo": [
+        "duro_amarillo"
+      ],
+      "fuentes": [
+        {
+          "id": "duro",
+          "pagina_pdf": 2
+        },
+        {
+          "id": "semillas2024"
+        },
+        {
+          "id": "h551ficha",
+          "pagina_pdf": 2
+        }
+      ],
+      "datos_no_documentados": [
+        "Temperatura óptima propia del cultivar",
+        "pH óptimo propio del cultivar",
+        "Demanda hídrica por etapa y por cultivar"
+      ],
+      "simulacion_grano_habilitada": true
+    },
+    {
+      "nombre": "INIAP H-553",
+      "tipo_grano_documentado": "Duro amarillo",
+      "usos_documentados": [
+        "grano_seco"
+      ],
+      "categorias_consumo": [
+        "duro_amarillo"
+      ],
+      "fuentes": [
+        {
+          "id": "duro",
+          "pagina_pdf": 2
+        },
+        {
+          "id": "semillas2024"
+        }
+      ],
+      "datos_no_documentados": [
+        "Temperatura óptima propia del cultivar",
+        "pH óptimo propio del cultivar",
+        "Demanda hídrica por etapa y por cultivar"
+      ],
+      "simulacion_grano_habilitada": true
+    },
+    {
+      "nombre": "INIAP H-554 Renacer",
+      "tipo_grano_documentado": "Duro cristalino QPM",
+      "usos_documentados": [
+        "grano_seco"
+      ],
+      "categorias_consumo": [
+        "duro_amarillo"
+      ],
+      "fuentes": [
+        {
+          "id": "renacer",
+          "pagina_pdf": 2
+        },
+        {
+          "id": "semillas2024"
+        }
+      ],
+      "datos_no_documentados": [
+        "Temperatura óptima propia del cultivar",
+        "pH óptimo propio del cultivar",
+        "Demanda hídrica por etapa y por cultivar"
+      ],
+      "simulacion_grano_habilitada": true
+    },
+    {
+      "nombre": "INIAP H-603 Superior",
+      "tipo_grano_documentado": "Duro amarillo",
+      "usos_documentados": [
+        "grano_seco"
+      ],
+      "categorias_consumo": [
+        "duro_amarillo"
+      ],
+      "fuentes": [
+        {
+          "id": "duro",
+          "pagina_pdf": 2
+        }
+      ],
+      "datos_no_documentados": [
+        "Temperatura óptima propia del cultivar",
+        "pH óptimo propio del cultivar",
+        "Demanda hídrica por etapa y por cultivar"
+      ],
+      "simulacion_grano_habilitada": true
+    },
+    {
+      "nombre": "DEKALB DK-7088",
+      "tipo_grano_documentado": "Amarillo intenso, semidentado según ficha del fabricante para Ecuador",
+      "usos_documentados": [
+        "grano_seco"
+      ],
+      "categorias_consumo": [
+        "duro_amarillo"
+      ],
+      "fuentes": [
+        {
+          "id": "h603"
+        },
+        {
+          "id": "mag2019",
+          "pagina_pdf": 4
+        },
+        {
+          "id": "dkecuador"
+        }
+      ],
+      "datos_no_documentados": [
+        "Temperatura óptima propia del cultivar",
+        "pH óptimo propio del cultivar",
+        "Demanda hídrica por etapa y por cultivar"
+      ],
+      "simulacion_grano_habilitada": true
+    },
+    {
+      "nombre": "INIAP 101 Blanco Harinoso Precoz",
+      "tipo_grano_documentado": "Blanco harinoso",
+      "usos_documentados": [
+        "grano_seco",
+        "choclo",
+        "forraje"
+      ],
+      "categorias_consumo": [
+        "choclo_blanco",
+        "grano_andino"
+      ],
+      "fuentes": [
+        {
+          "id": "sierra2021",
+          "pagina_pdf": 15
+        },
+        {
+          "id": "ficha101",
+          "pagina_pdf": 1
+        }
+      ],
+      "datos_no_documentados": [
+        "Temperatura óptima propia del cultivar",
+        "pH óptimo propio del cultivar",
+        "Demanda hídrica por etapa y por cultivar"
+      ],
+      "simulacion_grano_habilitada": true
+    },
+    {
+      "nombre": "INIAP 102 Blanco Blandito Mejorado",
+      "tipo_grano_documentado": "Blanco harinoso",
+      "usos_documentados": [
+        "grano_seco",
+        "choclo"
+      ],
+      "categorias_consumo": [
+        "choclo_blanco",
+        "grano_andino"
+      ],
+      "fuentes": [
+        {
+          "id": "sierra2021",
+          "pagina_pdf": 15
+        }
+      ],
+      "datos_no_documentados": [
+        "Temperatura óptima propia del cultivar",
+        "pH óptimo propio del cultivar",
+        "Demanda hídrica por etapa y por cultivar"
+      ],
+      "simulacion_grano_habilitada": true
+    },
+    {
+      "nombre": "INIAP 103 Mishqui Sara",
+      "tipo_grano_documentado": "Blanco harinoso QPM",
+      "usos_documentados": [
+        "grano_seco",
+        "choclo",
+        "forraje"
+      ],
+      "categorias_consumo": [
+        "choclo_blanco",
+        "grano_andino"
+      ],
+      "fuentes": [
+        {
+          "id": "sierra2021",
+          "pagina_pdf": 16
+        }
+      ],
+      "datos_no_documentados": [
+        "Temperatura óptima propia del cultivar",
+        "pH óptimo propio del cultivar",
+        "Demanda hídrica por etapa y por cultivar"
+      ],
+      "simulacion_grano_habilitada": true
+    },
+    {
+      "nombre": "INIAP 111 Guagal Mejorado",
+      "tipo_grano_documentado": "Blanco harinoso",
+      "usos_documentados": [
+        "grano_seco",
+        "choclo"
+      ],
+      "categorias_consumo": [
+        "choclo_blanco",
+        "grano_andino"
+      ],
+      "fuentes": [
+        {
+          "id": "sierra2021",
+          "pagina_pdf": 16
+        }
+      ],
+      "datos_no_documentados": [
+        "Temperatura óptima propia del cultivar",
+        "pH óptimo propio del cultivar",
+        "Demanda hídrica por etapa y por cultivar"
+      ],
+      "simulacion_grano_habilitada": true
+    },
+    {
+      "nombre": "INIAP 122 Chaucho Mejorado",
+      "tipo_grano_documentado": "Amarillo harinoso",
+      "usos_documentados": [
+        "grano_seco",
+        "choclo",
+        "tostado"
+      ],
+      "categorias_consumo": [
+        "choclo_amarillo",
+        "grano_andino"
+      ],
+      "fuentes": [
+        {
+          "id": "sierra2021",
+          "pagina_pdf": 17
+        }
+      ],
+      "datos_no_documentados": [
+        "Temperatura óptima propia del cultivar",
+        "pH óptimo propio del cultivar",
+        "Demanda hídrica por etapa y por cultivar"
+      ],
+      "simulacion_grano_habilitada": true
+    },
+    {
+      "nombre": "INIAP 124 Mishca Mejorado",
+      "tipo_grano_documentado": "Amarillo harinoso",
+      "usos_documentados": [
+        "grano_seco",
+        "choclo",
+        "tostado"
+      ],
+      "categorias_consumo": [
+        "choclo_amarillo",
+        "grano_andino"
+      ],
+      "fuentes": [
+        {
+          "id": "sierra2021",
+          "pagina_pdf": 17
+        }
+      ],
+      "datos_no_documentados": [
+        "Temperatura óptima propia del cultivar",
+        "pH óptimo propio del cultivar",
+        "Demanda hídrica por etapa y por cultivar"
+      ],
+      "simulacion_grano_habilitada": true
+    },
+    {
+      "nombre": "INIAP 180 Morochillo",
+      "tipo_grano_documentado": "Amarillo cristalino, morochillo",
+      "usos_documentados": [
+        "grano_seco",
+        "forraje"
+      ],
+      "categorias_consumo": [
+        "grano_andino"
+      ],
+      "fuentes": [
+        {
+          "id": "sierra2021",
+          "pagina_pdf": 18
+        }
+      ],
+      "datos_no_documentados": [
+        "Temperatura óptima propia del cultivar",
+        "pH óptimo propio del cultivar",
+        "Demanda hídrica por etapa y por cultivar"
+      ],
+      "simulacion_grano_habilitada": true
+    },
+    {
+      "nombre": "INIAP 199 Racimo de Uva",
+      "tipo_grano_documentado": "Morado/negro harinoso",
+      "usos_documentados": [
+        "grano_seco"
+      ],
+      "categorias_consumo": [
+        "grano_andino"
+      ],
+      "fuentes": [
+        {
+          "id": "sierra2021",
+          "pagina_pdf": 18
+        }
+      ],
+      "datos_no_documentados": [
+        "Temperatura óptima propia del cultivar",
+        "pH óptimo propio del cultivar",
+        "Demanda hídrica por etapa y por cultivar"
+      ],
+      "simulacion_grano_habilitada": true
+    },
+    {
+      "nombre": "INIAP 198 Canguil",
+      "tipo_grano_documentado": "Canguil: grano pequeño, blanco y duro según el plegable original del INIAP",
+      "usos_documentados": [
+        "canguil"
+      ],
+      "categorias_consumo": [
+        "canguil"
+      ],
+      "fuentes": [
+        {
+          "id": "i198"
+        },
+        {
+          "id": "i198agris"
+        }
+      ],
+      "datos_no_documentados": [
+        "Temperatura óptima específica",
+        "pH óptimo específico",
+        "Demanda hídrica específica por ciclo"
+      ],
+      "simulacion_grano_habilitada": false
+    }
+  ],
+  "advertencia": "Autoría institucional y trazabilidad no equivalen a certificación de la precisión del modelo. El CSV histórico de entrenamiento continúa con procedencia no acreditada; los datos personales y supuestos no son datos certificados."
+}

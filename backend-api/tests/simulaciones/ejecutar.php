@@ -64,7 +64,7 @@ $pruebas['año presente devuelve la simulación y mantiene parámetros ligados']
     comprobar($resultado === $fila, 'Debe conservar la fila y todos sus campos.');
     comprobar(count($pdo->consultas) === 1, 'Debe ejecutar una sola consulta.');
     comprobar(str_contains($pdo->consultas[0]['sql'], 'fecha >= :inicio AND fecha < :fin'), 'Debe filtrar el año solicitado.');
-    comprobar($pdo->consultas[0]['parametros'] === ['cultivo_id' => 1, 'inicio' => '2026-01-01 00:00:00', 'fin' => '2027-01-01 00:00:00'], 'Debe ligar el ID y el año.');
+    comprobar($pdo->consultas[0]['parametros'] === ['parcela_id' => 1, 'inicio' => '2026-01-01 00:00:00', 'fin' => '2027-01-01 00:00:00'], 'Debe ligar el ID y el año.');
 };
 $pruebas['año sin registros devuelve null sin consultar otra campaña'] = static function () use ($fila): void {
     // La segunda respuesta reproduce la fila ajena al año que devolvía el fallback legacy.
@@ -79,8 +79,8 @@ $pruebas['sin filtro devuelve la última simulación de la parcela'] = static fu
     comprobar($resultado === $fila, 'Debe mantener el comportamiento sin filtro.');
     comprobar(count($pdo->consultas) === 1, 'Debe ejecutar una sola consulta.');
     comprobar(!str_contains($pdo->consultas[0]['sql'], 'YEAR('), 'No debe añadir filtro temporal si no se solicita.');
-    comprobar($pdo->consultas[0]['parametros'] === ['cultivo_id' => 1], 'Solo debe ligar la parcela.');
-    comprobar(str_contains($pdo->consultas[0]['sql'], 'ORDER BY fecha DESC LIMIT 1'), 'Debe conservar el orden de última simulación.');
+    comprobar($pdo->consultas[0]['parametros'] === ['parcela_id' => 1], 'Solo debe ligar la parcela.');
+    comprobar(str_contains($pdo->consultas[0]['sql'], 'ORDER BY fecha DESC, id DESC LIMIT 1'), 'Debe conservar el orden de última simulación.');
 };
 $pruebas['sin filtro y sin registros devuelve null con una sola consulta'] = static function (): void {
     $pdo = new PdoSimulaciones([false]);

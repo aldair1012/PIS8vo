@@ -1,17 +1,26 @@
+import { useEffect, useState } from 'react';
 import { Line } from 'react-chartjs-2';
 import { Chart as ChartJS, LinearScale, PointElement, LineElement, Title, Tooltip, Legend } from 'chart.js';
 import { getDashboardChartColors, getDashboardChartAnimation } from '../../utils/chartConfig';
 import { descriptivePercentiles, evidenceNumber } from '../../utils/agronomicEvidence';
 
 ChartJS.register(LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
+const formatYield = value => value.toLocaleString('es-EC',{minimumFractionDigits:2,maximumFractionDigits:2});
 
 // Se conserva el nombre del componente para los importadores existentes.
 // Tres percentiles no permiten inferir una densidad ni ajustar una campana normal.
 export default function GaussChart({ p10, p50, p90, muestra }) {
-  const theme = getDashboardChartColors(document.body.classList.contains('light-theme'));
+  const [light,setLight] = useState(()=>document.body.classList.contains('light-theme'));
+  useEffect(()=>{
+    const observer=new MutationObserver(()=>setLight(document.body.classList.contains('light-theme')));
+    observer.observe(document.body,{attributes:true,attributeFilter:['class']});
+    return ()=>observer.disconnect();
+  },[]);
+  const theme = getDashboardChartColors(light);
   const summary = descriptivePercentiles(p10, p50, p90);
   const count = evidenceNumber(muestra);
   if (!summary) return <div className="chart-empty-state">No hay percentiles descriptivos disponibles para las simulaciones guardadas.</div>;
+  if (count === 1) return <div className="siembra-single-result"><strong>{formatYield(summary.values[1])} t/ha</strong><p>Rendimiento de la única simulación guardada en este periodo.</p><p>Una simulación no permite comparar la variación de rendimientos.</p></div>;
 
   const labels = ['P10', 'P50 · Mediana', 'P90'];
   const colors = [theme.risk, theme.leaf, theme.sky];
@@ -45,7 +54,7 @@ export default function GaussChart({ p10, p50, p90, muestra }) {
         displayColors: false,
         callbacks: {
           title: (items) => labels[items[0].dataIndex],
-          label: (item) => `${item.parsed.x.toFixed(2)} t/ha · resumen de ejecuciones guardadas`,
+          label: (item) => `${formatYield(item.parsed.x)} t/ha · resumen de ejecuciones guardadas`,
         },
       },
     },
@@ -67,9 +76,10 @@ export default function GaussChart({ p10, p50, p90, muestra }) {
     <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid var(--zs-border)', paddingTop: '0.75rem' }}>
       {labels.map((label, index) => <div key={label} style={{ textAlign: 'center', flex: 1, padding: '0.45rem 0.3rem', borderRadius: '8px', background: 'var(--zs-inset-surface)', margin: '0 4px', border: '1px solid var(--zs-border)' }}>
         <div style={{ color: 'var(--zs-muted)', fontSize: '0.72rem', fontWeight: 700 }}>{label}</div>
-        <div style={{ fontWeight: 900, color: colors[index], fontSize: '1.25rem', marginTop: '0.2rem' }}>{summary.values[index].toFixed(2)} <span style={{ fontSize: '0.78rem', fontWeight: 600 }}>t/ha</span></div>
+        <div style={{ fontWeight: 900, color: colors[index], fontSize: '1.25rem', marginTop: '0.2rem' }}>{formatYield(summary.values[index])} <span style={{ fontSize: '0.78rem', fontWeight: 600 }}>t/ha</span></div>
       </div>)}
     </div>
-    <p className="dashboard-chart-caption">{count !== null ? `${count} simulaciones guardadas. ` : ''}Los percentiles describen esta muestra de predicciones; no son probabilidades futuras ni una distribución normal validada.</p>
+    <p className="dashboard-chart-caption">{count !== null ? `${count} ${count === 1 ? 'simulación guardada' : 'simulaciones guardadas'}. ` : ''}Los percentiles describen esta muestra de predicciones; no son probabilidades futuras ni una distribución normal validada.</p>
+    {summary.values[0] === summary.values[2] && <p className="dashboard-chart-caption">Los tres percentiles coinciden en {formatYield(summary.values[1])} t/ha; los puntos están superpuestos.</p>}
   </div>;
 }

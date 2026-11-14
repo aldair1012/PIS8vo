@@ -209,9 +209,11 @@ final class GeminiFlowise
             . 'en el borrador, precipitacion_ciclo_entrada_mm es lluvia de todo el ciclo y nunca lluvia anual; '
             . 'fecha_siembra y parametros_campo son valores declarados para planificar. Distingue agua de riego de lluvia y capacidad del suelo; '
             . 'la ficha de variedad separa usos de grano, choclo y canguil: no conviertas toneladas entre productos ni prometas una simulación deshabilitada; '
-            . 'puntaje_clasificacion no mide exactitud de cosecha. Si evidencia_modelo indica validación independiente pendiente, no afirmes una precisión agrícola comprobada; '
-            . 'en promedio_30d, precipitacion_30d_mm es el acumulado real y precipitacion_anual_estimada_mm es una '
-            . 'proyección anual; el precio es referencia oficial, no cotización en vivo; si la pregunta trata de precio, '
+            . 'calidad_modelo_r2_pct es calidad global interna del modelo, no confianza individual ni probabilidad de cosecha. Si evidencia_modelo indica validación independiente pendiente, no afirmes una precisión agrícola comprobada; '
+            . 'En Siembra, el bloque siembra procede del resumen del servidor para la parcela y año seleccionados: prioriza su media, percentiles, muestra y calendario. No reemplaces una muestra vacía con rendimientos de otro año. Sus ventanas son referencias de catálogo, no riesgo evaluado ni fechas óptimas. '
+            . 'En Rendimiento, simulacion_seleccionada es la ejecución visible validada por el servidor: prioriza sus cifras y entradas frente a otras ejecuciones históricas; '
+            . 'en promedio_30d, precipitacion_30d_mm es el acumulado reciente del reanálisis y lluvia_anual_referencia es un promedio histórico por ubicación, nunca una '
+            . 'predicción de la lluvia del ciclo; el precio es referencia oficial, no cotización en vivo; si la pregunta trata de precio, '
             . 'margen o ingreso y existe impacto_precio, usa delta_por_qq y delta_ingreso_estimado; si existe '
             . 'simulacion_borrador, úsalo como fuente principal de la simulación en edición y no lo presentes como '
             . 'resultado ejecutado; simulacion_reciente es un registro anterior, no el resultado del borrador; si '
@@ -281,6 +283,7 @@ final class GeminiFlowise
             'precio_maiz' => $this->resumirValor($agricola['precio_maiz'] ?? null, 380),
             'impacto_precio' => $this->resumirValor($agricola['impacto_precio'] ?? null, 420),
             'nutricion' => $this->resumirValor($agricola['nutricion'] ?? null, 460),
+            'lluvia_anual_referencia' => $this->resumirValor($agricola['clima']['lluvia_anual_referencia'] ?? null, 650),
             'clima' => $this->resumirValor($agricola['clima'] ?? null, 850),
             'rendimiento' => $this->resumirValor($agricola['rendimiento']['kpis'] ?? null, 360),
             'finanzas' => $this->resumirValor($agricola['finanzas']['kpis'] ?? null, 400),
@@ -313,6 +316,25 @@ final class GeminiFlowise
             unset($datos['simulacion_reciente']);
         }
 
+        if (($contexto['panel_actual'] ?? null) === 'yield' && is_array($contexto['simulacion_seleccionada'] ?? null)) {
+            $visible = $contexto['simulacion_seleccionada'];
+            $datos['simulacion_seleccionada'] = $this->compactarSimulacionParaConsulta($visible);
+            $datos['rendimiento'] = [
+                'rendimiento_predicho' => $visible['rendimiento_estimado'] ?? null,
+                'produccion_total_t' => $visible['produccion_total'] ?? null,
+                'area_simulada_ha' => $visible['area_simulada'] ?? null,
+            ];
+            unset($datos['simulacion_reciente'], $datos['impacto_precio'], $datos['finanzas']);
+        }
+        if (($contexto['panel_actual'] ?? null) === 'yield') {
+            $datos['registro_campo_actual'] = $this->resumirValor($agricola['rendimiento']['mediciones_campo'] ?? $dashboard['mediciones_campo'] ?? null, 650);
+            $datos['referencia_sipa_visible'] = $this->resumirValor($dashboard['referencia_sipa'] ?? null, 500);
+        }
+        if (($contexto['panel_actual'] ?? null) === 'scenarios') {
+            $datos['siembra'] = $this->resumirValor($agricola['siembra'] ?? null, 2400);
+            $datos['calendario_visible'] = $this->resumirValor($dashboard['calendario_visible'] ?? null, 250);
+            unset($datos['rendimiento']);
+        }
         $json = json_encode($datos, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         if (!is_string($json)) {
             return '{}';
@@ -437,10 +459,12 @@ final class GeminiFlowise
         $campos = $meta['parcela_ejecucion']['parametros_campo'] ?? [];
         $calendario = $meta['trazabilidad']['calendario'] ?? [];
         return [
+            'id' => $simulacion['id'] ?? null,
             'fecha' => $simulacion['fecha'] ?? null,
             'rendimiento_estimado' => $simulacion['rendimiento_estimado'] ?? null,
             'produccion_total' => $simulacion['produccion_total'] ?? null,
-            'puntaje_clasificacion' => $simulacion['confianza'] ?? null,
+            'calidad_modelo_r2_pct' => $simulacion['confianza'] ?? null,
+            'entradas' => array_intersect_key($simulacion, array_flip(['temperatura','humedad','precipitacion','fertilizante','ph_suelo','tipo_suelo','area_simulada'])),
             'categoria_cosecha' => $simulacion['categoria_cosecha'] ?? null,
             'version_modelo' => $meta['version_modelo'] ?? null,
             'periodo_precipitacion' => $meta['trazabilidad']['periodo_precipitacion'] ?? null,

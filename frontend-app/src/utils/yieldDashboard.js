@@ -15,6 +15,13 @@ export const yieldFactors = {
 
 const provincias = ['Azuay', 'Bolívar', 'Cañar', 'Carchi', 'Chimborazo', 'Cotopaxi', 'El Oro', 'Esmeraldas', 'Galápagos', 'Guayas', 'Imbabura', 'Loja', 'Los Ríos', 'Manabí', 'Morona Santiago', 'Napo', 'Orellana', 'Pastaza', 'Pichincha', 'Santa Elena', 'Santo Domingo de los Tsáchilas', 'Sucumbíos', 'Tungurahua', 'Zamora Chinchipe'];
 export const isYieldNumber = (value) => typeof value === 'number' && Number.isFinite(value);
+export function validarRespuestaRendimiento(result, parcelaId) {
+  if (!result || typeof result !== 'object' || Array.isArray(result)) throw new Error('Respuesta de rendimiento inválida.');
+  if (parcelaId != null && (!result.cultivo_activo || String(result.cultivo_activo.id) !== String(parcelaId))) throw new Error('La respuesta no corresponde a la parcela seleccionada.');
+  if ((result.simulaciones_rendimiento !== undefined && !Array.isArray(result.simulaciones_rendimiento)) || (!result.sin_datos && !Array.isArray(result.simulaciones_rendimiento))) throw new Error('Historial de rendimiento inválido.');
+  if (result.simulaciones_rendimiento?.some(row => !row || !Number.isInteger(row.id) || row.id <= 0 || !isYieldNumber(row.rendimiento_t_ha) || row.rendimiento_t_ha < 0)) throw new Error('La respuesta contiene una ejecución inválida.');
+  return result;
+}
 const normalizePlace = (value) => String(value ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
 
 export function provinceFromLocation(value) {
@@ -64,3 +71,5 @@ export function yieldAnalysis(simulation, catalogue = {}) {
     primary: limiting[0] ?? null,
   };
 }
+
+export const escapeChartText = value => String(value ?? '').replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]));

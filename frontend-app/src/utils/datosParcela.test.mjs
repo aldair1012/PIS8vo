@@ -17,3 +17,8 @@ test('el índice visible se adapta si desaparecen opciones del indicador', () =>
   assert.equal(indiceKpiSeguro(2, 1), 0);
   assert.equal(indiceKpiSeguro(-1, 3), 0);
 });
+test('pH WMS convierte la unidad de SoilGrids y rechaza valores sin dato', () => {
+  const sample = value => ({ features: [{ properties: { pixel_value: value } }] });
+  assert.equal(leerPhSuelo(sample(65)), '6.5');
+  for (const value of [-32768, null, '65', 160]) assert.equal(leerPhSuelo(sample(value)), null);
+});

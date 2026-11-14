@@ -86,7 +86,7 @@ export default function DashboardFinance({ cultivoElegidoId, añoSeleccionado, o
       const cFijos = Object.hasOwn(overrideParams, 'costosFijos') ? overrideParams.costosFijos : costosFijos;
 
       const res = await dssService.getFinancieroData({
-        cultivoId: cultivoElegidoId,
+        parcelaId: cultivoElegidoId,
         año: añoSeleccionado,
         precioMaizQq: financeInputNumber(pQq),
         rendimientoQq: financeInputNumber(rQq),
@@ -323,14 +323,14 @@ export default function DashboardFinance({ cultivoElegidoId, añoSeleccionado, o
 
   return (
     <div className="dashboard-view dashboard-view--finance">
-      <DashboardSectionHeading label="01 · Supuestos" title="Configura tu escenario económico" description="Introduce un presupuesto hipotético o selecciona un ejemplo ilustrativo y pulsa Calcular. Los valores no acreditan costos ni cosechas observadas." />
+      <DashboardSectionHeading level={1} label="01 · Supuestos" title="Configura tu escenario económico" description="Introduce un presupuesto hipotético o selecciona un ejemplo ilustrativo y pulsa Calcular. Los valores no acreditan costos ni cosechas observadas." />
       {data?.sin_datos && <p>{data.mensaje ?? 'No hay simulaciones para este periodo. Puedes introducir un rendimiento y un presupuesto hipotéticos.'} {onNavigate && <button type="button" className="btn btn-secondary" onClick={() => onNavigate('simular')}>Ir a simulación</button>}</p>}
       {!cultivoElegidoId && <p>Sin parcela seleccionada: puedes calcular por hectárea; los totales de parcela requieren una superficie registrada.</p>}
 
       {/* Form Container: Parámetros de Mercado, Producción y Costos */}
       <div className="glass-panel" style={{ marginBottom: '1.25rem' }}>
         <div className="glass-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
-          <h3 style={{ fontSize: '0.9rem', fontWeight: 700 }}>Parámetros de Mercado, Producción y Costos</h3>
+          <h2 style={{ fontSize: '0.9rem', fontWeight: 700 }}>Parámetros de mercado, producción y costos</h2>
 
           {/* Plantillas Rápidas de Mercado con Estilo del Sistema y Botón de Información */}
           <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', flexWrap: 'wrap' }}>
@@ -410,7 +410,7 @@ export default function DashboardFinance({ cultivoElegidoId, añoSeleccionado, o
                 borderRadius: '8px',
                 border: '1.5px solid #70a984',
                 background: 'rgba(16, 185, 129, 0.15)',
-                color: '#88bd98',
+                color: 'var(--zs-success)',
                 cursor: 'pointer',
                 transition: 'all 0.2s ease',
                 marginLeft: '0.4rem'
@@ -540,23 +540,23 @@ export default function DashboardFinance({ cultivoElegidoId, añoSeleccionado, o
             fontSize: '0.74rem'
           }}>
             <div>
-              <span style={{ color: 'var(--text-subtle)', display: 'block', fontSize: '0.66rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Superficie Parcela</span>
+              <span style={{ color: 'var(--text-subtle)', display: 'block', fontSize: '0.66rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Superficie de la parcela</span>
               <span style={{ fontWeight: 800, color: 'var(--text-primary)' }}>{nombreParcela} ({formatNumber(areaParcela)} ha)</span>
             </div>
             <div>
-              <span style={{ color: 'var(--text-subtle)', display: 'block', fontSize: '0.66rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Cosecha Total Parcela</span>
+              <span style={{ color: 'var(--text-subtle)', display: 'block', fontSize: '0.66rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Cosecha total de la parcela</span>
               <span style={{ fontWeight: 800, color: 'var(--accent-primary)' }}>{formatNumber(produccionTotalParcela, 1)} qq <small style={{ color: 'var(--text-subtle)', fontWeight: 500 }}>({formatNumber(rendQqNum)} qq/ha)</small></span>
             </div>
             <div>
-              <span style={{ color: 'var(--text-subtle)', display: 'block', fontSize: '0.66rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Ingreso Bruto Total</span>
+              <span style={{ color: 'var(--text-subtle)', display: 'block', fontSize: '0.66rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Ingreso bruto total</span>
               <span style={{ fontWeight: 800, color: 'var(--accent-secondary)' }}>{formatCurrency(ingresoBrutoTotalParcela)}</span>
             </div>
             <div>
-              <span style={{ color: 'var(--text-subtle)', display: 'block', fontSize: '0.66rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Costo Total Parcela</span>
+              <span style={{ color: 'var(--text-subtle)', display: 'block', fontSize: '0.66rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Costo total de la parcela</span>
               <span style={{ fontWeight: 800, color: 'var(--accent-warning)' }}>{formatCurrency(costoTotalParcelaCalc)}</span>
             </div>
             <div>
-              <span style={{ color: 'var(--text-subtle)', display: 'block', fontSize: '0.66rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Margen Neto Parcela</span>
+              <span style={{ color: 'var(--text-subtle)', display: 'block', fontSize: '0.66rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Margen neto de la parcela</span>
               <span style={{ fontWeight: 900, color: margenNetoParcelaCalc === null ? 'var(--text-muted)' : (margenNetoParcelaCalc >= 0 ? 'var(--accent-primary)' : 'var(--accent-warning)') }}>
                 {formatCurrency(margenNetoParcelaCalc)}
               </span>
@@ -579,7 +579,7 @@ export default function DashboardFinance({ cultivoElegidoId, añoSeleccionado, o
               iconClass="text-success"
               slides={[
                 {
-                  title: "Margen Neto Estimado",
+                  title: "Margen neto estimado",
                   value: margenNeto === null ? 'No disponible' : <>{formatCurrency(margenNeto)} <span className="kpi-value-unit">/ha</span></>,
                   isMissing: margenNeto === null,
                   trend: margenNeto === null ? "Sin dato" : (margenNeto >= 0 ? "Margen positivo" : "Pérdida estimada"),
@@ -592,7 +592,7 @@ export default function DashboardFinance({ cultivoElegidoId, añoSeleccionado, o
                   miniChart: null,
                   explanation: {
                     tipo_elemento: "tarjeta",
-                    nombre: "Margen Neto Estimado",
+                    nombre: "Margen neto estimado",
                     cultivo: "maiz",
                     valor: margenNeto === null ? null : `${formatCurrency(margenNeto)} USD`,
                     unidad: "/ha",
@@ -657,7 +657,7 @@ export default function DashboardFinance({ cultivoElegidoId, añoSeleccionado, o
               iconClass="text-secondary"
               slides={[
                 {
-                  title: "Margen Bruto Operativo",
+                  title: "Margen bruto operativo",
                   value: margenBruto === null ? 'No disponible' : <>{formatCurrency(margenBruto)} <span className="kpi-value-unit">/ha</span></>,
                   isMissing: margenBruto === null,
                   trend: margenBruto === null ? "Sin dato" : (margenBruto >= 500 ? "Favorable" : "Regular"),
@@ -668,7 +668,7 @@ export default function DashboardFinance({ cultivoElegidoId, añoSeleccionado, o
                   miniChart: null,
                   explanation: {
                     tipo_elemento: "tarjeta",
-                    nombre: "Margen Bruto Operativo",
+                    nombre: "Margen bruto operativo",
                     cultivo: "maiz",
                     valor: margenBruto === null ? null : `${formatCurrency(margenBruto)} USD`,
                     unidad: "/ha",
@@ -732,18 +732,18 @@ export default function DashboardFinance({ cultivoElegidoId, añoSeleccionado, o
               iconClass="text-warning"
               slides={[
                 {
-                  title: "Punto de Equilibrio",
-                  value: puntoEquilibrio === null ? 'No disponible' : <>{puntoEquilibrio} <span className="kpi-value-unit">t/ha</span></>,
+                  title: "Punto de equilibrio",
+                  value: puntoEquilibrio === null ? 'No disponible' : <>{formatNumber(puntoEquilibrio, 3)} <span className="kpi-value-unit">t/ha</span></>,
                   isMissing: puntoEquilibrio === null,
                   trend: puntoEquilibrio === null ? "Sin dato" : "Moderado",
                   progress: null,
                   progressColor: "linear-gradient(90deg, #b78425 0%, #d8a83f 100%)",
                   progressLabelLeft: "Umbral Mínimo",
-                  progressLabelRight: puntoEquilibrio === null ? "Sin dato" : `${puntoEquilibrio} t/ha`,
+                  progressLabelRight: puntoEquilibrio === null ? "Sin dato" : `${formatNumber(puntoEquilibrio, 3)} t/ha`,
                   miniChart: null,
                   explanation: {
                     tipo_elemento: "tarjeta",
-                    nombre: "Punto de Equilibrio (Break-Even Yield)",
+                    nombre: "Punto de equilibrio",
                     cultivo: "maiz",
                     valor: puntoEquilibrio,
                     unidad: "t/ha",
@@ -784,7 +784,7 @@ export default function DashboardFinance({ cultivoElegidoId, añoSeleccionado, o
                   progressColor: "linear-gradient(90deg, #88bd98 0%, #70a984 100%)",
                   progressLabelLeft: "Holgura Lluvia/Rend",
                   progressLabelRight: margenSeguridad === null ? "Sin dato" : `${margenSeguridad}%`,
-                  miniChart: margenSeguridad === null ? null : { type: 'ring', percent: margenSeguridad, color: '#88bd98' },
+                  miniChart: margenSeguridad === null ? null : { type: 'ring', percent: margenSeguridad, color: 'var(--zs-success)' },
                   explanation: {
                     tipo_elemento: "tarjeta",
                     nombre: "Margen de Seguridad Productivo",
@@ -815,10 +815,10 @@ export default function DashboardFinance({ cultivoElegidoId, añoSeleccionado, o
                   progressColor: "linear-gradient(90deg, #176441 0%, #88bd98 100%)",
                   progressLabelLeft: "Fracción de la muestra",
                   progressLabelRight: fraccionCubreCostos === null ? "Sin dato" : `${fraccionCubreCostos}%`,
-                  miniChart: fraccionCubreCostos === null ? null : { type: 'ring', percent: fraccionCubreCostos, color: '#88bd98' },
+                  miniChart: fraccionCubreCostos === null ? null : { type: 'ring', percent: fraccionCubreCostos, color: 'var(--zs-success)' },
                   explanation: {
                     tipo_elemento: "tarjeta",
-                    nombre: "Frecuencia de Simulaciones Sobre el Punto de Equilibrio",
+                    nombre: "Frecuencia de simulaciones sobre el punto de equilibrio",
                     cultivo: "maiz",
                     valor: fraccionCubreCostos,
                     unidad: "%",
@@ -883,14 +883,14 @@ export default function DashboardFinance({ cultivoElegidoId, añoSeleccionado, o
               slides={[
                 {
                   title: "Retorno (ROI)",
-                  value: retornoInversion === null ? 'No disponible' : <>{retornoInversion} <span className="kpi-value-unit">%</span></>,
+                  value: retornoInversion === null ? 'No disponible' : <>{formatNumber(retornoInversion, 1)} <span className="kpi-value-unit">%</span></>,
                   isMissing: retornoInversion === null,
                   trend: retornoInversion === null ? "Sin dato" : (retornoInversion >= 0 ? "Favorable" : "Riesgoso"),
                   severity: retornoInversion !== null && retornoInversion < 0 ? { level: "danger", label: "Retorno negativo" } : null,
                   progress: null,
                   progressColor: retornoInversion !== null && retornoInversion >= 0 ? "linear-gradient(90deg, #176441 0%, #88bd98 100%)" : "linear-gradient(90deg, #af5437 0%, #e5a379 100%)",
                   progressLabelLeft: "Inversión",
-                  progressLabelRight: retornoInversion === null ? "Sin dato" : `${retornoInversion}%`,
+                  progressLabelRight: retornoInversion === null ? "Sin dato" : `${formatNumber(retornoInversion, 1)} %`,
                   miniChart: null,
                   explanation: {
                     tipo_elemento: "tarjeta",
@@ -979,7 +979,7 @@ export default function DashboardFinance({ cultivoElegidoId, añoSeleccionado, o
                 <h3 style={{ fontSize: '0.95rem', fontWeight: 600, margin: 0 }}>Sensibilidad Precio vs Rendimiento (USD)</h3>
               </div>
               <div className="glass-card-body" style={{ padding: '0.6rem 0.85rem 1rem 0.85rem' }}>
-                <div className="table-responsive-container">
+                <div className="table-responsive-container" tabIndex={0} role="region" aria-label="Tabla de sensibilidad económica, desplazable">
                   <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '6px 7px', textAlign: 'center' }}>
                     <thead>
                       <tr>
@@ -1079,8 +1079,8 @@ export default function DashboardFinance({ cultivoElegidoId, añoSeleccionado, o
                           label: (context) => {
                             const label = context.label || '';
                             const val = context.raw || 0;
-                            const pct = totalExpenses > 0 ? ((val / totalExpenses) * 100).toFixed(1) : '0.0';
-                            return ` ${label}: $${val.toLocaleString()} (${pct}%)`;
+                            const pct = totalExpenses > 0 ? (val / totalExpenses) * 100 : 0;
+                            return ` ${label}: $${val.toLocaleString('es-EC')} (${formatNumber(pct, 1)}%)`;
                           }
                         }
                       }
@@ -1093,7 +1093,7 @@ export default function DashboardFinance({ cultivoElegidoId, añoSeleccionado, o
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.25rem', alignItems: 'center', minHeight: '240px' }}>
                       {/* Doughnut Chart Canvas with Center Text Overlay */}
                       <div style={{ position: 'relative', width: '100%', height: '220px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                        <Doughnut data={chartData} options={chartOptions} />
+                        <Doughnut role="img" aria-label="Distribución de los costos del presupuesto calculado; desglose en la leyenda contigua" data={chartData} options={chartOptions} />
                         <div style={{ position: 'absolute', textAlign: 'center', pointerEvents: 'none' }}>
                           <span style={{ fontSize: '0.68rem', textTransform: 'uppercase', color: 'var(--text-subtle)', fontWeight: 700, letterSpacing: '0.05em', display: 'block' }}>
                             Costo total
@@ -1112,7 +1112,7 @@ export default function DashboardFinance({ cultivoElegidoId, añoSeleccionado, o
                         {expenseItems.map((item, idx) => {
                           const itemColor = colorPalette[idx % colorPalette.length];
                           const absVal = Math.abs(item.amount);
-                          const pct = ((absVal / totalExpenses) * 100).toFixed(1);
+                          const pct = formatNumber((absVal / totalExpenses) * 100, 1);
 
                           return (
                             <div key={item.label} style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
@@ -1121,8 +1121,8 @@ export default function DashboardFinance({ cultivoElegidoId, añoSeleccionado, o
                                   <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: itemColor, display: 'inline-block', boxShadow: `0 0 6px ${itemColor}80` }} />
                                   {item.label}
                                 </div>
-                                <div style={{ fontWeight: 700, color: itemColor, fontSize: '0.78rem' }}>
-                                  ${absVal.toLocaleString()} <span style={{ fontSize: '0.65rem', opacity: 0.8, color: 'var(--text-muted)' }}>({pct}%)</span>
+                                <div style={{ fontWeight: 700, color: 'var(--zs-text)', fontSize: '0.78rem' }}>
+                                  ${absVal.toLocaleString('es-EC')} <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>({pct}%)</span>
                                 </div>
                               </div>
                               <div style={{ width: '100%', height: '5px', background: 'var(--border-subtle)', borderRadius: '99px', overflow: 'hidden' }}>
@@ -1180,7 +1180,7 @@ export default function DashboardFinance({ cultivoElegidoId, añoSeleccionado, o
                     return (
                       <div 
                         key={i} 
-                        className="roi-strategy-item"
+                        className="roi-strategy-item" role="button" tabIndex={0} onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.currentTarget.click(); } }}
                         onClick={(e) => {
                           e.stopPropagation();
                           pedirExplicacionIa({
@@ -1218,7 +1218,7 @@ export default function DashboardFinance({ cultivoElegidoId, añoSeleccionado, o
                           </div>
                         </div>
                         <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px', flexShrink: 0 }}>
-                          <div style={{ fontWeight: 800, fontSize: '1.15rem', color: theme.active, fontFamily: 'var(--font-mono)', lineHeight: 1.1 }}>
+                          <div style={{ fontWeight: 800, fontSize: '1.15rem', color: 'var(--zs-text)', fontFamily: 'var(--font-mono)', lineHeight: 1.1 }}>
                             {est.roi === null ? '—' : `${est.roi}%`} <span style={{ fontSize: '0.68rem', fontWeight: 600, color: 'var(--text-subtle)' }}>ROI</span>
                           </div>
                           <span style={{

@@ -110,7 +110,7 @@ export default function EmptyDashboard({ tipo = 'yield', onGoToSimulation }) {
       </div>
 
       {/* Texto principal */}
-      <h2 style={{
+      <h1 style={{
         fontSize: '1.35rem',
         fontWeight: 800,
         color: 'var(--text-primary)',
@@ -119,7 +119,7 @@ export default function EmptyDashboard({ tipo = 'yield', onGoToSimulation }) {
         lineHeight: 1.25,
       }}>
         {cfg.titulo}
-      </h2>
+      </h1>
       <p style={{
         color: 'var(--text-muted)',
         fontSize: '0.82rem',

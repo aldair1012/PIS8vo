@@ -24,6 +24,10 @@ if %errorlevel%==0 (
 echo [ZeaSys] Iniciando servidor IA en segundo plano...
 
 REM Intentar con python
+if exist ".venv\Scripts\python.exe" (
+    start "ZeaSys ML Engine" /B ".venv\Scripts\python.exe" app.py
+    exit /b 0
+)
 where python >nul 2>&1
 if %errorlevel%==0 (
     start "ZeaSys ML Engine" /B python app.py

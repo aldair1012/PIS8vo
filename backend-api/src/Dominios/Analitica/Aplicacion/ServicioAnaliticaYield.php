@@ -8,6 +8,7 @@ use ZeaSys\Dominios\Analitica\Dominio\ReferenciasRendimientoInterface;
 use ZeaSys\Dominios\Lotes\Dominio\CultivoRepositoryInterface;
 use ZeaSys\Dominios\Simulaciones\Dominio\SimulacionRepositoryInterface;
 use ZeaSys\Dominios\Terreno\Aplicacion\ServicioDatosTerreno;
+use ZeaSys\Dominios\Terreno\Aplicacion\ProvinciaParcela;
 use ZeaSys\Kernel\Errores\AccesoDenegadoException;
 
 /** Reconstruye los resultados guardados del modelo para una parcela concreta. */
@@ -32,6 +33,11 @@ final class ServicioAnaliticaYield
         if (!$cultivo || (int) $cultivo['usuario_id'] !== $usuarioId || (isset($cultivo['activo']) && !(bool) $cultivo['activo'])) {
             throw new AccesoDenegadoException('Esta parcela no es válida o no está registrada a tu nombre.');
         }
+        $provincia = ProvinciaParcela::resolver($cultivo);
+        $cultivo['provincia'] = $provincia['provincia'];
+        $cultivo['fuente_provincia'] = $provincia['fuente'];
+
+        $lluviaAnual = $this->terreno?->referenciaLluvia($cultivo);
 
         // El selector de año del encabezado procede de la fecha del lote. Una
         // simulación puede ejecutarse en otro año; filtrar por s.fecha ocultaba
@@ -88,6 +94,7 @@ final class ServicioAnaliticaYield
                 'nombre' => (string) ($registro['nombre'] ?? 'Simulación'),
                 'explicacion_modelo' => $modelo['explicacion_modelo'] ?? null,
                 'entradas_modelo' => $modelo['entradas_modelo'] ?? [],
+                'lluvia_anual_referencia' => $modelo['lluvia_anual_referencia'] ?? null,
                 'trazabilidad' => $modelo['trazabilidad'] ?? [],
                 'parcela_ejecucion' => $modelo['parcela_ejecucion'] ?? null,
                 'modelo' => $modelo['modelo'] ?? $registro['modelo_usado'] ?? null,
@@ -126,6 +133,7 @@ final class ServicioAnaliticaYield
             return [
                 ...$this->sinDatos('Esta parcela todavía no tiene una simulación de rendimiento válida.'),
                 'cultivo_activo' => $cultivo,
+                'lluvia_anual_referencia' => $lluviaAnual,
                 'mediciones_campo' => $this->mediciones?->obtener($usuarioId, $cultivoId) ?? ['datos' => [], 'indicadores' => []],
             ];
         }
@@ -140,6 +148,7 @@ final class ServicioAnaliticaYield
         return [
             'sin_datos' => false,
             'cultivo_activo' => $cultivo,
+            'lluvia_anual_referencia' => $lluviaAnual,
             'simulaciones_count' => count($muestra),
             'simulaciones_rendimiento' => $muestra,
             'kpis' => [

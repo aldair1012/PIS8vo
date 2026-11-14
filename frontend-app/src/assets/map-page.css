@@ -1,0 +1,660 @@
+/* Capa visual del mapa de parcelas. Usa los tokens internos y evita
+   estilos en línea para que el modo claro y oscuro se mantengan. */
+
+.map-page-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.map-page-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+
+.map-eyebrow {
+  margin: 0 0 0.25rem;
+  color: var(--zs-accent, #8fbb9a);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.map-page-heading h1 {
+  margin: 0;
+  color: var(--zs-text, var(--text-primary));
+  font-size: clamp(1.45rem, 2.4vw, 1.85rem);
+  font-weight: 750;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+.map-page-heading .dashboard-title-desc {
+  max-width: 62ch;
+  margin: 0.25rem 0 0;
+  color: var(--zs-text-muted, var(--text-muted));
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.map-mode-select {
+  min-width: 240px;
+  min-height: 44px;
+  padding: 0.5rem 2.2rem 0.5rem 0.9rem;
+  border: 1px solid var(--zs-border-strong, var(--border-subtle));
+  border-radius: 999px;
+  background-color: var(--zs-surface, var(--surface-elevated));
+  color: var(--zs-text, var(--text-primary));
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.map-mode-select:focus-visible {
+  outline: 2px solid var(--zs-accent, #8fbb9a);
+  outline-offset: 2px;
+}
+
+.map-page-description-bar {
+  flex-shrink: 0;
+  padding: 0.55rem 0.9rem;
+  border: 1px solid var(--zs-border, var(--border-subtle));
+  border-radius: 10px;
+  background: var(--zs-raised, var(--surface-elevated));
+  color: var(--zs-text-muted, var(--text-muted));
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.map-weather-guide {
+  flex-shrink: 0;
+  padding: 0.6rem 0.9rem;
+  border: 1px solid color-mix(in srgb, var(--zs-info, #9ed1ff) 32%, transparent);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--zs-info, #9ed1ff) 9%, transparent);
+  color: var(--zs-text, var(--text-primary));
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+.map-weather-guide strong {
+  color: var(--zs-info, #9ed1ff);
+}
+
+.map-page-grid {
+  flex: 1;
+  min-height: 0;
+  height: auto;
+}
+
+.map-canvas-wrapper {
+  position: relative;
+  min-height: 300px;
+  overflow: hidden;
+  border: 1px solid var(--zs-border, var(--border-subtle));
+  border-radius: 16px;
+  background: var(--zs-surface, #102016);
+}
+
+.map-page-shell #mapContainer {
+  height: 100%;
+  min-height: 300px;
+  border-radius: 16px;
+}
+
+.map-page-shell .leaflet-container {
+  font-family: var(--font-sans);
+}
+
+.map-page-shell .leaflet-bar a {
+  border-bottom-color: var(--zs-border, var(--border-subtle));
+  background: var(--zs-surface, #fff);
+  color: var(--zs-text, #102016);
+}
+
+.map-page-shell .leaflet-bar a:hover,
+.map-page-shell .leaflet-bar a:focus-visible {
+  background: var(--zs-raised, #eef3ec);
+  color: var(--zs-text, #102016);
+}
+
+.map-page-shell .leaflet-control-attribution a {
+  color: #1f3b2c;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.map-page-shell .leaflet-popup-content-wrapper {
+  border-radius: 12px;
+}
+
+.map-page-shell .leaflet-popup-close-button {
+  color: var(--zs-text-muted, var(--text-muted));
+}
+
+.map-page-shell .leaflet-popup-close-button:hover {
+  color: var(--zs-text, var(--text-primary));
+}
+
+.map-legend {
+  position: absolute;
+  bottom: 14px;
+  left: 14px;
+  z-index: 1000;
+  max-width: min(280px, calc(100% - 28px));
+  padding: 0.7rem 0.85rem;
+  border: 1px solid var(--zs-border, var(--border-subtle));
+  border-radius: 12px;
+  background: var(--zs-surface, #fff);
+  box-shadow: 0 8px 24px rgba(6, 20, 12, 0.18);
+  color: var(--zs-text, #102016);
+  pointer-events: none;
+}
+
+.map-legend-title {
+  margin: 0 0 0.45rem;
+  padding-bottom: 0.35rem;
+  border-bottom: 1px solid var(--zs-border, var(--border-subtle));
+  color: var(--zs-text, var(--text-primary));
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.map-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 0.35rem;
+  color: var(--zs-text-muted, var(--text-muted));
+  font-size: 0.73rem;
+  line-height: 1.25;
+}
+
+.map-legend-item:last-child {
+  margin-bottom: 0;
+}
+
+.map-legend-pin {
+  width: 10px;
+  height: 10px;
+  flex: 0 0 10px;
+  border: 1px solid #fff;
+  border-radius: 50% 50% 50% 0;
+  background: var(--swatch, #2c6e94);
+  transform: rotate(-45deg);
+}
+
+.map-legend-dot {
+  width: 10px;
+  height: 10px;
+  flex: 0 0 10px;
+  border-radius: 50%;
+  background: var(--swatch, #2c6e94);
+}
+
+.map-legend-swatch {
+  width: 16px;
+  height: 10px;
+  flex: 0 0 16px;
+  border: 1px solid var(--swatch, #2c6e94);
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--swatch, #2c6e94) 22%, transparent);
+}
+
+.map-legend-line {
+  width: 18px;
+  height: 2px;
+  flex: 0 0 18px;
+  border-radius: 2px;
+  background: var(--swatch, #9a4530);
+}
+
+.map-legend-gradient {
+  width: 18px;
+  height: 11px;
+  flex: 0 0 18px;
+  border-radius: 3px;
+  background: linear-gradient(to bottom, #f4f1e8, #a8b5a0, #33453a);
+}
+
+/* Marcadores HTML de Leaflet */
+.map-marker {
+  display: flex;
+  width: 32px;
+  height: 32px;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #fff;
+  border-radius: 50% 50% 50% 0;
+  background: var(--marker-color, #2c6e94);
+  box-shadow: 0 4px 12px rgba(6, 20, 12, 0.32);
+  color: #fff;
+  transform: rotate(-45deg);
+}
+
+.map-marker svg {
+  width: 16px;
+  height: 16px;
+  transform: rotate(45deg);
+}
+
+.map-marker--round {
+  border-radius: 50%;
+  transform: none;
+}
+
+.map-marker--round svg {
+  transform: none;
+}
+
+/* Tarjetas de parcelas */
+.map-list-wrapper {
+  background: var(--zs-surface, var(--surface-elevated));
+}
+
+.map-list-wrapper .glass-card-header {
+  border-bottom-color: var(--zs-border, var(--border-subtle));
+}
+
+.map-list-wrapper .glass-card-header h2 {
+  color: var(--zs-text, var(--text-primary));
+  letter-spacing: -0.01em;
+}
+
+.map-plot-list {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.65rem;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0.9rem;
+}
+
+.map-plot-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  width: 100%;
+  padding: 0.85rem 0.9rem;
+  border: 1px solid var(--zs-border, var(--border-subtle));
+  border-radius: 12px;
+  background: var(--zs-raised, var(--surface-elevated));
+  color: var(--zs-text, var(--text-primary));
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 160ms ease, background-color 160ms ease;
+}
+
+.map-plot-card:hover {
+  border-color: var(--zs-border-strong, var(--border-strong));
+  background: color-mix(in srgb, var(--zs-accent, #8fbb9a) 8%, var(--zs-raised, #fff));
+}
+
+.map-plot-card:focus-visible {
+  outline: 2px solid var(--zs-accent, #8fbb9a);
+  outline-offset: 2px;
+}
+
+.map-plot-card-head {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--zs-text, var(--text-primary));
+  font-size: 0.9rem;
+  font-weight: 750;
+  line-height: 1.25;
+}
+
+.map-plot-card-head svg {
+  flex: 0 0 auto;
+  color: var(--zs-accent, #8fbb9a);
+}
+
+.map-plot-meta {
+  color: var(--zs-text-muted, var(--text-muted));
+  font-size: 0.76rem;
+  line-height: 1.4;
+}
+
+.map-plot-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-top: 0.3rem;
+  color: var(--zs-info, #2c6e94);
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.map-list-empty {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 0.6rem;
+  padding: 1.4rem;
+  color: var(--zs-text-muted, var(--text-muted));
+  font-size: 0.86rem;
+  line-height: 1.5;
+}
+
+.map-list-empty strong {
+  color: var(--zs-text, var(--text-primary));
+}
+
+.map-list-summary {
+  flex-shrink: 0;
+  margin: 0 0.9rem 0.6rem;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid var(--zs-border, var(--border-subtle));
+  border-radius: 12px;
+  background: var(--zs-raised, var(--surface-elevated));
+}
+
+.map-list-summary-title {
+  margin: 0 0 0.5rem;
+  color: var(--zs-text-muted, var(--text-muted));
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.map-list-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.55rem;
+}
+
+.map-list-stat span {
+  display: block;
+  color: var(--zs-text-muted, var(--text-muted));
+  font-size: 0.68rem;
+}
+
+.map-list-stat strong {
+  display: block;
+  margin-top: 0.05rem;
+  color: var(--zs-text, var(--text-primary));
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.map-list-footnote {
+  flex-shrink: 0;
+  margin: 0 0.9rem 0.9rem;
+  padding-top: 0.55rem;
+  border-top: 1px solid var(--zs-border, var(--border-subtle));
+  color: var(--zs-text-muted, var(--text-muted));
+  font-size: 0.7rem;
+  line-height: 1.4;
+}
+
+.map-empty-action {
+  min-height: 44px;
+  margin-top: 0.35rem;
+  padding: 0.55rem 0.9rem;
+  border: 1px solid var(--zs-accent, #1f5c38);
+  border-radius: 9px;
+  background: var(--zs-accent, #1f5c38);
+  color: var(--zs-accent-ink, #0c1a12);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.map-empty-action:focus-visible {
+  outline: 2px solid var(--zs-accent, #8fbb9a);
+  outline-offset: 2px;
+}
+
+/* Ventanas emergentes del mapa */
+.map-popup {
+  min-width: 180px;
+  padding: 0.25rem 0.15rem;
+  color: var(--zs-text, var(--text-primary));
+  font-family: var(--font-sans);
+}
+
+.map-popup--wide {
+  min-width: 220px;
+}
+
+.map-popup-kicker {
+  margin: 0;
+  color: var(--zs-text-muted, var(--text-muted));
+  font-size: 0.64rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.map-popup-title {
+  margin: 0.15rem 0 0.55rem;
+  padding-bottom: 0.45rem;
+  border-bottom: 1px solid var(--zs-border, var(--border-subtle));
+  color: var(--zs-text, var(--text-primary));
+  font-size: 1rem;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.map-popup-list {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0;
+}
+
+.map-popup-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: 0.76rem;
+  line-height: 1.35;
+}
+
+.map-popup-row dt {
+  color: var(--zs-text-muted, var(--text-muted));
+}
+
+.map-popup-row dd {
+  margin: 0;
+  color: var(--zs-text, var(--text-primary));
+  font-weight: 700;
+  text-align: right;
+}
+
+.map-popup-note {
+  margin: 0.65rem 0 0;
+  padding-top: 0.55rem;
+  border-top: 1px solid var(--zs-border, var(--border-subtle));
+  color: var(--zs-text-muted, var(--text-muted));
+  font-size: 0.7rem;
+  line-height: 1.4;
+}
+
+/* Clima en vivo */
+.map-weather-loading {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  color: var(--zs-text, var(--text-primary));
+  font-size: 0.8rem;
+}
+
+.map-spinner {
+  width: 15px;
+  height: 15px;
+  flex: 0 0 15px;
+  border: 2px solid color-mix(in srgb, var(--zs-info, #2c6e94) 25%, transparent);
+  border-top-color: var(--zs-info, #2c6e94);
+  border-radius: 50%;
+  animation: map-spin 0.8s linear infinite;
+}
+
+@keyframes map-spin {
+  to { transform: rotate(360deg); }
+}
+
+.map-weather-head {
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--zs-border, var(--border-subtle));
+}
+
+.map-weather-coordinates {
+  margin: 0.15rem 0 0;
+  color: var(--zs-text-muted, var(--text-muted));
+  font-size: 0.68rem;
+}
+
+.map-weather-hero {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.7rem 0;
+}
+
+.map-weather-icon {
+  display: flex;
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid color-mix(in srgb, var(--zs-info, #2c6e94) 28%, transparent);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--zs-info, #2c6e94) 10%, transparent);
+  color: var(--zs-info, #2c6e94);
+}
+
+.map-weather-icon svg {
+  width: 24px;
+  height: 24px;
+}
+
+.map-weather-temperature {
+  margin: 0;
+  color: var(--zs-text, var(--text-primary));
+  font-size: 1.8rem;
+  font-weight: 850;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.map-weather-temperature.is-hot { color: var(--zs-danger, #9a4530); }
+.map-weather-temperature.is-warm { color: var(--zs-warning, #8a6a1c); }
+.map-weather-temperature.is-mild { color: var(--zs-accent, #1f5c38); }
+.map-weather-temperature.is-cool,
+.map-weather-temperature.is-cold { color: var(--zs-info, #2c6e94); }
+
+.map-weather-description {
+  margin: 0.2rem 0 0;
+  color: var(--zs-text, var(--text-primary));
+  font-size: 0.78rem;
+  font-weight: 650;
+}
+
+.map-weather-feels {
+  margin: 0.1rem 0 0;
+  color: var(--zs-text-muted, var(--text-muted));
+  font-size: 0.69rem;
+}
+
+.map-weather-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.map-weather-cell {
+  padding: 0.4rem 0.5rem;
+  border: 1px solid var(--zs-border, var(--border-subtle));
+  border-radius: 8px;
+  background: var(--zs-raised, var(--surface-elevated));
+}
+
+.map-weather-cell span {
+  display: block;
+  color: var(--zs-text-muted, var(--text-muted));
+  font-size: 0.66rem;
+}
+
+.map-weather-cell strong {
+  display: block;
+  margin-top: 0.1rem;
+  color: var(--zs-text, var(--text-primary));
+  font-size: 0.78rem;
+}
+
+.map-weather-source {
+  margin: 0.55rem 0 0;
+  color: var(--zs-text-muted, var(--text-muted));
+  font-size: 0.66rem;
+}
+
+.map-weather-source a {
+  color: var(--zs-info, #2c6e94);
+  text-underline-offset: 2px;
+}
+
+.map-weather-error {
+  margin: 0;
+  padding: 0.4rem;
+  color: var(--zs-danger, #9a4530);
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .map-spinner {
+    animation-duration: 2.4s;
+  }
+
+  .map-plot-card {
+    transition: none;
+  }
+}
+
+@media (max-width: 720px) {
+  .map-page-heading {
+    align-items: stretch;
+  }
+
+  .map-mode-select {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .map-page-description-bar,
+  .map-weather-guide {
+    font-size: 0.78rem;
+  }
+
+  .map-canvas-wrapper,
+  .map-page-shell #mapContainer {
+    min-height: 260px;
+  }
+
+  .map-legend {
+    bottom: 10px;
+    left: 10px;
+    max-width: calc(100% - 20px);
+  }
+}

@@ -1,3 +1,4 @@
+import FuentesChat from './FuentesChat';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Bot, Check, ChevronRight, Copy, Database, Info, Loader2, MessageCircle,
@@ -43,13 +44,18 @@ const resumirDashboard = (contextoDashboard, vistaActual, cultivoElegidoId, año
     datos_base_sistema: datos.datos_base_sistema || null,
     cultivo_activo: datos.cultivo_activo || null,
     percentiles: datos.percentiles || null,
+    resumen_descriptivo: datos.resumen_descriptivo || null,
+    calendario_visible: datos.calendario_visible || null,
+    calendario_parcela: datos.calendario_parcela || null,
+    procedencia: datos.procedencia || null,
     simulaciones_count: datos.simulaciones_count ?? null,
     simulacion_seleccionada: datos.simulacion_seleccionada || null,
     referencia_sipa: datos.referencia_sipa || null,
+    mediciones_campo: datos.mediciones_campo || null,
   };
   if (Array.isArray(datos.recomendaciones)) resumen.recomendaciones = datos.recomendaciones.slice(0, 5);
   if (Array.isArray(datos.ranking)) resumen.ranking = datos.ranking.slice(0, 5);
-  if (Array.isArray(datos.viabilidad_siembra)) resumen.viabilidad_siembra = datos.viabilidad_siembra.slice(0, 8);
+  if (Array.isArray(datos.viabilidad_siembra)) resumen.viabilidad_siembra = datos.viabilidad_siembra.slice(0, 24);
   if (datos.clima_actual) resumen.clima_actual = datos.clima_actual;
   if (datos.clima_promedio_30d) resumen.clima_promedio_30d = datos.clima_promedio_30d;
   if (datos.clima_hoy) resumen.clima_hoy = datos.clima_hoy;
@@ -129,6 +135,11 @@ const ChatbotWidget = ({
   const [copiado, setCopiado] = useState(false);
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
+  const peticionRef = useRef({ numero: 0, controller: null });
+  useEffect(() => () => {
+    peticionRef.current.numero += 1;
+    peticionRef.current.controller?.abort();
+  }, []);
   const vista = VISTAS[vistaActual] || { nombre: 'ZeaSys', icono: '✦' };
   const dashboard = useMemo(() => resumirDashboard(contextoDashboard, vistaActual, cultivoElegidoId, añoSeleccionado), [contextoDashboard, vistaActual, cultivoElegidoId, añoSeleccionado]);
   const nombreParcela = cultivoActivo?.nombre_parcela
@@ -190,12 +201,14 @@ const ChatbotWidget = ({
   const enviarPregunta = async (pregunta) => {
     const preguntaTexto = normalizarTextoChat(pregunta).trim();
     if (!preguntaTexto || escribiendo) return;
+    const numero = ++peticionRef.current.numero;
+    const controller = new AbortController();
+    peticionRef.current.controller = controller;
     setMensajes((prev) => [...prev, { rol: 'usuario', texto: preguntaTexto }]);
     setInput('');
     setEscribiendo(true);
     setEstadoServicio('consultando');
     try {
-      await new Promise((resolve) => setTimeout(resolve, 220));
       const data = await chatService.preguntar(
         preguntaTexto,
         vistaActual,
@@ -203,11 +216,14 @@ const ChatbotWidget = ({
         añoSeleccionado,
         dashboard,
         vistaActual === 'simular' ? simulacion : null,
+        controller.signal,
       );
+      if (controller.signal.aborted || numero !== peticionRef.current.numero) return;
       const texto = normalizarTextoChat(data?.texto ?? data?.respuesta ?? data?.answer);
       setMensajes((prev) => [...prev, {
         rol: 'asistente',
         texto: texto || 'No pude generar una respuesta con los datos disponibles.',
+        referencias: data?.fuente_datos?.referencias_consultadas,
       }]);
       // La conversación puede renovarse (p. ej. tras limpiar o cambiar de
       // ámbito); si el identificador cambia, el favorito anterior ya no
@@ -222,6 +238,7 @@ const ChatbotWidget = ({
       }
       setEstadoServicio('conectado');
     } catch (error) {
+      if (controller.signal.aborted || numero !== peticionRef.current.numero) return;
       const codigo = error?.response?.status;
       const sesionExpirada = codigo === 401;
       setMensajes((prev) => [...prev, {
@@ -229,14 +246,14 @@ const ChatbotWidget = ({
         texto: sesionExpirada
           ? 'Tu sesión expiró. Vuelve a iniciar sesión para continuar usando el asistente.'
           : codigo === 502
-            ? `${PROVEEDOR_IA} no respondió (error 502). Pulsa Reintentar; si vuelve a fallar, revisa la clave y la cuota en Flowise.`
+            ? 'El asistente no respondió. Puedes reintentar en unos momentos.'
             : `${PROVEEDOR_IA} no pudo procesar la pregunta (error ${codigo ?? 'de conexión'}). Pulsa Reintentar.`,
         error: true,
         pregunta: preguntaTexto,
       }]);
       setEstadoServicio(sesionExpirada ? 'sesion' : 'error');
     } finally {
-      setEscribiendo(false);
+      if (numero === peticionRef.current.numero) setEscribiendo(false);
     }
   };
 
@@ -280,6 +297,9 @@ const ChatbotWidget = ({
   };
 
   const limpiarChat = () => {
+    peticionRef.current.numero += 1;
+    peticionRef.current.controller?.abort();
+    setEscribiendo(false);
     setMensajes([]);
     setEstadoServicio('listo');
     setFavorito({ conversacionId: null, guardado: false });
@@ -311,7 +331,7 @@ const ChatbotWidget = ({
         {abierto ? <X size={18} /> : <MessageCircle size={18} />}<span>Asistente</span>
       </button>
 
-      <aside id="zeasys-chat-panel" className={`zeasys-chat-panel ${abierto ? 'is-open' : ''}`} role="dialog" aria-label="Asistente de ZeaSys" aria-hidden={!abierto}>
+      <div id="zeasys-chat-panel" className={`zeasys-chat-panel ${abierto ? 'is-open' : ''}`} role="dialog" aria-label="Asistente de ZeaSys" aria-hidden={!abierto}>
         <header className="zeasys-chat-header">
           <div className="zeasys-chat-brand">
             <div className="zeasys-chat-avatar"><Bot size={20} /></div>
@@ -341,7 +361,7 @@ const ChatbotWidget = ({
         <div className="zeasys-chat-messages" role="log" aria-live="polite" aria-label="Conversación con el asistente">
           {mensajes.length === 0 && <div className="zeasys-chat-welcome"><div className="zeasys-chat-welcome-icon"><Sparkles size={21} /></div><h2>¿Qué quieres analizar?</h2><p>{esSimulacion ? 'Puedo analizar los valores de esta simulación antes de ejecutarla: clima de entrada, pH, textura, área, fertilizante y la referencia de precio.' : dashboard ? 'Puedes cruzar clima actual, precio de referencia, rendimiento, margen y las cifras de este panel.' : 'Puedes preguntar por clima, precio del maíz, nutrientes, rendimiento o margen de tu parcela.'}</p><div className="zeasys-chat-chips">{(SUGERENCIAS[vistaActual] || ['¿Cómo está el clima hoy y cómo afecta mi parcela?', '¿Qué información tienes de mi parcela?', '¿Qué datos faltan para tomar una decisión?']).map((sugerencia) => <button type="button" key={sugerencia} onClick={() => enviarPregunta(sugerencia)} disabled={escribiendo}>{sugerencia}<ChevronRight size={14} aria-hidden="true" /></button>)}</div></div>}
 
-          {mensajes.map((mensaje, index) => <div className={`zeasys-chat-message ${mensaje.rol === 'usuario' ? 'from-user' : 'from-assistant'}`} key={`${mensaje.rol}-${index}`}><div className="zeasys-chat-message-avatar">{mensaje.rol === 'usuario' ? <User size={14} /> : <Bot size={14} />}</div><div className="zeasys-chat-message-content"><div className="zeasys-chat-message-role">{mensaje.rol === 'usuario' ? 'Tú' : `${PROVEEDOR_IA} · ZeaSys`}</div><div className="zeasys-chat-bubble">{renderMarkdown(mensaje.texto)}</div>{mensaje.error && <button type="button" className="zeasys-chat-retry" onClick={() => enviarPregunta(mensaje.pregunta)}><RotateCcw size={13} /> Reintentar</button>}{index === ultimoAsistente && !mensaje.error && <div className="zeasys-chat-followups"><button type="button" onClick={() => enviarPregunta('Amplía tu respuesta anterior con más detalle, el razonamiento y las cifras concretas.')} disabled={escribiendo}>¿Quieres más detalle?<ChevronRight size={12} aria-hidden="true" /></button><button type="button" onClick={() => enviarPregunta('¿Cuál es la fuente y la fecha de los datos que usaste?')} disabled={escribiendo}>Ver fuente<ChevronRight size={12} aria-hidden="true" /></button></div>}</div></div>)}
+          {mensajes.map((mensaje, index) => <div className={`zeasys-chat-message ${mensaje.rol === 'usuario' ? 'from-user' : 'from-assistant'}`} key={`${mensaje.rol}-${index}`}><div className="zeasys-chat-message-avatar">{mensaje.rol === 'usuario' ? <User size={14} /> : <Bot size={14} />}</div><div className="zeasys-chat-message-content"><div className="zeasys-chat-message-role">{mensaje.rol === 'usuario' ? 'Tú' : `${PROVEEDOR_IA} · ZeaSys`}</div><div className="zeasys-chat-bubble">{renderMarkdown(mensaje.texto)}</div><FuentesChat referencias={mensaje.referencias} />{mensaje.error && <button type="button" className="zeasys-chat-retry" onClick={() => enviarPregunta(mensaje.pregunta)}><RotateCcw size={13} /> Reintentar</button>}{index === ultimoAsistente && !mensaje.error && <div className="zeasys-chat-followups"><button type="button" onClick={() => enviarPregunta('Amplía tu respuesta anterior con más detalle, el razonamiento y las cifras concretas.')} disabled={escribiendo}>¿Quieres más detalle?<ChevronRight size={12} aria-hidden="true" /></button><button type="button" onClick={() => enviarPregunta('¿Cuál es la fuente y la fecha de los datos que usaste?')} disabled={escribiendo}>Ver fuente<ChevronRight size={12} aria-hidden="true" /></button></div>}</div></div>)}
 
           {escribiendo && <div className="zeasys-chat-message from-assistant"><div className="zeasys-chat-message-avatar"><Bot size={14} /></div><div className="zeasys-chat-message-content"><div className="zeasys-chat-message-role">{`${PROVEEDOR_IA} · ZeaSys`}</div><div className="zeasys-chat-bubble zeasys-chat-typing"><Loader2 size={15} /><span>Analizando tus datos…</span></div></div></div>}
           <div ref={messagesEndRef} />
@@ -352,7 +372,7 @@ const ChatbotWidget = ({
           <button type="submit" className="zeasys-chat-send" disabled={escribiendo || !input.trim()} aria-label="Enviar pregunta">{escribiendo ? <Loader2 size={17} /> : <Send size={17} />}</button>
           <div className="zeasys-chat-composer-hint">Enter para enviar · Shift + Enter para una nueva línea</div>
         </form>
-      </aside>
+      </div>
     </>
   );
 };

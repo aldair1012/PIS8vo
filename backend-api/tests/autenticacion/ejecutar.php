@@ -48,7 +48,7 @@ final class UsuariosMemoriaAuth implements UsuarioRepositoryInterface
         if ($contrasenaHash !== null) $this->hash = $contrasenaHash;
         return true;
     }
-    public function eliminarUsuario(int $id): bool { $this->escrituras[] = ['eliminar', $id]; $this->existe = false; return true; }
+    public function eliminarUsuario(int $id): bool { $this->escrituras[] = ['eliminarCuenta', $id]; $this->existe = false; return true; }
     public function buscarOCrearPorGoogle(string $nombre, string $correo, ?string $picture = null): array|false { return $this->usuario['activo'] ? $this->usuario : false; }
 }
 
@@ -149,23 +149,23 @@ $pruebas['bcrypt no autentica sufijos fuera del límite de 72 bytes'] = static f
 };
 $pruebas['registro conserva contraseña exacta y confirmación exacta'] = static function (): void {
     [$servicio, $usuarios] = entorno();
-    $servicio->registro(peticion(['nombre' => ' Agricultor ', 'correo' => 'agricultor@example.test', 'contrasena' => ' Clave123! ', 'confirmar_contrasena' => ' Clave123! ']));
+    $servicio->registrarse(peticion(['nombre' => ' Agricultor ', 'correo' => 'agricultor@example.test', 'contrasena' => ' Clave123! ', 'confirmar_contrasena' => ' Clave123! ']));
     comprobar(Contrasena::verificar(' Clave123! ', $usuarios->hash), 'El registro no debe recortar la clave.');
     comprobar(!Contrasena::verificar('Clave123!', $usuarios->hash), 'No debe guardar el trim.');
     [$servicio, $usuarios] = entorno();
-    esperarError(static fn () => $servicio->registro(peticion(['nombre' => 'Agricultor', 'correo' => 'agricultor@example.test', 'contrasena' => ' Clave123! ', 'confirmar_contrasena' => 'Clave123!'])), ValidacionException::class, 400);
+    esperarError(static fn () => $servicio->registrarse(peticion(['nombre' => 'Agricultor', 'correo' => 'agricultor@example.test', 'contrasena' => ' Clave123! ', 'confirmar_contrasena' => 'Clave123!'])), ValidacionException::class, 400);
     comprobar($usuarios->escrituras === [], 'Una confirmación diferente no debe escribir.');
 };
 $pruebas['login conserva clave exacta y recordar booleano'] = static function (): void {
     [$servicio, $usuarios, $sesion] = entorno();
     $usuarios->hash = Contrasena::crearHash(' Clave123! ');
-    $resultado = $servicio->login(peticion(['correo' => ' agricultor@example.test ', 'contrasena' => ' Clave123! ', 'remember' => true]));
-    comprobar($resultado['success'] && $sesion->recordar, 'Debe autenticar y recordar la sesión.');
-    esperarError(static fn () => $servicio->login(peticion(['correo' => 'agricultor@example.test', 'contrasena' => 'Clave123!'])), NoAutorizadoException::class, 401);
+    $resultado = $servicio->iniciarSesion(peticion(['correo' => ' agricultor@example.test ', 'contrasena' => ' Clave123! ', 'recordar' => true]));
+    comprobar($resultado['exito'] && $sesion->recordar, 'Debe autenticar y recordar la sesión.');
+    esperarError(static fn () => $servicio->iniciarSesion(peticion(['correo' => 'agricultor@example.test', 'contrasena' => 'Clave123!'])), NoAutorizadoException::class, 401);
 };
 $pruebas['actualizar contraseña preserva espacios y solo usa la identidad de sesión'] = static function (): void {
     [$servicio, $usuarios] = entorno();
-    $servicio->update(peticion(['id' => 99, 'nombre' => 'Nuevo nombre', 'nueva_contrasena' => ' Nueva123! ', 'confirmar_nueva_contrasena' => ' Nueva123! ']));
+    $servicio->actualizar(peticion(['id' => 99, 'nombre' => 'Nuevo nombre', 'nueva_contrasena' => ' Nueva123! ', 'confirmar_nueva_contrasena' => ' Nueva123! ']));
     comprobar($usuarios->escrituras === [['perfil', 7]], 'Un ID de cuerpo no debe seleccionar otra cuenta.');
     comprobar(Contrasena::verificar(' Nueva123! ', $usuarios->hash), 'Debe guardar el valor exacto.');
     comprobar(!Contrasena::verificar('Nueva123!', $usuarios->hash), 'No debe aplicar trim a claves actualizadas.');
@@ -173,7 +173,7 @@ $pruebas['actualizar contraseña preserva espacios y solo usa la identidad de se
 $pruebas['actualizar no ignora claves débiles o una confirmación sin clave'] = static function (): void {
     foreach ([['0', '0'], ['', 'Clave123!'], [str_repeat('Aa1!', 19), str_repeat('Aa1!', 19)]] as [$clave, $confirmacion]) {
         [$servicio, $usuarios] = entorno();
-        esperarError(static fn () => $servicio->update(peticion(['nueva_contrasena' => $clave, 'confirmar_nueva_contrasena' => $confirmacion])), ValidacionException::class, 400);
+        esperarError(static fn () => $servicio->actualizar(peticion(['nueva_contrasena' => $clave, 'confirmar_nueva_contrasena' => $confirmacion])), ValidacionException::class, 400);
         comprobar($usuarios->escrituras === [], 'Debe rechazar la clave antes de guardar el perfil.');
     }
 };
@@ -181,18 +181,18 @@ $pruebas['me revoca usuarios ausentes o desactivados'] = static function (): voi
     foreach (['ausente', 'desactivado'] as $caso) {
         [$servicio, $usuarios, $sesion] = entorno();
         if ($caso === 'ausente') $usuarios->existe = false; else $usuarios->usuario['activo'] = 0;
-        comprobar($servicio->me() === ['authenticated' => false], 'No debe exponer una sesión revocada.');
+        comprobar($servicio->yo() === ['autenticado' => false], 'No debe exponer una sesión revocada.');
         comprobar($sesion->cerrada, 'Debe cerrar la sesión obsoleta.');
     }
 };
 $pruebas['operaciones privadas rechazan cuenta revocada antes de escribir'] = static function (): void {
-    foreach (['update', 'uploadAvatar', 'deleteAvatar', 'syncGoogleAvatar', 'eliminar'] as $metodo) {
+    foreach (['actualizar', 'subirAvatar', 'eliminarAvatar', 'sincronizarAvatarGoogle', 'eliminarCuenta'] as $metodo) {
         foreach (['ausente', 'desactivado', 'sin_sesion'] as $caso) {
             [$servicio, $usuarios, $sesion, $avatares] = entorno();
             if ($caso === 'ausente') $usuarios->existe = false;
             if ($caso === 'desactivado') $usuarios->usuario['activo'] = 0;
             if ($caso === 'sin_sesion') $sesion->id = null;
-            $args = match ($metodo) { 'update', 'syncGoogleAvatar' => [peticion([])], 'uploadAvatar' => [[]], default => [] };
+            $args = match ($metodo) { 'actualizar', 'sincronizarAvatarGoogle' => [peticion([])], 'subirAvatar' => [[]], default => [] };
             esperarError(static fn () => $servicio->{$metodo}(...$args), NoAutorizadoException::class, 401);
             comprobar($usuarios->escrituras === [] && $avatares->guardados === 0, 'No debe modificar una cuenta revocada.');
         }
@@ -201,7 +201,7 @@ $pruebas['operaciones privadas rechazan cuenta revocada antes de escribir'] = st
 $pruebas['sincronizar avatar Google limpia avatar local anterior'] = static function (): void {
     [$servicio, $usuarios, , $avatares] = entorno();
     $usuarios->usuario['foto_perfil'] = '/backend-api/public/uploads/avatars/avatar_7_456.png';
-    $servicio->syncGoogleAvatar(peticion(['foto_url' => 'https://lh3.googleusercontent.com/foto=s96-c']));
+    $servicio->sincronizarAvatarGoogle(peticion(['foto_url' => 'https://lh3.googleusercontent.com/foto=s96-c']));
     comprobar($avatares->eliminados === ['/backend-api/public/uploads/avatars/avatar_7_456.png'], 'Debe limpiar el archivo local sustituido.');
     comprobar($usuarios->usuario['foto_perfil'] === 'https://lh3.googleusercontent.com/foto=s400', 'Debe normalizar el tamaño de Google.');
 };
@@ -223,7 +223,7 @@ $pruebas['middleware no consulta cuentas para visitas anónimas públicas'] = st
     $_SESSION = [];
     $consultas = 0;
     $middleware = new AutenticacionMiddleware(static function (int $id) use (&$consultas): bool { $consultas++; return true; });
-    $middleware->procesar('api/auth/me', ['publica' => true, 'sesion' => true]);
+    $middleware->procesar('api/auth/yo', ['publica' => true, 'sesion' => true]);
     comprobar($consultas === 0, 'La página pública no debe abrir una conexión por autenticación.');
 };
 $pruebas['middleware revoca globalmente una cuenta desactivada y respeta cuentas activas'] = static function (): void {
@@ -252,7 +252,7 @@ foreach (['nombre', 'correo', 'contrasena', 'confirmar_contrasena'] as $campo) {
             [$servicio, $usuarios] = entorno();
             $datos = ['nombre' => 'Agricultor', 'correo' => 'agricultor@example.test', 'contrasena' => 'Clave123!', 'confirmar_contrasena' => 'Clave123!'];
             $datos[$campo] = $invalido;
-            esperarError(static fn () => $servicio->registro(peticion($datos)), ValidacionException::class, 400);
+            esperarError(static fn () => $servicio->registrarse(peticion($datos)), ValidacionException::class, 400);
             comprobar($usuarios->escrituras === [], 'No debe escribir entradas inválidas.');
         };
     }
@@ -260,16 +260,16 @@ foreach (['nombre', 'correo', 'contrasena', 'confirmar_contrasena'] as $campo) {
 foreach ([[], new stdClass(), false, 123, "Clave123!\0"] as $indice => $invalido) {
     $pruebas["login y cambio de clave rechazan tipo/byte inválido #{$indice}"] = static function () use ($invalido): void {
         [$servicio, $usuarios] = entorno();
-        esperarError(static fn () => $servicio->login(peticion(['correo' => 'agricultor@example.test', 'contrasena' => $invalido])), ValidacionException::class, 400);
-        esperarError(static fn () => $servicio->update(peticion(['nueva_contrasena' => $invalido, 'confirmar_nueva_contrasena' => $invalido])), ValidacionException::class, 400);
+        esperarError(static fn () => $servicio->iniciarSesion(peticion(['correo' => 'agricultor@example.test', 'contrasena' => $invalido])), ValidacionException::class, 400);
+        esperarError(static fn () => $servicio->actualizar(peticion(['nueva_contrasena' => $invalido, 'confirmar_nueva_contrasena' => $invalido])), ValidacionException::class, 400);
         comprobar($usuarios->escrituras === [], 'No debe escribir una clave inválida.');
     };
 }
 foreach (['false', 'true', 0, 1, [], new stdClass()] as $indice => $invalido) {
     $pruebas["login y Google rechazan recordar no booleano #{$indice}"] = static function () use ($invalido): void {
         [$servicio] = entorno();
-        esperarError(static fn () => $servicio->login(peticion(['correo' => 'agricultor@example.test', 'contrasena' => 'Clave123!', 'remember' => $invalido])), ValidacionException::class, 400);
-        esperarError(static fn () => $servicio->googleLogin(peticion(['id_token' => 'token_prueba', 'remember' => $invalido])), ValidacionException::class, 400);
+        esperarError(static fn () => $servicio->iniciarSesion(peticion(['correo' => 'agricultor@example.test', 'contrasena' => 'Clave123!', 'recordar' => $invalido])), ValidacionException::class, 400);
+        esperarError(static fn () => $servicio->iniciarSesionGoogle(peticion(['id_token' => 'token_prueba', 'recordar' => $invalido])), ValidacionException::class, 400);
     };
 }
 

@@ -1,2 +1,0 @@
-const __vite__mapDeps=(i,m=__vite__mapDeps,d=(m.f||(m.f=["./leaflet-geoman-CQ8FrSiX.js","./mapas-JtbkUS3R.js","./rolldown-runtime-XKyaHtl9.js","./estilo-CDoHey1g.css"])))=>i.map(i=>d[i]);
-import{r as e}from"./rolldown-runtime-XKyaHtl9.js";import{t}from"./mapas-JtbkUS3R.js";import{t as n}from"./preload-helper-DclECHGd.js";var r=e(t(),1);window.L=r.default,globalThis.L=r.default,await n(()=>import(`./leaflet-geoman-CQ8FrSiX.js`),__vite__mapDeps([0,1,2,3]),import.meta.url);

@@ -1,0 +1,249 @@
+{
+  "edicion": 2025,
+  "fuente": "INEC · ESPAC 2025, microdatos de cultivos transitorios",
+  "url": "https://www.ecuadorencifras.gob.ec/documentos/web-inec/Estadisticas_agropecuarias/espac/2025/2_DD_DATOS_ABIERTOS_ESPAC_2025.zip",
+  "sha256": "47863f1a255ae3e7e695df0c1fe0a329e55c35b2acd1d2d866d4657b6bfa1ea5",
+  "calculado_por": "ZeaSys; no es un tabulado oficial publicado",
+  "metodo": "Σ(producción en t × factor de expansión) / Σ(ha cosechadas × factor de expansión). Cultivo solo; estado de cosecha compatible; mínimo 5 registros por provincia y producto.",
+  "limites": "Referencia descriptiva de una encuesta retrospectiva. No identifica color, variedad comercial ni ubicación individual. No equiparar choclo con grano seco, ni comparar directamente con SIPA estandarizado a 13% de humedad. No valida el modelo XGBoost.",
+  "exclusiones": {
+    "cultivo_asociado": 814,
+    "estado_incompatible_o_ausente": 660,
+    "dato_fuera_de_contrato": 8,
+    "territorio_no_identificado": 2
+  },
+  "productos": [
+    {
+      "id": "duro_seco",
+      "nombre": "Maíz duro seco",
+      "estado_cosecha": "GRANO SECO",
+      "unidad": "t de grano seco/ha",
+      "provincias": [
+        {
+          "provincia": "Azuay",
+          "registros": 20,
+          "rendimiento_t_ha": 0.95
+        },
+        {
+          "provincia": "Carchi",
+          "registros": 18,
+          "rendimiento_t_ha": 3.296
+        },
+        {
+          "provincia": "El Oro",
+          "registros": 27,
+          "rendimiento_t_ha": 4.089
+        },
+        {
+          "provincia": "Esmeraldas",
+          "registros": 23,
+          "rendimiento_t_ha": 7.654
+        },
+        {
+          "provincia": "Guayas",
+          "registros": 189,
+          "rendimiento_t_ha": 5.237
+        },
+        {
+          "provincia": "Imbabura",
+          "registros": 19,
+          "rendimiento_t_ha": 2.27
+        },
+        {
+          "provincia": "Loja",
+          "registros": 322,
+          "rendimiento_t_ha": 3.851
+        },
+        {
+          "provincia": "Los Ríos",
+          "registros": 565,
+          "rendimiento_t_ha": 5.347
+        },
+        {
+          "provincia": "Manabí",
+          "registros": 700,
+          "rendimiento_t_ha": 5.239
+        },
+        {
+          "provincia": "Morona Santiago",
+          "registros": 26,
+          "rendimiento_t_ha": 1.373
+        },
+        {
+          "provincia": "Napo",
+          "registros": 19,
+          "rendimiento_t_ha": 4.597
+        },
+        {
+          "provincia": "Orellana",
+          "registros": 10,
+          "rendimiento_t_ha": 1.603
+        },
+        {
+          "provincia": "Pastaza",
+          "registros": 6,
+          "rendimiento_t_ha": 2.604
+        },
+        {
+          "provincia": "Pichincha",
+          "registros": 7,
+          "rendimiento_t_ha": 1.666
+        },
+        {
+          "provincia": "Santa Elena",
+          "registros": 60,
+          "rendimiento_t_ha": 3.793
+        },
+        {
+          "provincia": "Santo Domingo De Los Tsáchilas",
+          "registros": 7,
+          "rendimiento_t_ha": 3.177
+        },
+        {
+          "provincia": "Sucumbíos",
+          "registros": 27,
+          "rendimiento_t_ha": 2.055
+        },
+        {
+          "provincia": "Zamora Chinchipe",
+          "registros": 9,
+          "rendimiento_t_ha": 1.428
+        }
+      ]
+    },
+    {
+      "id": "suave_seco",
+      "nombre": "Maíz suave seco",
+      "estado_cosecha": "GRANO SECO",
+      "unidad": "t de grano seco/ha",
+      "provincias": [
+        {
+          "provincia": "Azuay",
+          "registros": 91,
+          "rendimiento_t_ha": 1.22
+        },
+        {
+          "provincia": "Bolívar",
+          "registros": 336,
+          "rendimiento_t_ha": 1.667
+        },
+        {
+          "provincia": "Cañar",
+          "registros": 32,
+          "rendimiento_t_ha": 1.361
+        },
+        {
+          "provincia": "Chimborazo",
+          "registros": 54,
+          "rendimiento_t_ha": 1.12
+        },
+        {
+          "provincia": "Cotopaxi",
+          "registros": 86,
+          "rendimiento_t_ha": 1.987
+        },
+        {
+          "provincia": "El Oro",
+          "registros": 6,
+          "rendimiento_t_ha": 1.698
+        },
+        {
+          "provincia": "Imbabura",
+          "registros": 53,
+          "rendimiento_t_ha": 1.044
+        },
+        {
+          "provincia": "Loja",
+          "registros": 16,
+          "rendimiento_t_ha": 1.599
+        },
+        {
+          "provincia": "Pichincha",
+          "registros": 35,
+          "rendimiento_t_ha": 2.162
+        },
+        {
+          "provincia": "Tungurahua",
+          "registros": 9,
+          "rendimiento_t_ha": 3.57
+        }
+      ]
+    },
+    {
+      "id": "duro_choclo",
+      "nombre": "Maíz duro en choclo",
+      "estado_cosecha": "CHOCLO",
+      "unidad": "t de choclo/ha",
+      "provincias": [
+        {
+          "provincia": "Guayas",
+          "registros": 6,
+          "rendimiento_t_ha": 1.982
+        },
+        {
+          "provincia": "Loja",
+          "registros": 12,
+          "rendimiento_t_ha": 4.665
+        },
+        {
+          "provincia": "Morona Santiago",
+          "registros": 11,
+          "rendimiento_t_ha": 3.182
+        }
+      ]
+    },
+    {
+      "id": "suave_choclo",
+      "nombre": "Maíz suave en choclo",
+      "estado_cosecha": "CHOCLO",
+      "unidad": "t de choclo/ha",
+      "provincias": [
+        {
+          "provincia": "Azuay",
+          "registros": 27,
+          "rendimiento_t_ha": 2.642
+        },
+        {
+          "provincia": "Bolívar",
+          "registros": 107,
+          "rendimiento_t_ha": 3.354
+        },
+        {
+          "provincia": "Carchi",
+          "registros": 9,
+          "rendimiento_t_ha": 2.555
+        },
+        {
+          "provincia": "Chimborazo",
+          "registros": 90,
+          "rendimiento_t_ha": 4.767
+        },
+        {
+          "provincia": "Cotopaxi",
+          "registros": 84,
+          "rendimiento_t_ha": 4.347
+        },
+        {
+          "provincia": "Imbabura",
+          "registros": 33,
+          "rendimiento_t_ha": 2.892
+        },
+        {
+          "provincia": "Loja",
+          "registros": 7,
+          "rendimiento_t_ha": 2.911
+        },
+        {
+          "provincia": "Pichincha",
+          "registros": 110,
+          "rendimiento_t_ha": 4.155
+        },
+        {
+          "provincia": "Tungurahua",
+          "registros": 184,
+          "rendimiento_t_ha": 4.085
+        }
+      ]
+    }
+  ]
+}

@@ -7,6 +7,7 @@ namespace ZeaSys\Dominios\Analitica\Aplicacion;
 use ZeaSys\Dominios\Analitica\Dominio\CatalogoAgronomicoInterface;
 use ZeaSys\Dominios\Lotes\Dominio\CultivoRepositoryInterface;
 use ZeaSys\Dominios\Simulaciones\Dominio\SimulacionRepositoryInterface;
+use ZeaSys\Dominios\Terreno\Aplicacion\ProvinciaParcela;
 use ZeaSys\Kernel\Errores\AccesoDenegadoException;
 
 class ServicioAnaliticaScenario
@@ -20,12 +21,16 @@ class ServicioAnaliticaScenario
     public function construir(int $usuarioId, ?int $cultivoId = null, ?int $año = null): array
     {
         $cultivo = null;
+        if ($cultivoId === null) return ['sin_datos'=>true,'cultivo_activo'=>null,'mensaje'=>'Selecciona una parcela para consultar Siembra.'];
         if ($cultivoId !== null) {
             $cultivo = $this->cultivos->obtenerPorId($cultivoId);
-            if (!$cultivo || (int) ($cultivo['usuario_id'] ?? 0) !== $usuarioId) {
+            if (!$cultivo || (int) ($cultivo['usuario_id'] ?? 0) !== $usuarioId || (isset($cultivo['activo']) && !(bool) $cultivo['activo'])) {
                 throw new AccesoDenegadoException('Esta parcela no es válida o no está registrada a tu nombre.');
             }
         }
+        $provincia = ProvinciaParcela::resolver($cultivo);
+        $cultivo['provincia'] = $provincia['provincia'];
+        $cultivo['fuente_provincia'] = $provincia['fuente'];
         // Filtrar en el repositorio antes de limitar; 50 resultados de otros
         // lotes no deben ocultar las simulaciones de la parcela solicitada.
         $registros = $cultivoId !== null
@@ -53,17 +58,13 @@ class ServicioAnaliticaScenario
                 'ph_suelo' => $this->numero($fila['ph_suelo'] ?? null, 0, 14),
             ];
         }
-        if ($muestra === []) {
-            return ['sin_datos' => true, 'sin_simulaciones' => true, 'cultivo_activo' => $cultivo,
-                'mensaje' => 'No hay simulaciones con rendimiento válido para la parcela y el año solicitados.'];
-        }
-
         $rendimientos = array_column($muestra, 'rendimiento');
         sort($rendimientos, SORT_NUMERIC);
         $n = count($rendimientos);
         $media = $this->media($rendimientos);
-        $objetivo = 5.4; // Referencia visible y explícita; no es un umbral probabilístico calibrado.
-        $fraccion = round(count(array_filter($rendimientos, static fn (float $r): bool => $r > $objetivo)) * 100 / $n, 1);
+        // Sin objetivo declarado por el productor, no se inventa un umbral agrícola.
+        $objetivo = null;
+        $fraccion = null;
         $cv = null;
         if ($n >= 2 && $media !== null && $media > 0) {
             $varianzaRelativa = array_sum(array_map(static fn (float $r): float => ($r / $media - 1) ** 2, $rendimientos)) / $n;
@@ -72,6 +73,8 @@ class ServicioAnaliticaScenario
 
         $catalogo = $this->catalogo->cargar();
         [$calendario, $mesesSiembra] = $this->calendario($catalogo, $cultivo, $año);
+        $ultima = $this->simulaciones->obtenerUltimaPorCultivo($cultivoId) ?? ($registros[0] ?? null);
+        $fechaUltima = $this->fecha($ultima['fecha'] ?? null);
         $ranking = $muestra;
         usort($ranking, static fn (array $a, array $b): int => $b['rendimiento'] <=> $a['rendimiento']);
         $ranking = array_map(static fn (array $sim): array => [
@@ -88,9 +91,13 @@ class ServicioAnaliticaScenario
         ], $muestra);
 
         return [
+            'sin_datos' => $n === 0, 'sin_simulaciones' => $n === 0,
             'cultivo_activo' => $cultivo,
+            'años_disponibles' => $this->simulaciones->obtenerAniosPorUsuario($usuarioId),
+            'año_ultima_simulacion' => $fechaUltima !== null ? (int) substr($fechaUltima, 0, 4) : null,
+            'calendario_parcela' => $this->calendarioParcela($cultivo, $ultima),
             'kpis' => [
-                'rendimiento_esperado' => round($media, 3),
+                'rendimiento_esperado' => $media === null ? null : round($media, 3),
                 'prob_superar_objetivo' => null,
                 'riesgo_agronomico' => ['nivel' => null, 'color' => 'info', 'texto' => null,
                     'motivo' => 'No hay un modelo calibrado de probabilidad o riesgo para esta muestra.'],
@@ -104,7 +111,7 @@ class ServicioAnaliticaScenario
                 'nota' => 'Muestra de simulaciones guardadas: no es una probabilidad futura, un ensayo de variedades ni variación interanual observada.',
             ],
             'percentiles' => [
-                'p10' => $this->percentil($rendimientos, 0.1), 'p50' => $this->percentil($rendimientos, 0.5), 'p90' => $this->percentil($rendimientos, 0.9),
+                'p10' => $n ? $this->percentil($rendimientos, 0.1) : null, 'p50' => $n ? $this->percentil($rendimientos, 0.5) : null, 'p90' => $n ? $this->percentil($rendimientos, 0.9) : null,
                 'tipo' => 'descriptivos_muestra_simulaciones', 'muestra' => $n,
                 'metodo' => 'interpolacion_lineal_posicion_n_menos_uno',
             ],
@@ -131,20 +138,17 @@ class ServicioAnaliticaScenario
     private function calendario(array $catalogo, ?array $cultivo, ?int $año): array
     {
         if ($cultivo === null) return [[], []];
-        $ubicacion = $this->normalizar((string) ($cultivo['ubicacion'] ?? ''));
-        $provincia = null;
-        foreach (['Azuay', 'Bolívar', 'Cañar', 'Carchi', 'Chimborazo', 'Cotopaxi', 'El Oro', 'Esmeraldas', 'Galápagos', 'Guayas', 'Imbabura', 'Loja', 'Los Ríos', 'Manabí', 'Morona Santiago', 'Napo', 'Orellana', 'Pastaza', 'Pichincha', 'Santa Elena', 'Santo Domingo', 'Sucumbíos', 'Tungurahua', 'Zamora Chinchipe'] as $nombre) {
-            if (preg_match('/(?<![a-z])' . preg_quote($this->normalizar($nombre), '/') . '(?![a-z])/', $ubicacion)) {
-                $provincia = $this->normalizar($nombre);
-                break;
-            }
-        }
-        if ($provincia === null) return [[], []];
+        if (!is_string($cultivo['provincia'] ?? null)) return [[], []];
+        $provincia = $this->normalizar($cultivo['provincia']);
+        $tipo = $this->normalizar((string) ($cultivo['tipo_maiz'] ?? ''));
         $meses = ['ENE' => 'Enero', 'FEB' => 'Febrero', 'MAR' => 'Marzo', 'ABR' => 'Abril', 'MAY' => 'Mayo', 'JUN' => 'Junio', 'JUL' => 'Julio', 'AGO' => 'Agosto', 'SEP' => 'Septiembre', 'OCT' => 'Octubre', 'NOV' => 'Noviembre', 'DIC' => 'Diciembre'];
         $ventanas = $siembra = [];
         foreach (($catalogo['calendario_siembra'] ?? []) as $fila) {
             $zona = (string) ($fila['Zona / Provincia'] ?? '');
             if (!str_contains($this->normalizar($zona), $provincia)) continue;
+            $tipoReferencia = (string) ($fila['Tipo Maíz'] ?? '');
+            $familiaReferencia = $this->normalizar($tipoReferencia);
+            if ((str_contains($tipo, 'suave') && str_contains($familiaReferencia, 'duro')) || (str_contains($tipo, 'duro') && str_contains($familiaReferencia, 'suave'))) continue;
             foreach ($meses as $clave => $nombre) {
                 $valor = trim((string) ($fila[$clave] ?? ''));
                 if (!in_array($valor, ['S', 'C'], true)) continue;
@@ -153,7 +157,7 @@ class ServicioAnaliticaScenario
                 $ventanas[] = [
                     'rango' => "1–{$dias} {$clave}", 'estado' => ($valor === 'S' ? 'Siembra: ' : 'Cosecha: ') . $zona,
                     'evaluacion' => 'referencia_catalogo', 'color' => 'info',
-                    'nota' => 'Ventana del catálogo local; no es una fecha optimizada por simulación ni garantiza rendimiento.',
+                    'nota' => 'Ventana del catálogo local' . ($tipoReferencia !== '' ? ' para ' . $tipoReferencia : '') . '; no es una fecha optimizada por simulación ni garantiza rendimiento.',
                     'fuente' => 'Catálogo agronómico local', 'tipo' => 'ventana_catalogo_no_pronostico',
                 ];
                 if ($valor === 'S') $siembra[$nombre] = $nombre;
@@ -165,6 +169,51 @@ class ServicioAnaliticaScenario
     private function normalizar(string $texto): string
     {
         return strtr(mb_strtolower($texto, 'UTF-8'), ['á' => 'a', 'é' => 'e', 'í' => 'i', 'ó' => 'o', 'ú' => 'u', 'ñ' => 'n']);
+    }
+
+    private function fecha(mixed $valor): ?string
+    {
+        if (!is_string($valor) || !preg_match('/^(\d{4})-(\d{2})-(\d{2})(?:[ T]|$)/', $valor, $m)) return null;
+        $year=(int)$m[1];
+        return $year>=2000 && $year<=2100 && checkdate((int)$m[2],(int)$m[3],$year) ? substr($valor,0,10) : null;
+    }
+
+    /** Fechas existentes del lote y de una ejecución compatible; nunca deduce una cosecha real. */
+    private function calendarioParcela(array $cultivo, ?array $ultima): array
+    {
+        $json=$this->jsonArray($ultima['escenarios_json']??null);
+        $guardado=$json['_zeasys_modelo']['trazabilidad']['calendario']??[];
+        if (!is_array($guardado)) $guardado=[];
+        $fechaGuardada=$this->fecha($guardado['fecha_siembra']??null);
+        $fechaActual=$this->fecha($cultivo['fecha_siembra']??null);
+        $inicio=$fechaActual??$fechaGuardada;
+        $tipo=$fechaActual!==null?($cultivo['tipo_fecha_siembra']??null):'prevista';
+        $ciclo=$this->numero($cultivo['ciclo_dias']??null,1,730);
+        $origenCiclo=$ciclo!==null?'Duración declarada por el productor':null;
+        $fin=null;$eventos=[];
+        if ($inicio!==null) {
+            $titulo=$fechaActual===null?'Siembra planificada en simulación #'.($ultima['id']??'')
+                :($tipo==='real_declarada'?'Siembra real declarada por el productor':($tipo==='prevista'?'Siembra prevista por el productor':'Siembra registrada · tipo por confirmar'));
+            $fuente=$fechaActual!==null?'Fecha guardada por el productor':'Fecha conservada en simulación #'.($ultima['id']??'');
+            $eventos[]=['fecha'=>$inicio,'tipo'=>$fechaActual!==null?'siembra_registrada':'siembra_simulada','titulo'=>$titulo,'fuente'=>$fuente,
+                'nota'=>$tipo==='real_declarada'?'Actividad declarada por el productor; no verificada independientemente.':'Planificación o fecha sin clasificar; no confirma una siembra realizada.'];
+        }
+        if ($inicio!==null && $ciclo!==null) {
+            $fin=\ZeaSys\Dominios\Lotes\Dominio\PlanificacionParcela::fin($inicio,(int)$ciclo);
+        } elseif ($inicio!==null && $fechaGuardada===$inicio) {
+            $finGuardado=$this->fecha($guardado['fecha_fin_estimada']??null);
+            if ($finGuardado!==null && $finGuardado>=$inicio) {
+                $fin=$finGuardado;
+                $ciclo=$this->numero($guardado['ciclo_dias']??null,1,730);
+                $origenCiclo=is_string($guardado['origen_duracion']??null)?$guardado['origen_duracion']:'Duración conservada en la simulación';
+            }
+        }
+        if ($fin!==null) $eventos[]=['fecha'=>$fin,'tipo'=>'fin_ciclo_estimado','titulo'=>'Fin estimado del ciclo','fuente'=>$origenCiclo??'Simulación #'.($ultima['id']??''),
+            'nota'=>'Fecha orientativa; no es una cosecha observada ni garantiza madurez o clima futuro.'];
+        return ['eventos'=>$eventos,'simulacion_id'=>$ultima['id']??null,'fecha_siembra'=>$inicio,'tipo_fecha_siembra'=>$tipo,
+            'fuente_fecha'=>$fuente??null,'fecha_fin_estimada'=>$fin,'ciclo_dias'=>$ciclo,'origen_duracion'=>$origenCiclo,'riego_tipo'=>$cultivo['riego_tipo']??null,
+            'nota'=>count($eventos)>1?'Fechas de tu planificación. El fin del ciclo es una referencia estimada.'
+                :($eventos!==[]?'Completa la duración prevista para obtener una fecha orientativa de fin de ciclo.':'Completa la planificación para activar el calendario de tu cultivo.')];
     }
 
     private function numero(mixed $valor, ?float $minimo = null, ?float $maximo = null): ?float

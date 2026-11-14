@@ -2,8 +2,8 @@ import { test, expect } from '@playwright/test';
 
 test.beforeEach(async ({ page }) => {
   await page.route('**/backend-api/public/index.php/api/**', route => route.fulfill({ json: {} }));
-  await page.route('**/backend-api/public/index.php/api/auth/me', route => route.fulfill({ json: { authenticated: true, user: { id: 987, nombre: 'Prueba' } } }));
-  await page.route('**/backend-api/public/index.php/api/cultivos', route => route.fulfill({ json: [{ id: 1, nombre_parcela: 'Parcela de prueba', area: 1 }] }));
+  await page.route('**/backend-api/public/index.php/api/auth/yo', route => route.fulfill({ json: { autenticado: true, usuario: { id: 987, nombre: 'Prueba' } } }));
+  await page.route('**/backend-api/public/index.php/api/parcelas', route => route.fulfill({ json: [{ id: 1, nombre_parcela: 'Parcela de prueba', area: 1 }] }));
 });
 
 test('menú móvil mantiene el foco y vuelve al botón al pulsar Escape', async ({ page }) => {

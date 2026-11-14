@@ -56,6 +56,7 @@
    */
   --zs-page-bg: var(--zs-forest-950);
   --zs-section-bg: var(--zs-forest-900);
+  --zs-nav-surface: color-mix(in srgb, var(--zs-section-bg) 94%, transparent);
   --zs-surface: var(--zs-forest-800);
   --zs-surface-raised: var(--zs-forest-700);
   --zs-text: hsl(var(--zs-h-paper) 30% 96%);
@@ -83,6 +84,8 @@
   --home-green-dark: var(--zs-leaf-400);
   --home-blue: var(--zs-sky-300);
   --home-warm: var(--zs-maize-400);
+  --home-nav-bg: var(--zs-nav-surface);
+  --home-nav-height: 68px;
 
   min-width: 0;
   padding-top: 0 !important;
@@ -94,6 +97,7 @@
   /* Layer 2 - semantic tokens (light). Solo cambian las superficies externas. */
   --zs-page-bg: hsl(var(--zs-h-paper) 34% 96.5%);
   --zs-section-bg: hsl(var(--zs-h-paper) 40% 93%);
+  --zs-nav-surface: color-mix(in srgb, var(--zs-section-bg) 82%, transparent);
   --zs-surface: hsl(var(--zs-h-paper) 30% 99%);
   --zs-surface-raised: hsl(var(--zs-h-paper) 26% 91%);
   --zs-text: hsl(var(--zs-h-forest) 58% 12%);
@@ -238,7 +242,6 @@
   margin: 0 !important;
   padding: 0 max(1rem, calc((100vw - 1280px) / 2)) !important;
   color: var(--zs-text);
-  background: color-mix(in srgb, var(--zs-section-bg) 92%, transparent) !important;
   border: 0 !important;
   border-bottom: 1px solid var(--zs-border) !important;
   border-radius: 0 !important;
@@ -246,6 +249,13 @@
   backdrop-filter: blur(18px) saturate(130%);
   -webkit-backdrop-filter: blur(18px) saturate(130%);
   transition: transform .46s cubic-bezier(.22, 1, .36, 1), opacity .25s ease, visibility 0s linear 0s !important;
+}
+
+/* Only the surface must outrank the legacy theme rules in styles.css;
+   sizing stays in the shared navbar and its responsive rules below. */
+.zeasys-home.zeasys-home--dark .zeasys-home-nav,
+.zeasys-home.zeasys-home--light .zeasys-home-nav {
+  background: var(--home-nav-bg) !important;
 }
 
 .zeasys-home .zeasys-home-nav.is-hidden {
@@ -320,11 +330,12 @@
   width: 100%;
   max-width: none !important;
   margin: 0 !important;
-  padding: clamp(7rem, 13vh, 9rem) max(1.25rem, calc((100vw - 1280px) / 2)) clamp(3.5rem, 8vh, 6rem) !important;
+  padding: calc(var(--home-nav-height) + clamp(1.5rem, 4vh, 3rem)) max(1.25rem, calc((100vw - 1280px) / 2)) clamp(1.5rem, 4vh, 3rem) !important;
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(430px, .92fr);
   align-items: center;
   gap: clamp(2.5rem, 6vw, 6rem);
+  color-scheme: dark;
   color: #f4f8f1;
   background-color: var(--zs-forest-950) !important;
   background-image:
@@ -357,6 +368,13 @@
   line-height: .96;
   letter-spacing: -.068em;
   text-wrap: balance;
+}
+
+.zeasys-home .zeasys-home-hero h1 span,
+.zeasys-home.zeasys-home--light .zeasys-home-hero h1 span {
+  font-size: inherit;
+  line-height: inherit;
+  letter-spacing: inherit;
 }
 
 .zeasys-home .zeasys-home-hero .zeasys-home-lead,
@@ -401,18 +419,19 @@
 
 .zeasys-home .zeasys-hero-visual {
   min-width: 0;
-  min-height: 560px;
+  min-height: 0;
   padding: 0;
   display: flex;
   align-items: stretch;
   justify-content: center;
 }
 
-/* Both faces must keep the same physical footprint while the card rotates. */
+/* The active face participates in flow, so neither the preview nor a longer
+   access/registration form depends on a guessed fixed height. */
 .zeasys-home .zeasys-hero-flip {
   width: min(100%, 640px) !important;
   min-width: 0;
-  min-height: clamp(630px, 48vw, 720px) !important;
+  min-height: 0 !important;
   margin: auto;
   align-self: stretch;
   perspective: 1800px;
@@ -428,17 +447,37 @@
 }
 
 .zeasys-home .zeasys-hero-flip-inner {
+  position: relative;
+  inset: auto;
   transform-origin: center center;
   transition-duration: .82s !important;
+}
+
+.zeasys-home .zeasys-hero-flip-front {
+  position: relative;
+  inset: auto;
+  padding: clamp(1.25rem, 2.8vw, 2rem);
+}
+
+.zeasys-home .zeasys-hero-flip.is-open .zeasys-hero-flip-front {
+  position: absolute;
+  inset: 0;
+}
+
+.zeasys-home .zeasys-hero-flip.is-open .zeasys-hero-auth-back {
+  position: relative;
+  inset: auto;
 }
 
 .zeasys-home .zeasys-hero-auth-back.zeasys-login-card {
   display: flex !important;
   align-items: center;
   justify-content: center;
-  padding: clamp(1.25rem, 3vw, 2.25rem) !important;
+  padding: 3.5rem clamp(1.25rem, 3vw, 2.25rem) clamp(1.25rem, 3vw, 2.25rem) !important;
   overflow: hidden !important;
 }
+
+.zeasys-home .zeasys-auth-close { width: 44px; height: 44px; top: .75rem; right: .75rem; }
 
 .zeasys-home .zeasys-hero-auth-back > .zeasys-auth-mode-card {
   width: min(100%, 480px) !important;
@@ -482,7 +521,7 @@
 .zeasys-home .zeasys-google-button-host iframe {
   display: block;
   border: 0;
-  clip-path: inset(2px 10px);
+  clip-path: inset(2px 10px round 999px);
 }
 .zeasys-home .zeasys-google-signin.is-loading .zeasys-google-button-host { pointer-events: none; }
 
@@ -538,6 +577,8 @@
 
 .zeasys-home .zeasys-dashboard-preview,
 .zeasys-home.zeasys-home--light .zeasys-dashboard-preview {
+  /* Legacy rotation cuts the corners and pushes the final rows out of view. */
+  transform: none !important;
   background: linear-gradient(145deg, rgba(17, 50, 33, .94), rgba(7, 24, 15, .96)) !important;
   border-color: rgba(200, 226, 200, .24) !important;
   box-shadow: var(--zs-shadow-lg), inset 0 1px 0 rgba(255, 255, 255, .05) !important;
@@ -848,7 +889,7 @@
 /* --------------------------------------------------------------------------
    7. Responsive behavior
    -------------------------------------------------------------------------- */
-@media (max-width: 1024px) {
+@media (max-width: 899px) {
   .zeasys-home .zeasys-home-hero,
   .zeasys-home.zeasys-home--light .zeasys-home-hero {
     grid-template-columns: 1fr;
@@ -860,9 +901,39 @@
   }
 
   .zeasys-home .zeasys-home-hero-copy { max-width: 700px; }
-  .zeasys-home .zeasys-hero-visual { width: min(100%, 680px); min-height: 800px; justify-self: center; align-self: center; }
-  .zeasys-home .zeasys-hero-flip { min-height: 800px !important; }
-  .zeasys-home .zeasys-hero-flip.is-registering { min-height: 880px !important; }
+  .zeasys-home .zeasys-hero-visual { width: min(100%, 680px); justify-self: center; align-self: center; }
+}
+
+@media (min-width: 900px) and (max-width: 1200px) {
+  .zeasys-home .zeasys-home-hero,
+  .zeasys-home.zeasys-home--light .zeasys-home-hero {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: clamp(1.25rem, 3vw, 2.5rem);
+  }
+  .zeasys-home .zeasys-home-hero h1,
+  .zeasys-home.zeasys-home--light .zeasys-home-hero h1,
+  .zeasys-home .zeasys-home-hero h1 span,
+  .zeasys-home.zeasys-home--light .zeasys-home-hero h1 span {
+    font-size: clamp(2.4rem, 4.8vw, 3.5rem);
+  }
+  .zeasys-home .zeasys-hero-actions { gap: .65rem; }
+  .zeasys-home .zeasys-hero-actions > button { padding-inline: .75rem; }
+}
+
+@media (min-width: 900px) and (max-height: 850px) {
+  .zeasys-home .zeasys-home-hero h1,
+  .zeasys-home.zeasys-home--light .zeasys-home-hero h1,
+  .zeasys-home .zeasys-home-hero h1 span,
+  .zeasys-home.zeasys-home--light .zeasys-home-hero h1 span {
+    font-size: clamp(2.4rem, 4.6vw, 4rem);
+  }
+  .zeasys-home .zeasys-hero-steps { margin-block: 1rem; }
+  .zeasys-home .zeasys-hero-actions { margin-top: 1rem; padding-top: 1rem; }
+  .zeasys-home .zeasys-visual-heading h2 { font-size: clamp(1.35rem, 2.25vw, 1.75rem); }
+  .zeasys-home .zeasys-preview-chart { height: 80px; }
+}
+
+@media (max-width: 1024px) {
   .zeasys-home .zeasys-data-card--with-model { grid-template-columns: 1fr; }
   .zeasys-home .zeasys-corn-model { min-height: 460px; }
   .zeasys-home .zeasys-footer-main {
@@ -873,6 +944,7 @@
 }
 
 @media (max-width: 860px) {
+  .zeasys-home { --home-nav-height: 64px; }
   .zeasys-home .zeasys-home-nav { height: 64px !important; padding-inline: 1rem !important; }
   .zeasys-home .zeasys-home-brand .platform-logo--wordmark { width: 148px !important; height: 34px !important; }
   .zeasys-home .zeasys-home-links {
@@ -905,7 +977,7 @@
 @media (max-width: 600px) {
   .zeasys-home .zeasys-home-hero,
   .zeasys-home.zeasys-home--light .zeasys-home-hero {
-    padding: 6.25rem 1rem 3.5rem !important;
+    padding: calc(var(--home-nav-height) + 1.5rem) 1rem 2rem !important;
   }
 
   .zeasys-home .zeasys-home-hero h1,
@@ -913,10 +985,9 @@
   .zeasys-home .zeasys-hero-actions { display: grid; grid-template-columns: 1fr 1fr; }
   .zeasys-home .zeasys-primary-btn,
   .zeasys-home .zeasys-secondary-button { justify-content: center; width: 100%; }
-  .zeasys-home .zeasys-hero-visual { width: 100%; min-height: 820px; }
-  .zeasys-home .zeasys-hero-flip { width: 100% !important; min-height: 820px !important; }
-  .zeasys-home .zeasys-hero-flip.is-registering { min-height: 920px !important; }
-  .zeasys-home .zeasys-hero-auth-back.zeasys-login-card { padding: 1rem !important; }
+  .zeasys-home .zeasys-hero-visual { width: 100%; }
+  .zeasys-home .zeasys-hero-flip { width: 100% !important; }
+  .zeasys-home .zeasys-hero-auth-back.zeasys-login-card { padding: 3.5rem 1rem 1rem !important; }
   .zeasys-home .zeasys-hero-auth-back > .zeasys-auth-mode-card { width: 100% !important; }
   .zeasys-home .zeasys-dashboard-preview { transform: none !important; }
   .zeasys-home .zeasys-capabilities-section,
@@ -936,9 +1007,6 @@
   .zeasys-home .zeasys-theme-toggle,
   .zeasys-home .zeasys-mobile-menu-toggle { width: 44px; min-width: 44px; height: 44px; }
   .zeasys-home .zeasys-hero-actions { grid-template-columns: 1fr; }
-  .zeasys-home .zeasys-hero-visual,
-  .zeasys-home .zeasys-hero-flip { min-height: 840px !important; }
-  .zeasys-home .zeasys-hero-flip.is-registering { min-height: 940px !important; }
   .zeasys-home .zeasys-preview-meta { align-items: flex-start; flex-direction: column; gap: .4rem; }
   .zeasys-home .zeasys-capability-grid > .zeasys-capability-flip { min-height: 330px !important; }
   .zeasys-home .zeasys-corn-model { min-height: 330px; }
@@ -965,7 +1033,6 @@
 
 /* Public counterpart of the field-notebook visual system. Hero art remains dark in both themes. */
 .zeasys-home .zeasys-home-nav { border-radius: 18px; box-shadow: 0 6px 25px #00000010; }
-.zeasys-home .zeasys-home-hero-copy h1 { letter-spacing: -.045em; line-height: 1.07; }
 .zeasys-home .zeasys-section-heading h2 { letter-spacing: -.035em; }
 .zeasys-home :is(.zeasys-data-card, .zeasys-login-card) { border-radius: 24px; }
 .zeasys-home .zeasys-capability-face { border-radius: 20px; }
@@ -974,3 +1041,14 @@
 @media (max-width: 640px) {
   .zeasys-home :is(.zeasys-data-card, .zeasys-login-card) { border-radius: 16px; }
 }
+
+/* Portada: orientación de uso y jerarquía, conservando fotografía y difusión. */
+.zeasys-home { --zs-page-bg: var(--zp-forest-950); --zs-section-bg: var(--zp-forest-900); }
+.zeasys-home.zeasys-home--light { --zs-page-bg: var(--zp-paper-100); --zs-section-bg: var(--zp-paper-50); }
+.zeasys-home .zeasys-hero-kicker { margin: 0 0 1.1rem; color: var(--home-green); font-size: .72rem; font-weight: 700; letter-spacing: .14em; }
+.zeasys-home .zeasys-hero-steps { display: flex; flex-wrap: wrap; gap: .8rem 1.25rem; padding: 0; margin: 1.5rem 0; list-style: none; color: var(--home-muted); }
+.zeasys-home .zeasys-hero-steps li { font-size: .8rem; }
+.zeasys-home .zeasys-hero-steps span { color: var(--home-green); font-weight: 700; margin-right: .35rem; }
+@media (max-width: 600px) { .zeasys-home .zeasys-hero-steps { gap: .65rem; max-width: 32ch; } }
+
+.zeasys-home .zeasys-preview-chart { height: 110px; min-height: 0; }

@@ -15,7 +15,8 @@ final class ProveedorReferenciasPublicas implements ReferenciasRendimientoInterf
     {
         $resultado = [];
         if (($cultivo['tipo_maiz'] ?? '') !== 'Duro Amarillo') {
-            return ['estado' => 'Las referencias externas integradas corresponden a maíz para grano; este tipo requiere una ficha específica.'];
+            $lluvia = (new \ZeaSys\Dominios\Terreno\Infraestructura\ProveedorLluviaAnual($this->cache))->obtenerParaParcela($cultivo);
+            return ['lluvia_anual' => $lluvia, 'estado' => 'Las referencias externas integradas corresponden a maíz para grano; este tipo requiere una ficha específica.'];
         }
         $fichas = json_decode((string) file_get_contents(__DIR__ . '/../../../../data/referencias/variedades-verificadas.json'), true);
         $normalizar = static fn (string $valor): string => preg_replace('/[^a-z0-9]+/', '', strtolower(iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $valor) ?: $valor)) ?? '';
@@ -46,7 +47,7 @@ final class ProveedorReferenciasPublicas implements ReferenciasRendimientoInterf
 
         $climaSiembra = $this->climaDesdeSiembraEstimada($cultivo, $lat, $lon);
         if ($climaSiembra !== null) $resultado += $climaSiembra;
-        $lluviaInamhi = $this->historicoLluviaInamhi($lat, $lon);
+        $lluviaInamhi = (new \ZeaSys\Dominios\Terreno\Infraestructura\ProveedorLluviaAnual($this->cache))->historicoLluviaInamhi($lat, $lon);
         if ($lluviaInamhi !== null) $resultado['lluvia_historica_inamhi'] = $lluviaInamhi;
 
         $ruta = __DIR__ . '/../../../../data/referencias/gaez-v4-ecuador-maiz.json';
@@ -237,124 +238,11 @@ final class ProveedorReferenciasPublicas implements ReferenciasRendimientoInterf
         return $references;
     }
 
-    /** Serie anual INAMHI de la estación cercana; no rellena meses sin dato. */
-    private function historicoLluviaInamhi(float $lat, float $lon): ?array
-    {
-        $cacheKey = 'yield_inamhi_rain_v1_' . round($lat, 3) . '_' . round($lon, 3);
-        $cached = $this->cache->obtener($cacheKey, 604800);
-        if ($cached !== null) return $cached;
-
-        $path = __DIR__ . '/../../../../../ml-engine/data/inamhi-precipitacion-2019diciembre.csv';
-        $handle = @fopen($path, 'rb');
-        if ($handle === false) return null;
-        $headers = fgetcsv($handle, null, ';');
-        if (!is_array($headers)) {
-            fclose($handle);
-            return null;
-        }
-        $columns = array_flip(array_map(static fn (string $value): string => trim($value, "\xEF\xBB\xBF \t\n\r\0\x0B"), $headers));
-        $months = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
-        foreach (['Estacion', 'NombreEstacion', 'longitud2', 'latitud2', 'año', ...$months] as $required) {
-            if (!isset($columns[$required])) {
-                fclose($handle);
-                return null;
-            }
-        }
-
-        $stations = [];
-        while (($row = fgetcsv($handle, null, ';')) !== false) {
-            $code = trim((string) ($row[$columns['Estacion']] ?? ''));
-            $stationLat = $this->decimal($row[$columns['latitud2']] ?? null);
-            $stationLon = $this->decimal($row[$columns['longitud2']] ?? null);
-            $year = filter_var(trim((string) ($row[$columns['año']] ?? '')), FILTER_VALIDATE_INT);
-            if ($code === '' || $stationLat === null || $stationLon === null || $year === false || $year < 2000 || $year > 2019) continue;
-
-            if (!isset($stations[$code])) {
-                $rawName = (string) ($row[$columns['NombreEstacion']] ?? '');
-                $name = iconv('ISO-8859-1', 'UTF-8//IGNORE', $rawName);
-                $stations[$code] = [
-                    'codigo' => $code,
-                    'nombre' => $name !== false ? trim($name) : trim($rawName),
-                    'latitud' => $stationLat,
-                    'longitud' => $stationLon,
-                    'años' => [],
-                ];
-            }
-            if (isset($stations[$code]['años'][$year])) continue;
-            $values = [];
-            foreach ($months as $month) $values[] = $this->decimal($row[$columns[$month]] ?? null);
-            $stations[$code]['años'][$year] = $values;
-        }
-        fclose($handle);
-        if ($stations === []) return null;
-
-        $qualified = [];
-        $fallback = [];
-        foreach ($stations as $station) {
-            if (abs($station['latitud']) > 90 || abs($station['longitud']) > 180) continue;
-            $distance = $this->distanciaKm($lat, $lon, $station['latitud'], $station['longitud']);
-            if ($distance > 100) continue;
-            $completeYears = 0;
-            foreach ($station['años'] as $values) {
-                if (count(array_filter($values, static fn (?float $value): bool => $value !== null)) === 12) $completeYears++;
-            }
-            if ($completeYears > 0) $fallback[] = ['station' => $station, 'distance' => $distance, 'complete' => $completeYears];
-            if ($completeYears >= 8) $qualified[] = ['station' => $station, 'distance' => $distance, 'complete' => $completeYears];
-        }
-        if ($qualified !== []) {
-            usort($qualified, static fn (array $a, array $b): int => $a['distance'] <=> $b['distance']);
-            $selected = $qualified[0];
-            $selection = 'Estación más cercana dentro de 100 km con al menos ocho años de doce meses reportados';
-        } elseif ($fallback !== []) {
-            usort($fallback, static fn (array $a, array $b): int => $b['complete'] <=> $a['complete'] ?: $a['distance'] <=> $b['distance']);
-            $selected = $fallback[0];
-            $selection = 'Estación cercana con más años de doce meses reportados; la cobertura puede ser limitada';
-        } else {
-            return null;
-        }
-
-        $byYear = $selected['station']['años'];
-        $series = [];
-        $completeYears = 0;
-        for ($year = 2000; $year <= 2019; $year++) {
-            $values = $byYear[$year] ?? array_fill(0, 12, null);
-            $validMonths = count(array_filter($values, static fn (?float $value): bool => $value !== null));
-            $annual = $validMonths === 12 ? round(array_sum($values), 1) : null;
-            if ($annual !== null) $completeYears++;
-            $series[] = ['año' => $year, 'precipitacion_mm' => $annual, 'meses_reportados' => $validMonths];
-        }
-
-        $result = [
-            'estacion' => $selected['station']['nombre'],
-            'codigo_estacion' => $selected['station']['codigo'],
-            'distancia_km' => round($selected['distance'], 1),
-            'fuente' => 'INAMHI · serie mensual local del proyecto',
-            'archivo_fuente' => 'ml-engine/data/inamhi-precipitacion-2019diciembre.csv',
-            'tipo' => 'observaciones_mensuales_estacion',
-            'periodo' => '2000–2019',
-            'unidad' => 'mm/año',
-            'años_con_12_meses' => $completeYears,
-            'criterio_estacion' => $selection,
-            'serie' => $series,
-            'nota' => 'Cada total es la suma de los doce valores mensuales publicados. Si falta un mes, el total anual queda vacío; los meses ausentes nunca se cuentan como cero. Es una estación meteorológica de referencia, no un pluviómetro instalado en la parcela.',
-        ];
-        $this->cache->guardar($cacheKey, $result);
-        return $result;
-    }
-
     private function decimal(mixed $value): ?float
     {
         if (!is_scalar($value) || trim((string) $value) === '') return null;
         $number = str_replace(',', '.', trim((string) $value));
         return is_numeric($number) && is_finite((float) $number) ? (float) $number : null;
-    }
-
-    private function distanciaKm(float $lat1, float $lon1, float $lat2, float $lon2): float
-    {
-        $a = deg2rad($lat2 - $lat1);
-        $b = deg2rad($lon2 - $lon1);
-        $h = sin($a / 2) ** 2 + cos(deg2rad($lat1)) * cos(deg2rad($lat2)) * sin($b / 2) ** 2;
-        return 6371 * 2 * asin(min(1, sqrt($h)));
     }
 
     private function consultar(array $urls): array

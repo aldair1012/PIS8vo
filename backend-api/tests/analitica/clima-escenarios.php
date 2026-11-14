@@ -40,6 +40,7 @@ final class Cultivos implements CultivoRepositoryInterface {
     public function areaTotalPorUsuario(int $usuarioId): float { return 1.0; }
 }
 final class Simulaciones implements SimulacionRepositoryInterface {
+    public ?array $ultima = null;
     public array $consultas = [];
     public function __construct(private array $filas = []) {}
     public function obtenerRecientesPorCultivo(int $usuarioId, int $cultivoId, int $limite = 50, ?int $year = null): array {
@@ -54,7 +55,7 @@ final class Simulaciones implements SimulacionRepositoryInterface {
     public function obtenerEstadisticas(int $usuarioId, ?int $year = null): array { throw new \RuntimeException('No usar estadísticas globales.'); }
     public function eliminar(int $id): bool { throw new \RuntimeException('No escribir.'); }
     public function contarPorUsuario(int $usuarioId): int { return count($this->filas); }
-    public function obtenerUltimaPorCultivo(int $cultivoId, ?int $año = null): ?array { return null; }
+    public function obtenerUltimaPorCultivo(int $cultivoId, ?int $año = null): ?array { return $this->ultima; }
 }
 final class Cache implements CacheInterface {
     public array $datos = [];
@@ -137,7 +138,7 @@ $pruebas['caché v5 conserva procedencia por campo y referencias etiquetadas'] =
     $servicio = new ServicioDatosTerreno($cache, new Clima(['temperatura' => 25]), new Suelo(['ph' => 6]), new Altitud());
     $primero = $servicio->obtener(-2, -80, 45);
     $segundo = $servicio->obtener(-2, -80, 45);
-    comprobar(str_starts_with($cache->claves[0], 'precision_data_v6_'), 'Invalidar caché del proveedor de suelo anterior.');
+    comprobar(str_starts_with($cache->claves[0], 'precision_data_v7_'), 'Invalidar caché del proveedor de suelo anterior.');
     comprobar($segundo['clima_campos_api'] === ['temperatura'] && $segundo['suelo_campos_api'] === ['ph'], 'Procedencia debe sobrevivir caché.');
     comprobar(in_array('humedad', $primero['procedencia_campos']['clima_referencia_estimada'], true), 'Defaults se etiquetan referencias.');
     comprobar(!in_array('temperatura', $primero['procedencia_campos']['clima_referencia_estimada'], true), 'No etiquetar dato real como default.');
@@ -147,7 +148,7 @@ $pruebas['resumen conserva medias y percentiles reales sin probabilidades invent
     comprobar($datos['kpis']['rendimiento_esperado'] === 6.0, 'Media correcta.');
     comprobar($datos['percentiles']['p10'] === 4.4 && $datos['percentiles']['p50'] === 6.0 && $datos['percentiles']['p90'] === 7.6, 'Percentiles descriptivos de muestra.');
     comprobar($datos['kpis']['prob_superar_objetivo'] === null && $datos['kpis']['estabilidad'] === null, 'No convertir CV ni media en probabilidad o estabilidad.');
-    comprobar($datos['resumen_descriptivo']['fraccion_supera_objetivo_pct'] === 50.0 && $datos['resumen_descriptivo']['coeficiente_variacion_pct'] === 33.33, 'Fracción y CV descriptivos explícitos.');
+    comprobar($datos['resumen_descriptivo']['fraccion_supera_objetivo_pct'] === null && $datos['resumen_descriptivo']['coeficiente_variacion_pct'] === 33.33, 'No inventar un objetivo agrícola; conservar CV descriptivo.');
 };
 $pruebas['muestra única y rendimiento cero conservan ausencia de variación estimable'] = static function (): void {
     $datos = scenario([['id' => 1, 'rendimiento_estimado' => 0]]);
@@ -174,7 +175,7 @@ $pruebas['periodos anual y ciclo se conservan separados sin diagnósticos de rie
 };
 $pruebas['calendario sin fuente o provincia no inventa diciembre ni otra ubicación'] = static function (): void {
     $catalogo = ['calendario_siembra' => [['Zona / Provincia' => 'Guayas', 'DIC' => 'S']]];
-    $datos = scenario([['rendimiento_estimado' => 5]], $catalogo, ['ubicacion' => 'Lugar desconocido']);
+    $datos = scenario([['rendimiento_estimado' => 5]], $catalogo, ['ubicacion' => 'Lugar desconocido','latitud'=>null,'longitud'=>null]);
     comprobar($datos['viabilidad_siembra'] === [] && $datos['kpis']['fecha_siembra_recomendada'] === null, 'No asignar provincia predeterminada.');
 };
 $pruebas['ventana real de catálogo conserva fuente y año bisiesto'] = static function (): void {
@@ -196,6 +197,41 @@ $pruebas['rechaza parcela ajena antes de consultar simulaciones'] = static funct
 };
 
 $fallos = 0;
+$pruebas['calendario de parcela conecta fechas conservadas sin confundir año de ejecución y campaña'] = static function (): void {
+    $repo=new Simulaciones();
+    $repo->ultima=['id'=>206,'fecha'=>'2026-11-09 10:00:00','escenarios_json'=>json_encode(['_zeasys_modelo'=>['trazabilidad'=>['calendario'=>['fecha_siembra'=>'2027-03-12','fecha_fin_estimada'=>'2027-07-12','origen_duracion'=>'Referencia del conjunto de entrenamiento']]]])];
+    $datos=(new ServicioAnaliticaScenario(new Catalogo(),new Cultivos(lote(['fecha_siembra'=>'2027-03-12'])),$repo))->construir(7,1,2099);
+    comprobar(($datos['año_ultima_simulacion']??null)===2026 && $datos['simulaciones_count']===0,'Ofrecer el año disponible sin mezclar sus resultados.');
+    $events=$datos['calendario_parcela']['eventos']??[];
+    comprobar(count($events)===2 && $events[0]['fecha']==='2027-03-12' && $events[1]['fecha']==='2027-07-12','Conectar siembra y fin estimado ya guardados.');
+    comprobar($events[1]['tipo']==='fin_ciclo_estimado' && str_contains($events[1]['fuente'],'entrenamiento'),'No presentar fin estimado como cosecha observada.');
+};
+$pruebas['calendario de parcela no mezcla un fin de ciclo anterior con una nueva fecha de siembra'] = static function (): void {
+    $repo=new Simulaciones();$repo->ultima=['id'=>2,'fecha'=>'2026-01-01','escenarios_json'=>json_encode(['_zeasys_modelo'=>['trazabilidad'=>['calendario'=>['fecha_siembra'=>'2026-02-01','fecha_fin_estimada'=>'2026-06-01']]]])];
+    $datos=(new ServicioAnaliticaScenario(new Catalogo(),new Cultivos(lote(['fecha_siembra'=>'2027-03-12'])),$repo))->construir(7,1,2026);
+    $events=$datos['calendario_parcela']['eventos']??[];
+    comprobar(count($events)===1 && $events[0]['fecha']==='2027-03-12','Conservar sólo la fecha registrada de la campaña actual.');
+};
+$pruebas['Siembra resuelve la provincia por coordenadas antes de leer ventanas de catálogo'] = static function (): void {
+    $catalogo=['calendario_siembra'=>[['Zona / Provincia'=>'Manabí','FEB'=>'S'],['Zona / Provincia'=>'Guayas','MAR'=>'S']]];
+    $datos=scenario([['id'=>1,'rendimiento_estimado'=>4]],$catalogo,['latitud'=>-1,'longitud'=>-80,'ubicacion'=>'Guayas']);
+    comprobar(($datos['cultivo_activo']['provincia']??null)==='Manabí' && $datos['kpis']['fecha_siembra_recomendada']==='Febrero','Las coordenadas deben resolver la referencia provincial.');
+};
+$pruebas['Siembra mantiene el calendario sin inventar rendimientos cuando el año no tiene simulaciones'] = static function (): void {
+    $catalogo=['calendario_siembra'=>[['Zona / Provincia'=>'Manabí','FEB'=>'S']]];
+    $datos=scenario([],$catalogo,['latitud'=>-1,'longitud'=>-80],2024);
+    comprobar(count($datos['viabilidad_siembra']??[])===1 && $datos['viabilidad_siembra'][0]['rango']==='1–29 FEB','El calendario no depende de tener simulaciones.');
+    comprobar($datos['kpis']['rendimiento_esperado']===null && $datos['percentiles']['p50']===null && $datos['simulaciones_count']===0,'Ausencia de muestra no es cero.');
+};
+$pruebas['Siembra separa las ventanas de maíz duro y suave de una misma provincia'] = static function (): void {
+    $catalogo=['calendario_siembra'=>[['Zona / Provincia'=>'Loja','Tipo Maíz'=>'Maíz Duro Amarillo','MAR'=>'S'],['Zona / Provincia'=>'Loja','Tipo Maíz'=>'Maíz Suave / Blanco','MAY'=>'S']]];
+    $datos=scenario([['id'=>1,'rendimiento_estimado'=>4]],$catalogo,['latitud'=>null,'longitud'=>null,'ubicacion'=>'Loja','tipo_maiz'=>'Suave Harinoso']);
+    comprobar($datos['kpis']['fecha_siembra_recomendada']==='Mayo','No mezclar ventanas de familias distintas.');
+};
+$pruebas['Siembra rechaza parcelas inactivas antes de leer resultados'] = static function (): void {
+    try {scenario([['id'=>1,'rendimiento_estimado'=>4]],[],['activo'=>0]);throw new \RuntimeException('Debió rechazar parcela inactiva.');}
+    catch (AccesoDenegadoException) {}
+};
 foreach ($pruebas as $nombre => $prueba) {
     try { $prueba(); echo "[OK] {$nombre}\n"; }
     catch (\Throwable $e) { $fallos++; echo "[FAIL] {$nombre}: {$e->getMessage()}\n"; }

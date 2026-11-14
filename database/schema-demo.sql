@@ -10,6 +10,9 @@ CREATE TABLE `parcelas` (
   `latitud` decimal(10,7) DEFAULT NULL,
   `longitud` decimal(10,7) DEFAULT NULL,
   `fecha_siembra` date DEFAULT NULL,
+  `tipo_fecha_siembra` varchar(20) DEFAULT NULL,
+  `ciclo_dias` smallint unsigned DEFAULT NULL,
+  `riego_tipo` varchar(40) DEFAULT NULL,
   `fecha_registro` datetime NOT NULL DEFAULT current_timestamp(),
   `activo` tinyint(1) NOT NULL DEFAULT 1,
   `geojson` longtext DEFAULT NULL,
@@ -84,8 +87,7 @@ ALTER TABLE `simulaciones`
 ALTER TABLE `usuarios`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `correo` (`correo`),
-  ADD KEY `idx_correo` (`correo`),
-  ADD KEY `idx_rol` (`rol`);
+  ADD KEY `idx_correo` (`correo`);
 
 ALTER TABLE `conversaciones_favoritas`
   ADD PRIMARY KEY (`id`),

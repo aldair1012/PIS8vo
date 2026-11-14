@@ -1,1 +1,355 @@
-{"periodos": [{"actualizacion_fuente": 2021, "fuente_hoja": "MAG - CGINA", "nota_metodologica": "* La superficie cosechada se estima a partir de la superficie (sembrada) interpretada mediante imágenes satelitales aplicando un factor de merma que se obtiene de la ESPAC 2020.\n** Los valores corresponden a la producción bruta de maíz duro, para obtener el volumen disponible para la industria (producción neta) se debe descontar las pérdidas (desgranado, transporte, estiba, desestiba), autoconsumo y alimentación animal. \n*** Rendimiento estimado a partir del valor de rendimientos objetivos 2019, aplicando un coeficiente obtenido a partir de los valores de la ESPAC 2019-2020. Estos valores se encuentran ponderados por la superficie cosechada.", "nacional": {"superficie_cosechada_ha": 259084.233946, "produccion_t": 1430607.628921, "rendimiento_t_ha": 5.52}, "provincias": [{"provincia": "El Oro", "superficie_cosechada_ha": 1738.47482, "produccion_t": 7635.283798, "rendimiento_t_ha": 4.391944}, {"provincia": "Guayas", "superficie_cosechada_ha": 38708.836012, "produccion_t": 212400.721372, "rendimiento_t_ha": 5.487138}, {"provincia": "Loja", "superficie_cosechada_ha": 34344.354067, "produccion_t": 219317.495049, "rendimiento_t_ha": 6.385838}, {"provincia": "Los Ríos", "superficie_cosechada_ha": 101257.795484, "produccion_t": 588090.602587, "rendimiento_t_ha": 5.807855}, {"provincia": "Manabí", "superficie_cosechada_ha": 78388.382132, "produccion_t": 379858.074883, "rendimiento_t_ha": 4.845847}, {"provincia": "Santa Elena", "superficie_cosechada_ha": 4646.39143, "produccion_t": 23305.45123, "rendimiento_t_ha": 5.015817}], "año": 2020}, {"actualizacion_fuente": 2022, "fuente_hoja": "MAG - CGINA", "nota_metodologica": "* La superficie cosechada se estima a partir de la superficie (sembrada) interpretada mediante imágenes satelitales aplicando un factor de merma que se obtiene de la ESPAC 2021.\n** El valor corresponde a la producción bruta de maíz duro, para obtener el volumen disponible para la industria (producción neta) se debe descontar las pérdidas (desgranado, transporte, estiva, desestiba), autoconsumo y alimentación animal.\n***Valores ponderados y estandarizados a 13% humedad y 1% impureza.", "nacional": {"superficie_cosechada_ha": 305986.17816, "produccion_t": 1765293.905789, "rendimiento_t_ha": 5.769195}, "provincias": [{"provincia": "El Oro", "superficie_cosechada_ha": 2238.874213, "produccion_t": 8407.685418, "rendimiento_t_ha": 3.755318}, {"provincia": "Guayas", "superficie_cosechada_ha": 43294.977592, "produccion_t": 188680.046557, "rendimiento_t_ha": 4.358012}, {"provincia": "Loja", "superficie_cosechada_ha": 42132.860568, "produccion_t": 201551.86649, "rendimiento_t_ha": 4.783721}, {"provincia": "Los Ríos", "superficie_cosechada_ha": 117308.071748, "produccion_t": 746576.281362, "rendimiento_t_ha": 6.364236}, {"provincia": "Manabí", "superficie_cosechada_ha": 95930.804125, "produccion_t": 595683.24633, "rendimiento_t_ha": 6.20951}, {"provincia": "Santa Elena", "superficie_cosechada_ha": 5080.589914, "produccion_t": 24394.779633, "rendimiento_t_ha": 4.801564}], "año": 2021}, {"actualizacion_fuente": 2023, "fuente_hoja": "MAG - CGINA", "nota_metodologica": "* La superficie cosechada se estima a partir de la superficie (sembrada) interpretada mediante imágenes satelitales aplicando un factor de merma que se obtiene de la encueata ESPAC.\n** El valor corresponde a la producción bruta de maíz duro, para obtener el volumen disponible para la industria (producción neta) se debe descontar las pérdidas (desgranado, transporte, estiva, desestiba), autoconsumo y alimentación animal.\n***Valores ponderados y estandarizados a 13% humedad y 1% impureza.", "nacional": {"superficie_cosechada_ha": 284699.596105, "produccion_t": 1806818.967705, "rendimiento_t_ha": 6.346405}, "provincias": [{"provincia": "El Oro", "superficie_cosechada_ha": 2216.765715, "produccion_t": 12724.822619, "rendimiento_t_ha": 5.740265}, {"provincia": "Guayas", "superficie_cosechada_ha": 43666.879509, "produccion_t": 234908.316507, "rendimiento_t_ha": 5.379554}, {"provincia": "Loja", "superficie_cosechada_ha": 33993.563796, "produccion_t": 208422.90807, "rendimiento_t_ha": 6.131246}, {"provincia": "Los Ríos", "superficie_cosechada_ha": 111747.718071, "produccion_t": 665519.796611, "rendimiento_t_ha": 5.955556}, {"provincia": "Manabí", "superficie_cosechada_ha": 87254.447198, "produccion_t": 648169.846135, "rendimiento_t_ha": 7.428502}, {"provincia": "Santa Elena", "superficie_cosechada_ha": 5820.221817, "produccion_t": 37073.277763, "rendimiento_t_ha": 6.369736}], "año": 2022}, {"actualizacion_fuente": 2024, "fuente_hoja": "MAG - CGINA", "nota_metodologica": "* La superficie cosechada se estima a partir de la superficie (sembrada) interpretada mediante imágenes satelitales aplicando un factor de merma que se obtiene de la encueata ESPAC.\n** El valor corresponde a la producción bruta de maíz duro, para obtener el volumen disponible para la industria (producción neta) se debe descontar las pérdidas (desgranado, transporte, estiva, desestiba), autoconsumo y alimentación animal.\n***Valores ponderados y estandarizados a 13% humedad y 1% impureza.", "nacional": {"superficie_cosechada_ha": 308372.689446, "produccion_t": 1795794.422436, "rendimiento_t_ha": 5.823455}, "provincias": [{"provincia": "El Oro", "superficie_cosechada_ha": 2704.345997, "produccion_t": 15754.207087, "rendimiento_t_ha": 5.825515}, {"provincia": "Guayas", "superficie_cosechada_ha": 51586.219181, "produccion_t": 284864.080687, "rendimiento_t_ha": 5.522097}, {"provincia": "Loja", "superficie_cosechada_ha": 35670.734647, "produccion_t": 142588.263688, "rendimiento_t_ha": 3.997346}, {"provincia": "Los Ríos", "superficie_cosechada_ha": 126419.48835, "produccion_t": 837440.363341, "rendimiento_t_ha": 6.624298}, {"provincia": "Manabí", "superficie_cosechada_ha": 86528.911729, "produccion_t": 489724.323221, "rendimiento_t_ha": 5.659661}, {"provincia": "Santa Elena", "superficie_cosechada_ha": 5462.989543, "produccion_t": 25423.184412, "rendimiento_t_ha": 4.653713}], "año": 2023}, {"actualizacion_fuente": 2025, "fuente_hoja": "MAG - Operativos de Rendimientos Objetivos", "nota_metodologica": "* La superficie cosechada se estima a partir de la superficie (sembrada) interpretada mediante imágenes satelitales aplicando un factor de merma que se obtiene de la encuesta ESPAC.\n** El valor corresponde a la producción bruta de maíz duro, para obtener el volumen disponible para la industria (producción neta) se debe descontar las pérdidas (desgranado, transporte, estiva, desestiba), autoconsumo y alimentación animal.\n***Valores ponderados y estandarizados a 13% humedad y 1% impureza.", "nacional": {"superficie_cosechada_ha": 272508.721904, "produccion_t": 1715387.192292, "rendimiento_t_ha": 6.294797}, "provincias": [{"provincia": "El Oro", "superficie_cosechada_ha": 1501.950305, "produccion_t": 7521.713175, "rendimiento_t_ha": 5.007964}, {"provincia": "Esmeraldas", "superficie_cosechada_ha": 5535.379543, "produccion_t": 42162.204247, "rendimiento_t_ha": 7.616859}, {"provincia": "Guayas", "superficie_cosechada_ha": 38776.064849, "produccion_t": 231491.374539, "rendimiento_t_ha": 5.969955}, {"provincia": "Loja", "superficie_cosechada_ha": 27028.646101, "produccion_t": 164607.179064, "rendimiento_t_ha": 6.090101}, {"provincia": "Los Ríos", "superficie_cosechada_ha": 109055.787819, "produccion_t": 723597.427567, "rendimiento_t_ha": 6.635113}, {"provincia": "Manabí", "superficie_cosechada_ha": 74758.129566, "produccion_t": 449713.90624, "rendimiento_t_ha": 6.015585}, {"provincia": "Orellana", "superficie_cosechada_ha": 5989.600349, "produccion_t": 38594.681135, "rendimiento_t_ha": 6.443615}, {"provincia": "Santa Elena", "superficie_cosechada_ha": 5104.081138, "produccion_t": 25358.902436, "rendimiento_t_ha": 4.968358}, {"provincia": "Santo Domingo De Los Tsáchilas", "superficie_cosechada_ha": 1649.822138, "produccion_t": 9008.721109, "rendimiento_t_ha": 5.46042}, {"provincia": "Sucumbíos", "superficie_cosechada_ha": 3109.260095, "produccion_t": 23331.082782, "rendimiento_t_ha": 7.503741}], "año": 2024}, {"actualizacion_fuente": 2026, "fuente_hoja": "MAG - Operativos de Rendimientos Objetivos", "nota_metodologica": "* La superficie cosechada se estima a partir de la superficie (sembrada) interpretada mediante imágenes satelitales aplicando un factor de merma que se obtiene de la encuesta ESPAC.\n** El valor corresponde a la producción bruta de maíz duro, para obtener el volumen disponible para la industria (producción neta) se debe descontar las pérdidas (desgranado, transporte, estiva, desestiba), autoconsumo y alimentación animal.\n***Valores ponderados y estandarizados a 13% humedad y 1% impureza.", "nacional": {"superficie_cosechada_ha": 278872.79877, "produccion_t": 1971027.70412, "rendimiento_t_ha": 7.067838}, "provincias": [{"provincia": "El Oro", "superficie_cosechada_ha": 1387.68552, "produccion_t": 7268.781699, "rendimiento_t_ha": 5.238061}, {"provincia": "Esmeraldas", "superficie_cosechada_ha": 6159.494281, "produccion_t": 42674.710006, "rendimiento_t_ha": 6.928281}, {"provincia": "Guayas", "superficie_cosechada_ha": 35220.35324, "produccion_t": 223882.952863, "rendimiento_t_ha": 6.356636}, {"provincia": "Loja", "superficie_cosechada_ha": 27691.670992, "produccion_t": 183861.036168, "rendimiento_t_ha": 6.639579}, {"provincia": "Los Ríos", "superficie_cosechada_ha": 111251.256093, "produccion_t": 831045.011301, "rendimiento_t_ha": 7.469983}, {"provincia": "Manabí", "superficie_cosechada_ha": 80515.046759, "produccion_t": 584530.773391, "rendimiento_t_ha": 7.259895}, {"provincia": "Orellana", "superficie_cosechada_ha": 6071.971039, "produccion_t": 41918.946158, "rendimiento_t_ha": 6.90368}, {"provincia": "Santa Elena", "superficie_cosechada_ha": 5576.188035, "produccion_t": 28371.531036, "rendimiento_t_ha": 5.08798}, {"provincia": "Santo Domingo De Los Tsáchilas", "superficie_cosechada_ha": 1491.904974, "produccion_t": 8146.427134, "rendimiento_t_ha": 5.46042}, {"provincia": "Sucumbíos", "superficie_cosechada_ha": 3507.227837, "produccion_t": 19327.534365, "rendimiento_t_ha": 5.510772}], "año": 2025}]}
+{
+  "cultivo": "Maíz duro seco (grano seco)",
+  "pais": "Ecuador",
+  "consultado": "2026-11-09",
+  "fuente_pagina": "https://sipa.agricultura.gob.ec/index.php/maiz",
+  "fuente_archivo": "https://sipa.agricultura.gob.ec/descargas/base-estadistica/modulo_productivo/spr-mag.xlsx",
+  "sha256_archivo_fuente": "af00541e69f08d5dd86002be9d2da3f5c916076ba157f30576352d1fe1795200",
+  "unidad_superficie": "ha",
+  "unidad_produccion": "t brutas",
+  "unidad_rendimiento": "t/ha",
+  "periodos": [
+    {
+      "actualizacion_fuente": 2021,
+      "fuente_hoja": "MAG - CGINA",
+      "nota_metodologica": "* La superficie cosechada se estima a partir de la superficie (sembrada) interpretada mediante imágenes satelitales aplicando un factor de merma que se obtiene de la ESPAC 2020.\n** Los valores corresponden a la producción bruta de maíz duro, para obtener el volumen disponible para la industria (producción neta) se debe descontar las pérdidas (desgranado, transporte, estiba, desestiba), autoconsumo y alimentación animal. \n*** Rendimiento estimado a partir del valor de rendimientos objetivos 2019, aplicando un coeficiente obtenido a partir de los valores de la ESPAC 2019-2020. Estos valores se encuentran ponderados por la superficie cosechada.",
+      "nacional": {
+        "superficie_cosechada_ha": 259084.233946,
+        "produccion_t": 1430607.628921,
+        "rendimiento_t_ha": 5.52
+      },
+      "provincias": [
+        {
+          "provincia": "El Oro",
+          "superficie_cosechada_ha": 1738.47482,
+          "produccion_t": 7635.283798,
+          "rendimiento_t_ha": 4.391944
+        },
+        {
+          "provincia": "Guayas",
+          "superficie_cosechada_ha": 38708.836012,
+          "produccion_t": 212400.721372,
+          "rendimiento_t_ha": 5.487138
+        },
+        {
+          "provincia": "Loja",
+          "superficie_cosechada_ha": 34344.354067,
+          "produccion_t": 219317.495049,
+          "rendimiento_t_ha": 6.385838
+        },
+        {
+          "provincia": "Los Ríos",
+          "superficie_cosechada_ha": 101257.795484,
+          "produccion_t": 588090.602587,
+          "rendimiento_t_ha": 5.807855
+        },
+        {
+          "provincia": "Manabí",
+          "superficie_cosechada_ha": 78388.382132,
+          "produccion_t": 379858.074883,
+          "rendimiento_t_ha": 4.845847
+        },
+        {
+          "provincia": "Santa Elena",
+          "superficie_cosechada_ha": 4646.39143,
+          "produccion_t": 23305.45123,
+          "rendimiento_t_ha": 5.015817
+        }
+      ],
+      "año": 2020
+    },
+    {
+      "actualizacion_fuente": 2022,
+      "fuente_hoja": "MAG - CGINA",
+      "nota_metodologica": "* La superficie cosechada se estima a partir de la superficie (sembrada) interpretada mediante imágenes satelitales aplicando un factor de merma que se obtiene de la ESPAC 2021.\n** El valor corresponde a la producción bruta de maíz duro, para obtener el volumen disponible para la industria (producción neta) se debe descontar las pérdidas (desgranado, transporte, estiva, desestiba), autoconsumo y alimentación animal.\n***Valores ponderados y estandarizados a 13% humedad y 1% impureza.",
+      "nacional": {
+        "superficie_cosechada_ha": 305986.17816,
+        "produccion_t": 1765293.905789,
+        "rendimiento_t_ha": 5.769195
+      },
+      "provincias": [
+        {
+          "provincia": "El Oro",
+          "superficie_cosechada_ha": 2238.874213,
+          "produccion_t": 8407.685418,
+          "rendimiento_t_ha": 3.755318
+        },
+        {
+          "provincia": "Guayas",
+          "superficie_cosechada_ha": 43294.977592,
+          "produccion_t": 188680.046557,
+          "rendimiento_t_ha": 4.358012
+        },
+        {
+          "provincia": "Loja",
+          "superficie_cosechada_ha": 42132.860568,
+          "produccion_t": 201551.86649,
+          "rendimiento_t_ha": 4.783721
+        },
+        {
+          "provincia": "Los Ríos",
+          "superficie_cosechada_ha": 117308.071748,
+          "produccion_t": 746576.281362,
+          "rendimiento_t_ha": 6.364236
+        },
+        {
+          "provincia": "Manabí",
+          "superficie_cosechada_ha": 95930.804125,
+          "produccion_t": 595683.24633,
+          "rendimiento_t_ha": 6.20951
+        },
+        {
+          "provincia": "Santa Elena",
+          "superficie_cosechada_ha": 5080.589914,
+          "produccion_t": 24394.779633,
+          "rendimiento_t_ha": 4.801564
+        }
+      ],
+      "año": 2021
+    },
+    {
+      "actualizacion_fuente": 2023,
+      "fuente_hoja": "MAG - CGINA",
+      "nota_metodologica": "* La superficie cosechada se estima a partir de la superficie (sembrada) interpretada mediante imágenes satelitales aplicando un factor de merma que se obtiene de la encueata ESPAC.\n** El valor corresponde a la producción bruta de maíz duro, para obtener el volumen disponible para la industria (producción neta) se debe descontar las pérdidas (desgranado, transporte, estiva, desestiba), autoconsumo y alimentación animal.\n***Valores ponderados y estandarizados a 13% humedad y 1% impureza.",
+      "nacional": {
+        "superficie_cosechada_ha": 284699.596105,
+        "produccion_t": 1806818.967705,
+        "rendimiento_t_ha": 6.346405
+      },
+      "provincias": [
+        {
+          "provincia": "El Oro",
+          "superficie_cosechada_ha": 2216.765715,
+          "produccion_t": 12724.822619,
+          "rendimiento_t_ha": 5.740265
+        },
+        {
+          "provincia": "Guayas",
+          "superficie_cosechada_ha": 43666.879509,
+          "produccion_t": 234908.316507,
+          "rendimiento_t_ha": 5.379554
+        },
+        {
+          "provincia": "Loja",
+          "superficie_cosechada_ha": 33993.563796,
+          "produccion_t": 208422.90807,
+          "rendimiento_t_ha": 6.131246
+        },
+        {
+          "provincia": "Los Ríos",
+          "superficie_cosechada_ha": 111747.718071,
+          "produccion_t": 665519.796611,
+          "rendimiento_t_ha": 5.955556
+        },
+        {
+          "provincia": "Manabí",
+          "superficie_cosechada_ha": 87254.447198,
+          "produccion_t": 648169.846135,
+          "rendimiento_t_ha": 7.428502
+        },
+        {
+          "provincia": "Santa Elena",
+          "superficie_cosechada_ha": 5820.221817,
+          "produccion_t": 37073.277763,
+          "rendimiento_t_ha": 6.369736
+        }
+      ],
+      "año": 2022
+    },
+    {
+      "actualizacion_fuente": 2024,
+      "fuente_hoja": "MAG - CGINA",
+      "nota_metodologica": "* La superficie cosechada se estima a partir de la superficie (sembrada) interpretada mediante imágenes satelitales aplicando un factor de merma que se obtiene de la encueata ESPAC.\n** El valor corresponde a la producción bruta de maíz duro, para obtener el volumen disponible para la industria (producción neta) se debe descontar las pérdidas (desgranado, transporte, estiva, desestiba), autoconsumo y alimentación animal.\n***Valores ponderados y estandarizados a 13% humedad y 1% impureza.",
+      "nacional": {
+        "superficie_cosechada_ha": 308372.689446,
+        "produccion_t": 1795794.422436,
+        "rendimiento_t_ha": 5.823455
+      },
+      "provincias": [
+        {
+          "provincia": "El Oro",
+          "superficie_cosechada_ha": 2704.345997,
+          "produccion_t": 15754.207087,
+          "rendimiento_t_ha": 5.825515
+        },
+        {
+          "provincia": "Guayas",
+          "superficie_cosechada_ha": 51586.219181,
+          "produccion_t": 284864.080687,
+          "rendimiento_t_ha": 5.522097
+        },
+        {
+          "provincia": "Loja",
+          "superficie_cosechada_ha": 35670.734647,
+          "produccion_t": 142588.263688,
+          "rendimiento_t_ha": 3.997346
+        },
+        {
+          "provincia": "Los Ríos",
+          "superficie_cosechada_ha": 126419.48835,
+          "produccion_t": 837440.363341,
+          "rendimiento_t_ha": 6.624298
+        },
+        {
+          "provincia": "Manabí",
+          "superficie_cosechada_ha": 86528.911729,
+          "produccion_t": 489724.323221,
+          "rendimiento_t_ha": 5.659661
+        },
+        {
+          "provincia": "Santa Elena",
+          "superficie_cosechada_ha": 5462.989543,
+          "produccion_t": 25423.184412,
+          "rendimiento_t_ha": 4.653713
+        }
+      ],
+      "año": 2023
+    },
+    {
+      "actualizacion_fuente": 2025,
+      "fuente_hoja": "MAG - Operativos de Rendimientos Objetivos",
+      "nota_metodologica": "* La superficie cosechada se estima a partir de la superficie (sembrada) interpretada mediante imágenes satelitales aplicando un factor de merma que se obtiene de la encuesta ESPAC.\n** El valor corresponde a la producción bruta de maíz duro, para obtener el volumen disponible para la industria (producción neta) se debe descontar las pérdidas (desgranado, transporte, estiva, desestiba), autoconsumo y alimentación animal.\n***Valores ponderados y estandarizados a 13% humedad y 1% impureza.",
+      "nacional": {
+        "superficie_cosechada_ha": 272508.721904,
+        "produccion_t": 1715387.192292,
+        "rendimiento_t_ha": 6.294797
+      },
+      "provincias": [
+        {
+          "provincia": "El Oro",
+          "superficie_cosechada_ha": 1501.950305,
+          "produccion_t": 7521.713175,
+          "rendimiento_t_ha": 5.007964
+        },
+        {
+          "provincia": "Esmeraldas",
+          "superficie_cosechada_ha": 5535.379543,
+          "produccion_t": 42162.204247,
+          "rendimiento_t_ha": 7.616859
+        },
+        {
+          "provincia": "Guayas",
+          "superficie_cosechada_ha": 38776.064849,
+          "produccion_t": 231491.374539,
+          "rendimiento_t_ha": 5.969955
+        },
+        {
+          "provincia": "Loja",
+          "superficie_cosechada_ha": 27028.646101,
+          "produccion_t": 164607.179064,
+          "rendimiento_t_ha": 6.090101
+        },
+        {
+          "provincia": "Los Ríos",
+          "superficie_cosechada_ha": 109055.787819,
+          "produccion_t": 723597.427567,
+          "rendimiento_t_ha": 6.635113
+        },
+        {
+          "provincia": "Manabí",
+          "superficie_cosechada_ha": 74758.129566,
+          "produccion_t": 449713.90624,
+          "rendimiento_t_ha": 6.015585
+        },
+        {
+          "provincia": "Orellana",
+          "superficie_cosechada_ha": 5989.600349,
+          "produccion_t": 38594.681135,
+          "rendimiento_t_ha": 6.443615
+        },
+        {
+          "provincia": "Santa Elena",
+          "superficie_cosechada_ha": 5104.081138,
+          "produccion_t": 25358.902436,
+          "rendimiento_t_ha": 4.968358
+        },
+        {
+          "provincia": "Santo Domingo De Los Tsáchilas",
+          "superficie_cosechada_ha": 1649.822138,
+          "produccion_t": 9008.721109,
+          "rendimiento_t_ha": 5.46042
+        },
+        {
+          "provincia": "Sucumbíos",
+          "superficie_cosechada_ha": 3109.260095,
+          "produccion_t": 23331.082782,
+          "rendimiento_t_ha": 7.503741
+        }
+      ],
+      "año": 2024
+    },
+    {
+      "actualizacion_fuente": 2026,
+      "fuente_hoja": "MAG - Operativos de Rendimientos Objetivos",
+      "nota_metodologica": "* La superficie cosechada se estima a partir de la superficie (sembrada) interpretada mediante imágenes satelitales aplicando un factor de merma que se obtiene de la encuesta ESPAC.\n** El valor corresponde a la producción bruta de maíz duro, para obtener el volumen disponible para la industria (producción neta) se debe descontar las pérdidas (desgranado, transporte, estiva, desestiba), autoconsumo y alimentación animal.\n***Valores ponderados y estandarizados a 13% humedad y 1% impureza.",
+      "nacional": {
+        "superficie_cosechada_ha": 278872.79877,
+        "produccion_t": 1971027.70412,
+        "rendimiento_t_ha": 7.067838
+      },
+      "provincias": [
+        {
+          "provincia": "El Oro",
+          "superficie_cosechada_ha": 1387.68552,
+          "produccion_t": 7268.781699,
+          "rendimiento_t_ha": 5.238061
+        },
+        {
+          "provincia": "Esmeraldas",
+          "superficie_cosechada_ha": 6159.494281,
+          "produccion_t": 42674.710006,
+          "rendimiento_t_ha": 6.928281
+        },
+        {
+          "provincia": "Guayas",
+          "superficie_cosechada_ha": 35220.35324,
+          "produccion_t": 223882.952863,
+          "rendimiento_t_ha": 6.356636
+        },
+        {
+          "provincia": "Loja",
+          "superficie_cosechada_ha": 27691.670992,
+          "produccion_t": 183861.036168,
+          "rendimiento_t_ha": 6.639579
+        },
+        {
+          "provincia": "Los Ríos",
+          "superficie_cosechada_ha": 111251.256093,
+          "produccion_t": 831045.011301,
+          "rendimiento_t_ha": 7.469983
+        },
+        {
+          "provincia": "Manabí",
+          "superficie_cosechada_ha": 80515.046759,
+          "produccion_t": 584530.773391,
+          "rendimiento_t_ha": 7.259895
+        },
+        {
+          "provincia": "Orellana",
+          "superficie_cosechada_ha": 6071.971039,
+          "produccion_t": 41918.946158,
+          "rendimiento_t_ha": 6.90368
+        },
+        {
+          "provincia": "Santa Elena",
+          "superficie_cosechada_ha": 5576.188035,
+          "produccion_t": 28371.531036,
+          "rendimiento_t_ha": 5.08798
+        },
+        {
+          "provincia": "Santo Domingo De Los Tsáchilas",
+          "superficie_cosechada_ha": 1491.904974,
+          "produccion_t": 8146.427134,
+          "rendimiento_t_ha": 5.46042
+        },
+        {
+          "provincia": "Sucumbíos",
+          "superficie_cosechada_ha": 3507.227837,
+          "produccion_t": 19327.534365,
+          "rendimiento_t_ha": 5.510772
+        }
+      ],
+      "año": 2025
+    }
+  ]
+}

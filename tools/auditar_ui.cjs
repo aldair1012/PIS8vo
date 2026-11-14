@@ -6,10 +6,11 @@ const { chromium } = createRequire(path.resolve(__dirname, '../frontend-app/pack
 const origin = process.env.ZEASYS_E2E_ORIGIN || '';
 if (!/^http:\/\/127\.0\.0\.1:\d+$/.test(origin)) throw Error('Requiere el entorno desechable.');
 const output = path.resolve(process.argv[2] || 'documentacion/fuentes-maiz/descargas/ui-antes');
-const axePath = path.resolve('documentacion/fuentes-maiz/descargas/ui-audit/node_modules/axe-core/axe.min.js');
+const axePath = path.resolve(__dirname, '../documentacion/fuentes-maiz/descargas/ui-audit/node_modules/axe-core/axe.min.js');
 const widths = (process.env.ZEASYS_AUDIT_WIDTHS || '390,820,1440').split(',').map(Number);
 const themes = (process.env.ZEASYS_AUDIT_THEMES || 'light,dark').split(',');
-const views = ['Mis parcelas','Simular cosecha','Rendimiento','Siembra','Clima y cultivo','Finanzas','Mapa de parcelas','Simulaciones guardadas','Configuración'];
+const defaultViews = ['Mis parcelas','Simular cosecha','Rendimiento','Siembra','Clima y cultivo','Finanzas','Mapa de parcelas','Simulaciones guardadas','Configuración'];
+const views = process.env.ZEASYS_AUDIT_VIEWS ? process.env.ZEASYS_AUDIT_VIEWS.split(',') : defaultViews;
 (async () => {
   await fs.mkdir(output, { recursive:true });
   const browser = await chromium.launch({ channel:'chrome', headless:true });
@@ -17,7 +18,7 @@ const views = ['Mis parcelas','Simular cosecha','Rendimiento','Siembra','Clima y
   try {
     for(const width of widths) for(const theme of themes) {
       const context=await browser.newContext({viewport:{width,height:1000},bypassCSP:true});
-      const response=await context.request.post(origin+'/backend-api/public/index.php/api/auth/login',{data:{correo:'a@example.test',contrasena:' ClavePrueba-2026! '}});
+      const response=await context.request.post(origin+'/backend-api/public/index.php/api/auth/iniciar-sesion',{data:{correo:'a@example.test',contrasena:' ClavePrueba-2026! '}});
       if(!response.ok()) throw Error('Falló el acceso ficticio.');
       await context.addInitScript(value=>localStorage.setItem('theme',value),theme);
       const page=await context.newPage(); const errors=[];
@@ -30,8 +31,13 @@ const views = ['Mis parcelas','Simular cosecha','Rendimiento','Siembra','Clima y
           if(await page.locator('#workspace-sidebar').evaluate(node=>node.inert)) await page.getByRole('button',{name:'Expandir barra lateral'}).click();
           await page.getByRole('button',{name,exact:true}).click();
         }
-        await page.waitForFunction(()=>!document.querySelector('.content-body')?.textContent.trim().startsWith('Cargando'),{timeout:30000});
         await page.waitForTimeout(650);
+        await page.waitForFunction(()=>![...document.querySelectorAll('#workspace-content .flex-center, #workspace-content [role=status]')].some(n=>/^Cargando/i.test(n.textContent.trim())), null, {timeout:60000});
+        await page.waitForTimeout(400);
+        if (name === 'Siembra' && process.env.ZEASYS_AUDIT_SOWING_CONTEXT === '1') {
+          await page.getByRole('button',{name:'Cómo leer estos datos',exact:true}).click();
+          await page.getByRole('heading',{name:'Alcance de los resultados',exact:true}).scrollIntoViewIfNeeded();
+        }
         await page.addScriptTag({path:axePath});
         const results=await page.evaluate(()=>window.axe.run(document,{runOnly:{type:'tag',values:['wcag2a','wcag2aa','wcag21aa','wcag22aa','best-practice']}}));
         const layout=await page.evaluate(()=>{

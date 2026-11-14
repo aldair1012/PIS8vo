@@ -4487,9 +4487,10 @@ body.light-theme .kpi-trend-badge.badge-neutral {
 @media (max-width: 768px) {
   .zeasys-chat-backdrop { display: block; position: fixed; inset: 0; z-index: 9999; border: 0; background: rgba(2, 6, 23, 0.48); backdrop-filter: blur(2px); }
   .zeasys-chat-panel { width: min(100vw, 430px); }
-  .zeasys-chat-tab { top: auto; bottom: 5.25rem; min-height: 48px; width: 50px; border-radius: 15px 0 0 15px !important; }
+  .zeasys-chat-tab { top: auto; bottom: 1rem; right: 1rem; min-height: 48px; width: 48px; padding: 0; border: 1px solid rgba(74, 222, 128, 0.42) !important; border-radius: 50% !important; }
+  .zeasys-chat-tab:hover, .zeasys-chat-tab:focus-visible { width: 48px; }
   .zeasys-chat-tab span { display: none; }
-  .zeasys-chat-tab.is-open { top: 1rem; bottom: auto; right: min(100vw, 430px); }
+  .zeasys-chat-tab.is-open { display: none; }
 }
 
 body.light-theme .zeasys-chat-panel { background: #ffffff; border-left-color: #cbd5e1; }

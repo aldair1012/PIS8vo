@@ -61,6 +61,14 @@ export default function useSectionSnap(enabled) {
 
       const candidate = sections[candidateIndex];
       const bounds = candidate.getBoundingClientRect();
+      // A small/short viewport needs free scrolling, as does any section
+      // taller than the screen. Snapping there skips content still being read.
+      const freeScroll = window.matchMedia('(max-width: 1024px), (max-height: 760px), (prefers-reduced-motion: reduce)').matches;
+      const currentHeight = sections[settledIndex]?.getBoundingClientRect().height ?? 0;
+      if (freeScroll || currentHeight > window.innerHeight + 2 || bounds.height > window.innerHeight + 2) {
+        settledIndex = sectionAt(0.5);
+        return;
+      }
       const visibleHeight = Math.min(bounds.bottom, window.innerHeight) - Math.max(bounds.top, 0);
       if (visibleHeight < window.innerHeight * PEEK_RATIO - 2) return;
 

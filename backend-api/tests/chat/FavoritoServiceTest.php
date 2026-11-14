@@ -81,7 +81,7 @@ test('FavoritoService: guarda la conversación con el título del primer mensaje
     assert_equals('¿Cómo está el clima?', $resultado['titulo']);
     assert_equals(1, count($repositorio->guardados));
     assert_equals('dashboard', $repositorio->guardados[0]['ambito']);
-    assert_equals(195, $repositorio->guardados[0]['cultivo_id']);
+    assert_equals(195, $repositorio->guardados[0]['parcela_id']);
     assert_equals(2, count($repositorio->guardados[0]['mensajes']));
     assert_equals('8vo', $repositorio->guardados[0]['contexto']['parcela']);
     assert_true(!array_key_exists('ignorado', $repositorio->guardados[0]), 'No deben persistirse campos ajenos al contrato');

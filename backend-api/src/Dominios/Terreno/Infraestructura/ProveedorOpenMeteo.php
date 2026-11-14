@@ -11,11 +11,11 @@ final class ProveedorOpenMeteo implements ProveedorClimaInterface
 {
     public function obtenerClima(float $latitud, float $longitud, ?float $altitud): array
     {
-        // API de Open-Meteo — Promedio histórico de los últimos 30 días
-        // Se usa /v1/archive en lugar de /v1/forecast para obtener la temperatura
-        // MEDIA del ciclo agrícola en vez del valor instantáneo (que varía hora a hora).
-        $fechaFin   = date('Y-m-d');
-        $fechaInicio = date('Y-m-d', strtotime('-30 days'));
+        // Treinta días completos del archivo reciente, con siete días de margen
+        // por la demora de publicación. No representa la media de todo el cultivo.
+        $fin = new \DateTimeImmutable('-7 days', new \DateTimeZone('America/Guayaquil'));
+        $fechaFin = $fin->format('Y-m-d');
+        $fechaInicio = $fin->modify('-29 days')->format('Y-m-d');
         $urlClima = "https://archive-api.open-meteo.com/v1/archive"
             . "?latitude={$latitud}&longitude={$longitud}"
             . "&start_date={$fechaInicio}&end_date={$fechaFin}"
@@ -62,17 +62,11 @@ final class ProveedorOpenMeteo implements ProveedorClimaInterface
             $actualizaciones['humedad'] = round(array_sum($valoresHumedad) / count($valoresHumedad), 1);
         }
 
-        // --- Precipitación: suma real de los 30 días, escalada a mm/año ---
-        $valoresPrecip = array_filter($this->serie($datosDiarios, 'precipitation_sum'), fn($v) => $v !== null);
-        if (!empty($valoresPrecip)) {
-            $precipTotal30d = array_sum($valoresPrecip);          // mm en 30 días
-            $precipAnualEstimada = round($precipTotal30d * 12.0, 1);   // proyección anual
-            // `precipitacion` conserva la estimación anual porque los cálculos
-            // agronómicos existentes la usan como lluvia de campaña. El valor
-            // realmente medido en los últimos 30 días se expone aparte para no
-            // etiquetarlo como si fuera un acumulado mensual.
-            $actualizaciones['precipitacion_30d'] = round($precipTotal30d, 1);
-            $actualizaciones['precipitacion'] = max(200.0, min(3500.0, $precipAnualEstimada));
+        // Acumulado reciente únicamente; no convertirlo en una lluvia anual.
+        $valoresPrecip = $this->serie($datosDiarios, 'precipitation_sum');
+        $fechas = $this->serie($datosDiarios, 'time');
+        if (count($valoresPrecip) === 30 && count($fechas) === 30 && count(array_filter($valoresPrecip, static fn($v) => !is_bool($v) && is_numeric($v) && is_finite((float)$v) && $v >= 0)) === 30) {
+            $actualizaciones['precipitacion_30d'] = round(array_sum($valoresPrecip), 1);
         }
 
         // --- Viento ---
@@ -91,6 +85,7 @@ final class ProveedorOpenMeteo implements ProveedorClimaInterface
             $actualizaciones['radiacion_par'] = round(max(0.0, $promedioRadiacionSolar * 2.06), 1);
         }
 
+        if ($actualizaciones !== []) $actualizaciones['periodo_30d'] = ['inicio'=>$fechaInicio,'fin'=>$fechaFin,'dias'=>30];
         return $actualizaciones;
     }
 

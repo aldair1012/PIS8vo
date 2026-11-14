@@ -1,36 +1,61 @@
-import { useState, useEffect, useMemo } from 'react';
+import { lazy, Suspense, useState, useEffect, useMemo, useRef } from 'react';
 import { dssService } from '../services/api';
-import GaussChart from '../templates/Charts/GaussChart';
-import CalendarGrid from '../templates/Common/CalendarGrid';
+import SowingPlanForm from '../components/SowingPlanForm';
+import { savedSowingRows, sowingPlanning, irrigationLabel } from '../utils/sowingPlan';
 import SimulationInfoCard from '../templates/Common/SimulationInfoCard';
-import EmptyDashboard from '../templates/Common/EmptyDashboard';
-import { DashboardSectionHeading } from '../templates/Common/DashboardSectionHeading';
+import { DashboardMetric, DashboardPanel } from '../templates/Common/DashboardPrimitives';
 import useExplicacionIA from '../hooks/usarExplicacionIA';
-import { evidenceNumber as toFiniteNumber, scenarioHeatmap, catalogSowingEvents } from '../utils/agronomicEvidence';
-import {
-  AlertTriangle, 
-  Thermometer,
-  Sprout,
-  Flame,
-  CloudRain,
-  CheckCircle
-} from 'lucide-react';
+import { evidenceNumber as toFiniteNumber, evidenceDate, descriptivePercentiles, catalogSowingEvents, catalogHarvestEvents, recordedCropEvents, calendarStartDate, validateSowingResponse } from '../utils/agronomicEvidence';
+import '../assets/siembra-dashboard.css';
+import { Sprout, Activity, BarChart3, CalendarDays, MapPin, ArrowUpRight, Layers, ChevronDown, Info, Check, Pencil } from 'lucide-react';
+
+const GaussChart=lazy(()=>import('../templates/Charts/GaussChart'));
+const CalendarGrid=lazy(()=>import('../templates/Common/CalendarGrid'));
+const longDate=value=>evidenceDate(value)?.toLocaleDateString('es-EC',{day:'numeric',month:'long',year:'numeric'}) || 'Por completar';
+
+function SowingDisclosure({id,title,description,icon:Icon,open,onToggle,children}) {
+  return <section className="sowing-disclosure"><h2><button type="button" id={`${id}-toggle`} aria-expanded={open} aria-controls={id} onClick={onToggle}>
+    <span className="sowing-disclosure-icon"><Icon size={22} aria-hidden="true"/></span><span><strong>{title}</strong><span>{description}</span></span><ChevronDown className="sowing-chevron" size={20} aria-hidden="true"/>
+  </button></h2><div id={id} hidden={!open} aria-labelledby={`${id}-toggle`}>{open&&children}</div></section>;
+}
 
 const formatMetricNumber = (value, maximumFractionDigits = 2) => (
-  value === null ? 'Sin datos' : value.toLocaleString('es-EC', { maximumFractionDigits })
+  value === null ? '—' : value.toLocaleString('es-EC', { minimumFractionDigits: maximumFractionDigits, maximumFractionDigits })
 );
 
-export default function DashboardScenario({ cultivoElegidoId, añoSeleccionado, onNavigate, onDashboardData }) {
+export default function DashboardScenario({ cultivoElegidoId, añoSeleccionado, onNavigate, onDashboardData, onSelectYear, onCropUpdated }) {
   const [response, setResponse] = useState(null);
+  const [reload, setReload] = useState(0);
+  const [disclosures,setDisclosures]=useState({});
+  const planButton=useRef(null);
+  const restorePlanFocus=useRef(false);
+  const disclosureOpen=name=>Boolean(disclosures[`${cultivoElegidoId}:${name}`]);
+  const toggleDisclosure=name=>setDisclosures(previous=>({...previous,[`${cultivoElegidoId}:${name}`]:!previous[`${cultivoElegidoId}:${name}`]}));
+  const [calendarPhase, setCalendarPhase] = useState('ambos');
   const requestKey = `${cultivoElegidoId ?? ''}:${añoSeleccionado ?? ''}`;
   const current = response?.key === requestKey ? response : null;
   const data = current?.data;
   const loading = current === null;
   const error = current?.error;
-  const [expandedIndex, setExpandedIndex] = useState(null);
+  const [editingKey, setEditingKey] = useState(null);
+  const [notice, setNotice] = useState(null);
+  const [historyOrder, setHistoryOrder] = useState('recientes');
+  const [advancedOpen, setAdvancedOpen] = useState(false);
   const selectedYear = toFiniteNumber(añoSeleccionado);
   const baseYearNum = Number.isInteger(selectedYear) && selectedYear >= 2000 && selectedYear <= 2100 ? selectedYear : new Date().getFullYear();
-  const initialCalendarDate = useMemo(() => new Date(baseYearNum, new Date().getMonth(), 1), [baseYearNum]);
+  const zoneEvents = useMemo(() => [...catalogSowingEvents(data?.viabilidad_siembra, baseYearNum), ...catalogHarvestEvents(data?.viabilidad_siembra, baseYearNum)], [data?.viabilidad_siembra, baseYearNum]);
+  const plan=useMemo(()=>sowingPlanning(data?.cultivo_activo,data?.calendario_parcela),[data]);
+  const personalCalendar=useMemo(()=>({eventos:[
+    ...(plan.start?[{fecha:plan.start,tipo:plan.fromSimulation?'siembra_simulada':'siembra_registrada',titulo:plan.kind==='real_declarada'?'Siembra realizada (declarada por ti)':plan.kind==='prevista'?'Siembra prevista':'Siembra: fecha por confirmar',fuente:plan.fromSimulation?'Fecha usada en una simulación':'Fecha guardada por ti'}]:[]),
+    ...(plan.end?[{fecha:plan.end,tipo:'fin_ciclo_estimado',titulo:'Fin aproximado del cultivo',fuente:plan.durationFromSimulation?'Duración usada en una simulación':'Calculado con tu fecha y duración'}]:[]),
+  ]}),[plan]);
+  const plotEvents=useMemo(()=>recordedCropEvents(personalCalendar),[personalCalendar]);
+  const calendarEvents=useMemo(()=>zoneEvents.filter(event=>calendarPhase==='ambos'||event.phase===calendarPhase),[zoneEvents,calendarPhase]);
+  const personalDate=useMemo(()=>calendarStartDate(plotEvents,baseYearNum),[plotEvents,baseYearNum]);
+  const zoneDate=useMemo(()=>calendarStartDate(calendarEvents,baseYearNum),[calendarEvents,baseYearNum]);
+  const referencesOpen=disclosureOpen('references');
+  const historyOpen=disclosureOpen('history');
+  const ownCalendarOpen=disclosureOpen('calendar');
 
   const {
     mostrarModalIa,
@@ -45,652 +70,132 @@ export default function DashboardScenario({ cultivoElegidoId, añoSeleccionado, 
     async function loadData() {
       try {
         const res = await dssService.getEscenarioData(cultivoElegidoId, añoSeleccionado);
-        if (active) setResponse({ key: requestKey, data: res });
+        const valid = validateSowingResponse(res, cultivoElegidoId);
+        if (active) setResponse({ key: requestKey, data: valid });
       } catch {
-        if (active) setResponse({ key: requestKey, error: 'Error al cargar datos del planificador.' });
+        if (active) setResponse(previous=>previous?.key===requestKey&&previous.data
+          ? {...previous,refreshError:'Tu plan está guardado. No pudimos actualizar la información de esta pantalla. Puedes volver a cargar los datos.'}
+          : {key:requestKey,error:'No se pudieron cargar los datos de Siembra. Vuelve a intentarlo.'});
       }
     }
     loadData();
     return () => { active = false; };
-  }, [cultivoElegidoId, añoSeleccionado, requestKey]);
+  }, [cultivoElegidoId, añoSeleccionado, requestKey, reload]);
 
   useEffect(() => {
-    if (data && !data.sin_datos && onDashboardData) onDashboardData(data);
-  }, [data, onDashboardData]);
+    onDashboardData?.(data ? {...data,calendario_visible:{origen:referencesOpen?'zona':'parcela',fase:referencesOpen?calendarPhase:'fechas_de_la_parcela'}} : null);
+  }, [data, onDashboardData, referencesOpen, calendarPhase]);
+
+  useEffect(() => {
+    if (editingKey !== null || !restorePlanFocus.current) return;
+    restorePlanFocus.current = false;
+    requestAnimationFrame(() => planButton.current?.focus({ preventScroll: true }));
+  }, [editingKey]);
 
   if (loading) {
-    return <div className="flex-center" style={{ height: '70vh', color: 'var(--text-muted)' }}>Cargando DSS Planificador...</div>;
+    return <div className="dashboard-view dashboard-view--scenario ydp-dashboard sowing-dashboard"><div className="sowing-loading" role="status" aria-busy="true"><span className="ydp-loader" aria-hidden="true"/><p>Cargando el plan de tu parcela…</p><div className="sowing-loading-placeholder" aria-hidden="true"/></div></div>;
   }
 
   if (error) {
-    return <div className="bg-danger-alpha text-danger" style={{ padding: '1rem', borderRadius: '12px' }}>{error}</div>;
+    return <section className="dashboard-view dashboard-view--scenario ydp-dashboard sowing-dashboard"><h1>Siembra</h1><p role="alert" className="ydp-state ydp-state--error">{error}</p><button type="button" className="ydp-primary-action" onClick={() => { setResponse(null); setReload(value => value + 1); }}>Reintentar siembra</button></section>;
   }
 
-  if (!data || data.sin_datos || !data.kpis) {
-    return <EmptyDashboard tipo="scenario" onGoToSimulation={() => onNavigate?.('simular')} />;
+  if (!data?.cultivo_activo) {
+    return <div className="dashboard-view dashboard-view--scenario ydp-dashboard sowing-dashboard"><section className="ydp-empty"><span className="ydp-empty-icon"><Sprout size={24} aria-hidden="true" /></span><p className="ydp-eyebrow">PLANIFICACIÓN DE SIEMBRA</p><h1>Elige una parcela para empezar</h1><p>Registra o selecciona una parcela para consultar sus fechas y simulaciones guardadas.</p><button type="button" onClick={()=>onNavigate?.('cultivos')}>Ir a mis parcelas <ArrowUpRight size={16} aria-hidden="true" /></button></section></div>;
   }
 
-  const { kpis, percentiles, viabilidad_siembra } = data;
-  const heatmap = scenarioHeatmap(data.heatmap);
-  const ranking = Array.isArray(data.ranking) ? data.ranking.filter((row) => row?.tipo === 'resultado_guardado' && Number.isInteger(row.simulacion_id) && row.simulacion_id > 0 && toFiniteNumber(row.valor) !== null) : [];
+  const { percentiles } = data;
+  const kpis = data.kpis ?? {};
   const recomendaciones = Array.isArray(data.recomendaciones) ? data.recomendaciones.filter((row) => row && typeof row === 'object') : [];
   const resumen = data.resumen_descriptivo || {};
   const muestra = toFiniteNumber(resumen.muestra);
-  const objetivo = toFiniteNumber(resumen.objetivo_referencia_t_ha);
   const rendimientoEsperado = toFiniteNumber(kpis.rendimiento_esperado);
-  const fraccionSobreObjetivo = toFiniteNumber(resumen.fraccion_supera_objetivo_pct);
+  const medianaGuardada = toFiniteNumber(percentiles?.p50);
   const coeficienteVariacion = toFiniteNumber(resumen.coeficiente_variacion_pct);
-  const riesgoAgronomico = typeof kpis.riesgo_agronomico === 'string'
-    ? { texto: kpis.riesgo_agronomico }
-    : (kpis.riesgo_agronomico && typeof kpis.riesgo_agronomico === 'object' ? kpis.riesgo_agronomico : {});
-  const riesgoTexto = String(riesgoAgronomico.texto || '').trim();
 
-  const getIcon = (name) => {
-    switch(name) {
-      case 'Thermometer':
-      case 'ThermometerSun': return <Thermometer size={18} />;
-      case 'Sprout': return <Sprout size={18} />;
-      case 'Flame': return <Flame size={18} />;
-      case 'CloudRainWind': return <CloudRain size={18} />;
-      default: return <CheckCircle size={18} />;
-    }
-  };
-
-  const calendarEvents = catalogSowingEvents(viabilidad_siembra, baseYearNum);
-  const recommendedMonths = new Set(calendarEvents.map((event) => event.monthKey));
-
-  const monthLabels = [
-    { key: 'ene', name: 'ENE' },
-    { key: 'feb', name: 'FEB' },
-    { key: 'mar', name: 'MAR' },
-    { key: 'abr', name: 'ABR' },
-    { key: 'may', name: 'MAY' },
-    { key: 'jun', name: 'JUN' },
-    { key: 'jul', name: 'JUL' },
-    { key: 'ago', name: 'AGO' },
-    { key: 'sep', name: 'SEP' },
-    { key: 'oct', name: 'OCT' },
-    { key: 'nov', name: 'NOV' },
-    { key: 'dic', name: 'DIC' }
+  const historyRows = savedSowingRows(data, historyOrder);
+  const hasSample = muestra !== null && muestra > 0;
+  const lot = data.cultivo_activo;
+  const explain = (nombre,valor,unidad,descripcion_tecnica,guia_lectura) => pedirExplicacionIa({tipo_elemento:'tarjeta',nombre,valor,unidad,descripcion_tecnica,guia_lectura,estado:valor===null?'sin_datos':'descriptivo',cultivo:'maiz'});
+  const yieldUnit = 't/ha significa toneladas por cada hectárea. Sirve para comparar el rendimiento sin confundirlo con la producción total de la parcela.';
+  const sampleLimit = 'Estos datos describen simulaciones guardadas de esta parcela y año; no son cosechas medidas ni garantizan lo que obtendrás en el campo.';
+  const percentileSummary = descriptivePercentiles(percentiles?.p10, percentiles?.p50, percentiles?.p90);
+  const metricReadings = [
+    ['Es el promedio de los rendimientos de las simulaciones consultadas.', [yieldUnit, 'Se obtiene sumando los rendimientos guardados y dividiendo entre la cantidad de ejecuciones.']],
+    ['Es el valor central al ordenar los rendimientos guardados de menor a mayor.', [yieldUnit, 'Resume el centro de la muestra; si hay un número par de resultados, se usan los dos valores centrales.']],
+    ['Indica cuánto se diferencian entre sí los rendimientos de las simulaciones consultadas.', ['CV significa coeficiente de variación: compara la dispersión de los resultados con su promedio.', 'Un porcentaje mayor indica más diferencias dentro de esta muestra. No es un porcentaje de riesgo de perder la cosecha.']],
+    ['Es la cantidad de simulaciones con un rendimiento válido que se están consultando.', ['El año filtra la fecha en que se hizo el cálculo, no la fecha de siembra.', 'Se consultan hasta las 50 ejecuciones más recientes del año. Cada ejecución es un cálculo del sistema.']],
+  ];
+  const explainPercentiles = () => pedirExplicacionIa({tipo_elemento:'grafico',nombre:muestra===1?'Resultado de la simulación disponible':'Percentiles de la muestra guardada',valor:muestra,unidad:'ejecuciones',datos_grafico:percentiles,
+    descripcion_tecnica:'P10, mediana y P90 resumen esta muestra de resultados guardados; no son probabilidades futuras.',
+    guia_lectura:{resumen:!percentileSummary?'No hay percentiles descriptivos válidos disponibles para esta muestra.':toFiniteNumber(percentiles?.muestra)===1?'Aquí hay una sola simulación. Su resultado no permite comparar la variación entre ejecuciones.':'Estos tres puntos resumen la parte baja, el centro y la parte alta de los rendimientos guardados.',
+      lectura:!percentileSummary?['No se reemplazan los datos ausentes con ceros. Revisa que existan resultados guardados válidos para esta parcela y año.']:toFiniteNumber(percentiles?.muestra)===1?[`El rendimiento guardado es ${formatMetricNumber(toFiniteNumber(percentiles?.p50))} t/ha.`,yieldUnit]:[
+        `P10: ${formatMetricNumber(toFiniteNumber(percentiles?.p10))} t/ha. Es una referencia de la parte baja de esta muestra.`,
+        `P50 o mediana: ${formatMetricNumber(toFiniteNumber(percentiles?.p50))} t/ha. Es el valor central.`,
+        `P90: ${formatMetricNumber(toFiniteNumber(percentiles?.p90))} t/ha. Es una referencia de la parte alta de esta muestra.`,yieldUnit],
+      limite:'Los percentiles no son probabilidades de tu próxima cosecha ni límites garantizados. Con pocos resultados, el resumen puede cambiar mucho al agregar otra simulación.'}});
+  const metrics = [
+    {label:'Rendimiento medio guardado',value:rendimientoEsperado,unit:'t/ha',icon:Sprout,feature:true,detail:`Media de ${muestra} ${muestra===1?'ejecución guardada':'ejecuciones guardadas'}`,description:'Media de los rendimientos guardados para esta parcela y año. No es una nueva predicción ni una media medida de cosechas.'},
+    {label:'Mediana guardada',value:medianaGuardada,unit:'t/ha',icon:BarChart3,detail:'Valor central de los resultados guardados',description:'Valor central de los rendimientos ordenados. Resume esta muestra; no es un objetivo agronómico ni una probabilidad futura.'},
+    {label:'Variación de la muestra (CV)',value:coeficienteVariacion,unit:'%',icon:Activity,digits:1,detail:coeficienteVariacion===null?'Requiere al menos dos valores y media positiva':'Dispersión entre las ejecuciones consultadas',description:'Desviación estándar dividida por la media, expresada como porcentaje. Describe la dispersión de estas ejecuciones; no demuestra estabilidad entre campañas ni incertidumbre predictiva.'},
+    {label:'Simulaciones consultadas',value:muestra,unit:'',icon:Layers,digits:0,detail:`Ejecuciones válidas realizadas en ${baseYearNum}`,description:'Cantidad de ejecuciones con rendimiento válido dentro de las 50 más recientes consultadas de esta parcela y año. No es la cantidad de cosechas reales.'},
   ];
 
-  const totalRecommendedMonths = recommendedMonths.size;
-  const recommendedProgress = Math.round(Math.min(100, (totalRecommendedMonths / monthLabels.length) * 100));
-  const recommendedWindowLabel = totalRecommendedMonths > 0
-    ? `${totalRecommendedMonths} mes${totalRecommendedMonths === 1 ? '' : 'es'} con referencia de catálogo`
-    : 'Sin referencia de calendario disponible para esta parcela';
+  const editing=editingKey===String(lot.id);
+  const closePlan=()=>{restorePlanFocus.current=true;setEditingKey(null);};
+  const openPlan=()=>{setEditingKey(String(lot.id));requestAnimationFrame(()=>document.getElementById('sowing-plan-date')?.focus());};
+  const hasPlan=plan.ownDate!==null;
+  const years=[...new Set([baseYearNum,...(data.años_disponibles||[]).filter(year=>Number.isInteger(year)&&year>=2000&&year<=2100)])].sort((a,b)=>b-a);
+  const visibleHistory=disclosureOpen('all-results')?historyRows:historyRows.slice(0,5);
+  const explainRun=row=>explain(`Resultado guardado #${row.id}: ${row.nombre}`,row.valor,'t/ha','Resultado de una simulación guardada.',{
+    resumen:`Es el rendimiento conservado de la simulación #${row.id}.`,lectura:[yieldUnit,`Se calculó el ${row.fechaTexto}. Variedad: ${row.variedad}.`],limite:sampleLimit});
+  const pendingText=new Intl.ListFormat('es-EC',{style:'long',type:'conjunction'}).format(plan.pending);
 
-  // Dynamic relative scale calculation for the heatmap cells
-  const allValues = heatmap.rows.map((item) => item.valor);
-  const maxVal = allValues.length ? Math.max(...allValues) : 0;
-  const minVal = allValues.length ? Math.min(...allValues) : 0;
-  const valRange = maxVal - minVal === 0 ? 1 : maxVal - minVal;
+  return <div className="dashboard-view dashboard-view--scenario ydp-dashboard sowing-dashboard">
+    <header className="ydp-page-header sowing-page-header"><div><span className="ydp-eyebrow">TU PLAN DE CULTIVO</span><h1>{lot.nombre_parcela||'Tu parcela de maíz'}</h1><p className="sowing-intro">Guarda cuándo vas a sembrar y revisa las fechas de tu cultivo.</p><p className="ydp-location"><MapPin size={18} aria-hidden="true"/>{lot.provincia||lot.ubicacion||'Ubicación de tu parcela'}</p></div></header>
 
-  const getHeatmapStyle = (val) => {
-    const isLight = typeof document !== 'undefined' && document.body.classList.contains('light-theme');
+    {current?.refreshError&&<div className="sowing-refresh-error" role="alert"><p>{current.refreshError}</p><button type="button" className="sowing-secondary" onClick={()=>setReload(value=>value+1)}>Volver a cargar los datos</button></div>}
 
-    if (val === null) return { bg: 'var(--surface-elevated)', text: 'var(--text-subtle)', border: 'var(--border-subtle)', badge: 'Sin simulación' };
-
-    if (val < 4.5) {
-      return {
-        bg: isLight ? '#fee2e2' : 'rgba(239, 68, 68, 0.25)',
-        text: isLight ? '#991b1b' : '#fca5a5',
-        border: isLight ? '#fca5a5' : 'rgba(239, 68, 68, 0.5)',
-        badge: 'Menos de 4.5 t/ha'
-      };
-    }
-    if (val < 6.0) {
-      return {
-        bg: isLight ? '#fef3c7' : 'rgba(245, 158, 11, 0.25)',
-        text: isLight ? '#92400e' : '#fde047',
-        border: isLight ? '#fde047' : 'rgba(245, 158, 11, 0.5)',
-        badge: 'Entre 4.5 y 6 t/ha'
-      };
-    }
-
-    const pct = Math.min(1, Math.max(0, (val - minVal) / valRange));
-    return {
-      bg: isLight ? '#dcfce7' : `rgba(34, 197, 94, ${0.22 + pct * 0.25})`,
-      text: isLight ? '#14532d' : '#86efac',
-      border: isLight ? '#86efac' : 'rgba(34, 197, 94, 0.5)',
-      badge: '6 t/ha o más'
-    };
-  };
-
-  return (
-    <div className="dashboard-view dashboard-view--scenario">
-      <DashboardSectionHeading label="01 · Resumen" title="Resultados de simulaciones guardadas" description="Resumen descriptivo de ejecuciones de esta parcela. No representa probabilidades futuras ni estabilidad entre campañas." />
-      {/* Unified Recommended Sowing Window Dashboard Card (Image 3 layout) */}
-      <div className="glass-panel dss-unified-card" style={{ animation: 'fadeIn 0.5s ease' }}>
-        
-        {/* Top metrics and risk badge row */}
-        <div className="dss-card-metrics-row">
-          
-          {/* Left: 3 metrics */}
-          <div className="dss-metrics-left-grid">
-            
-            {/* Metric 1: Rendimiento Central */}
-            <div
-              className={`dss-metric-col ${rendimientoEsperado === null ? 'dss-metric-empty' : ''}`}
-              onClick={() => pedirExplicacionIa({
-                tipo_elemento: "tarjeta",
-                nombre: "Rendimiento medio de simulaciones guardadas",
-                cultivo: "maiz",
-                valor: rendimientoEsperado,
-                unidad: "t/ha",
-                estado: rendimientoEsperado === null ? "sin_datos" : "descriptivo",
-                descripcion_tecnica: `Media de ${muestra ?? 'las'} simulaciones guardadas para la parcela y el periodo seleccionado. No es una nueva predicción ni una media observada de cosechas.`
-              })}
-              style={{ cursor: 'pointer' }}
-              title="Clic para ver detalle"
-            >
-              <div className="dss-metric-value">
-                {formatMetricNumber(rendimientoEsperado)} {rendimientoEsperado !== null && <span>t/ha</span>}
-              </div>
-              <div className="dss-metric-title">Rendimiento medio guardado</div>
-              <div className={`dss-metric-trend ${rendimientoEsperado === null ? '' : 'up'}`}>
-                {rendimientoEsperado === null ? 'Dato no disponible' : `${muestra ?? '—'} simulaciones en la muestra`}
-              </div>
-            </div>
-
-            {/* Metric 2: Superar Objetivo */}
-            <div 
-              className={`dss-metric-col ${fraccionSobreObjetivo === null ? 'dss-metric-empty' : ''}`}
-              onClick={() => pedirExplicacionIa({
-                tipo_elemento: "tarjeta",
-                nombre: "Fracción de simulaciones sobre el objetivo de referencia",
-                cultivo: "maiz",
-                valor: fraccionSobreObjetivo,
-                unidad: "%",
-                estado: fraccionSobreObjetivo === null ? "sin_datos" : "descriptivo",
-                descripcion_tecnica: `Porcentaje de la muestra de simulaciones guardadas con rendimiento superior a ${objetivo ?? 'un objetivo no informado'} t/ha. Es una fracción empírica de esta muestra y no una probabilidad futura de éxito ni un umbral de rentabilidad calculado.`
-              })}
-              style={{ cursor: 'pointer' }}
-              title="Clic para ver detalle"
-            >
-              <div className="dss-metric-value">
-                {formatMetricNumber(fraccionSobreObjetivo, 1)} {fraccionSobreObjetivo !== null && <span>%</span>}
-              </div>
-              <div className="dss-metric-title">Muestra sobre objetivo{objetivo !== null ? ` (${objetivo} t/ha)` : ''}</div>
-              <div className="dss-metric-trend">
-                {fraccionSobreObjetivo === null ? 'Dato no disponible' : 'Fracción empírica; no es probabilidad futura'}
-              </div>
-            </div>
-
-            {/* Metric 3: Estabilidad Histórica */}
-            <div 
-              className={`dss-metric-col ${coeficienteVariacion === null ? 'dss-metric-empty' : ''}`}
-              onClick={() => pedirExplicacionIa({
-                tipo_elemento: "tarjeta",
-                nombre: "Coeficiente de variación de la muestra",
-                cultivo: "maiz",
-                valor: coeficienteVariacion,
-                unidad: "%",
-                estado: coeficienteVariacion === null ? "sin_datos" : "descriptivo",
-                descripcion_tecnica: "Desviación estándar dividida por la media de los rendimientos guardados, expresada como porcentaje. Describe dispersión de ejecuciones y no demuestra estabilidad interanual ni incertidumbre predictiva. Requiere al menos dos valores y media positiva."
-              })}
-              style={{ cursor: 'pointer' }}
-              title="Clic para ver detalle"
-            >
-              <div className="dss-metric-value">
-                {formatMetricNumber(coeficienteVariacion, 1)} {coeficienteVariacion !== null && <span>%</span>}
-              </div>
-              <div className="dss-metric-title">Variación de la muestra (CV)</div>
-              <div className="dss-metric-trend">
-                {coeficienteVariacion === null ? 'Se requieren más datos válidos' : 'Dispersión descriptiva entre ejecuciones'}
-              </div>
-            </div>
-
-          </div>
-
-          {/* Right: Risk Badge */}
-          {(() => {
-            const riskText = riesgoTexto.toLowerCase();
-            const riskColor = riesgoAgronomico.color || '';
-            let levelClass = riesgoTexto ? 'level-neutral' : 'level-empty';
-            if (riskColor === 'danger' || /alto|elevado|cr[ií]tico/.test(riskText)) levelClass = 'level-danger';
-            if (riskColor === 'success' || riskText.includes('bajo')) {
-              levelClass = 'level-success';
-            } else if (riskColor === 'warning' || riskText.includes('medio') || riskText.includes('moderad') || riskText.includes('regular')) {
-              levelClass = 'level-warning';
-            }
-            return (
-              <div 
-                className={`dss-risk-badge-box ${levelClass}`}
-                onClick={() => pedirExplicacionIa({
-                  tipo_elemento: "tarjeta",
-                  nombre: "Riesgo Agronómico Compuesto",
-                  cultivo: "maiz",
-                  valor: riesgoTexto || null,
-                  unidad: "",
-                  estado: levelClass === 'level-empty' ? 'sin_datos' : (levelClass === 'level-danger' ? 'riesgoso' : (levelClass === 'level-warning' ? 'regular' : 'favorable')),
-                  rango_ideal: "Bajo",
-                  descripcion_tecnica: "Calificación combinada del riesgo de pérdida del cultivo debido a factores biológicos y abióticos del lote simulado en la ventana seleccionada."
-                })}
-                style={{ cursor: 'pointer' }}
-                title="Clic para ver detalle del riesgo"
-              >
-                <div className={`dss-risk-icon-wrap ${levelClass}`}>
-                  {levelClass === 'level-success' ? <CheckCircle size={18} /> : <AlertTriangle size={18} />}
-                </div>
-                <div className="dss-risk-text-info">
-                  <span className="dss-risk-label">Riesgo Agronómico</span>
-                  <span className="dss-risk-value">{riesgoTexto || 'Sin datos'}</span>
-                  <span className="dss-risk-sub">{riesgoTexto ? `Riesgo agrario · ${riesgoTexto}` : 'Se requiere una evaluación del escenario'}</span>
-                </div>
-              </div>
-            );
-          })()}
-
+    <DashboardPanel id="sowing-main-plan" title="Tu plan de siembra" subtitle="Estas son las fechas y los datos de esta parcela." icon={Sprout} action={!editing&&<button ref={planButton} data-plot-id={lot.id} type="button" className="ydp-primary-action" aria-expanded={false} aria-controls="sowing-plan-editor" onClick={openPlan}><Pencil size={18} aria-hidden="true"/>{hasPlan?'Editar mi plan':'Completar mi plan'}</button>}>
+      {notice?.key===requestKey&&<p className="sowing-saved" role="status"><Check size={20} aria-hidden="true"/>{notice.message}</p>}
+      {editing?<div id="sowing-plan-editor"><SowingPlanForm key={`${lot.id}:${reload}`} plot={lot} suggestion={plan} onCancel={closePlan} onSaved={patch=>{
+        setResponse(previous=>previous?.key===requestKey?{...previous,data:{...previous.data,cultivo_activo:{...previous.data.cultivo_activo,...patch},calendario_parcela:null}}:previous);
+        setNotice({key:requestKey,message:'Tu plan quedó guardado.'});restorePlanFocus.current=true;setEditingKey(null);setReload(value=>value+1);onCropUpdated?.();
+      }}/></div>:<>
+        <div className="sowing-plan-status"><span className="sowing-status-label"><span aria-hidden="true" className="sowing-status-dot"/>{plan.pending.length?'Plan por completar':'Plan guardado'}</span>{plan.pending.length>0&&<p>Te falta revisar: {pendingText}.</p>}</div>
+        <div className="sowing-dates" role="group" aria-label="Fechas de tu cultivo">
+          <div className="sowing-date"><span className="sowing-date-icon"><Sprout size={24} aria-hidden="true"/></span><div><h3>Siembra</h3><strong className="sowing-date-value">{longDate(plan.start)}</strong><p>{plan.start?(plan.kind==='real_declarada'?'Ya sembraste · dato informado por ti':plan.kind==='prevista'?'Fecha prevista: todavía es un plan':'Confirma si ya sembraste en esta fecha'):'Guarda el día que planeas sembrar.'}</p></div></div>
+          <div className="sowing-date"><span className="sowing-date-icon"><CalendarDays size={24} aria-hidden="true"/></span><div><h3>Fin del cultivo (aproximado)</h3><strong className="sowing-date-value">{longDate(plan.end)}</strong><p>{plan.end?'Una referencia para preparar la cosecha.':plan.start?'Añade la duración para calcular esta fecha.':'Necesitamos la fecha de siembra y la duración.'}</p></div></div>
         </div>
+        <dl className="sowing-campaign-summary"><div><dt>Maíz de esta parcela</dt><dd>{lot.variedad_maiz||'Por completar'}{lot.tipo_maiz&&<small>{lot.tipo_maiz}</small>}</dd></div><div><dt>Duración del cultivo</dt><dd>{plan.cycle===null?'Por completar':`${formatMetricNumber(plan.cycle,0)} días`}<small>{plan.durationFromSimulation?'Usada en una simulación; falta confirmarla':plan.cycle!==null?'Guardada por ti':'Desde la siembra hasta el fin del cultivo'}</small></dd></div><div><dt>Agua o riego</dt><dd>{irrigationLabel(plan.water)}</dd></div></dl>
+        {(plan.fromSimulation||plan.durationFromSimulation)&&<p className="sowing-info"><Info size={20} aria-hidden="true"/><span>{plan.fromSimulation?'Esta fecha se usó en una simulación y aún no está guardada como plan de la parcela.':'La duración viene de una simulación anterior.'} Pulsa «{hasPlan?'Editar mi plan':'Completar mi plan'}» para revisarla y guardarla.</span></p>}
+        {plan.end&&<p className="sowing-harvest-note">La fecha final se calcula con la siembra y la duración. El estado del cultivo y el clima pueden cambiar el momento de cosechar.</p>}
+        {plotEvents.length>0&&<div className="sowing-personal-calendar"><button type="button" className="sowing-calendar-toggle" aria-expanded={ownCalendarOpen} aria-controls="siembra-calendar" onClick={()=>toggleDisclosure('calendar')}><CalendarDays size={20} aria-hidden="true"/>Ver mis fechas en calendario<ChevronDown size={18} aria-hidden="true"/></button><div id="siembra-calendar" hidden={!ownCalendarOpen}>{ownCalendarOpen&&<Suspense fallback={<p role="status">Abriendo tu calendario…</p>}><CalendarGrid events={plotEvents} initialDate={personalDate} resetToInitial fillHeight={false} embedded title="Las fechas de tu cultivo" eventDetailLabel="Detalle del calendario de la parcela" legendItems={[{color:'var(--zs-info)',label:'Siembra'},{color:'var(--zs-warning)',label:'Fin aproximado'}]}/></Suspense>}</div></div>}
+      </>}
+    </DashboardPanel>
 
-        {/* Bottom timeline track (12 months) */}
-        <div 
-          className="dss-timeline-section"
-          onClick={() => pedirExplicacionIa({
-            tipo_elemento: "tarjeta",
-            nombre: "Meses de siembra según catálogo local",
-            cultivo: "maiz",
-            valor: kpis.fecha_siembra_recomendada,
-            unidad: "",
-            estado: calendarEvents.length ? "referencia_catalogo" : "sin_datos",
-            descripcion_tecnica: "Meses indicados por el catálogo agronómico local para la provincia identificada. No son fechas óptimas calculadas por el modelo ni una evaluación del clima futuro."
-          })}
-          style={{ cursor: 'pointer' }}
-          title="Clic para ver detalles de la recomendación"
-        >
-          <div className="dss-timeline-title">Referencia de siembra del catálogo — Vista anual</div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', marginBottom: '0.75rem' }}>
-            <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-primary)' }}>{recommendedWindowLabel}</span>
-            <div style={{ flex: '1 1 260px', minWidth: '140px', height: '8px', background: 'var(--border-subtle)', borderRadius: '999px', overflow: 'hidden' }}>
-              <div style={{ width: `${recommendedProgress}%`, height: '100%', background: 'linear-gradient(90deg, #f59e0b, #84cc16)', borderRadius: '999px' }} />
-            </div>
-          </div>
-          <div className="dss-timeline-track">
-            {monthLabels.map(month => {
-              const isRec = recommendedMonths.has(month.key);
-              return (
-                <div 
-                  key={month.key} 
-                  className={`dss-timeline-item ${isRec ? 'recommended' : ''}`}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    pedirExplicacionIa({
-                      tipo_elemento: "tarjeta",
-                      nombre: `Mes de ${month.name} (${isRec ? 'Con referencia de catálogo' : 'Sin referencia disponible'})`,
-                      cultivo: "maiz",
-                      valor: isRec ? "Mes indicado en catálogo" : null,
-                      unidad: "",
-                      estado: isRec ? "referencia_catalogo" : "sin_datos",
-                      descripcion_tecnica: isRec 
-                        ? `El mes de ${month.name} aparece en la referencia del catálogo para la provincia de la parcela. Esta referencia no acredita condiciones hídricas futuras.`
-                        : `No hay una ventana de catálogo identificada para ${month.name}. La ausencia de referencia no significa que el mes sea inadecuado ni acredita un riesgo climático.`
-                    });
-                  }}
-                  style={{ cursor: 'pointer' }}
-                >
-                  <span className="dss-timeline-item-name">{month.name}</span>
-                  <span className="dss-timeline-item-sub">{isRec ? 'Catálogo' : 'Sin evaluar'}</span>
-                  <div className="dss-timeline-dot" />
-                </div>
-              );
-            })}
-          </div>
-        </div>
+    <div className="sowing-optional-heading"><h2>Si necesitas más información</h2><p>Abre sólo la opción que te ayude en este momento.</p></div>
+    <SowingDisclosure id="sowing-zone-reference" title="Consultar meses habituales de la zona" description="Una guía general si todavía estás eligiendo cuándo sembrar." icon={CalendarDays} open={referencesOpen} onToggle={()=>toggleDisclosure('references')}>
+      <div className="sowing-reference-heading"><h3>Referencias para {lot.provincia||'la ubicación de esta parcela'}</h3><p>Son meses publicados en el catálogo agrícola. No consideran el clima futuro de tu parcela ni cambian tu plan.</p></div>
+      {zoneEvents.length?<><label className="sowing-filter">¿Qué fechas quieres consultar?<select aria-label="Tipo de referencia agrícola" value={calendarPhase} onChange={event=>setCalendarPhase(event.target.value)}><option value="ambos">Siembra y cosecha</option><option value="siembra">Meses de siembra</option><option value="cosecha">Meses de cosecha</option></select></label>
+        <ul className="sowing-reference-list">{calendarEvents.map((event,index)=><li key={`${event.title}:${index}`}><span className="sowing-reference-type">{event.phase==='cosecha'?'Cosecha de referencia':'Siembra de referencia'}</span><strong>{event.start.toLocaleDateString('es-EC',{day:'numeric',month:'long'})}{event.end.getTime()!==event.start.getTime()?` al ${event.end.toLocaleDateString('es-EC',{day:'numeric',month:'long'})}`:''}</strong><span>{event.title}</span></li>)}</ul>
+        {calendarEvents.length===0?<p className="sowing-empty">El catálogo no tiene referencias para esta opción. Esto no significa que el mes sea malo para cultivar.</p>:<details className="sowing-reference-calendar"><summary>Ver estas referencias en calendario</summary><Suspense fallback={<p role="status">Abriendo calendario de referencia…</p>}><CalendarGrid events={calendarEvents} initialDate={zoneDate} referenceYear={baseYearNum} resetToInitial fillHeight={false} embedded title="Referencia general del catálogo" eventDetailLabel="Detalle de la referencia de siembra" legendItems={[{color:'var(--zs-info)',label:'Siembra de referencia'},{color:'var(--zs-warning)',label:'Cosecha de referencia'}]}/></Suspense></details>}
+        <p className="sowing-source-caption">Fuente: catálogo agrícola de la zona y el tipo de maíz registrados. Los meses sin referencia no han sido evaluados.</p>
+      </>:<div className="sowing-empty"><h3>No encontramos una referencia para esta parcela</h3><p>Puedes guardar tu fecha de siembra igualmente. La falta de una ficha no significa que no puedas cultivar en esa zona.</p></div>}
+    </SowingDisclosure>
 
-      </div>
-
-      <DashboardSectionHeading label="02 · Comparación" title="Ejecuciones, variedades y resultados" description="Se comparan únicamente resultados guardados. Las celdas ausentes no representan rendimiento cero." />
-      {/* Primary Grid: Comparador de Fechas (Arriba Izq) + Distribución Probabilística (Arriba Der) */}
-      <div className="scenario-comparison-grid">
-        {/* Comparador de Fechas e Híbridos */}
-        <div 
-          className="glass-panel chart-panel-interactive"
-          onClick={() => pedirExplicacionIa({
-            tipo_elemento: "grafico",
-            nombre: "Comparación de simulaciones guardadas y variedades",
-            cultivo: "maiz",
-            valor: "Rendimientos guardados por ejecución y variedad",
-            unidad: "t/ha",
-            estado: "matriz de decisiones",
-            descripcion_tecnica: "Cada fila identifica una simulación guardada y su fecha de ejecución, no una fecha de siembra. La comparación es descriptiva y no prueba un efecto causal de la variedad o del manejo.",
-            datos_grafico: heatmap.rows
-          })}
-          style={{ display: 'flex', flexDirection: 'column' }}
-        >
-          <div className="glass-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', marginBottom: '0.4rem' }}>
-            <h3 style={{ fontSize: '0.98rem', fontWeight: 600, margin: 0 }}>Simulaciones guardadas por variedad (t/ha)</h3>
-          </div>
-          <div className="glass-card-body" style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '0.5rem 0.85rem 0.85rem 0.85rem' }}>
-            <div className="table-responsive-container" style={{ overflowX: 'auto', flex: 1, display: 'flex', flexDirection: 'column' }}>
-              {heatmap.rows.length === 0 && <p className="chart-empty-state" role="status">No hay resultados guardados disponibles para esta comparación.</p>}
-              {heatmap.rows.length > 0 && (
-              <table style={{ width: '100%', height: '100%', tableLayout: 'fixed', borderCollapse: 'separate', borderSpacing: '6px 8px', textAlign: 'center' }}>
-                <thead>
-                  <tr>
-                    <th style={{ width: '115px', padding: '0.4rem 0.25rem', color: 'var(--text-subtle)', fontSize: '0.72rem', textAlign: 'left', textTransform: 'uppercase', letterSpacing: '0.04em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      Ejecución
-                    </th>
-                    {heatmap.varieties.map((hibrido) => (
-                      <th key={hibrido} style={{ padding: '0.4rem 0.2rem', color: 'var(--text-primary)', fontSize: '0.74rem', fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={hibrido}>
-                        {hibrido}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody style={{ height: '100%' }}>
-                  {heatmap.dates.map((fecha) => {
-                    const rowItems = heatmap.rows.filter(h => h.fecha === fecha);
-                    const listHibridos = heatmap.varieties;
-                    return (
-                      <tr key={fecha}>
-                        <td style={{ padding: '0.4rem 0.25rem', fontWeight: 700, textAlign: 'left', color: 'var(--text-primary)', fontSize: '0.78rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', verticalAlign: 'middle' }} title={fecha}>
-                          {fecha}
-                        </td>
-                        {listHibridos.map((hibrido) => {
-                          const item = rowItems.find(r => r.hibrido === hibrido);
-                          const val = item ? item.valor : null;
-                          const hStyle = getHeatmapStyle(val);
-                          return (
-                            <td 
-                              key={hibrido} 
-                              style={{ 
-                                height: '62px',
-                                padding: '0', 
-                                background: hStyle.bg, 
-                                color: hStyle.text,
-                                border: `1.5px solid ${hStyle.border}`,
-                                borderRadius: '10px',
-                                fontWeight: 800,
-                                fontSize: '1rem',
-                                boxShadow: '0 3px 10px rgba(0, 0, 0, 0.03)',
-                                transition: 'all 0.2s ease',
-                                cursor: 'default',
-                                verticalAlign: 'middle'
-                              }}
-                              title={val === null ? `${hibrido} en ${fecha}: sin simulación guardada` : `${hibrido} en ${fecha}: ${val.toFixed(2)} t/ha`}
-                            >
-                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '3px', height: '100%', width: '100%' }}>
-                                <span style={{ fontSize: '1.05rem', fontWeight: 800, lineHeight: 1 }}>{val === null ? '—' : val.toFixed(1)}</span>
-                                {val !== null && <span style={{ fontSize: '0.64rem', fontWeight: 600, opacity: 0.85, lineHeight: 1 }}>t/ha</span>}
-                              </div>
-                            </td>
-                          );
-                        })}
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-              )}
-            </div>
-            <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.6rem', fontSize: '0.72rem', justifyContent: 'center', flexWrap: 'wrap' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', background: 'var(--surface-elevated)', padding: '0.25rem 0.6rem', borderRadius: '6px', border: '1px solid var(--border-subtle)' }}>
-                <div style={{ width: '10px', height: '10px', background: '#ef4444', borderRadius: '3px' }}></div>
-                <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>&lt; 4.5 t/ha</span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', background: 'var(--surface-elevated)', padding: '0.25rem 0.6rem', borderRadius: '6px', border: '1px solid var(--border-subtle)' }}>
-                <div style={{ width: '10px', height: '10px', background: '#f59e0b', borderRadius: '3px' }}></div>
-                <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>4.5 – 6.0 t/ha</span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', background: 'var(--surface-elevated)', padding: '0.25rem 0.6rem', borderRadius: '6px', border: '1px solid var(--border-subtle)' }}>
-                <div style={{ width: '10px', height: '10px', background: '#22c55e', borderRadius: '3px' }}></div>
-                <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>≥ 6.0 t/ha</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Percentiles descriptivos de la muestra guardada. */}
-        <div 
-          className="glass-panel chart-panel-interactive"
-          onClick={() => pedirExplicacionIa({
-            tipo_elemento: "grafico",
-            nombre: "Percentiles descriptivos de simulaciones guardadas",
-            cultivo: "maiz",
-            valor: "Percentiles de rendimiento",
-            unidad: "t/ha",
-            estado: "descriptivo",
-            descripcion_tecnica: `P10, mediana y P90 de ${muestra ?? 'las'} ejecuciones guardadas. Resumen de esta muestra de predicciones; no es una distribución normal validada, una garantía de rendimiento ni una probabilidad futura.`,
-            datos_grafico: percentiles
-          })}
-          style={{ display: 'flex', flexDirection: 'column' }}
-        >
-          <div className="glass-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', marginBottom: '0.4rem' }}>
-            <h3 style={{ fontSize: '0.98rem', fontWeight: 600, margin: 0 }}>Percentiles de la muestra guardada</h3>
-          </div>
-          <div className="glass-card-body" style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-            <GaussChart p10={percentiles?.p10} p50={percentiles?.p50} p90={percentiles?.p90} muestra={percentiles?.muestra} />
-          </div>
-        </div>
-      </div>
-
-      {/* Secondary Grid: Calendario (Abajo Izq) + Top 5 Combinaciones (Abajo Der) */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '1.25rem', marginBottom: '1.5rem', alignItems: 'stretch' }}>
-        {/* Calendar */}
-        <CalendarGrid 
-          type="siembra"
-          events={calendarEvents} 
-          initialDate={initialCalendarDate} 
-          title="Referencia de siembra del catálogo local"
-        />
-
-        {/* Top Recommendations */}
-        <div 
-          className="glass-panel chart-panel-interactive" 
-          style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: '380px' }}
-        >
-          <div className="glass-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', marginBottom: '0.4rem', padding: '0.85rem 1.1rem', borderBottom: '1px solid var(--border-subtle)' }}>
-            <h3 style={{ fontSize: '0.98rem', fontWeight: 700, margin: 0 }}>Hasta 5 resultados guardados de mayor rendimiento</h3>
-            <span style={{ fontSize: '0.7rem', color: 'var(--text-subtle)', fontWeight: 600 }}>Haz clic en cada opción para ver su explicación</span>
-          </div>
-          <div className="glass-card-body" style={{ padding: '0.75rem 1.1rem', flex: 1, display: 'flex', flexDirection: 'column', gap: '0.6rem', overflowY: 'auto' }}>
-            {ranking.length === 0 && <p role="status" className="chart-empty-state">No hay simulaciones guardadas para ordenar.</p>}
-            {ranking.map((row, i) => {
-              const isExpanded = expandedIndex === i;
-
-              const badgeClass = i === 0 ? 'bg-success-alpha text-success' : (i === 1 ? 'bg-secondary-alpha text-secondary' : (i === 2 ? 'bg-warning-alpha text-warning' : 'bg-primary-alpha text-primary'));
-              const porqueText = typeof row.porque === 'string' && row.porque.trim()
-                ? row.porque
-                : 'Este resultado figura en el orden de rendimientos guardados. No hay una explicación causal registrada para esta ejecución.';
-
-              const handleItemClick = (e) => {
-                e.stopPropagation();
-                setExpandedIndex(isExpanded ? null : i);
-              };
-
-              const handleIaClick = (e) => {
-                e.stopPropagation();
-                pedirExplicacionIa({
-                  tipo_elemento: "tarjeta",
-                  nombre: `Estrategia #${i+1}: ${row.estrategia}`,
-                  cultivo: "maiz",
-                  valor: `${row.valor} ${row.unidad}`,
-                  unidad: row.unidad,
-                  estado: row.badge,
-                  descripcion_tecnica: `Resultado guardado: ${row.combinacion ?? 'detalle de combinación no conservado'}. ${porqueText}`
-                });
-              };
-
-              return (
-                <div 
-                  key={i} 
-                  onClick={handleItemClick}
-                  style={{ 
-                    display: 'flex', 
-                    flexDirection: 'column', 
-                    gap: '0.35rem', 
-                    padding: '0.7rem 0.9rem', 
-                    borderRadius: '10px', 
-                    background: isExpanded ? 'rgba(59, 130, 246, 0.08)' : 'var(--surface-elevated)', 
-                    border: isExpanded ? '1.5px solid var(--accent-primary, #3b82f6)' : '1px solid var(--border-subtle)',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease',
-                    boxShadow: isExpanded ? '0 4px 12px rgba(0,0,0,0.15)' : 'none'
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.4rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-                      <span style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--text-subtle)', background: 'var(--surface-hover)', padding: '0.12rem 0.4rem', borderRadius: '5px' }}>
-                        #{i + 1}
-                      </span>
-                      <span style={{ fontWeight: 800, fontSize: '0.84rem', color: 'var(--text-primary)' }}>
-                        {row.estrategia}
-                      </span>
-                      <span className={`badge ${badgeClass}`} style={{ fontSize: '0.64rem', padding: '0.12rem 0.45rem' }}>
-                        {row.badge}
-                      </span>
-                    </div>
-
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                      <div style={{ fontWeight: 800, fontSize: '0.88rem', color: '#ffffff' }}>
-                        {row.valor} <span style={{ fontSize: '0.7rem', color: 'var(--text-subtle)' }}>{row.unidad}</span>
-                      </div>
-                      <span style={{ fontSize: '0.68rem', color: isExpanded ? 'var(--accent-primary, #60a5fa)' : 'var(--text-subtle)', fontWeight: 700 }}>
-                        {isExpanded ? '▲ Ocultar' : '▼ Ver explicación'}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--secondary, #60a5fa)' }}>
-                    <span style={{ color: 'var(--text-subtle)', fontWeight: 600 }}>Combinación:</span> {row.combinacion}
-                  </div>
-
-                  {/* Explicación por separado únicamente al dar clic */}
-                  {isExpanded && (
-                    <div style={{ marginTop: '0.45rem', paddingTop: '0.45rem', borderTop: '1px solid var(--border-subtle)', display: 'flex', flexDirection: 'column', gap: '0.45rem', animation: 'fadeIn 0.2s ease' }}>
-                      <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)', lineHeight: '1.45', background: 'rgba(255, 255, 255, 0.03)', padding: '0.5rem 0.65rem', borderRadius: '6px', borderLeft: '3px solid #3b82f6' }}>
-                        <strong style={{ color: 'var(--text-primary)', display: 'block', marginBottom: '0.15rem' }}>CONTEXTO DEL RESULTADO GUARDADO</strong>
-                        {porqueText}
-                      </div>
-
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                        <span style={{ fontSize: '0.68rem', color: 'var(--text-subtle)' }}>
-                          Orden descriptivo; no acredita una recomendación agronómica
-                        </span>
-                        <button
-                          type="button"
-                          onClick={handleIaClick}
-                          style={{
-                            padding: '0.28rem 0.65rem',
-                            fontSize: '0.68rem',
-                            fontWeight: 700,
-                            borderRadius: '6px',
-                            border: '1px solid var(--accent-primary, #3b82f6)',
-                            background: 'rgba(59, 130, 246, 0.15)',
-                            color: 'var(--accent-primary, #60a5fa)',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s ease'
-                          }}
-                        >
-                          Análisis Detallado
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-
-      {/* Recomendaciones Agronómicas (Formato Ancho Completo 100% Elegante) */}
-      {recomendaciones && recomendaciones.length > 0 && (
-        <div className="glass-panel" style={{ width: '100%', marginBottom: '1.5rem', boxSizing: 'border-box' }}>
-          <div className="glass-card-header" style={{ padding: '0.85rem 1.25rem', borderBottom: '1px solid var(--border-subtle)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h3 style={{ fontSize: '0.98rem', fontWeight: 700, margin: 0 }}>Alcance y referencias del resumen</h3>
-            <span style={{ fontSize: '0.74rem', color: 'var(--text-subtle)', fontWeight: 600 }}>Procedencia y límites de los datos</span>
-          </div>
-          <div className="glass-card-body" style={{ padding: '1rem 1.25rem', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-            {recomendaciones.map((rec, i) => {
-              const borderCol = rec.tipo === 'danger' ? '#ef4444' : (rec.tipo === 'warning' ? '#eab308' : '#16a34a');
-              const bgCol = rec.tipo === 'danger' ? 'rgba(239, 68, 68, 0.05)' : (rec.tipo === 'warning' ? 'rgba(234, 179, 8, 0.05)' : 'rgba(22, 163, 74, 0.05)');
-              
-              const cleanTitle = String(rec.titulo || '')
-                .replace(/【[^】]*】/g, '')
-                .replace(/[\u{1F300}-\u{1F9FF}]|[\u{1F600}-\u{1F64F}]|[\u{1F680}-\u{1F6FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '')
-                .trim();
-
-              const cleanText = String(rec.texto || '')
-                .replace(/【[^】]*】/g, '')
-                .replace(/[\u{1F300}-\u{1F9FF}]|[\u{1F600}-\u{1F64F}]|[\u{1F680}-\u{1F6FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '')
-                .trim();
-
-              return (
-                <div 
-                  key={i} 
-                  style={{ 
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '0.9rem 1.25rem', 
-                    borderRadius: '12px',
-                    border: '1px solid var(--border-subtle)',
-                    borderLeft: `5px solid ${borderCol}`,
-                    background: 'var(--surface-elevated)',
-                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.02)',
-                    gap: '1.25rem',
-                    flexWrap: 'nowrap'
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1, minWidth: 0 }}>
-                    <div style={{ 
-                      color: borderCol,
-                      background: bgCol,
-                      padding: '0.55rem',
-                      borderRadius: '50%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      flexShrink: 0
-                    }}>
-                      {getIcon(rec.icono)}
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <h4 style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.2rem' }}>
-                        {cleanTitle}
-                      </h4>
-                      <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', lineHeight: '1.45', margin: 0 }}>
-                        {cleanText}
-                      </p>
-                    </div>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
-                    <button
-                      type="button"
-                      className="btn" 
-                      onClick={() => onNavigate?.('history')}
-                      disabled={!onNavigate}
-                      style={{ 
-                        padding: '0.45rem 1.1rem', 
-                        fontSize: '0.74rem', 
-                        fontWeight: 700,
-                        borderRadius: '8px',
-                        background: rec.tipo === 'danger' ? 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)' : (rec.tipo === 'warning' ? 'linear-gradient(135deg, #eab308 0%, #ca8a04 100%)' : 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)'),
-                        color: rec.tipo === 'warning' ? '#0f172a' : '#ffffff',
-                        border: 'none',
-                        cursor: onNavigate ? 'pointer' : 'default',
-                        whiteSpace: 'nowrap',
-                        boxShadow: '0 3px 10px rgba(0,0,0,0.15)'
-                      }}
-                    >
-                      Ver simulaciones
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      <SimulationInfoCard
-        isOpen={mostrarModalIa}
-        onClose={() => setMostrarModalIa(false)}
-        loading={cargandoIa}
-        data={datosIa}
-      />
-    </div>
-  );
+    <SowingDisclosure id="sowing-saved-results" title="Consultar simulaciones guardadas" description={hasSample?`${muestra} ${muestra===1?'cálculo disponible':'cálculos disponibles'} de ${baseYearNum}. Son estimaciones, no cosechas reales.`:'Consulta los cálculos que ya hiciste para esta parcela.'} icon={BarChart3} open={historyOpen} onToggle={()=>toggleDisclosure('history')}>
+      <div className="sowing-history-heading"><div><h3>Resultados que ya calculaste</h3><p>Sirven para revisar tus pruebas. Para analizar el rendimiento de tu parcela, abre la sección Rendimiento.</p></div><button type="button" className="sowing-secondary" onClick={()=>onNavigate?.('yield')}>Ir a Rendimiento <ArrowUpRight size={18} aria-hidden="true"/></button></div>
+      <div className="sowing-history-filters"><label className="sowing-filter">Año en que hiciste las simulaciones<select aria-label="Año de las simulaciones" value={baseYearNum} disabled={editing} onChange={event=>onSelectYear?.(Number(event.target.value))}>{years.map(year=><option key={year} value={year}>{year}</option>)}</select></label>{hasSample&&<label className="sowing-filter">Ordenar resultados<select aria-label="Ordenar simulaciones guardadas" value={historyOrder} onChange={event=>setHistoryOrder(event.target.value)}><option value="recientes">Más recientes primero</option><option value="mayor">Mayor rendimiento primero</option><option value="menor">Menor rendimiento primero</option></select></label>}</div>
+      <p className="sowing-year-help">Este año sólo filtra los cálculos guardados. Las fechas de tu cultivo son las que registraste en el plan.</p>
+      {hasSample&&historyRows.length?<><p className="sowing-help">Pulsa un resultado para entender qué significa. «t/ha» significa toneladas por cada hectárea.</p><ul className="sowing-history-list" aria-label="Simulaciones guardadas de esta parcela">{visibleHistory.map(row=><li key={row.id}><button type="button" className="sowing-result" aria-label={`Ver explicación de simulación #${row.id}`} onClick={()=>explainRun(row)}><span className="sowing-result-copy"><strong>{row.nombre}</strong><span>Calculada: {row.fechaTexto}</span><span>{row.variedad==='Variedad no conservada'?'Esta simulación no guardó la variedad':row.variedad}</span></span><span className="sowing-result-value"><strong>{formatMetricNumber(row.valor,2)} <small>t/ha</small></strong><span>Rendimiento estimado</span></span><ArrowUpRight size={20} aria-hidden="true"/></button></li>)}</ul>{historyRows.length>5&&<button type="button" className="sowing-secondary sowing-more-results" aria-expanded={disclosureOpen('all-results')} onClick={()=>toggleDisclosure('all-results')}>{disclosureOpen('all-results')?'Mostrar sólo cinco resultados':`Ver los ${historyRows.length} resultados`}</button>}
+        <details className="sowing-advanced" open={advancedOpen} onToggle={event=>setAdvancedOpen(event.currentTarget.open)}><summary>Ver estadísticas de las simulaciones <span>Opcional: promedio, variación y percentiles</span></summary><p>Este resumen describe tus simulaciones. No calcula una nueva cosecha ni mide el riesgo de tu cultivo.</p>
+          <section className="ydp-metrics" aria-label="Indicadores avanzados de siembra">{metrics.map((metric,index)=><DashboardMetric key={metric.label} label={metric.label} value={formatMetricNumber(metric.value,metric.digits??2)} unit={metric.value===null?'':metric.unit} detail={metric.detail} icon={metric.icon} feature={metric.feature} onExplain={()=>explain(metric.label,metric.value,metric.unit,metric.description,{resumen:metric.value===null?'No hay un valor disponible para este indicador.':metricReadings[index][0],lectura:metricReadings[index][1],limite:sampleLimit})}/>)}</section>
+          {advancedOpen&&<DashboardPanel title={muestra===1?'Resultado de la simulación disponible':'Percentiles de la muestra guardada'} subtitle="Detalle estadístico de los resultados guardados" icon={Activity} onExplain={explainPercentiles}><Suspense fallback={<p role="status">Preparando el gráfico…</p>}><GaussChart p10={percentiles?.p10} p50={percentiles?.p50} p90={percentiles?.p90} muestra={percentiles?.muestra}/></Suspense></DashboardPanel>}
+          <details className="sowing-methodology"><summary>Cómo se calculan estos datos</summary><p>Los indicadores describen simulaciones guardadas, no cosechas observadas.</p>{recomendaciones.map((item,index)=><article className="sowing-source-note" key={index}><h3>{typeof item.titulo==='string'?item.titulo:'De dónde viene el resumen'}</h3>{typeof item.texto==='string'&&<p>{item.texto}</p>}</article>)}</details>
+        </details>
+      </>:<div className="sowing-empty"><h3>No hay simulaciones guardadas en {baseYearNum}</h3><p>Tu plan de siembra sigue disponible. Puedes cambiar el año o hacer una simulación cuando tengas los datos del cultivo.</p>{Number.isInteger(data.año_ultima_simulacion)&&data.año_ultima_simulacion!==baseYearNum&&onSelectYear&&<button type="button" className="sowing-secondary" onClick={()=>onSelectYear(data.año_ultima_simulacion)}>Ver simulaciones de {data.año_ultima_simulacion}</button>}<button type="button" className="sowing-secondary" onClick={()=>onNavigate?.('simular')}>Preparar una simulación <ArrowUpRight size={18} aria-hidden="true"/></button></div>}
+    </SowingDisclosure>
+    <SimulationInfoCard isOpen={mostrarModalIa} onClose={()=>setMostrarModalIa(false)} loading={cargandoIa} data={datosIa}/>
+  </div>;
 }

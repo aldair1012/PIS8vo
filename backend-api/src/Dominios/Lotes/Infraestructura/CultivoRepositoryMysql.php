@@ -22,9 +22,9 @@ final class CultivoRepositoryMysql implements CultivoRepositoryInterface
     {
         $stmt = $this->db->prepare(
             'INSERT INTO parcelas
-                (usuario_id, nombre_parcela, variedad_maiz, tipo_maiz, ubicacion, area, latitud, longitud, fecha_siembra, geojson, altitud, ph, fertilizacion_fecha, fertilizacion_dosis, fertilizacion_tipo)
+                (usuario_id, nombre_parcela, variedad_maiz, tipo_maiz, ubicacion, area, latitud, longitud, fecha_siembra, geojson, altitud, ph, fertilizacion_fecha, fertilizacion_dosis, fertilizacion_tipo, tipo_fecha_siembra, ciclo_dias, riego_tipo)
              VALUES
-                (:usuario_id, :nombre_parcela, :variedad_maiz, :tipo_maiz, :ubicacion, :area, :latitud, :longitud, :fecha_siembra, :geojson, :altitud, :ph, :fertilizacion_fecha, :fertilizacion_dosis, :fertilizacion_tipo)'
+                (:usuario_id, :nombre_parcela, :variedad_maiz, :tipo_maiz, :ubicacion, :area, :latitud, :longitud, :fecha_siembra, :geojson, :altitud, :ph, :fertilizacion_fecha, :fertilizacion_dosis, :fertilizacion_tipo, :tipo_fecha_siembra, :ciclo_dias, :riego_tipo)'
         );
         $stmt->execute([
             'usuario_id'     => $datos['usuario_id'],
@@ -41,7 +41,10 @@ final class CultivoRepositoryMysql implements CultivoRepositoryInterface
             'ph'             => $datos['ph'] ?? null,
             'fertilizacion_fecha' => $datos['fertilizacion_fecha'] ?? null,
             'fertilizacion_dosis' => $datos['fertilizacion_dosis'] ?? null,
-            'fertilizacion_tipo'  => $datos['fertilizacion_tipo'] ?? null
+            'fertilizacion_tipo'  => $datos['fertilizacion_tipo'] ?? null,
+            'tipo_fecha_siembra' => $datos['tipo_fecha_siembra'] ?? null,
+            'ciclo_dias' => $datos['ciclo_dias'] ?? null,
+            'riego_tipo' => $datos['riego_tipo'] ?? null
         ]);
 
         return (int) $this->db->lastInsertId();
@@ -98,7 +101,10 @@ final class CultivoRepositoryMysql implements CultivoRepositoryInterface
                 ph             = :ph,
                 fertilizacion_fecha = :fertilizacion_fecha,
                 fertilizacion_dosis = :fertilizacion_dosis,
-                fertilizacion_tipo  = :fertilizacion_tipo
+                fertilizacion_tipo  = :fertilizacion_tipo,
+                tipo_fecha_siembra = :tipo_fecha_siembra,
+                ciclo_dias = :ciclo_dias,
+                riego_tipo = :riego_tipo
              WHERE id = :id'
         );
         return $stmt->execute([
@@ -116,6 +122,9 @@ final class CultivoRepositoryMysql implements CultivoRepositoryInterface
             'fertilizacion_fecha' => $datos['fertilizacion_fecha'] ?? null,
             'fertilizacion_dosis' => $datos['fertilizacion_dosis'] ?? null,
             'fertilizacion_tipo'  => $datos['fertilizacion_tipo'] ?? null,
+            'tipo_fecha_siembra' => $datos['tipo_fecha_siembra'] ?? null,
+            'ciclo_dias' => $datos['ciclo_dias'] ?? null,
+            'riego_tipo' => $datos['riego_tipo'] ?? null,
             'id'             => $id
         ]);
     }

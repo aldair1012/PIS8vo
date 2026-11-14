@@ -11,6 +11,27 @@ const toFiniteNumber = (value) => {
   return Number.isFinite(number) ? number : null;
 };
 
+const decimalFormat = new Intl.NumberFormat('es-EC', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const compactFormat = new Intl.NumberFormat('es-EC', { maximumFractionDigits: 2 });
+const dateFormat = new Intl.DateTimeFormat('es-EC', { day: '2-digit', month: '2-digit', year: 'numeric' });
+const formatDecimal = (value) => {
+  const number = toFiniteNumber(value);
+  return number === null ? null : decimalFormat.format(number);
+};
+const formatCompact = (value) => {
+  const number = toFiniteNumber(value);
+  return number === null ? null : compactFormat.format(number);
+};
+const formatDate = (value) => {
+  if (!value) return '-';
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? '-' : dateFormat.format(date);
+};
+const formatArea = (value) => {
+  const area = formatCompact(value);
+  return area === null ? 'Área no disponible' : `${area} ha`;
+};
+
 export default function History({ recargarDatos }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -82,7 +103,7 @@ export default function History({ recargarDatos }) {
     <div style={{ width: '100%', paddingBottom: '2rem' }}>
       <div className="dashboard-title-row" style={{ width: '100%', marginBottom: '1rem' }}>
         <div>
-          <h1 style={{ fontSize: '1.4rem', fontWeight: 800, margin: 0 }}>Historial de Simulaciones</h1>
+          <h1 style={{ fontSize: '1.4rem', fontWeight: 800, margin: 0 }}>Historial de simulaciones</h1>
           <p className="dashboard-title-desc" style={{ marginTop: '4px', fontSize: '0.84rem' }}>Revisa y compara tus simulaciones anteriores para monitorear la evolución agronómica de tus lotes.</p>
         </div>
         
@@ -112,11 +133,11 @@ export default function History({ recargarDatos }) {
 
       {/* Stats cards */}
       {data && (
-        <div className="kpi-row" style={{ width: '100%', marginBottom: '1rem' }}>
+        <div className="kpi-row history-kpi-row" style={{ width: '100%', marginBottom: '1rem' }}>
           <InteractiveKPI
             icon={<Database size={20} />}
             iconClass="text-secondary"
-            title="Total Simulaciones"
+            title="Simulaciones"
             value={totalSimulaciones === null ? 'No disponible' : totalSimulaciones}
             isMissing={totalSimulaciones === null}
             trend={totalSimulaciones === null ? 'Sin dato' : 'Registradas'}
@@ -128,8 +149,8 @@ export default function History({ recargarDatos }) {
           <InteractiveKPI
             icon={<TrendingUp size={20} />}
             iconClass="text-success"
-            title="Rendimiento Medio"
-            value={rendimientoPromedio === null ? 'No disponible' : <>{rendimientoPromedio.toFixed(2)} <span className="kpi-value-unit">t/ha</span></>}
+            title="Rendimiento medio"
+            value={rendimientoPromedio === null ? 'No disponible' : <>{formatDecimal(rendimientoPromedio)} <span className="kpi-value-unit">t/ha</span></>}
             isMissing={rendimientoPromedio === null}
             trend={rendimientoPromedio === null ? 'Sin dato' : 'Promedio'}
             progress={null}
@@ -140,8 +161,8 @@ export default function History({ recargarDatos }) {
           <InteractiveKPI
             icon={<Award size={20} />}
             iconClass="text-success"
-            title="Rendimiento Máximo"
-            value={rendimientoMaximo === null ? 'No disponible' : <>{rendimientoMaximo.toFixed(2)} <span className="kpi-value-unit">t/ha</span></>}
+            title="Rendimiento máximo"
+            value={rendimientoMaximo === null ? 'No disponible' : <>{formatDecimal(rendimientoMaximo)} <span className="kpi-value-unit">t/ha</span></>}
             isMissing={rendimientoMaximo === null}
             trend={rendimientoMaximo === null ? 'Sin dato' : 'Récord'}
             progress={null}
@@ -152,13 +173,13 @@ export default function History({ recargarDatos }) {
           <InteractiveKPI
             icon={<Activity size={20} />}
             iconClass="text-secondary"
-            title="Producción Acumulada"
-            value={produccionTotal === null ? 'No disponible' : <>{produccionTotal.toLocaleString('es-EC')} <span className="kpi-value-unit">t</span></>}
+            title="Producción acumulada"
+            value={produccionTotal === null ? 'No disponible' : <>{formatCompact(produccionTotal)} <span className="kpi-value-unit">t</span></>}
             isMissing={produccionTotal === null}
             trend={produccionTotal === null ? 'Sin dato' : 'Acumulada'}
             progress={null}
             progressColor="linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%)"
-            progressLabelLeft="Total Lotes"
+            progressLabelLeft="Total de lotes"
             delay={3}
           />
         </div>
@@ -167,7 +188,7 @@ export default function History({ recargarDatos }) {
       {/* Listings table */}
       {data && <div className="glass-panel" style={{ width: '100%', boxSizing: 'border-box' }}>
         <div className="glass-card-header" style={{ padding: '0.85rem 1.25rem' }}>
-          <h3 style={{ fontSize: '1rem', fontWeight: 700, margin: 0 }}>Simulaciones Registradas</h3>
+          <h2 style={{ fontSize: '1rem', fontWeight: 700, margin: 0 }}>Simulaciones registradas</h2>
         </div>
         <div className="glass-card-body" style={{ padding: 0, width: '100%', overflow: 'hidden' }}>
           {simulaciones.length === 0 ? (
@@ -183,7 +204,7 @@ export default function History({ recargarDatos }) {
                   <tr style={{ background: 'var(--surface-elevated)', borderBottom: '1.5px solid var(--border-subtle)' }}>
                     <th style={{ padding: '0.75rem 1rem', textAlign: 'left', fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Simulación / Lote</th>
                     <th style={{ padding: '0.75rem 1rem', textAlign: 'center', fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Modelo</th>
-                    <th style={{ padding: '0.75rem 1rem', textAlign: 'left', fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Variables Agronómicas</th>
+                    <th style={{ padding: '0.75rem 1rem', textAlign: 'left', fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Variables agronómicas</th>
                     <th style={{ padding: '0.75rem 1rem', textAlign: 'left', fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Rendimiento</th>
                     <th style={{ padding: '0.75rem 1rem', textAlign: 'center', fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Fecha</th>
                     <th style={{ padding: '0.75rem 1rem', textAlign: 'center', fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Acción</th>
@@ -195,36 +216,36 @@ export default function History({ recargarDatos }) {
                       <td style={{ padding: '0.7rem 1rem' }}>
                         <span style={{ fontWeight: 700, fontSize: '0.88rem', color: 'var(--text-primary)' }}>{sim.nombre || '-'}</span>
                         <div style={{ fontSize: '0.76rem', color: 'var(--text-subtle)', marginTop: '2px' }}>
-                          Lote: <strong style={{ color: 'var(--text-muted)' }}>{sim.nombre_parcela || 'Sin parcela indicada'}</strong> ({toFiniteNumber(sim.area_simulada) === null ? 'Área no disponible' : `${toFiniteNumber(sim.area_simulada)} ha`})
+                          Lote: <strong style={{ color: 'var(--text-muted)' }}>{sim.nombre_parcela || 'Sin parcela indicada'}</strong> ({formatArea(sim.area_simulada)})
                         </div>
                       </td>
                       <td style={{ padding: '0.7rem 1rem', textAlign: 'center' }}>
-                        <span style={{ padding: '0.2rem 0.55rem', borderRadius: '6px', background: 'rgba(59, 130, 246, 0.12)', color: '#60a5fa', fontWeight: 700, fontSize: '0.7rem', letterSpacing: '0.04em', textTransform: 'uppercase', border: '1px solid rgba(59, 130, 246, 0.25)', display: 'inline-block' }}>
+                        <span style={{ padding: '0.2rem 0.55rem', borderRadius: '6px', background: 'rgba(59, 130, 246, 0.12)', color: 'var(--zs-info)', fontWeight: 700, fontSize: '0.7rem', letterSpacing: '0.04em', textTransform: 'uppercase', border: '1px solid rgba(59, 130, 246, 0.25)', display: 'inline-block' }}>
                           {sim.modelo_usado || 'dss'}
                         </span>
                       </td>
                       <td style={{ padding: '0.7rem 1rem' }}>
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem 0.5rem', alignItems: 'center' }}>
                           <span style={{ background: 'var(--surface-hover)', border: '1px solid var(--border-subtle)', padding: '0.15rem 0.45rem', borderRadius: '6px', color: 'var(--text-primary)', fontWeight: 600, fontSize: '0.74rem' }}>
-                            {sim.temperatura ?? '-'}°C • {sim.humedad ?? '-'}% Hum
+                            {formatCompact(sim.temperatura) ?? '-'}°C • {formatCompact(sim.humedad) ?? '-'}% Hum
                           </span>
                           <span style={{ background: 'var(--surface-hover)', border: '1px solid var(--border-subtle)', padding: '0.15rem 0.45rem', borderRadius: '6px', color: 'var(--text-primary)', fontWeight: 600, fontSize: '0.74rem' }}>
-                            {sim.precipitacion ?? '-'} · {precipitationPeriod(sim)} Lluvia
+                            Lluvia: {formatCompact(sim.precipitacion) ?? '-'} {precipitationPeriod(sim)}
                           </span>
                           <span style={{ background: 'var(--surface-hover)', border: '1px solid var(--border-subtle)', padding: '0.15rem 0.45rem', borderRadius: '6px', color: 'var(--text-primary)', fontWeight: 600, fontSize: '0.74rem' }}>
-                            {sim.fertilizante ?? '-'} kg/ha Fert
+                            {formatCompact(sim.fertilizante) ?? '-'} kg/ha Fert
                           </span>
                           <span style={{ background: 'var(--surface-hover)', border: '1px solid var(--border-subtle)', padding: '0.15rem 0.45rem', borderRadius: '6px', color: 'var(--text-subtle)', fontSize: '0.74rem' }}>
-                            Suelo {sim.tipo_suelo || '-'} (pH {sim.ph_suelo ?? '-'})
+                            Suelo {sim.tipo_suelo || '-'} (pH {formatCompact(sim.ph_suelo) ?? '-'})
                           </span>
                         </div>
                       </td>
                       <td style={{ padding: '0.7rem 1rem' }}>
-                        <div style={{ fontWeight: 800, color: '#34d399', fontSize: '0.92rem' }}>{toFiniteNumber(sim.rendimiento_estimado) === null ? 'Rendimiento no disponible' : `${toFiniteNumber(sim.rendimiento_estimado).toFixed(2)} t/ha`}</div>
-                        <div style={{ fontSize: '0.74rem', color: 'var(--text-subtle)' }}>Total: {toFiniteNumber(sim.produccion_total) === null ? 'No disponible' : `${toFiniteNumber(sim.produccion_total).toLocaleString('es-EC')} t`}</div>
+                        <div style={{ fontWeight: 800, color: 'var(--zs-success)', fontSize: '0.92rem' }}>{formatDecimal(sim.rendimiento_estimado) === null ? 'Rendimiento no disponible' : `${formatDecimal(sim.rendimiento_estimado)} t/ha`}</div>
+                        <div style={{ fontSize: '0.74rem', color: 'var(--text-subtle)' }}>Total: {formatCompact(sim.produccion_total) === null ? 'No disponible' : `${formatCompact(sim.produccion_total)} t`}</div>
                       </td>
                       <td style={{ padding: '0.7rem 1rem', textAlign: 'center', fontSize: '0.8rem', color: 'var(--text-subtle)', whiteSpace: 'nowrap' }}>
-                        {sim.fecha ? new Date(sim.fecha).toLocaleDateString() : '-'}
+                        {formatDate(sim.fecha)}
                       </td>
                       <td style={{ padding: '0.7rem 1rem', textAlign: 'center' }}>
                         <button 

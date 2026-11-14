@@ -51,6 +51,11 @@ return static function (): Container {
 
     // --- Terreno (F03): datos de clima/suelo con caché de archivos ---
     $contenedor->registrar(
+        \ZeaSys\Dominios\Terreno\Dominio\ProveedorLluviaAnualInterface::class,
+        static fn (Container $c): \ZeaSys\Dominios\Terreno\Infraestructura\ProveedorLluviaAnual =>
+            new \ZeaSys\Dominios\Terreno\Infraestructura\ProveedorLluviaAnual($c->get(\ZeaSys\Dominios\Terreno\Dominio\CacheInterface::class))
+    );
+    $contenedor->registrar(
         \ZeaSys\Dominios\Terreno\Dominio\CacheInterface::class,
         static fn (): \ZeaSys\Dominios\Terreno\Infraestructura\CacheArchivos =>
             new \ZeaSys\Dominios\Terreno\Infraestructura\CacheArchivos()
@@ -83,6 +88,7 @@ return static function (): Container {
                 $c->get(\ZeaSys\Dominios\Terreno\Dominio\ProveedorClimaInterface::class),
                 $c->get(\ZeaSys\Dominios\Terreno\Dominio\ProveedorSueloInterface::class),
                 $c->get(\ZeaSys\Dominios\Terreno\Dominio\AltitudPorCultivoInterface::class),
+                $c->get(\ZeaSys\Dominios\Terreno\Dominio\ProveedorLluviaAnualInterface::class),
             )
     );
     $contenedor->registrar(
@@ -175,6 +181,7 @@ return static function (): Container {
                 $c->get(\ZeaSys\Dominios\Simulaciones\Explicacion\Aplicacion\ServicioExplicabilidad::class),
                 $c->get(\ZeaSys\Dominios\Terreno\Dominio\CacheInterface::class),
                 $c->get(\ZeaSys\Dominios\Lotes\Dominio\CultivoRepositoryInterface::class),
+                $c->get(\ZeaSys\Dominios\Terreno\Dominio\ProveedorLluviaAnualInterface::class),
             )
     );
     $contenedor->registrar(
@@ -316,6 +323,7 @@ return static function (): Container {
                 $c->get(\ZeaSys\Dominios\Analitica\Aplicacion\ServicioAnaliticaYield::class),
                 $c->get(\ZeaSys\Dominios\Analitica\Aplicacion\ServicioAnaliticaFinancial::class),
                 $c->get(\ZeaSys\Dominios\Analitica\Aplicacion\ServicioPrecioMaiz::class),
+                $c->get(\ZeaSys\Dominios\Analitica\Aplicacion\ServicioAnaliticaScenario::class),
             )
     );
     $contenedor->registrar(

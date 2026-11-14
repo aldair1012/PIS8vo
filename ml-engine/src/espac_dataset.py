@@ -14,7 +14,10 @@ ALLOWED={'MAIZ DURO SECO (GRANO SECO)':'duro_seco','MAIZ SUAVE SECO (GRANO SECO)
 SEEDS={'1':'comun','2':'mejorada','3':'certificada','4':'hibrida_nacional','5':'hibrida_internacional'}
 
 
-def prepare(path, profile_path=None):
+def prepare(path, profile_path=None, producto='grano_seco'):
+    if producto not in ('grano_seco', 'choclo'): raise ValueError('Producto de cosecha desconocido.')
+    allowed = ALLOWED if producto == 'grano_seco' else {'MAIZ DURO CHOCLO (CHOCLO)':'duro_choclo','MAIZ SUAVE CHOCLO (CHOCLO)':'suave_choclo'}
+    state = 'GRANO SECO' if producto == 'grano_seco' else 'CHOCLO'
     path=Path(path)
     profile_path=profile_path or ROOT/'documentacion/fuentes-maiz/perfil-candidato-espac2025.json'
     profile=json.loads(Path(profile_path).read_text(encoding='utf-8'))
@@ -32,9 +35,9 @@ def prepare(path, profile_path=None):
     def exclude(reason): exclusions[reason]=exclusions.get(reason,0)+1
     for number,row in enumerate(raw,2):
         kind=row['ct_nclavr'].strip()
-        if kind not in ALLOWED: exclude('producto_no_grano_seco'); continue
+        if kind not in allowed: exclude('producto_incompatible'); continue
         if row['ct_k504'].strip()!='1': exclude('cultivo_asociado'); continue
-        if row['ct_k520'].strip()!='GRANO SECO': exclude('estado_no_grano_seco'); continue
+        if row['ct_k520'].strip()!=state: exclude('estado_incompatible'); continue
         def num(key):
             text=row[key].strip().replace(',','.')
             return float(text) if text else math.nan
@@ -54,7 +57,7 @@ def prepare(path, profile_path=None):
         key=tuple(row[k] for k in fields)
         if key in seen: exclude('duplicado_exacto'); continue
         seen.add(key)
-        selected.append({'provincia':province,'tipo_maiz':ALLOWED[kind],'tipo_semilla':SEEDS[seed],
+        selected.append({'provincia':province,'tipo_maiz':allowed[kind],'tipo_semilla':SEEDS[seed],
                          'mes_siembra_sin':math.sin(2*math.pi*month/12),'mes_siembra_cos':math.cos(2*math.pi*month/12),
                          'superficie_sembrada_ha':planted,'rendimiento_t_ha':production/area,'peso_encuesta':weight,
                          'grupo_segmento':group,'linea_copia_maiz':number})
@@ -63,6 +66,7 @@ def prepare(path, profile_path=None):
     return frame,{'sha256':sha,'fuente':profile['url'],'filas_originales':len(raw),'filas_ensayo':len(frame),
                   'segmentos':int(frame.grupo_segmento.nunique()),'provincias':int(frame.provincia.nunique()),
                   'por_tipo':frame.tipo_maiz.value_counts().to_dict(),'exclusiones':exclusions,
-                  'objetivo':'ct_prod [toneladas métricas] / ct_k511ha [ha cosechadas]; sin ajuste adicional de humedad',
+                  'producto':producto, 'estado_cosecha':state,
+                  'objetivo':f'ct_prod [toneladas métricas de {state}] / ct_k511ha [ha cosechadas]; sin conversión entre productos ni ajuste de humedad',
                   'features':FEATURES,'sin_geolocalizacion_individual':True,'sin_variedad_comercial':True,
                   'nota':'Datos retrospectivos de encuesta de una edición; no equivalen a observaciones verificadas de parcelas de ZeaSys.'}

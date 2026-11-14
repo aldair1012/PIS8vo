@@ -1,0 +1,1336 @@
+{
+  "fecha": "2026-11-09",
+  "metodo": "Playwright Chrome + axe-core 4.14.0; cuenta ficticia en base desechable; inspección visual de capturas.",
+  "nota_revalidacion": "Matriz general de 54 casos; Siembra se revalidó en sus seis combinaciones tras corregir el foco de la tabla. No se ocultan los resultados originales locales. Se revalidaron también doce combinaciones de parcelas/mapa tras corregir la disposición móvil y el acercamiento.",
+  "limites": "Reglas automatizables y estados indicados; no es certificación completa de accesibilidad ni prueba de ausencia de todos los defectos.",
+  "paneles": [
+    {
+      "view": "Mis parcelas",
+      "width": 390,
+      "theme": "light",
+      "layout": {
+        "documentOverflow": false,
+        "contentOverflow": false,
+        "smallTargets": []
+      },
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": 6
+        }
+      ],
+      "errors": []
+    },
+    {
+      "view": "Simular cosecha",
+      "width": 390,
+      "theme": "light",
+      "layout": {
+        "documentOverflow": false,
+        "contentOverflow": false,
+        "smallTargets": []
+      },
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-allowed-role",
+          "nodes": 1
+        },
+        {
+          "id": "color-contrast",
+          "nodes": 1
+        }
+      ],
+      "errors": []
+    },
+    {
+      "view": "Rendimiento",
+      "width": 390,
+      "theme": "light",
+      "layout": {
+        "documentOverflow": false,
+        "contentOverflow": true,
+        "smallTargets": []
+      },
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-allowed-role",
+          "nodes": 1
+        },
+        {
+          "id": "aria-prohibited-attr",
+          "nodes": 3
+        },
+        {
+          "id": "color-contrast",
+          "nodes": 52
+        }
+      ],
+      "errors": []
+    },
+    {
+      "view": "Siembra",
+      "width": 390,
+      "theme": "light",
+      "layout": {
+        "documentOverflow": false,
+        "contentOverflow": false,
+        "smallTargets": []
+      },
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-allowed-role",
+          "nodes": 1
+        },
+        {
+          "id": "color-contrast",
+          "nodes": 22
+        }
+      ],
+      "errors": []
+    },
+    {
+      "view": "Clima y cultivo",
+      "width": 390,
+      "theme": "light",
+      "layout": {
+        "documentOverflow": false,
+        "contentOverflow": false,
+        "smallTargets": []
+      },
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-allowed-role",
+          "nodes": 1
+        }
+      ],
+      "errors": []
+    },
+    {
+      "view": "Finanzas",
+      "width": 390,
+      "theme": "light",
+      "layout": {
+        "documentOverflow": false,
+        "contentOverflow": false,
+        "smallTargets": []
+      },
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-allowed-role",
+          "nodes": 1
+        },
+        {
+          "id": "aria-prohibited-attr",
+          "nodes": 9
+        },
+        {
+          "id": "color-contrast",
+          "nodes": 66
+        }
+      ],
+      "errors": []
+    },
+    {
+      "view": "Mapa de parcelas",
+      "width": 390,
+      "theme": "light",
+      "layout": {
+        "documentOverflow": false,
+        "contentOverflow": false,
+        "smallTargets": []
+      },
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-allowed-role",
+          "nodes": 1
+        },
+        {
+          "id": "color-contrast",
+          "nodes": 1
+        },
+        {
+          "id": "link-in-text-block",
+          "nodes": 1
+        }
+      ],
+      "errors": []
+    },
+    {
+      "view": "Simulaciones guardadas",
+      "width": 390,
+      "theme": "light",
+      "layout": {
+        "documentOverflow": false,
+        "contentOverflow": false,
+        "smallTargets": []
+      },
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-allowed-role",
+          "nodes": 1
+        },
+        {
+          "id": "aria-prohibited-attr",
+          "nodes": 4
+        }
+      ],
+      "errors": []
+    },
+    {
+      "view": "Configuración",
+      "width": 390,
+      "theme": "light",
+      "layout": {
+        "documentOverflow": false,
+        "contentOverflow": false,
+        "smallTargets": []
+      },
+      "violations": [],
+      "incomplete": [],
+      "errors": []
+    },
+    {
+      "view": "Mis parcelas",
+      "width": 390,
+      "theme": "dark",
+      "layout": {
+        "documentOverflow": false,
+        "contentOverflow": false,
+        "smallTargets": []
+      },
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": 6
+        }
+      ],
+      "errors": []
+    },
+    {
+      "view": "Simular cosecha",
+      "width": 390,
+      "theme": "dark",
+      "layout": {
+        "documentOverflow": false,
+        "contentOverflow": false,
+        "smallTargets": []
+      },
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-allowed-role",
+          "nodes": 1
+        },
+        {
+          "id": "color-contrast",
+          "nodes": 1
+        }
+      ],
+      "errors": []
+    },
+    {
+      "view": "Rendimiento",
+      "width": 390,
+      "theme": "dark",
+      "layout": {
+        "documentOverflow": false,
+        "contentOverflow": true,
+        "smallTargets": []
+      },
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-allowed-role",
+          "nodes": 1
+        },
+        {
+          "id": "aria-prohibited-attr",
+          "nodes": 3
+        },
+        {
+          "id": "color-contrast",
+          "nodes": 61
+        }
+      ],
+      "errors": []
+    },
+    {
+      "view": "Siembra",
+      "width": 390,
+      "theme": "dark",
+      "layout": {
+        "documentOverflow": false,
+        "contentOverflow": false,
+        "smallTargets": []
+      },
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-allowed-role",
+          "nodes": 1
+        },
+        {
+          "id": "color-contrast",
+          "nodes": 31
+        }
+      ],
+      "errors": []
+    },
+    {
+      "view": "Clima y cultivo",
+      "width": 390,
+      "theme": "dark",
+      "layout": {
+        "documentOverflow": false,
+        "contentOverflow": false,
+        "smallTargets": []
+      },
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-allowed-role",
+          "nodes": 1
+        }
+      ],
+      "errors": []
+    },
+    {
+      "view": "Finanzas",
+      "width": 390,
+      "theme": "dark",
+      "layout": {
+        "documentOverflow": false,
+        "contentOverflow": false,
+        "smallTargets": []
+      },
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-allowed-role",
+          "nodes": 1
+        },
+        {
+          "id": "aria-prohibited-attr",
+          "nodes": 9
+        },
+        {
+          "id": "color-contrast",
+          "nodes": 77
+        }
+      ],
+      "errors": []
+    },
+    {
+      "view": "Mapa de parcelas",
+      "width": 390,
+      "theme": "dark",
+      "layout": {
+        "documentOverflow": false,
+        "contentOverflow": false,
+        "smallTargets": []
+      },
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-allowed-role",
+          "nodes": 1
+        },
+        {
+          "id": "color-contrast",
+          "nodes": 9
+        },
+        {
+          "id": "link-in-text-block",
+          "nodes": 1
+        }
+      ],
+      "errors": []
+    },
+    {
+      "view": "Simulaciones guardadas",
+      "width": 390,
+      "theme": "dark",
+      "layout": {
+        "documentOverflow": false,
+        "contentOverflow": false,
+        "smallTargets": []
+      },
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-allowed-role",
+          "nodes": 1
+        },
+        {
+          "id": "aria-prohibited-attr",
+          "nodes": 4
+        },
+        {
+          "id": "color-contrast",
+          "nodes": 11
+        }
+      ],
+      "errors": []
+    },
+    {
+      "view": "Configuración",
+      "width": 390,
+      "theme": "dark",
+      "layout": {
+        "documentOverflow": false,
+        "contentOverflow": false,
+        "smallTargets": []
+      },
+      "violations": [],
+      "incomplete": [],
+      "errors": []
+    },
+    {
+      "view": "Mis parcelas",
+      "width": 820,
+      "theme": "light",
+      "layout": {
+        "documentOverflow": false,
+        "contentOverflow": false,
+        "smallTargets": []
+      },
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": 4
+        }
+      ],
+      "errors": []
+    },
+    {
+      "view": "Simular cosecha",
+      "width": 820,
+      "theme": "light",
+      "layout": {
+        "documentOverflow": false,
+        "contentOverflow": false,
+        "smallTargets": []
+      },
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-allowed-role",
+          "nodes": 1
+        },
+        {
+          "id": "color-contrast",
+          "nodes": 1
+        }
+      ],
+      "errors": []
+    },
+    {
+      "view": "Rendimiento",
+      "width": 820,
+      "theme": "light",
+      "layout": {
+        "documentOverflow": false,
+        "contentOverflow": false,
+        "smallTargets": []
+      },
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-allowed-role",
+          "nodes": 1
+        },
+        {
+          "id": "aria-prohibited-attr",
+          "nodes": 3
+        },
+        {
+          "id": "color-contrast",
+          "nodes": 44
+        }
+      ],
+      "errors": []
+    },
+    {
+      "view": "Siembra",
+      "width": 820,
+      "theme": "light",
+      "layout": {
+        "documentOverflow": false,
+        "contentOverflow": false,
+        "smallTargets": []
+      },
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-allowed-role",
+          "nodes": 1
+        },
+        {
+          "id": "color-contrast",
+          "nodes": 8
+        }
+      ],
+      "errors": []
+    },
+    {
+      "view": "Clima y cultivo",
+      "width": 820,
+      "theme": "light",
+      "layout": {
+        "documentOverflow": false,
+        "contentOverflow": false,
+        "smallTargets": []
+      },
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-allowed-role",
+          "nodes": 1
+        }
+      ],
+      "errors": []
+    },
+    {
+      "view": "Finanzas",
+      "width": 820,
+      "theme": "light",
+      "layout": {
+        "documentOverflow": false,
+        "contentOverflow": false,
+        "smallTargets": []
+      },
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-allowed-role",
+          "nodes": 1
+        },
+        {
+          "id": "aria-prohibited-attr",
+          "nodes": 9
+        },
+        {
+          "id": "color-contrast",
+          "nodes": 80
+        }
+      ],
+      "errors": []
+    },
+    {
+      "view": "Mapa de parcelas",
+      "width": 820,
+      "theme": "light",
+      "layout": {
+        "documentOverflow": false,
+        "contentOverflow": false,
+        "smallTargets": []
+      },
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-allowed-role",
+          "nodes": 1
+        },
+        {
+          "id": "color-contrast",
+          "nodes": 1
+        },
+        {
+          "id": "link-in-text-block",
+          "nodes": 1
+        }
+      ],
+      "errors": []
+    },
+    {
+      "view": "Simulaciones guardadas",
+      "width": 820,
+      "theme": "light",
+      "layout": {
+        "documentOverflow": false,
+        "contentOverflow": false,
+        "smallTargets": []
+      },
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-allowed-role",
+          "nodes": 1
+        },
+        {
+          "id": "aria-prohibited-attr",
+          "nodes": 4
+        }
+      ],
+      "errors": []
+    },
+    {
+      "view": "Configuración",
+      "width": 820,
+      "theme": "light",
+      "layout": {
+        "documentOverflow": false,
+        "contentOverflow": false,
+        "smallTargets": []
+      },
+      "violations": [],
+      "incomplete": [],
+      "errors": []
+    },
+    {
+      "view": "Mis parcelas",
+      "width": 820,
+      "theme": "dark",
+      "layout": {
+        "documentOverflow": false,
+        "contentOverflow": false,
+        "smallTargets": []
+      },
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": 4
+        }
+      ],
+      "errors": []
+    },
+    {
+      "view": "Simular cosecha",
+      "width": 820,
+      "theme": "dark",
+      "layout": {
+        "documentOverflow": false,
+        "contentOverflow": false,
+        "smallTargets": []
+      },
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-allowed-role",
+          "nodes": 1
+        },
+        {
+          "id": "color-contrast",
+          "nodes": 1
+        }
+      ],
+      "errors": []
+    },
+    {
+      "view": "Rendimiento",
+      "width": 820,
+      "theme": "dark",
+      "layout": {
+        "documentOverflow": false,
+        "contentOverflow": false,
+        "smallTargets": []
+      },
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-allowed-role",
+          "nodes": 1
+        },
+        {
+          "id": "aria-prohibited-attr",
+          "nodes": 3
+        },
+        {
+          "id": "color-contrast",
+          "nodes": 56
+        }
+      ],
+      "errors": []
+    },
+    {
+      "view": "Siembra",
+      "width": 820,
+      "theme": "dark",
+      "layout": {
+        "documentOverflow": false,
+        "contentOverflow": false,
+        "smallTargets": []
+      },
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-allowed-role",
+          "nodes": 1
+        },
+        {
+          "id": "color-contrast",
+          "nodes": 17
+        }
+      ],
+      "errors": []
+    },
+    {
+      "view": "Clima y cultivo",
+      "width": 820,
+      "theme": "dark",
+      "layout": {
+        "documentOverflow": false,
+        "contentOverflow": false,
+        "smallTargets": []
+      },
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-allowed-role",
+          "nodes": 1
+        }
+      ],
+      "errors": []
+    },
+    {
+      "view": "Finanzas",
+      "width": 820,
+      "theme": "dark",
+      "layout": {
+        "documentOverflow": false,
+        "contentOverflow": false,
+        "smallTargets": []
+      },
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-allowed-role",
+          "nodes": 1
+        },
+        {
+          "id": "aria-prohibited-attr",
+          "nodes": 9
+        },
+        {
+          "id": "color-contrast",
+          "nodes": 89
+        }
+      ],
+      "errors": []
+    },
+    {
+      "view": "Mapa de parcelas",
+      "width": 820,
+      "theme": "dark",
+      "layout": {
+        "documentOverflow": false,
+        "contentOverflow": false,
+        "smallTargets": []
+      },
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-allowed-role",
+          "nodes": 1
+        },
+        {
+          "id": "color-contrast",
+          "nodes": 7
+        },
+        {
+          "id": "link-in-text-block",
+          "nodes": 1
+        }
+      ],
+      "errors": []
+    },
+    {
+      "view": "Simulaciones guardadas",
+      "width": 820,
+      "theme": "dark",
+      "layout": {
+        "documentOverflow": false,
+        "contentOverflow": false,
+        "smallTargets": []
+      },
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-allowed-role",
+          "nodes": 1
+        },
+        {
+          "id": "aria-prohibited-attr",
+          "nodes": 4
+        },
+        {
+          "id": "color-contrast",
+          "nodes": 11
+        }
+      ],
+      "errors": []
+    },
+    {
+      "view": "Configuración",
+      "width": 820,
+      "theme": "dark",
+      "layout": {
+        "documentOverflow": false,
+        "contentOverflow": false,
+        "smallTargets": []
+      },
+      "violations": [],
+      "incomplete": [],
+      "errors": []
+    },
+    {
+      "view": "Mis parcelas",
+      "width": 1440,
+      "theme": "light",
+      "layout": {
+        "documentOverflow": false,
+        "contentOverflow": false,
+        "smallTargets": []
+      },
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": 23
+        }
+      ],
+      "errors": []
+    },
+    {
+      "view": "Simular cosecha",
+      "width": 1440,
+      "theme": "light",
+      "layout": {
+        "documentOverflow": false,
+        "contentOverflow": false,
+        "smallTargets": []
+      },
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-allowed-role",
+          "nodes": 1
+        },
+        {
+          "id": "color-contrast",
+          "nodes": 13
+        }
+      ],
+      "errors": []
+    },
+    {
+      "view": "Rendimiento",
+      "width": 1440,
+      "theme": "light",
+      "layout": {
+        "documentOverflow": false,
+        "contentOverflow": false,
+        "smallTargets": []
+      },
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-allowed-role",
+          "nodes": 1
+        },
+        {
+          "id": "aria-prohibited-attr",
+          "nodes": 3
+        },
+        {
+          "id": "color-contrast",
+          "nodes": 17
+        }
+      ],
+      "errors": []
+    },
+    {
+      "view": "Siembra",
+      "width": 1440,
+      "theme": "light",
+      "layout": {
+        "documentOverflow": false,
+        "contentOverflow": false,
+        "smallTargets": []
+      },
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-allowed-role",
+          "nodes": 1
+        },
+        {
+          "id": "color-contrast",
+          "nodes": 15
+        }
+      ],
+      "errors": []
+    },
+    {
+      "view": "Clima y cultivo",
+      "width": 1440,
+      "theme": "light",
+      "layout": {
+        "documentOverflow": false,
+        "contentOverflow": false,
+        "smallTargets": []
+      },
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-allowed-role",
+          "nodes": 1
+        },
+        {
+          "id": "color-contrast",
+          "nodes": 13
+        }
+      ],
+      "errors": []
+    },
+    {
+      "view": "Finanzas",
+      "width": 1440,
+      "theme": "light",
+      "layout": {
+        "documentOverflow": false,
+        "contentOverflow": false,
+        "smallTargets": []
+      },
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-allowed-role",
+          "nodes": 1
+        },
+        {
+          "id": "aria-prohibited-attr",
+          "nodes": 9
+        },
+        {
+          "id": "color-contrast",
+          "nodes": 30
+        }
+      ],
+      "errors": []
+    },
+    {
+      "view": "Mapa de parcelas",
+      "width": 1440,
+      "theme": "light",
+      "layout": {
+        "documentOverflow": false,
+        "contentOverflow": false,
+        "smallTargets": []
+      },
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-allowed-role",
+          "nodes": 1
+        },
+        {
+          "id": "color-contrast",
+          "nodes": 1
+        },
+        {
+          "id": "link-in-text-block",
+          "nodes": 1
+        }
+      ],
+      "errors": []
+    },
+    {
+      "view": "Simulaciones guardadas",
+      "width": 1440,
+      "theme": "light",
+      "layout": {
+        "documentOverflow": false,
+        "contentOverflow": false,
+        "smallTargets": []
+      },
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-allowed-role",
+          "nodes": 1
+        },
+        {
+          "id": "aria-prohibited-attr",
+          "nodes": 4
+        },
+        {
+          "id": "color-contrast",
+          "nodes": 13
+        }
+      ],
+      "errors": []
+    },
+    {
+      "view": "Configuración",
+      "width": 1440,
+      "theme": "light",
+      "layout": {
+        "documentOverflow": false,
+        "contentOverflow": false,
+        "smallTargets": []
+      },
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": 14
+        }
+      ],
+      "errors": []
+    },
+    {
+      "view": "Mis parcelas",
+      "width": 1440,
+      "theme": "dark",
+      "layout": {
+        "documentOverflow": false,
+        "contentOverflow": false,
+        "smallTargets": []
+      },
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": 24
+        }
+      ],
+      "errors": []
+    },
+    {
+      "view": "Simular cosecha",
+      "width": 1440,
+      "theme": "dark",
+      "layout": {
+        "documentOverflow": false,
+        "contentOverflow": false,
+        "smallTargets": []
+      },
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-allowed-role",
+          "nodes": 1
+        },
+        {
+          "id": "color-contrast",
+          "nodes": 13
+        }
+      ],
+      "errors": []
+    },
+    {
+      "view": "Rendimiento",
+      "width": 1440,
+      "theme": "dark",
+      "layout": {
+        "documentOverflow": false,
+        "contentOverflow": false,
+        "smallTargets": []
+      },
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-allowed-role",
+          "nodes": 1
+        },
+        {
+          "id": "aria-prohibited-attr",
+          "nodes": 3
+        },
+        {
+          "id": "color-contrast",
+          "nodes": 29
+        }
+      ],
+      "errors": []
+    },
+    {
+      "view": "Siembra",
+      "width": 1440,
+      "theme": "dark",
+      "layout": {
+        "documentOverflow": false,
+        "contentOverflow": false,
+        "smallTargets": []
+      },
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-allowed-role",
+          "nodes": 1
+        },
+        {
+          "id": "color-contrast",
+          "nodes": 24
+        }
+      ],
+      "errors": []
+    },
+    {
+      "view": "Clima y cultivo",
+      "width": 1440,
+      "theme": "dark",
+      "layout": {
+        "documentOverflow": false,
+        "contentOverflow": false,
+        "smallTargets": []
+      },
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-allowed-role",
+          "nodes": 1
+        },
+        {
+          "id": "color-contrast",
+          "nodes": 13
+        }
+      ],
+      "errors": []
+    },
+    {
+      "view": "Finanzas",
+      "width": 1440,
+      "theme": "dark",
+      "layout": {
+        "documentOverflow": false,
+        "contentOverflow": false,
+        "smallTargets": []
+      },
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-allowed-role",
+          "nodes": 1
+        },
+        {
+          "id": "aria-prohibited-attr",
+          "nodes": 9
+        },
+        {
+          "id": "color-contrast",
+          "nodes": 46
+        }
+      ],
+      "errors": []
+    },
+    {
+      "view": "Mapa de parcelas",
+      "width": 1440,
+      "theme": "dark",
+      "layout": {
+        "documentOverflow": false,
+        "contentOverflow": false,
+        "smallTargets": []
+      },
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-allowed-role",
+          "nodes": 1
+        },
+        {
+          "id": "color-contrast",
+          "nodes": 22
+        },
+        {
+          "id": "link-in-text-block",
+          "nodes": 1
+        }
+      ],
+      "errors": []
+    },
+    {
+      "view": "Simulaciones guardadas",
+      "width": 1440,
+      "theme": "dark",
+      "layout": {
+        "documentOverflow": false,
+        "contentOverflow": false,
+        "smallTargets": []
+      },
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-allowed-role",
+          "nodes": 1
+        },
+        {
+          "id": "aria-prohibited-attr",
+          "nodes": 4
+        },
+        {
+          "id": "color-contrast",
+          "nodes": 24
+        }
+      ],
+      "errors": []
+    },
+    {
+      "view": "Configuración",
+      "width": 1440,
+      "theme": "dark",
+      "layout": {
+        "documentOverflow": false,
+        "contentOverflow": false,
+        "smallTargets": []
+      },
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": 14
+        }
+      ],
+      "errors": []
+    }
+  ],
+  "portada": [
+    {
+      "width": 390,
+      "theme": "light",
+      "overflow": false,
+      "errors": [],
+      "violations": [],
+      "incomplete": [
+        "color-contrast"
+      ]
+    },
+    {
+      "width": 390,
+      "theme": "dark",
+      "overflow": false,
+      "errors": [],
+      "violations": [],
+      "incomplete": [
+        "color-contrast"
+      ]
+    },
+    {
+      "width": 820,
+      "theme": "light",
+      "overflow": false,
+      "errors": [],
+      "violations": [],
+      "incomplete": [
+        "color-contrast"
+      ]
+    },
+    {
+      "width": 820,
+      "theme": "dark",
+      "overflow": false,
+      "errors": [],
+      "violations": [],
+      "incomplete": [
+        "color-contrast"
+      ]
+    },
+    {
+      "width": 1440,
+      "theme": "light",
+      "overflow": false,
+      "errors": [],
+      "violations": [],
+      "incomplete": [
+        "color-contrast"
+      ]
+    },
+    {
+      "width": 1440,
+      "theme": "dark",
+      "overflow": false,
+      "errors": [],
+      "violations": [],
+      "incomplete": [
+        "color-contrast"
+      ]
+    }
+  ],
+  "estados": [
+    {
+      "width": 390,
+      "theme": "light",
+      "state": "registro",
+      "violations": []
+    },
+    {
+      "width": 390,
+      "theme": "light",
+      "state": "fertilizante",
+      "violations": []
+    },
+    {
+      "width": 390,
+      "theme": "light",
+      "state": "producto-propio",
+      "violations": []
+    },
+    {
+      "width": 390,
+      "theme": "dark",
+      "state": "registro",
+      "violations": []
+    },
+    {
+      "width": 390,
+      "theme": "dark",
+      "state": "fertilizante",
+      "violations": []
+    },
+    {
+      "width": 390,
+      "theme": "dark",
+      "state": "producto-propio",
+      "violations": []
+    },
+    {
+      "width": 1440,
+      "theme": "light",
+      "state": "registro",
+      "violations": []
+    },
+    {
+      "width": 1440,
+      "theme": "light",
+      "state": "fertilizante",
+      "violations": []
+    },
+    {
+      "width": 1440,
+      "theme": "light",
+      "state": "producto-propio",
+      "violations": []
+    },
+    {
+      "width": 1440,
+      "theme": "dark",
+      "state": "registro",
+      "violations": []
+    },
+    {
+      "width": 1440,
+      "theme": "dark",
+      "state": "fertilizante",
+      "violations": []
+    },
+    {
+      "width": 1440,
+      "theme": "dark",
+      "state": "producto-propio",
+      "violations": []
+    }
+  ]
+}

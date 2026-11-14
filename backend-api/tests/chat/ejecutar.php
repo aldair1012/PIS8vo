@@ -56,6 +56,8 @@ require_once __DIR__ . '/RecuperacionHibridaTest.php';
 require_once __DIR__ . '/MemoriaSesionTest.php';
 require_once __DIR__ . '/FavoritoServiceTest.php';
 require_once __DIR__ . '/ChatDraftTest.php';
+require_once __DIR__ . '/SeleccionRendimientoTest.php';
+require_once __DIR__ . '/ContextoSiembraTest.php';
 
 foreach ($tests as $t) {
     try {

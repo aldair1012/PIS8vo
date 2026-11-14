@@ -78,7 +78,7 @@ def main() -> None:
                 raise ValueError(f"Province totals do not reconcile with national {key} in {year}")
 
         periods.append({
-            "anio": year,
+            "año": year,
             "actualizacion_fuente": int(re.search(r"20\d{2}", str(sheet["C4"].value)).group()),
             "fuente_hoja": str(sheet["A3"].value or "").replace("|► Fuente:", "").strip(),
             "nota_metodologica": re.sub(r"^\s*\.\s*", "", str(sheet["A5"].value or "").replace("|► Notas técnicas:", "").strip()),

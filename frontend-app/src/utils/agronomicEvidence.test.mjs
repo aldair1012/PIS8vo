@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { evidenceNumber, evidenceDate, scenarioHeatmap, descriptivePercentiles, catalogSowingEvents, measuredPhenologyEvents, soilWaterRows } from './agronomicEvidence.js';
+import { evidenceNumber, evidenceDate, scenarioHeatmap, descriptivePercentiles, catalogSowingEvents, catalogHarvestEvents, recordedCropEvents, calendarStartDate, measuredPhenologyEvents, soilWaterRows } from './agronomicEvidence.js';
 
 test('distingue cero medido de null, booleanos, espacios y objetos', () => {
   assert.equal(evidenceNumber(0), 0);
@@ -38,4 +38,17 @@ test('el calendario usa únicamente ventanas de catálogo con fuente y rango vá
 test('agua por estrato conserva null y cero como estados diferentes', () => {
   assert.deepEqual(soilWaterRows({ labels: ['A', 'B', 'C'], valores: [null, 0] }), [{ label: 'A', value: null }, { label: 'B', value: 0 }, { label: 'C', value: null }]);
   assert.deepEqual(soilWaterRows(null), []);
+});
+
+test('cosechas del catálogo conservan fechas, tipo y fuente sin convertirse en siembras',()=>{
+  const rows=[{tipo:'ventana_catalogo_no_pronostico',fuente:'Catálogo local',estado:'Cosecha: Manabí',rango:'1–31 AGO'}];
+  assert.equal(catalogHarvestEvents(rows,2026)[0].phase,'cosecha');assert.deepEqual(catalogSowingEvents(rows,2026),[]);
+  assert.deepEqual(catalogHarvestEvents([{...rows[0],fuente:null}],2026),[]);
+});
+test('el mes inicial contiene datos y las fechas de una campaña conservan su año propio',()=>{
+  const events=recordedCropEvents({eventos:[{fecha:'2027-03-12',tipo:'siembra_registrada',titulo:'Siembra',fuente:'Productor'},{fecha:'2027-07-12',tipo:'fin_ciclo_estimado',titulo:'Fin estimado',fuente:'Simulación #1'}]});
+  const start=calendarStartDate(events,2026,10);assert.equal(start.getFullYear(),2027);assert.equal(start.getMonth(),2);assert.equal(events.length,2);
+  assert.deepEqual(recordedCropEvents({eventos:[{fecha:'2026-02-30',tipo:'siembra_registrada',fuente:'Productor'}]}),[]);
+  const windows=catalogSowingEvents([{tipo:'ventana_catalogo_no_pronostico',fuente:'Catálogo',estado:'Siembra: Manabí',rango:'1–28 FEB'}],2026);
+  assert.equal(calendarStartDate(windows,2026,10).getMonth(),1);
 });

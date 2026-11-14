@@ -28,6 +28,7 @@ final class SimulacionService
         private ServicioExplicabilidad $explicabilidad,
         private CacheInterface $cache,
         private CultivoRepositoryInterface $cultivos,
+        private ?\ZeaSys\Dominios\Terreno\Dominio\ProveedorLluviaAnualInterface $lluviaAnual = null,
     ) {
     }
 
@@ -186,6 +187,7 @@ final class SimulacionService
             $resultado['trazabilidad']['advertencias'][] = 'La provincia de la parcela es '.$provincia['provincia'].', pero el modelo utiliza otra categoría geográfica de referencia. No hay respaldo específico confirmado para esa provincia.';
         }
 
+        $resultado['lluvia_anual_referencia'] = $this->lluviaAnual?->obtenerParaParcela($c);
         $resultado['evaluacion_variedades'] = $catalogo->evaluar($c, ['ph_suelo' => $datos['ph_suelo']]);
         $utilizada = $resultado['entradas_modelo']['variedad'] ?? null;
         $resultado['trazabilidad']['variedad_simulada'] = [

@@ -1,0 +1,6 @@
+/* Extensiones de los componentes internos compartidos; mantienen sus tokens de tema. */
+.zeasys-workspace .ydp-dashboard :is(.dashboard-metric--interactive,.dashboard-panel--interactive) { cursor:pointer; }
+.zeasys-workspace .ydp-dashboard :is(.dashboard-metric--interactive,.dashboard-panel--interactive):hover { border-color:var(--zs-border-strong); }
+.zeasys-workspace .ydp-dashboard .dashboard-explain-title { display:inline;text-align:left;padding:0;border:0;border-radius:4px;background:transparent;color:inherit;font:inherit;line-height:inherit;cursor:pointer;min-height:44px; }
+.zeasys-workspace .ydp-dashboard .dashboard-explain-title:focus-visible { outline:2px solid var(--zs-focus);outline-offset:4px; }
+.zeasys-workspace .ydp-dashboard .dashboard-explain-hint { display:block;margin-top:6px;color:var(--zs-muted);font-size:11px;line-height:1.5;font-weight:400; }

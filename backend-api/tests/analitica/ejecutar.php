@@ -70,6 +70,16 @@ function construirPrueba(string $variedad, array $clima = [], bool $api = false,
 }
 
 $pruebas = [
+    'Rendimiento resuelve provincia por coordenadas aunque la ubicación escrita difiera' => static function (): bool {
+        $lote=['usuario_id'=>7,'activo'=>true,'latitud'=>-1,'longitud'=>-80,'ubicacion'=>'Guayas'];
+        $result=(new ServicioAnaliticaYield(new CatalogoPrueba([]),new CultivosPrueba($lote),new SimulacionesPrueba()))->construir(7,1);
+        return ($result['cultivo_activo']['provincia']??null)==='Manabí';
+    },
+    'Rendimiento entrega provincia de referencia incluso sin simulaciones' => static function (): bool {
+        $lote=['usuario_id'=>7,'activo'=>true,'latitud'=>-1,'longitud'=>-80,'ubicacion'=>'Sin provincia en el nombre'];
+        $result=(new ServicioAnaliticaYield(new CatalogoPrueba([]),new CultivosPrueba($lote),new SimulacionesPrueba(true)))->construir(7,1);
+        return $result['sin_datos'] && ($result['cultivo_activo']['provincia']??null)==='Manabí';
+    },
     'reconoce la misma variedad con diferencias de comillas y guiones' => static function (): bool {
         return construirPrueba('INIAP H-603 Superior')['kpis']['rendimiento_maximo_catalogo'] === 12.0;
     },

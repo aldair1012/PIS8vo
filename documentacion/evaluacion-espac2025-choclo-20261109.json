@@ -1,0 +1,240 @@
+{
+  "estado": "completado",
+  "publicacion": false,
+  "calidad": {
+    "sha256": "47863f1a255ae3e7e695df0c1fe0a329e55c35b2acd1d2d866d4657b6bfa1ea5",
+    "fuente": "https://www.ecuadorencifras.gob.ec/documentos/web-inec/Estadisticas_agropecuarias/espac/2025/2_DD_DATOS_ABIERTOS_ESPAC_2025.zip",
+    "filas_originales": 4976,
+    "filas_ensayo": 705,
+    "segmentos": 241,
+    "provincias": 17,
+    "por_tipo": {
+      "suave_choclo": 660,
+      "duro_choclo": 45
+    },
+    "exclusiones": {
+      "producto_incompatible": 4198,
+      "cultivo_asociado": 54,
+      "estado_incompatible": 19
+    },
+    "producto": "choclo",
+    "estado_cosecha": "CHOCLO",
+    "objetivo": "ct_prod [toneladas métricas de CHOCLO] / ct_k511ha [ha cosechadas]; sin conversión entre productos ni ajuste de humedad",
+    "features": [
+      "provincia",
+      "tipo_maiz",
+      "tipo_semilla",
+      "mes_siembra_sin",
+      "mes_siembra_cos",
+      "superficie_sembrada_ha"
+    ],
+    "sin_geolocalizacion_individual": true,
+    "sin_variedad_comercial": true,
+    "nota": "Datos retrospectivos de encuesta de una edición; no equivalen a observaciones verificadas de parcelas de ZeaSys."
+  },
+  "configuraciones": [
+    {
+      "n_estimators": 250,
+      "max_depth": 2,
+      "learning_rate": 0.04,
+      "min_child_weight": 10,
+      "reg_lambda": 8
+    },
+    {
+      "n_estimators": 350,
+      "max_depth": 3,
+      "learning_rate": 0.03,
+      "min_child_weight": 10,
+      "reg_lambda": 5
+    }
+  ],
+  "parametros_comunes": {
+    "objective": "reg:squarederror",
+    "tree_method": "hist",
+    "n_jobs": 2,
+    "random_state": 42,
+    "subsample": 0.8,
+    "colsample_bytree": 0.8
+  },
+  "versiones": {
+    "python": "3.11.9",
+    "sklearn": "1.8.0",
+    "xgboost": "3.2.0"
+  },
+  "resultados": {
+    "segmento_muestral": {
+      "referencia_mediana_por_tipo": {
+        "n": 705,
+        "mae_t_ha": 2.2618322504508956,
+        "rmse_t_ha": 2.957817652717435,
+        "r2": -0.07239210187450751,
+        "mae_ponderado_t_ha": 2.2567793122487276,
+        "rmse_ponderado_t_ha": 3.0421031584078557
+      },
+      "xgboost": {
+        "0": {
+          "n": 705,
+          "mae_t_ha": 2.3325321435751256,
+          "rmse_t_ha": 2.930511088987275,
+          "r2": -0.05268286024631963,
+          "mae_ponderado_t_ha": 2.357280317414669,
+          "rmse_ponderado_t_ha": 2.9669043221770646
+        },
+        "1": {
+          "n": 705,
+          "mae_t_ha": 2.3750796494496,
+          "rmse_t_ha": 2.993502838952537,
+          "r2": -0.0984243766619397,
+          "mae_ponderado_t_ha": 2.423831390580737,
+          "rmse_ponderado_t_ha": 3.065174783110022
+        }
+      },
+      "pliegues": [
+        {
+          "fold": 1,
+          "n_train": 528,
+          "n_test": 177,
+          "grupos_solapados": 0
+        },
+        {
+          "fold": 2,
+          "n_train": 529,
+          "n_test": 176,
+          "grupos_solapados": 0
+        },
+        {
+          "fold": 3,
+          "n_train": 529,
+          "n_test": 176,
+          "grupos_solapados": 0
+        },
+        {
+          "fold": 4,
+          "n_train": 529,
+          "n_test": 176,
+          "grupos_solapados": 0
+        }
+      ],
+      "por_tipo": {
+        "duro_choclo": {
+          "n": 45,
+          "referencia": {
+            "n": 45,
+            "mae_t_ha": 2.9505106513596258,
+            "rmse_t_ha": 4.06972458834638,
+            "r2": -0.1444022295046874,
+            "mae_ponderado_t_ha": 3.6794288101710144,
+            "rmse_ponderado_t_ha": 4.962105884048074
+          }
+        },
+        "suave_choclo": {
+          "n": 660,
+          "referencia": {
+            "n": 660,
+            "mae_t_ha": 2.214876904934391,
+            "rmse_t_ha": 2.8663416375597763,
+            "r2": -0.06601566695760464,
+            "mae_ponderado_t_ha": 2.1409037243669893,
+            "rmse_ponderado_t_ha": 2.828895743718648
+          }
+        }
+      },
+      "predicciones": {
+        "archivo": "predicciones_segmento_muestral.csv",
+        "sha256": "ce1a3dd86af8c5649f8ad87d3b15a7454e049884046d8c1836bbb824fb45790b"
+      }
+    },
+    "provincia_no_vista": {
+      "referencia_mediana_por_tipo": {
+        "n": 705,
+        "mae_t_ha": 2.2829978840615115,
+        "rmse_t_ha": 2.967968484455498,
+        "r2": -0.07976534265080515,
+        "mae_ponderado_t_ha": 2.2682109490397595,
+        "rmse_ponderado_t_ha": 3.022810496860116
+      },
+      "xgboost": {
+        "0": {
+          "n": 705,
+          "mae_t_ha": 2.2877783715772866,
+          "rmse_t_ha": 2.9061113034889656,
+          "r2": -0.03522631015041511,
+          "mae_ponderado_t_ha": 2.2753216527904057,
+          "rmse_ponderado_t_ha": 2.894965192607944
+        },
+        "1": {
+          "n": 705,
+          "mae_t_ha": 2.3062633110610053,
+          "rmse_t_ha": 2.966334892420553,
+          "r2": -0.07857704793553966,
+          "mae_ponderado_t_ha": 2.2750384483560735,
+          "rmse_ponderado_t_ha": 2.9458462090741433
+        }
+      },
+      "pliegues": [
+        {
+          "fold": 1,
+          "n_train": 520,
+          "n_test": 185,
+          "grupos_solapados": 0
+        },
+        {
+          "fold": 2,
+          "n_train": 532,
+          "n_test": 173,
+          "grupos_solapados": 0
+        },
+        {
+          "fold": 3,
+          "n_train": 532,
+          "n_test": 173,
+          "grupos_solapados": 0
+        },
+        {
+          "fold": 4,
+          "n_train": 531,
+          "n_test": 174,
+          "grupos_solapados": 0
+        }
+      ],
+      "por_tipo": {
+        "duro_choclo": {
+          "n": 45,
+          "referencia": {
+            "n": 45,
+            "mae_t_ha": 2.9660780904564774,
+            "rmse_t_ha": 3.9436653799505073,
+            "r2": -0.07460478715664487,
+            "mae_ponderado_t_ha": 3.5699001723401267,
+            "rmse_ponderado_t_ha": 4.64942078216794
+          }
+        },
+        "suave_choclo": {
+          "n": 660,
+          "referencia": {
+            "n": 660,
+            "mae_t_ha": 2.236424233625491,
+            "rmse_t_ha": 2.8894708762821075,
+            "r2": -0.0832889806544943,
+            "mae_ponderado_t_ha": 2.1621876423788153,
+            "rmse_ponderado_t_ha": 2.849719700049469
+          }
+        }
+      },
+      "predicciones": {
+        "archivo": "predicciones_provincia_no_vista.csv",
+        "sha256": "aa5f2f618b82f43d99ee1391be822e7db87245e178bbcd9154a3e7b312fe05a4"
+      }
+    }
+  },
+  "limites": [
+    "Una edición de encuesta; sin validación fuera de 2025.",
+    "Sin nombres de variedades, química de suelo o clima de parcela enlazados.",
+    "Se excluyen áreas cosechadas nulas; no estima probabilidad de pérdida total.",
+    "Factores de expansión usados como pesos; no se estiman intervalos del diseño muestral.",
+    "El diccionario describe 115 variables y producción en toneladas; sus límites de año 25–26 no coinciden con códigos 24–25 observados. No se usa año como feature ni se inventan fechas.",
+    "Este contrato no es intercambiable con el modelo activo de 36 variables."
+  ],
+  "segundos": 0.782,
+  "decision": "No publicar: contrato distinto, una sola edición y falta validación externa compatible."
+}

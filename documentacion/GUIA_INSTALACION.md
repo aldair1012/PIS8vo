@@ -16,7 +16,7 @@ Instala en tu computadora los siguientes programas si no los tienes:
 2. Entra en tu navegador a: `http://localhost/phpmyadmin`
 3. Crea una base de datos nueva llamada `agropredict_db`. Si ya existe, no la sobrescribas; revisa su contenido y configuración.
 4. Haz clic en **Importar** y selecciona el archivo ubicado en:
-   `c:\xampp\htdocs\ZeaSys\database\schema-demo.sql`. El instalador del paquete para docentes crea automáticamente una base separada llamada `zeasys_revision`; siga su `LEEME.txt` para esa modalidad.
+   `c:\xampp\htdocs\ZeaSys\database\schema-demo.sql`. Para la entrega del 9 de noviembre de 2026, sigue `REVISION_DOCENTES.md`. El ZIP de código no crea una base automáticamente ni incluye cuentas personales.
 
 El esquema de demostración crea las tablas sin cuentas ni parcelas personales. El archivo `database/agropredict_db.sql` de esta instalación puede contener datos personales: no lo distribuyas ni lo importes para una demostración. Para actualizar una base existente, haz primero un respaldo y revisa qué migraciones le corresponden:
 
@@ -24,6 +24,11 @@ El esquema de demostración crea las tablas sin cuentas ni parcelas personales. 
 mysql -u root agropredict_db < database\migraciones\20261018_solo_xgboost.sql
 mysql -u root agropredict_db < database\migraciones\20261019_chat_favoritos.sql
 ```
+
+La planificación de Siembra del 10 de noviembre añade tres columnas opcionales.
+En una base existente ejecuta `php scripts/migrar_planificacion.php` desde la raíz:
+comprueba el esquema, respalda la tabla `parcelas` fuera del proyecto y añade sólo
+las columnas que falten. En una instalación nueva, `schema-demo.sql` ya las incluye.
 
 ---
 

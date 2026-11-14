@@ -43,7 +43,7 @@ final class Simulaciones implements SimulacionRepositoryInterface {
 function comprobar(bool $valor, string $mensaje): void { if (!$valor) throw new \RuntimeException($mensaje); }
 function peticion(array $query): Peticion {
     $_GET = $query; $_SERVER['REQUEST_METHOD'] = 'GET';
-    return Peticion::desdeGlobal('analitica/financial');
+    return Peticion::desdeGlobal('analitica/financiero');
 }
 function fixture(array $filas = [], array $query = [], array $lote = [], ?int $id = 1): array {
     $cultivo = array_replace(['id' => 1, 'usuario_id' => 7, 'area' => 1.0, 'nombre_parcela' => 'Prueba'], $lote);

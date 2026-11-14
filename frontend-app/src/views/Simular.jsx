@@ -1,3 +1,5 @@
+import AnnualRainReference from '../components/AnnualRainReference';
+import { numeroFertilizacion, validarProductoFertilizante } from '../utils/fertilizerInput';
 import { useEffect, useRef, useState } from 'react';
 import { MapPin, Pencil, Check, ArrowRight, RefreshCw, Info, Sprout } from 'lucide-react';
 import { simulacionService, parcelasService } from '../services/api';
@@ -11,26 +13,31 @@ import ParametrosCampo from '../components/ParametrosCampo';
 import ResultadoSimulacion from '../components/ResultadoSimulacion';
 import '../assets/simulacion.css';
 
+const areaEtiqueta = (value) => {
+  const numero = Number(value);
+  return Number.isFinite(numero) ? `${numero.toLocaleString('es-EC', { maximumFractionDigits: 2 })} ha` : 'Área sin registrar';
+};
 const vacios = { area: '', temp: '', hum: '', prec: '', fert: '', ph: '', suelo: '' };
 const esNumero = value => ['number','string'].includes(typeof value) && String(value).trim() !== '' && Number.isFinite(Number(value));
 
 const CATALOGO_FERT = [
-  { id:'urea', nombre:'Urea', formula:'46-0-0', N:46, P:0, K:0, Mg:0, S:0, precio:33 },
-  { id:'dap', nombre:'Fosfato diamónico (DAP)', formula:'18-46-0', N:18, P:46, K:0, Mg:0, S:0, precio:45 },
-  { id:'mop', nombre:'Muriato de potasio (MOP)', formula:'0-0-60', N:0, P:0, K:60, Mg:0, S:0, precio:36 },
-  { id:'sa', nombre:'Sulfato de amonio', formula:'21-0-0 · 24 S', N:21, P:0, K:0, Mg:0, S:24, precio:29 },
-  { id:'na', nombre:'Nitrato de amonio', formula:'33-0-0', N:33, P:0, K:0, Mg:0, S:0, precio:36 },
-  { id:'sulpomag', nombre:'Sulpomag (langbeinita)', formula:'0-0-22 · 18 S · 11 Mg', N:0, P:0, K:22, Mg:11, S:18, precio:38 },
-  { id:'npk15', nombre:'Mezcla NPK', formula:'15-15-15', N:15, P:15, K:15, Mg:0, S:0, precio:48 },
-  { id:'npk12', nombre:'Mezcla NPK', formula:'12-24-12 · 16 S', N:12, P:24, K:16, Mg:0, S:16, precio:52 },
-  { id:'npk10', nombre:'Mezcla NPK', formula:'10-30-10', N:10, P:30, K:10, Mg:0, S:0, precio:55 },
-  { id:'compost', nombre:'Compost o estiércol', formula:'~1,5-0,5-1,2', N:1.5, P:0.5, K:1.2, Mg:0.3, S:0.4, precio:8 },
+  { id:'urea', nombre:'Urea', formula:'46-0-0', N:46, P:0, K:0, Mg:0, S:0, precio:'' },
+  { id:'dap', nombre:'Fosfato diamónico (DAP)', formula:'18-46-0', N:18, P:46, K:0, Mg:0, S:0, precio:'' },
+  { id:'mop', nombre:'Muriato de potasio (MOP)', formula:'0-0-60', N:0, P:0, K:60, Mg:0, S:0, precio:'' },
+  { id:'sa', nombre:'Sulfato de amonio', formula:'21-0-0 · 24 S', N:21, P:0, K:0, Mg:0, S:24, precio:'' },
+  { id:'na', nombre:'Nitrato de amonio', formula:'33-0-0', N:33, P:0, K:0, Mg:0, S:0, precio:'' },
+  { id:'sulpomag', nombre:'Sulpomag (langbeinita)', formula:'0-0-22 · 18 S · 11 Mg', N:0, P:0, K:22, Mg:11, S:18, precio:'' },
+  { id:'npk15', nombre:'Mezcla NPK', formula:'15-15-15', N:15, P:15, K:15, Mg:0, S:0, precio:'' },
+  { id:'npk12', nombre:'Mezcla NPK', formula:'12-24-12 · 16 S', N:12, P:24, K:16, Mg:0, S:16, precio:'' },
+  { id:'npk10', nombre:'Mezcla NPK', formula:'10-30-10', N:10, P:30, K:10, Mg:0, S:0, precio:'' },
+  { id:'compost', nombre:'Compost o estiércol', formula:'~1,5-0,5-1,2', N:1.5, P:0.5, K:1.2, Mg:0.3, S:0.4, precio:'' },
 ];
-const num = v => { const n = parseFloat(String(v ?? '').replace(/,/g, '.').replace(/[^\\d.]/g, '')); return Number.isFinite(n) ? n : 0; };
+const num = v => numeroFertilizacion(v) ?? 0;
 const pct = v => Math.min(Math.max(num(v), 0), 100);
-const fmt1 = n => (Math.round(n * 10) / 10).toLocaleString('es');
+const fmt1 = n => n == null ? 'Sin precio' : (Math.round(n * 10) / 10).toLocaleString('es-EC');
 
 export default function Simular({ cultivos, onSimulationCompleted, onNavigate, onboardingStep, onNextOnboardingStep, onSimulationContextChange }) {
+  const planAplicado = useRef(false);
   const [cultivoId, setCultivoId] = useState('');
   const [datos, setDatos] = useState(vacios);
   const [campos, setCampos] = useState({});
@@ -53,7 +60,7 @@ export default function Simular({ cultivos, onSimulationCompleted, onNavigate, o
   const [customsFert, setCustomsFert] = useState([]);
   const [aplicacionesN, setAplicacionesN] = useState(2);
   const [formOtroAbierto, setFormOtroAbierto] = useState(false);
-  const [formOtro, setFormOtro] = useState({ nombre: '', N: '0', P: '0', K: '0', Mg: '0', S: '0', precio: '0' });
+  const [formOtro, setFormOtro] = useState({ nombre: '', N: '0', P: '0', K: '0', Mg: '0', S: '0', precio: '' });
   const modificados = useRef({});
   const headingResultado = useRef(null);
   const tabs = useRef([]);
@@ -71,11 +78,12 @@ export default function Simular({ cultivos, onSimulationCompleted, onNavigate, o
   const totalK = seleccionados.reduce((s, id) => { const r = inputsFert[id]; const p = findFert(id); const kg = r?.unidad === 'kg' ? num(r?.dosis) : num(r?.dosis) * 50; return s + kg * pct(r?.K ?? p?.K ?? 0) / 100; }, 0);
   const totalMg = seleccionados.reduce((s, id) => { const r = inputsFert[id]; const p = findFert(id); const kg = r?.unidad === 'kg' ? num(r?.dosis) : num(r?.dosis) * 50; return s + kg * pct(r?.Mg ?? p?.Mg ?? 0) / 100; }, 0);
   const totalS = seleccionados.reduce((s, id) => { const r = inputsFert[id]; const p = findFert(id); const kg = r?.unidad === 'kg' ? num(r?.dosis) : num(r?.dosis) * 50; return s + kg * pct(r?.S ?? p?.S ?? 0) / 100; }, 0);
-  const totalCosto = seleccionados.reduce((s, id) => { const r = inputsFert[id]; const p = findFert(id); const dosis = num(r?.dosis); const precio = num(r?.precio ?? p?.precio); return s + (r?.unidad === 'kg' ? (num(r?.dosis) / 50) * precio : dosis * precio); }, 0);
+  const costoIncompleto = seleccionados.some(id => !String(inputsFert[id]?.precio ?? '').trim());
+  const totalCosto = costoIncompleto ? null : seleccionados.reduce((s, id) => { const r = inputsFert[id]; const p = findFert(id); const dosis = num(r?.dosis); const precio = num(r?.precio ?? p?.precio); return s + (r?.unidad === 'kg' ? (num(r?.dosis) / 50) * precio : dosis * precio); }, 0);
   const planFertilizacion = seleccionados.map(id => {
     const p = findFert(id); const r = inputsFert[id] || {};
     const dosis = num(r.dosis); const kg = r.unidad === 'kg' ? dosis : dosis * 50;
-    return { nombre: p?.nombre, formula: p?.formula, dosis, unidad: r.unidad || 'bolsa', porcentaje: { N: pct(r.N ?? p?.N), P: pct(r.P ?? p?.P), K: pct(r.K ?? p?.K), Mg: pct(r.Mg ?? p?.Mg), S: pct(r.S ?? p?.S) }, aporte: { N: kg * pct(r.N ?? p?.N) / 100, P: kg * pct(r.P ?? p?.P) / 100, K: kg * pct(r.K ?? p?.K) / 100, Mg: kg * pct(r.Mg ?? p?.Mg) / 100, S: kg * pct(r.S ?? p?.S) / 100 }, costo: r.unidad === 'kg' ? (dosis / 50) * num(r.precio ?? p?.precio) : dosis * num(r.precio ?? p?.precio) };
+    return { nombre: p?.nombre, formula: p?.formula, dosis, unidad: r.unidad || 'bolsa', porcentaje: { N: pct(r.N ?? p?.N), P: pct(r.P ?? p?.P), K: pct(r.K ?? p?.K), Mg: pct(r.Mg ?? p?.Mg), S: pct(r.S ?? p?.S) }, aporte: { N: kg * pct(r.N ?? p?.N) / 100, P: kg * pct(r.P ?? p?.P) / 100, K: kg * pct(r.K ?? p?.K) / 100, Mg: kg * pct(r.Mg ?? p?.Mg) / 100, S: kg * pct(r.S ?? p?.S) / 100 }, costo: String(r.precio ?? '').trim() === '' ? null : r.unidad === 'kg' ? (dosis / 50) * num(r.precio) : dosis * num(r.precio) };
   });
 
   const invalidar = () => { setResult(null); setAreaResultado(null); setError(null); };
@@ -93,7 +101,7 @@ export default function Simular({ cultivos, onSimulationCompleted, onNavigate, o
     setInputsFert(prev => {
       if (prev[id]) return prev;
       const p = findFert(id);
-      return { ...prev, [id]: { dosis: '1', unidad: 'bolsa', N: String(p?.N ?? 0), P: String(p?.P ?? 0), K: String(p?.K ?? 0), Mg: String(p?.Mg ?? 0), S: String(p?.S ?? 0), precio: String(p?.precio ?? 0) } };
+      return { ...prev, [id]: { dosis: '1', unidad: 'bolsa', N: String(p?.N ?? 0), P: String(p?.P ?? 0), K: String(p?.K ?? 0), Mg: String(p?.Mg ?? 0), S: String(p?.S ?? 0), precio: String(p?.precio ?? '') } };
     });
     invalidar();
   };
@@ -106,7 +114,7 @@ export default function Simular({ cultivos, onSimulationCompleted, onNavigate, o
     setCustomsFert(prev => [...prev, prod]);
     setSeleccionados(prev => [...prev, prod.id]);
     setInputsFert(prev => ({ ...prev, [prod.id]: { dosis: '1', unidad: 'bolsa', N: formOtro.N, P: formOtro.P, K: formOtro.K, Mg: formOtro.Mg, S: formOtro.S, precio: formOtro.precio } }));
-    setFormOtro({ nombre: '', N: '0', P: '0', K: '0', Mg: '0', S: '0', precio: '0' });
+    setFormOtro({ nombre: '', N: '0', P: '0', K: '0', Mg: '0', S: '0', precio: '' });
     setFormOtroAbierto(false);
     invalidar();
   };
@@ -115,7 +123,7 @@ export default function Simular({ cultivos, onSimulationCompleted, onNavigate, o
     modificados.current = {};
     setCultivoId(id); setEditarDatos(false); setReferencias(null); setAviso(''); setAutomaticos({});
     setDatos({ ...vacios, area: esNumero(crop?.area) ? String(crop.area) : '', ph: esNumero(crop?.ph) ? String(crop.ph) : '' });
-    setCampos({}); setFecha(crop?.fecha_siembra ?? ''); setHistorico(false); setVista('preparar'); invalidar();
+    setCampos({ ...(esNumero(crop?.ciclo_dias)?{ciclo_dias:Number(crop.ciclo_dias)}:{}), ...(Object.hasOwn(definicionesCampo.riego_tipo.opciones,crop?.riego_tipo)?{riego_tipo:crop.riego_tipo}:{}) }); setFecha(crop?.fecha_siembra ?? ''); setHistorico(false); setVista('preparar'); invalidar();
   };
 
   useEffect(() => {
@@ -148,7 +156,12 @@ export default function Simular({ cultivos, onSimulationCompleted, onNavigate, o
   }, [cultivoId, phParcela, areaParcela, recarga]);
 
   useEffect(() => {
-    if (modoFert !== 'producto' || seleccionados.length === 0) return;
+    if (modoFert !== 'producto') return;
+    if (seleccionados.length === 0) {
+      if (planAplicado.current) { setDatos(prev => ({ ...prev, fert: '' })); setCampos(prev => { const next = { ...prev }; for (const key of ['fosforo_p2o5_kg_ha','potasio_k2o_kg_ha','magnesio_kg_ha','azufre_kg_ha','aplicaciones_nitrogeno']) delete next[key]; return next; }); }
+      planAplicado.current = false; return;
+    }
+    planAplicado.current = true;
     setDatos(prev => ({ ...prev, fert: fmt1(totalN) }));
     setCampos(prev => ({
       ...prev,
@@ -174,6 +187,10 @@ export default function Simular({ cultivos, onSimulationCompleted, onNavigate, o
     event.preventDefault(); setError(null);
     if (!parcela) { setError('Selecciona una parcela para preparar la simulación.'); return; }
     if (sinModelo) { setError('Esta variedad tiene ficha de consulta; su cálculo específico todavía requiere un modelo compatible.'); return; }
+    if (modoFert === 'producto') for (const id of seleccionados) {
+      const message = validarProductoFertilizante(inputsFert[id] || {});
+      if (message) { setError(message); return; }
+    }
     const numbers = {};
     for (const [key, label, min, max] of [
       ['area', 'Área a simular', .01, Number(parcela.area)], ['temp', 'Temperatura media', 0, 50],
@@ -212,7 +229,7 @@ export default function Simular({ cultivos, onSimulationCompleted, onNavigate, o
     finally { setLoading(false); }
   };
 
-  const placeholdersNum = { area: 'Ej.: 1.5', temp: 'Ej.: 24.5', hum: 'Ej.: 70', prec: 'Ej.: 650', fert: 'Ej.: 120', ph: 'Ej.: 6.2' };
+  const placeholdersNum = { area: 'Ej.: 1,5', temp: 'Ej.: 24,5', hum: 'Ej.: 70', prec: 'Ej.: 650', fert: 'Ej.: 120', ph: 'Ej.: 6,2' };
   const campoNumero = (key, id, label, hint) => {
     const bloqueado = Boolean(automaticos[key] && !editarDatos);
     return <div className="form-group"><label className="form-label" htmlFor={id}>{label} <span aria-hidden="true">*</span></label>
@@ -241,11 +258,12 @@ export default function Simular({ cultivos, onSimulationCompleted, onNavigate, o
       {onboardingStep === 2 && <p className="simulation-notice">Tu parcela ya está registrada. Completa este escenario para crear tu primera simulación.</p>}
       <div className="simulation-prepare-grid"><form className="simulation-form" noValidate onSubmit={simular}>
         <fieldset disabled={loading}><section className="simulation-section"><header className="simulation-section-heading"><div><span className="simulation-section-number">01</span><h2>Elige tu parcela</h2></div></header>
-          <div className="form-group"><label className="form-label" htmlFor="simular-parcela">Parcela de referencia <span aria-hidden="true">*</span></label><select id="simular-parcela" className="form-select" value={cultivoId} onChange={event => seleccionar(event.target.value)}><option value="">Selecciona una parcela</option>{cultivos.map(crop => <option key={crop.id} value={crop.id}>{crop.nombre_parcela} ({crop.area} ha)</option>)}</select></div>
+          <div className="form-group"><label className="form-label" htmlFor="simular-parcela">Parcela de referencia <span aria-hidden="true">*</span></label><select id="simular-parcela" className="form-select" value={cultivoId} onChange={event => seleccionar(event.target.value)}><option value="">Selecciona una parcela</option>{cultivos.map(crop => <option key={crop.id} value={crop.id}>{crop.nombre_parcela} ({areaEtiqueta(crop.area)})</option>)}</select></div>
           {parcela && <div className="simulation-location"><MapPin size={19} /><div><strong>{provincia ?? (cargandoDatos ? 'Identificando provincia…' : 'Provincia sin confirmar')}</strong><p>{parcela.ubicacion || 'Coordenadas registradas en la parcela'}</p><span>{parcela.variedad_maiz}</span></div></div>}
         </section>
         <section className="simulation-section"><header className="simulation-section-heading"><div><span className="simulation-section-number">02</span><h2>Revisa los datos del escenario</h2></div><button type="button" className="simulation-edit" onClick={() => setEditarDatos(value => !value)} disabled={!cultivoId}>{editarDatos ? <Check size={16} /> : <Pencil size={16} />}{editarDatos ? 'Listo, usar estos datos' : 'Modificar datos'}</button></header>
           <p>Precargamos las referencias disponibles de ubicación. Puedes modificarlas para este cálculo; no cambiarán el registro de tu parcela.</p>
+          {referencias && <AnnualRainReference reference={referencias.lluvia_anual_referencia} unavailable />}
           {cargandoDatos && <p role="status" className="simulation-loading"><span /> Consultando clima, suelo y provincia…</p>}
           {aviso && <p role="status" className="simulation-notice">{aviso}</p>}
           <div className="simulation-fields-grid">
@@ -264,20 +282,20 @@ export default function Simular({ cultivos, onSimulationCompleted, onNavigate, o
                 <p className="form-hint">Marca los fertilizantes que vas a usar. El nitrógeno calculado rellena la casilla del escenario y P, K, Mg, S y aplicaciones entran al modelo.</p>
                 <div className="simulation-chips">
                   {catalogoFert.map(p => (
-                    <button type="button" key={p.id} className={`simulation-chip ${seleccionados.includes(p.id) ? 'sel' : ''}`} onClick={() => toggleFert(p.id)}>{p.nombre} <small>{p.formula}</small></button>
+                    <button type="button" key={p.id} className={`simulation-chip ${seleccionados.includes(p.id) ? 'sel' : ''}`} aria-pressed={seleccionados.includes(p.id)} onClick={() => toggleFert(p.id)}>{p.nombre} <small>{p.formula}</small></button>
                   ))}
                   <button type="button" className="simulation-chip simulation-chip-otro" onClick={() => setFormOtroAbierto(v => !v)}>➕ Otros…</button>
                 </div>
                 {formOtroAbierto && (
                   <div className="simulation-otro-form">
                     <div className="simulation-otro-grid">
-                      <input className="form-input" placeholder="Nombre del producto" value={formOtro.nombre} onChange={e => setFormOtro({ ...formOtro, nombre: e.target.value })} />
-                      <input className="form-input" inputMode="decimal" placeholder="% N" value={formOtro.N} onChange={e => setFormOtro({ ...formOtro, N: e.target.value })} />
-                      <input className="form-input" inputMode="decimal" placeholder="% P₂O₅" value={formOtro.P} onChange={e => setFormOtro({ ...formOtro, P: e.target.value })} />
-                      <input className="form-input" inputMode="decimal" placeholder="% K₂O" value={formOtro.K} onChange={e => setFormOtro({ ...formOtro, K: e.target.value })} />
-                      <input className="form-input" inputMode="decimal" placeholder="% Mg" value={formOtro.Mg} onChange={e => setFormOtro({ ...formOtro, Mg: e.target.value })} />
-                      <input className="form-input" inputMode="decimal" placeholder="% S" value={formOtro.S} onChange={e => setFormOtro({ ...formOtro, S: e.target.value })} />
-                      <input className="form-input" inputMode="decimal" placeholder="Precio/bolsa" value={formOtro.precio} onChange={e => setFormOtro({ ...formOtro, precio: e.target.value })} />
+                      <label>Nombre del producto<input className="form-input" placeholder="Nombre del producto" value={formOtro.nombre} onChange={e => setFormOtro({ ...formOtro, nombre: e.target.value })} /></label>
+                      <label>Nitrógeno (%)<input className="form-input" inputMode="decimal" placeholder="% N" value={formOtro.N} onChange={e => setFormOtro({ ...formOtro, N: e.target.value })} /></label>
+                      <label>P₂O₅ (%)<input className="form-input" inputMode="decimal" placeholder="% P₂O₅" value={formOtro.P} onChange={e => setFormOtro({ ...formOtro, P: e.target.value })} /></label>
+                      <label>K₂O (%)<input className="form-input" inputMode="decimal" placeholder="% K₂O" value={formOtro.K} onChange={e => setFormOtro({ ...formOtro, K: e.target.value })} /></label>
+                      <label>Magnesio (%)<input className="form-input" inputMode="decimal" placeholder="% Mg" value={formOtro.Mg} onChange={e => setFormOtro({ ...formOtro, Mg: e.target.value })} /></label>
+                      <label>Azufre (%)<input className="form-input" inputMode="decimal" placeholder="% S" value={formOtro.S} onChange={e => setFormOtro({ ...formOtro, S: e.target.value })} /></label>
+                      <label>Precio por bolsa de 50 kg (USD)<input className="form-input" inputMode="decimal" placeholder="Precio/bolsa" value={formOtro.precio} onChange={e => setFormOtro({ ...formOtro, precio: e.target.value })} /></label>
                     </div>
                     <button type="button" className="btn btn-outline" onClick={agregarOtroFert}>Agregar a mi plan</button>
                   </div>
@@ -291,14 +309,14 @@ export default function Simular({ cultivos, onSimulationCompleted, onNavigate, o
                         <button type="button" className="simulation-fert-quitar" onClick={() => { setSeleccionados(prev => prev.filter(x => x !== id)); invalidar(); }}>Quitar ✕</button>
                       </div>
                       <div className="simulation-fert-row-grid">
-                        <label>Peso<input className="form-input" inputMode="decimal" value={r.dosis || ''} onChange={e => updateInput(id, 'dosis', e.target.value)} /></label>
+                        <label>Dosis por hectárea<input className="form-input" inputMode="decimal" value={r.dosis || ''} onChange={e => updateInput(id, 'dosis', e.target.value)} /></label>
                         <label>Unidad<select className="form-select" value={r.unidad || 'bolsa'} onChange={e => updateInput(id, 'unidad', e.target.value)}>
                           <option value="bolsa">Bolsa 50 kg</option><option value="kg">kg/ha</option>
                         </select></label>
                         <label>% N<input className="form-input" inputMode="decimal" value={r.N || ''} onChange={e => updateInput(id, 'N', e.target.value)} /></label>
                         <label>Precio/bolsa<input className="form-input" inputMode="decimal" value={r.precio || ''} onChange={e => updateInput(id, 'precio', e.target.value)} /></label>
                       </div>
-                      <p className="form-hint">{fmt1(kg)} kg de producto → <strong>{fmt1(kg * pct(r.N || p?.N || 0) / 100)} kg N/ha</strong> · {fmt1(kg * pct(r.P || p?.P || 0) / 100)} P₂O₅ · {fmt1(kg * pct(r.K || p?.K || 0) / 100)} K₂O · {fmt1(kg * pct(r.Mg || p?.Mg || 0) / 100)} Mg · {fmt1(kg * pct(r.S || p?.S || 0) / 100)} S · costo <strong>{fmt1(r.unidad === 'kg' ? (dosis / 50) * num(r.precio || p?.precio) : dosis * num(r.precio || p?.precio))} USD/ha</strong></p>
+                      <p className="form-hint">{fmt1(kg)} kg de producto → <strong>{fmt1(kg * pct(r.N || p?.N || 0) / 100)} kg N/ha</strong> · {fmt1(kg * pct(r.P || p?.P || 0) / 100)} P₂O₅ · {fmt1(kg * pct(r.K || p?.K || 0) / 100)} K₂O · {fmt1(kg * pct(r.Mg || p?.Mg || 0) / 100)} Mg · {fmt1(kg * pct(r.S || p?.S || 0) / 100)} S · costo <strong>{String(r.precio ?? '').trim() ? `${fmt1(r.unidad === 'kg' ? (dosis / 50) * num(r.precio) : dosis * num(r.precio))} USD/ha` : 'Sin precio ingresado'}</strong></p>
                     </div>
                   );
                 })}
@@ -307,7 +325,7 @@ export default function Simular({ cultivos, onSimulationCompleted, onNavigate, o
                     <div><strong>N total:</strong> {fmt1(totalN)} kg N/ha</div>
                     <div><strong>P₂O₅:</strong> {fmt1(totalP)} · <strong>K₂O:</strong> {fmt1(totalK)} · <strong>Mg:</strong> {fmt1(totalMg)} · <strong>S:</strong> {fmt1(totalS)} kg/ha</div>
                     <div><strong>Costo:</strong> {fmt1(totalCosto)} USD/ha</div>
-                    <p className="form-hint">P, K, Mg y S entran al modelo como parámetros de campo; aplicaciones de N: {aplicacionesN}. INIAP (secano): fracciona el N — mitad a los 15 días y mitad a los 30.</p>
+                    <p className="form-hint">Aportes calculados a partir de la composición indicada. Aplicaciones de N planificadas: {aplicacionesN}. Confirma la etiqueta del producto; esta conversión no recomienda una dosis ni un calendario.</p>
                   </div>
                 )}
                 <div className="form-group">

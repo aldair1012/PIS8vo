@@ -11,6 +11,7 @@ use ZeaSys\Dominios\Simulaciones\Dominio\SimulacionRepositoryInterface;
 use ZeaSys\Dominios\Simulaciones\Aplicacion\CatalogoMaiz;
 use ZeaSys\Dominios\Terreno\Aplicacion\ProvinciaParcela;
 use ZeaSys\Kernel\Errores\AccesoDenegadoException;
+use ZeaSys\Kernel\Errores\ValidacionException;
 
 /**
  * El backend no redacta ni resuelve preguntas. Sólo valida la parcela,
@@ -118,6 +119,7 @@ final class ChatService
             }
         }
 
+        $simulacionSeleccionada = $this->resolverSimulacionSeleccionada($vista, $dashboard, $usuarioId, $cultivoId);
         $contextoAgricola = [];
         if ($usuarioId > 0 && is_array($cultivoSeleccionado)) {
             try {
@@ -126,6 +128,7 @@ final class ChatService
                     (int) ($cultivoSeleccionado['id'] ?? 0),
                     $año,
                     $simulacionesRecientes,
+                    $vista === 'scenarios',
                 );
             } catch (\Throwable) {
                 // El dashboard visible y las simulaciones siguen disponibles
@@ -152,6 +155,7 @@ final class ChatService
             'simulaciones_recientes' => $this->normalizar(array_slice($simulacionesRecientes, 0, 8)),
             'contexto_agricola' => $this->normalizar($contextoAgricola),
             'dashboard_visible' => $dashboardContexto,
+            'simulacion_seleccionada' => $simulacionSeleccionada,
             'historial_conversacion' => $this->normalizar($historial),
         ];
 
@@ -235,12 +239,24 @@ final class ChatService
         $this->favoritos->eliminar($usuarioId, $conversacionId);
     }
 
+    /** Recupera la ejecución visible desde la cuenta y parcela autorizadas. */
+    private function resolverSimulacionSeleccionada(?string $vista, ?array $dashboard, int $usuarioId, ?int $cultivoId): ?array
+    {
+        if ($vista !== 'yield' || !isset($dashboard['simulacion_seleccionada'])) return null;
+        $selected = $dashboard['simulacion_seleccionada'];
+        $id = is_array($selected) ? filter_var($selected['id'] ?? null, FILTER_VALIDATE_INT) : false;
+        if ($id === false || $id < 1) throw new ValidacionException('La simulación seleccionada no es válida.');
+        $row = $this->simulaciones->obtenerPorId($id);
+        if ($usuarioId < 1 || $cultivoId === null || !$row || (int) ($row['usuario_id'] ?? 0) !== $usuarioId || (int) ($row['parcela_id'] ?? 0) !== $cultivoId) {
+            throw new AccesoDenegadoException('La simulación seleccionada no pertenece a esta parcela de tu cuenta.');
+        }
+        return $row;
+    }
+
     /**
-     * Convierte el formulario de Nueva Simulación en un bloque seguro y
-     * acotado. La parcela y su área proceden de la base de datos autorizada;
-     * el resto son valores visibles del formulario, no una simulación
-     * ejecutada. Se descartan campos desconocidos o fuera de rango.
-     *
+     * Convierte el formulario de Nueva Simulación en un bloque seguro y acotado.
+     * La parcela y su área proceden de la base de datos autorizada; el resto son
+     * valores visibles del formulario, no una ejecución. Descarta campos fuera de rango.
      * @param array<string, mixed>|null $simulacion
      * @param array<string, mixed>|null $cultivo
      * @return array<string, mixed>|null

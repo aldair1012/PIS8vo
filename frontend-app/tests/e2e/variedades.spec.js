@@ -26,14 +26,14 @@ for (const theme of ['light', 'dark']) {
         localStorage.setItem('onboarding_done_987', 'true');
       }, theme);
       await page.route('**/backend-api/public/index.php/api/**', route => route.fulfill({ json: {} }));
-      await page.route('**/backend-api/public/index.php/api/auth/me', route => route.fulfill({ json: { authenticated: true, user: { id: 987, nombre: 'Prueba', rol: 'productor' } } }));
-      await page.route('**/backend-api/public/index.php/api/cultivos', route => route.fulfill({ json: [{ id: 1, nombre_parcela: 'Parcela ficticia', area: 1, variedad_maiz: 'INIAP 101 Blanco Harinoso Precoz', tipo_maiz: 'Suave Harinoso', ubicacion: 'Pichincha', altitud: 2700, ph: 6.2 }] }));
-      await page.route('**/backend-api/public/index.php/api/cultivos/valores-ubicacion*', route => route.fulfill({ json: { success: true, temperatura: 16, humedad: 70, ph_suelo: 6.2, tipo_suelo: 'franco', area_simulada: 1 } }));
+      await page.route('**/backend-api/public/index.php/api/auth/yo', route => route.fulfill({ json: { autenticado: true, usuario: { id: 987, nombre: 'Prueba', rol: 'productor' } } }));
+      await page.route('**/backend-api/public/index.php/api/parcelas', route => route.fulfill({ json: [{ id: 1, nombre_parcela: 'Parcela ficticia', area: 1, variedad_maiz: 'INIAP 101 Blanco Harinoso Precoz', tipo_maiz: 'Suave Harinoso', ubicacion: 'Pichincha', altitud: 2700, ph: 6.2 }] }));
+      await page.route('**/backend-api/public/index.php/api/parcelas/valores-ubicacion*', route => route.fulfill({ json: { exito: true, temperatura: 16, humedad: 70, ph_suelo: 6.2, tipo_suelo: 'franco', area_simulada: 1 } }));
       const requests = [];
       await page.route('**/backend-api/public/index.php/api/simulaciones/evaluar-variedades', route => {
         const payload = route.request().postDataJSON();
         requests.push(payload);
-        return route.fulfill({ json: { success: true, evaluacion: evaluations[payload.objetivo] } });
+        return route.fulfill({ json: { exito: true, evaluacion: evaluations[payload.objetivo] } });
       });
       await page.goto('/');
       const navigation = page.getByRole('button', { name: 'Simular cosecha', exact: true });
@@ -81,10 +81,10 @@ test('canguil ofrece su ficha y evita una simulación específica sin soporte', 
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.addInitScript(() => { localStorage.setItem('onboarding_completed', 'true'); });
   await page.route('**/backend-api/public/index.php/api/**', route => route.fulfill({ json: {} }));
-  await page.route('**/backend-api/public/index.php/api/auth/me', route => route.fulfill({ json: { authenticated: true, user: { id: 987, nombre: 'Prueba', rol: 'productor' } } }));
-  await page.route('**/backend-api/public/index.php/api/cultivos', route => route.fulfill({ json: [{ id: 2, nombre_parcela: 'Canguil ficticio', area: 1, variedad_maiz: 'INIAP 198 Canguil', tipo_maiz: 'Duro Amarillo / Blanco', ubicacion: 'Pichincha', altitud: 2700, ph: 6.2 }] }));
-  await page.route('**/backend-api/public/index.php/api/cultivos/valores-ubicacion*', route => route.fulfill({ json: { success: true, area_simulada: 1 } }));
-  await page.route('**/backend-api/public/index.php/api/simulaciones/evaluar-variedades', route => route.fulfill({ json: { success: true, evaluacion: evaluations.perfil_canguil } }));
+  await page.route('**/backend-api/public/index.php/api/auth/yo', route => route.fulfill({ json: { autenticado: true, usuario: { id: 987, nombre: 'Prueba', rol: 'productor' } } }));
+  await page.route('**/backend-api/public/index.php/api/parcelas', route => route.fulfill({ json: [{ id: 2, nombre_parcela: 'Canguil ficticio', area: 1, variedad_maiz: 'INIAP 198 Canguil', tipo_maiz: 'Duro Amarillo / Blanco', ubicacion: 'Pichincha', altitud: 2700, ph: 6.2 }] }));
+  await page.route('**/backend-api/public/index.php/api/parcelas/valores-ubicacion*', route => route.fulfill({ json: { exito: true, area_simulada: 1 } }));
+  await page.route('**/backend-api/public/index.php/api/simulaciones/evaluar-variedades', route => route.fulfill({ json: { exito: true, evaluacion: evaluations.perfil_canguil } }));
   await page.goto('/');
   await page.getByRole('button', { name: 'Simular cosecha', exact: true }).click();
   await page.locator('#simular-parcela').selectOption('2');

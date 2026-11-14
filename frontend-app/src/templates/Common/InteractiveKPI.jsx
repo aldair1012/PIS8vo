@@ -259,19 +259,25 @@ export default function InteractiveKPI({
   };
 
   if (!hasRenderableSlides) return null;
+  const canExplain = typeof onClick === 'function' || typeof onExplain === 'function' || typeof activeSlide.onClick === 'function';
 
   return (
     <div
       className={`kpi-card kpi-card-state-${activeMetricState} ${activeSlideIsEmpty ? 'kpi-card-empty' : ''}`}
       data-kpi-state={activeMetricState}
       title={tooltip}
+      role="group"
       aria-label={tooltip || activeSlide.title}
       style={{
         animationDelay: `${delay * 60}ms`,
         cursor: (onClick || onExplain || activeSlide.onClick || activeSlide.explanation) ? 'pointer' : 'default',
         ...style
       }}
-      onClick={handleCardClick}
+      onClick={event => {
+        if (!canExplain || event.target.closest('button,a,input,select,textarea') || window.getSelection()?.toString().trim()) return;
+        event.currentTarget.querySelector('.kpi-explain-title')?.focus({ preventScroll: true });
+        handleCardClick(event);
+      }}
     >
 
 
@@ -280,7 +286,7 @@ export default function InteractiveKPI({
         <div className={`kpi-icon-wrapper ${iconClass} kpi-icon-state-${activeMetricState}`}>
           {icon}
         </div>
-        <span className="kpi-heading-title">{activeSlide.title}</span>
+        <span className="kpi-heading-title">{canExplain ? <button type="button" className="kpi-explain-title" aria-label={`Ver explicación de ${activeSlide.title}`} onClick={event => { event.stopPropagation(); handleCardClick(event); }}>{activeSlide.title}</button> : activeSlide.title}</span>
         <div className="kpi-heading-status">
           {activeSlide.severity?.label && <span className={`kpi-severity kpi-severity--${activeSlide.severity.level}`}><span aria-hidden="true">⚠</span> {activeSlide.severity.label}</span>}
         </div>
@@ -355,20 +361,8 @@ export default function InteractiveKPI({
           <span>{activeSlide.explanation?.fuente ? `Fuente: ${activeSlide.explanation.fuente}` : 'Fuente pendiente de completar'}</span>
         </div>
       )}
-      {slides.length > 1 && <div className="kpi-switcher" aria-label={`Indicadores de ${activeSlide.title}`}><span>{visibleIndex + 1} / {slideCount}</span><div className="kpi-carousel-dots">{slides.map((slide, idx) => <button type="button" key={idx} className={`kpi-dot ${idx === visibleIndex ? 'active' : ''}`} aria-label={`Mostrar ${slide.title}, indicador ${idx + 1} de ${slideCount}`} aria-pressed={idx === visibleIndex} onClick={(event) => { event.stopPropagation(); setActiveIndex(idx); }} />)}</div></div>}
-      {(onClick || onExplain || activeSlide.onClick || activeSlide.explanation) && (
-        <button
-          type="button"
-          className="kpi-explain-action"
-          onClick={(event) => {
-            event.stopPropagation();
-            handleCardClick(event);
-          }}
-          aria-label={`Ver explicación de ${activeSlide.title}`}
-        >
-          Ver explicación <span aria-hidden="true">↗</span>
-        </button>
-      )}
+      {slides.length > 1 && <div className="kpi-switcher" role="group" aria-label={`Indicadores de ${activeSlide.title}`}><span>{visibleIndex + 1} / {slideCount}</span><div className="kpi-carousel-dots">{slides.map((slide, idx) => <button type="button" key={idx} className={`kpi-dot ${idx === visibleIndex ? 'active' : ''}`} aria-label={`Mostrar ${slide.title}, indicador ${idx + 1} de ${slideCount}`} aria-pressed={idx === visibleIndex} onClick={(event) => { event.stopPropagation(); setActiveIndex(idx); }} />)}</div></div>}
+      {canExplain && <span className="kpi-explain-hint">Toca la tarjeta para entender este dato</span>}
     </div>
   );
 }

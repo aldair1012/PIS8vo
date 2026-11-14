@@ -246,7 +246,7 @@ final class ClienteHttp
         return $this->capturarRespuesta($ch);
     }
 
-    /** Subida multipart (para /api/auth/upload-avatar, que lee $_FILES['foto']). */
+    /** Subida multipart (para /api/auth/subir-avatar, que lee $_FILES['foto']). */
     public function solicitarMultipart(string $ruta, array $campos): array
     {
         $ch = curl_init(BASE_URL . $ruta);
@@ -330,16 +330,16 @@ function ejecutarEscenario(string $modo, array &$temporales): array
     $registrar('ia-status requiere autenticacion', 'GET', '/api/simulaciones/ia-status', null, 'exacto');
 
     // 2) Cuenta de prueba
-    $registrar('registro', 'POST', '/api/auth/register', [
+    $registrar('registro', 'POST', '/api/auth/registrarse', [
         'nombre' => 'Contrato Test', 'correo' => $email,
         'contrasena' => $password, 'confirmar_contrasena' => $password,
     ], 'exacto');
-    $registrar('me tras registro', 'GET', '/api/auth/me', null, 'exacto');
-    $registrar('login', 'POST', '/api/auth/login', ['correo' => $email, 'contrasena' => $password, 'remember' => false], 'exacto');
+    $registrar('me tras registro', 'GET', '/api/auth/yo', null, 'exacto');
+    $registrar('login', 'POST', '/api/auth/iniciar-sesion', ['correo' => $email, 'contrasena' => $password, 'remember' => false], 'exacto');
 
     // 3) Parcela
-    $registrar('cultivos lista vacia', 'GET', '/api/cultivos', null, 'exacto');
-    $alta = $registrar('crear cultivo', 'POST', '/api/cultivos', [
+    $registrar('parcelas lista vacia', 'GET', '/api/parcelas', null, 'exacto');
+    $alta = $registrar('crear cultivo', 'POST', '/api/parcelas', [
         'nombre_parcela' => 'Lote Contrato', 'variedad_maiz' => 'Pioneer P4039',
         'tipo_maiz' => 'Duro Amarillo', 'ubicacion' => 'Quito - Pichincha', 'area' => 2.5,
         'latitud' => -0.1807, 'longitud' => -78.4678, 'altitud' => 2850, 'ph' => 6.2,
@@ -347,9 +347,9 @@ function ejecutarEscenario(string $modo, array &$temporales): array
     $ids['cultivo'] = $alta['cuerpo']['cultivo']['id'] ?? null;
     if ($ids['cultivo'] === null) { fail('No se pudo obtener el id del cultivo creado.'); exit(2); }
 
-    $registrar('cultivos lista con 1', 'GET', '/api/cultivos', null, 'exacto');
-    $registrar('cultivos mapa', 'GET', '/api/cultivos/mapa', null, 'exacto');
-    $registrar('valores ubicacion (externo)', 'GET', '/api/cultivos/valores-ubicacion?id=' . $ids['cultivo'], null, 'estructural');
+    $registrar('parcelas lista con 1', 'GET', '/api/parcelas', null, 'exacto');
+    $registrar('parcelas mapa', 'GET', '/api/parcelas/mapa', null, 'exacto');
+    $registrar('valores ubicacion (externo)', 'GET', '/api/parcelas/valores-ubicacion?id=' . $ids['cultivo'], null, 'estructural');
 
     // 4) Simulación + explicaciones
     $sim = $registrar('simular', 'POST', '/api/simulaciones/simular', [
@@ -362,26 +362,26 @@ function ejecutarEscenario(string $modo, array &$temporales): array
 
     $registrar('historial', 'GET', '/api/simulaciones/historial?año=' . date('Y'), null, 'exacto');
 
-    $registrar('explain cascada', 'POST', '/api/simulaciones/explain', [
+    $registrar('explain cascada', 'POST', '/api/simulaciones/explicar', [
         'nombre' => 'Cascada de Brechas de Rendimiento', 'cultivo_id' => $ids['cultivo'], 'año' => (int) date('Y'),
         'valor' => '4.2', 'unidad' => 't/ha', 'estado' => 'riesgoso',
         'datos_grafico' => ['labels' => ['Potencial', 'Nitrógeno', 'Agua', 'Final'], 'proyeccion_actual' => [11.2, 9.1, 7.4, 6.9]],
     ], 'tolerante');
-    $registrar('explain ROI', 'POST', '/api/simulaciones/explain', [
+    $registrar('explain ROI', 'POST', '/api/simulaciones/explicar', [
         'nombre' => 'ROI Anual', 'cultivo_id' => $ids['cultivo'], 'año' => (int) date('Y'),
         'valor' => '35', 'unidad' => '%', 'estado' => 'optimo',
     ], 'tolerante');
-    $registrar('explain probabilidad', 'POST', '/api/simulaciones/explain', [
+    $registrar('explain probabilidad', 'POST', '/api/simulaciones/explicar', [
         'nombre' => 'Probabilidad de Cosecha', 'cultivo_id' => $ids['cultivo'], 'año' => (int) date('Y'),
         'valor' => '82%', 'unidad' => '', 'estado' => 'bueno',
     ], 'tolerante');
 
     // 5) Dashboards DSS
     $q = '?cultivo_id=' . $ids['cultivo'] . '&año=' . date('Y');
-    $registrar('dashboard yield', 'GET', '/api/yield' . $q, null, 'tolerante');
-    $registrar('dashboard scenarios', 'GET', '/api/scenarios' . $q, null, 'tolerante');
-    $registrar('dashboard climate (externo)', 'GET', '/api/climate' . $q, null, 'estructural');
-    $registrar('dashboard financial', 'GET', '/api/financial' . $q, null, 'tolerante');
+    $registrar('dashboard yield', 'GET', '/api/rendimiento' . $q, null, 'tolerante');
+    $registrar('dashboard scenarios', 'GET', '/api/escenarioss' . $q, null, 'tolerante');
+    $registrar('dashboard climate (externo)', 'GET', '/api/clima' . $q, null, 'estructural');
+    $registrar('dashboard financial', 'GET', '/api/financiero' . $q, null, 'tolerante');
 
     // 5b) Chatbot (paso 30): pregunta por un indicador conocido y verifica respuesta
     $registrar('chat responde indicador', 'POST', '/api/chat/preguntar', [
@@ -390,19 +390,19 @@ function ejecutarEscenario(string $modo, array &$temporales): array
     ], 'tolerante');
 
     // 6) Perfil y cierre
-    $registrar('auth update', 'POST', '/api/auth/update', ['nombre' => 'Contrato Test Editado'], 'exacto');
-    $registrar('subir avatar', 'POST', '/api/auth/upload-avatar', ['foto' => new CURLFile($tmpPng, 'image/png', 'contrato.png')], 'exacto', multipart: true);
-    $registrar('eliminar avatar', 'POST', '/api/auth/delete-avatar', null, 'exacto');
+    $registrar('auth update', 'POST', '/api/auth/actualizar', ['nombre' => 'Contrato Test Editado'], 'exacto');
+    $registrar('subir avatar', 'POST', '/api/auth/subir-avatar', ['foto' => new CURLFile($tmpPng, 'image/png', 'contrato.png')], 'exacto', multipart: true);
+    $registrar('eliminar avatar', 'POST', '/api/auth/eliminar-cuenta-avatar', null, 'exacto');
     $registrar('sync google avatar', 'POST', '/api/auth/sync-google-avatar', ['foto_url' => 'https://lh3.googleusercontent.com/a/contrato_test=s96-c'], 'exacto');
-    $registrar('eliminar avatar (google)', 'POST', '/api/auth/delete-avatar', null, 'exacto');
-    $registrar('logout', 'POST', '/api/auth/logout', null, 'exacto');
-    $registrar('login de nuevo', 'POST', '/api/auth/login', ['correo' => $email, 'contrasena' => $password, 'remember' => false], 'exacto');
+    $registrar('eliminar avatar (google)', 'POST', '/api/auth/eliminar-cuenta-avatar', null, 'exacto');
+    $registrar('logout', 'POST', '/api/auth/cerrar-sesion', null, 'exacto');
+    $registrar('login de nuevo', 'POST', '/api/auth/iniciar-sesion', ['correo' => $email, 'contrasena' => $password, 'remember' => false], 'exacto');
 
     // 7) Limpieza (y contrato de eliminación)
     $registrar('eliminar simulacion', 'DELETE', '/api/simulaciones/eliminar?id=' . $ids['simulacion'], null, 'exacto');
-    $registrar('eliminar cultivo', 'DELETE', '/api/cultivos?id=' . $ids['cultivo'], null, 'exacto');
-    $registrar('eliminar cuenta', 'POST', '/api/auth/delete', null, 'exacto');
-    $registrar('me tras eliminar cuenta', 'GET', '/api/auth/me', null, 'exacto');
+    $registrar('eliminar cultivo', 'DELETE', '/api/parcelas?id=' . $ids['cultivo'], null, 'exacto');
+    $registrar('eliminar cuenta', 'POST', '/api/auth/eliminar-cuenta', null, 'exacto');
+    $registrar('me tras eliminar cuenta', 'GET', '/api/auth/yo', null, 'exacto');
 
     return $pasos;
 }

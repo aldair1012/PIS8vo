@@ -14,14 +14,20 @@ final class ServicioDatosTerreno
 {
     public static function claveCache(float $latitud, float $longitud): string
     {
-        return 'precision_data_v6_'.round($latitud,3).'_'.round($longitud,3);
+        return 'precision_data_v7_'.round($latitud,4).'_'.round($longitud,4);
     }
     public function __construct(
         private CacheInterface $cache,
         private ProveedorClimaInterface $clima,
         private ProveedorSueloInterface $suelo,
         private AltitudPorCultivoInterface $altitudPorCultivo,
+        private ?\ZeaSys\Dominios\Terreno\Dominio\ProveedorLluviaAnualInterface $lluvia = null,
     ) {
+    }
+
+    public function referenciaLluvia(array $parcela): ?array
+    {
+        return $this->lluvia?->obtenerParaParcela($parcela);
     }
 
     /**
@@ -122,6 +128,14 @@ final class ServicioDatosTerreno
             // Fallback: se conservan los valores por defecto, exactamente como en el original.
         }
 
+        $lluvia = $this->lluvia?->obtener($latitud, $longitud);
+        $datosClimaYSuelo['lluvia_anual_referencia'] = $lluvia;
+        if ($lluvia !== null) {
+            $datosClimaYSuelo['clima']['precipitacion'] = $lluvia['valor'];
+            $datosClimaYSuelo['clima_campos_api'][] = 'precipitacion';
+            $datosClimaYSuelo['exito'] = true;
+        }
+
         // API de SoilGrids
         try {
             $bloqueSuelo = $this->suelo->obtenerSuelo($latitud, $longitud);
@@ -145,6 +159,7 @@ final class ServicioDatosTerreno
             ? 'SoilGrids WMS (suelo estimado por mapa, 250 m, 0–5 cm)'
             : 'suelo de respaldo';
         $datosClimaYSuelo['source'] = implode(' + ', $fuentes);
+        if ($lluvia !== null) $datosClimaYSuelo['source'] .= ' + lluvia anual: '.$lluvia['fuente'];
         $datosClimaYSuelo['procedencia_campos'] = [
             'clima_referencia_estimada' => array_values(array_diff(array_keys($datosClimaYSuelo['clima']), $datosClimaYSuelo['clima_campos_api'])),
             'suelo_referencia_estimada' => array_values(array_diff(array_keys($datosClimaYSuelo['suelo']), $datosClimaYSuelo['suelo_campos_api'])),

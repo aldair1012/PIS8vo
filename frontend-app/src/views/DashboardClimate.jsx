@@ -1,3 +1,4 @@
+import AnnualRainReference from '../components/AnnualRainReference';
 import { useState, useEffect, useMemo } from 'react';
 import { dssService } from '../services/api';
 import ClimateLine from '../templates/Charts/ClimateLine';
@@ -109,7 +110,7 @@ export default function DashboardClimate({ cultivoElegidoId, añoSeleccionado, o
 
   return (
     <div className="dashboard-view dashboard-view--climate">
-      <DashboardSectionHeading
+      <DashboardSectionHeading level={1}
         label="Ahora"
         title="Clima actual y pronóstico"
         description="Lectura de corto plazo para la parcela. El promedio de 30 días se muestra aparte para no confundir clima observado con pronóstico."
@@ -181,10 +182,12 @@ export default function DashboardClimate({ cultivoElegidoId, añoSeleccionado, o
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}><Thermometer size={13} /> Promedio 30 días: {formatMetricNumber(promedio30d?.temperatura)} °C</span>
           <span>{formatMetricNumber(promedio30d?.humedad)} % HR</span>
           <span>{promedio30d?.precipitacion_30d != null ? `${formatMetricNumber(promedio30d.precipitacion_30d)} mm en 30 días` : 'Sin acumulado de lluvia de 30 días'}</span>
-          <span>{formatMetricNumber(promedio30d?.precipitacion_anual_estimada ?? promedio30d?.precipitacion)} mm/año estimados</span>
+
+          {data?.periodo_clima_reciente && <span>Período: {data.periodo_clima_reciente.inicio} a {data.periodo_clima_reciente.fin}</span>}
           <span>Fuente: {promedio30d?.fuente || data?.api_source || 'No informada'}</span>
-          <span style={{ color: 'var(--text-muted)' }}>El promedio de 30 días y la extrapolación anual no son el clima de hoy ni mediciones del ciclo del cultivo.</span>
+          <span style={{ color: 'var(--text-muted)' }}>El acumulado reciente y el promedio histórico anual tienen períodos distintos; no son mediciones del ciclo del cultivo.</span>
         </div>
+        <AnnualRainReference reference={data?.lluvia_anual_referencia} unavailable />
       </div>
 
       <DashboardSectionHeading label="02 · Señales" title="Estado del clima y del cultivo" description="Los indicadores sin una fuente disponible no se presentan como mediciones reales." />

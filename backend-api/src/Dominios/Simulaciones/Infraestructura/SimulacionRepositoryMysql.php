@@ -35,6 +35,7 @@ final class SimulacionRepositoryMysql implements SimulacionRepositoryInterface
         $kpisModelo = [
             'explicacion_modelo' => $resultado['explicacion_modelo'] ?? null,
             'entradas_modelo' => $resultado['entradas_modelo'] ?? [],
+            'lluvia_anual_referencia' => $resultado['lluvia_anual_referencia'] ?? null,
             'trazabilidad' => $resultado['trazabilidad'] ?? [],
             'evaluacion_variedades' => $resultado['evaluacion_variedades'] ?? null,
             'parcela_ejecucion' => array_intersect_key($datos, array_flip(['variedad_maiz', 'tipo_maiz', 'ubicacion', 'latitud', 'longitud', 'altitud', 'fecha_siembra', 'parametros_campo', 'provincia_identificada', 'fuente_provincia'])),
@@ -46,7 +47,7 @@ final class SimulacionRepositoryMysql implements SimulacionRepositoryInterface
             'intervalo_rendimiento' => $resultado['intervalo_rendimiento'] ?? null,
             'confianza_tipo' => $resultado['confianza_tipo'] ?? null,
         ];
-        if ($kpisModelo['probabilidad_cosecha'] !== null || !empty($kpisModelo['probabilidades_cosecha']) || $kpisModelo['intervalo_rendimiento'] !== null || $kpisModelo['evaluacion_variedades'] !== null) {
+        if ($kpisModelo['lluvia_anual_referencia'] !== null || $kpisModelo['probabilidad_cosecha'] !== null || !empty($kpisModelo['probabilidades_cosecha']) || $kpisModelo['intervalo_rendimiento'] !== null || $kpisModelo['evaluacion_variedades'] !== null) {
             $escenarios['_zeasys_modelo'] = $kpisModelo;
         }
 

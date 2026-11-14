@@ -1,6 +1,18 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { provinceFromLocation, regionalHistory, simulationHistory, yieldAnalysis } from './yieldDashboard.js';
+import { escapeChartText, validarRespuestaRendimiento, provinceFromLocation, regionalHistory, simulationHistory, yieldAnalysis } from './yieldDashboard.js';
+
+test('rechaza respuestas inválidas o de otra parcela antes de renderizar',()=>{
+  for(const value of [null,[],{}, {cultivo_activo:{id:2},simulaciones_rendimiento:[]}, {cultivo_activo:{id:1},simulaciones_rendimiento:{}}, {cultivo_activo:{id:1},simulaciones_rendimiento:[null]}]) assert.throws(()=>validarRespuestaRendimiento(value,1));
+  const empty={sin_datos:true,cultivo_activo:{id:1}};
+  assert.equal(validarRespuestaRendimiento(empty,1),empty);
+  const zero={cultivo_activo:{id:1},simulaciones_rendimiento:[{id:1,rendimiento_t_ha:0}]};
+  assert.equal(validarRespuestaRendimiento(zero,1),zero);
+});
+
+test('un nombre de parcela no puede introducir HTML en la ayuda del gráfico',()=>{
+  assert.equal(escapeChartText('<img src=x onerror="alert(1)">'), '&lt;img src=x onerror=&quot;alert(1)&quot;&gt;');
+});
 
 test('identifica provincias con tildes y reconoce las que no tienen cobertura SIPA', () => {
   assert.equal(provinceFromLocation('Jipijapa, MANABI, Ecuador'), 'Manabí');
@@ -12,8 +24,8 @@ test('identifica provincias con tildes y reconoce las que no tienen cobertura SI
 
 test('el histórico conserva solo la provincia del lote y deja huecos en años ausentes', () => {
   const periods = [
-    { anio: 2024, provincias: [{ provincia: 'Manabí', rendimiento_t_ha: 6 }, { provincia: 'Guayas', rendimiento_t_ha: 8 }] },
-    { anio: 2025, provincias: [{ provincia: 'Guayas', rendimiento_t_ha: 9 }] },
+    { año: 2024, provincias: [{ provincia: 'Manabí', rendimiento_t_ha: 6 }, { provincia: 'Guayas', rendimiento_t_ha: 8 }] },
+    { año: 2025, provincias: [{ provincia: 'Guayas', rendimiento_t_ha: 9 }] },
   ];
   const manabi = regionalHistory(periods, 'Manabí', 2025);
   assert.equal(manabi.selected, null);

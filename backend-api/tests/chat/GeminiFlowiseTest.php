@@ -56,11 +56,11 @@ test('GeminiFlowise: incluye clima actual, precio y nutrición en el contexto co
                 'actual' => ['temperatura_c' => 24.5, 'humedad_pct' => 78, 'lluvia_mm' => 2.1],
                 'pronostico_7d' => [['2026-10-19', 28.2, 18.1, 4.2, 80]],
                 'resumen_7d' => ['lluvia_total_mm' => 42.1, 'dias_con_lluvia' => 4],
+                'lluvia_anual_referencia' => ['valor'=>820,'unidad'=>'mm/año','periodo'=>'2000–2019','fuente'=>'INAMHI','tipo'=>'observaciones_mensuales_estacion'],
                 'promedio_30d' => [
                     'temperatura_c' => 24.1,
                     'humedad_pct' => 76,
                     'precipitacion_30d_mm' => 67.2,
-                    'precipitacion_anual_estimada_mm' => 820,
                 ],
             ],
             'precio_maiz' => [
@@ -96,7 +96,8 @@ test('GeminiFlowise: incluye clima actual, precio y nutrición en el contexto co
     assert_contains('nutricion', $resumen);
     assert_contains('temperatura_c', $resumen);
     assert_contains('precipitacion_30d_mm', $resumen);
-    assert_contains('precipitacion_anual_estimada_mm', $resumen);
+    assert_contains('lluvia_anual_referencia', $resumen);
+    assert_contains('INAMHI', $resumen);
     assert_contains('margen_neto_por_ha', $resumen);
 });
 

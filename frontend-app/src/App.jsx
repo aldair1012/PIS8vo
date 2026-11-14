@@ -29,6 +29,7 @@ export default function App() {
   // Estados del diseño (Layout)
   const [vistaActual, setVistaActual] = useState('yield');
   const [registroCampoId, setRegistroCampoId] = useState(null);
+  const [revisionMediciones, setRevisionMediciones] = useState(0);
   const [cultivos, setCultivos] = useState([]);
   const [cultivosError, setCultivosError] = useState(false);
   const [cultivosCargando, setCultivosCargando] = useState(true);
@@ -180,7 +181,7 @@ export default function App() {
   // El asistente recibe exactamente el conjunto de datos que el usuario está
   // viendo. La clave evita reutilizar un snapshot de otra parcela o año.
   const registrarContextoDashboard = useCallback((vista, datos) => {
-    if (!datos || typeof datos !== 'object') return;
+    if (!datos || typeof datos !== 'object') { setContextoDashboard(previous => previous?.vista === vista ? null : previous); return; }
     setContextoDashboard({ vista, datos, cultivoId: cultivoElegidoId, año: añoSeleccionado });
   }, [cultivoElegidoId, añoSeleccionado]);
   const registrarScenario = useCallback((datos) => registrarContextoDashboard('scenarios', datos), [registrarContextoDashboard]);
@@ -290,12 +291,12 @@ export default function App() {
   const getActiveTitle = () => {
     switch (vistaActual) {
       case 'yield': return 'Rendimiento proyectado';
-      case 'scenarios': return 'Viabilidad de siembra';
+      case 'scenarios': return 'Siembra';
       case 'climate': return 'Clima y cultivo';
       case 'finance': return 'Viabilidad financiera';
       case 'map': return 'Mapa de parcelas';
-      case 'simular': return 'Nueva Simulación';
-      case 'history': return 'Historial de Simulaciones';
+      case 'simular': return 'Nueva simulación';
+      case 'history': return 'Historial de simulaciones';
       case 'configuracion': return 'Configuración';
       default: return 'ZeaSys';
     }
@@ -338,7 +339,8 @@ export default function App() {
           cultivoElegidoId={cultivoElegidoId}
           setCultivoElegidoId={setCultivoElegidoId}
           añoSeleccionado={añoSeleccionado}
-          setAñoSeleccionado={setAñoSeleccionado}
+          setAnioSeleccionado={setAñoSeleccionado}
+          aniosDisponibles={vistaActual === 'scenarios' ? contextoDashboard?.datos?.años_disponibles : undefined}
           user={user}
           iaEncendida={iaEncendida}
           menuCerrado={menuCerrado}
@@ -349,12 +351,12 @@ export default function App() {
 
         <main
           id="workspace-content"
-          tabIndex={-1}
+          tabIndex={0}
           className="content-body"
           style={['map', 'cultivos'].includes(vistaActual) ? {
             minHeight: isMobileView ? 'auto' : 'calc(100vh - 64px)',
             height: isMobileView ? 'auto' : 'calc(100vh - 64px)',
-            overflowY: isMobileView ? 'auto' : 'hidden',
+            overflowY: `var(--workspace-map-overflow, ${isMobileView ? 'auto' : 'hidden'})`,
             overflowX: 'hidden',
             display: 'flex',
             flexDirection: 'column',
@@ -397,10 +399,13 @@ export default function App() {
 
           {vistaActual === 'scenarios' && (
             <DashboardScenario
+              key={cultivoElegidoId}
               cultivoElegidoId={cultivoElegidoId}
               añoSeleccionado={añoSeleccionado}
               onNavigate={setVistaActual}
               onDashboardData={registrarScenario}
+              onSelectYear={setAñoSeleccionado}
+              onCropUpdated={cargarCultivos}
             />
           )}
           {vistaActual === 'climate' && (
@@ -413,6 +418,7 @@ export default function App() {
           )}
           {vistaActual === 'yield' && (
             <DashboardYield
+              revisionMediciones={revisionMediciones}
               cultivoElegidoId={cultivoElegidoId}
               añoSeleccionado={añoSeleccionado}
               onNavigate={(destino, fechaSimulacion) => {
@@ -464,6 +470,7 @@ export default function App() {
               <RegistroCampo
                 cultivos={cultivos}
                 initialId={registroCampoId}
+                onUpdated={(id) => { if (String(id) === String(cultivoElegidoId)) setRevisionMediciones(value => value + 1); }}
                 onClose={() => setRegistroCampoId(null)}
               />
             </Suspense>
@@ -472,6 +479,7 @@ export default function App() {
           {vistaActual === 'cultivos' && (
             <Cultivos
               onCultivoChanged={handleCultivoChanged}
+              onAbrirRegistroCampo={() => setRegistroCampoId(cultivoElegidoId ?? cultivos[0]?.id ?? null)}
               onboardingStep={onboardingStep}
               onNextOnboardingStep={(targetView) => handleNextOnboardingStep(2, targetView)}
             />

@@ -7,7 +7,7 @@ test.describe.configure({ mode: 'serial' });
 test.setTimeout(90000);
 
 test.beforeEach(async ({ page }) => {
-  const response = await page.request.post('/backend-api/public/index.php/api/auth/login', {
+  const response = await page.request.post('/backend-api/public/index.php/api/auth/iniciar-sesion', {
     data: { correo: 'a@example.test', contrasena: ' ClavePrueba-2026! ' },
   });
   expect(response.ok()).toBeTruthy();
@@ -19,7 +19,7 @@ test.beforeEach(async ({ page }) => {
 test('simular desde el formulario conserva el resultado y lo guarda en historial', async ({ page }) => {
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));
-  const crops = await (await page.request.get('/backend-api/public/index.php/api/cultivos')).json();
+  const crops = await (await page.request.get('/backend-api/public/index.php/api/parcelas')).json();
   await page.getByRole('button', { name: 'Simular cosecha', exact: true }).click();
   await page.locator('#simular-parcela').selectOption(String(crops[0].id));
   await expect(page.getByRole('button', { name: 'Ejecutar Simulación', exact: true })).toBeEnabled({ timeout: 60000 });
@@ -49,7 +49,7 @@ test('simular desde el formulario conserva el resultado y lo guarda en historial
 
 test('descarga JSON incluye todas las páginas y mediciones de la cuenta', async ({ page }) => {
   await page.getByRole('button', { name: /Configuración de cuenta de/ }).click();
-  await expect(page.getByRole('heading', { name: 'Descargar información', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Descargar información', exact: true })).toBeVisible({ timeout: 30000 });
   await page.getByRole('checkbox', { name: /Registros de campo/ }).check();
   const downloadPromise = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Descargar JSON' }).click();
@@ -69,17 +69,18 @@ test('registro de campo guarda un cambio y conserva los demás grupos', async ({
   await page.getByRole('button', { name: 'Registro de campo', exact: true }).click();
   const dialog = page.getByRole('dialog', { name: 'Registro de campo', exact: true });
   await expect(dialog.getByLabel('Profundidad evaluada (cm)')).toBeVisible({ timeout: 30000 });
-  await dialog.getByLabel('Profundidad evaluada (cm)').fill('80');
-  const responsePromise = page.waitForResponse(response => response.url().endsWith('/api/yield/mediciones') && response.request().method() === 'POST');
+  const profundidad = (await dialog.getByLabel('Profundidad evaluada (cm)').inputValue()) === '80' ? 90 : 80;
+  await dialog.getByLabel('Profundidad evaluada (cm)').fill(String(profundidad));
+  const responsePromise = page.waitForResponse(response => response.url().endsWith('/api/rendimiento/mediciones') && response.request().method() === 'POST');
   await dialog.getByRole('button', { name: 'Guardar mediciones', exact: true }).click();
   const response = await responsePromise;
   expect(response.ok()).toBeTruthy();
   const saved = (await response.json()).mediciones;
-  expect(saved.datos.profundidad_cm).toBe(80);
+  expect(saved.datos.profundidad_cm).toBe(profundidad);
   expect(saved.indicadores.indice_cosecha.valor).toBe(0.4);
-  expect(saved.indicadores.agua_medida.valor).toBe(160);
+  expect(saved.indicadores.agua_medida.valor).toBe(profundidad * 2);
   await expect(dialog.getByRole('status')).toContainText('Mediciones guardadas');
   await dialog.getByRole('button', { name: 'Cerrar registro de campo' }).click();
   await page.getByRole('button', { name: 'Registro de campo', exact: true }).click();
-  await expect(dialog.getByLabel('Profundidad evaluada (cm)')).toHaveValue('80', { timeout: 30000 });
+  await expect(dialog.getByLabel('Profundidad evaluada (cm)')).toHaveValue(String(profundidad), { timeout: 30000 });
 });

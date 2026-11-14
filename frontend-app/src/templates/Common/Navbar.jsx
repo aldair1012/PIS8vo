@@ -8,6 +8,7 @@ export default function Navbar({
   setCultivoElegidoId, 
   añoSeleccionado, 
   setAnioSeleccionado,
+  aniosDisponibles,
   user,
   iaEncendida,
   menuCerrado,
@@ -16,7 +17,7 @@ export default function Navbar({
   setVistaActual
 }) {
   return (
-    <div className="navbar">
+    <header className="navbar">
       <div className="navbar-left" style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
         <button
           onClick={() => setMenuCerrado(!menuCerrado)}
@@ -69,6 +70,7 @@ export default function Navbar({
             setCultivoElegidoId={setCultivoElegidoId}
             añoSeleccionado={añoSeleccionado}
             setAnioSeleccionado={setAnioSeleccionado}
+            aniosDisponibles={aniosDisponibles}
             vistaActual={vistaActual}
             setVistaActual={setVistaActual}
           />
@@ -147,6 +149,6 @@ export default function Navbar({
           </div>
         )}
       </div>
-    </div>
+    </header>
   );
 }

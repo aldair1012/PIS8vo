@@ -3,18 +3,31 @@ import fixture from '../fixtures/simulacion-prueba.json' with { type: 'json' };
 
 // Parcela ficticia; resultado calculado offline con XGBoost. Nada se guarda en la cuenta.
 const crop = { id: 91, nombre_parcela: 'Parcela de prueba', area: 1, ph: 6.2, variedad_maiz: 'INIAP 101 Blanco Harinoso Precoz', tipo_maiz: 'Suave Harinoso', ubicacion: 'Comunidad sin provincia en el nombre', latitud: -.18, longitud: -78.47, fecha_siembra: '2024-02-28' };
-const location = { success: true, temperatura: 16, humedad: 70, ph_suelo: 6.2, tipo_suelo: 'franco', area_simulada: 1, provincia: 'Pichincha', fuente_provincia: 'Coordenadas de la parcela', referencia_suelo: { clase_estimada: 'Franco limosa' } };
+const location = { exito: true, temperatura: 16, humedad: 70, ph_suelo: 6.2, tipo_suelo: 'franco', area_simulada: 1, provincia: 'Pichincha', fuente_provincia: 'Coordenadas de la parcela', referencia_suelo: { clase_estimada: 'Franco limosa' } };
+
+test('el plan de urea convierte kg de producto a nitrógeno y limpia un producto retirado',async({page})=>{
+  await abrir(page,'light',1440);
+  await page.getByRole('button',{name:'Urea 46-0-0',exact:true}).click();
+  const product=page.locator('.simulation-fert-row');
+  await product.getByRole('combobox',{name:'Unidad',exact:true}).selectOption('kg');
+  await product.getByLabel(/Dosis/).fill('100');
+  await expect(page.locator('#simular-nitrogeno')).toHaveValue('46');
+  await expect(product).toContainText('Sin precio ingresado');
+  await page.getByRole('button',{name:'Urea 46-0-0',exact:true}).click();
+  await expect(page.locator('#simular-nitrogeno')).toHaveValue('');
+});
 
 async function abrir(page, theme, width, deferredLocation = null) {
   await page.setViewportSize({ width, height: 1000 });
   await page.addInitScript(value => { localStorage.setItem('theme', value); localStorage.setItem('onboarding_completed', 'true'); }, theme);
   await page.route('**/backend-api/public/index.php/api/**', route => route.fulfill({ json: {} }));
-  await page.route('**/backend-api/public/index.php/api/auth/me', route => route.fulfill({ json: { authenticated: true, user: { id: 987, nombre: 'Prueba', rol: 'productor' } } }));
-  await page.route('**/backend-api/public/index.php/api/cultivos', route => route.fulfill({ json: [crop] }));
-  await page.route('**/backend-api/public/index.php/api/cultivos/valores-ubicacion*', async route => { if (deferredLocation) await deferredLocation; await route.fulfill({ json: location }); });
+  await page.route('**/backend-api/public/index.php/api/auth/yo', route => route.fulfill({ json: { autenticado: true, usuario: { id: 987, nombre: 'Prueba', rol: 'productor' } } }));
+  await page.route('**/backend-api/public/index.php/api/parcelas', route => route.fulfill({ json: [crop] }));
+  await page.route('**/backend-api/public/index.php/api/parcelas/valores-ubicacion*', async route => { if (deferredLocation) await deferredLocation; await route.fulfill({ json: location }); });
   await page.goto('/');
   const nav = page.getByRole('button', { name: 'Simular cosecha', exact: true });
-  if (!await nav.isVisible()) await page.getByRole('button', { name: 'Expandir barra lateral' }).click();
+  await page.locator('.navbar').waitFor();
+  if (await page.locator('#workspace-sidebar').evaluate(node => node.inert)) await page.getByRole('button', { name: 'Expandir barra lateral' }).click();
   await nav.click();
   await page.locator('#simular-parcela').selectOption('91');
 }
@@ -41,14 +54,15 @@ for (const theme of ['light', 'dark']) for (const width of [390, 820, 1440]) {
     await page.locator('.simulation-workbench').scrollIntoViewIfNeeded();
     await page.screenshot({ path: testInfo.outputPath(`preparar-${theme}-${width}.png`) });
     let sent;
-    await page.route('**/backend-api/public/index.php/api/simulaciones/simular', route => { sent = route.request().postDataJSON(); return route.fulfill({ json: { success: true, resultado: fixture } }); });
+    await page.route('**/backend-api/public/index.php/api/simulaciones/simular', route => { sent = route.request().postDataJSON(); return route.fulfill({ json: { exito: true, resultado: fixture } }); });
     await page.getByRole('button', { name: 'Ejecutar Simulación', exact: true }).click();
     await expect(page.getByRole('heading', { name: 'Resultado de la simulación', exact: true })).toBeVisible();
     expect(sent.area_simulada).toBe(.83); expect(sent.temperatura).toBe(26.7);
     expect(sent.usar_suelo_ubicacion).toBe(false); expect(sent.parametros_campo.riego_tipo).toBe('goteo');
     await expect(page.getByRole('tab', { name: '2 Resultado', exact: true })).toHaveAttribute('aria-selected', 'true');
     await expect(page.locator('#panel-preparar')).toBeHidden();
-    expect(await page.locator('.simulation-workbench').evaluate(element => element.scrollWidth <= element.clientWidth + 1)).toBeTruthy();
+    const layout = await page.locator('.simulation-workbench').evaluate(element => { const box=element.getBoundingClientRect(); return { ok:element.scrollWidth <= element.clientWidth+1, nodes:[...element.querySelectorAll('*')].filter(n=>n.getBoundingClientRect().right>box.right+1 && n.clientWidth).slice(0,8).map(n=>[n.tagName,n.className,n.clientWidth]) }; });
+    expect(layout.ok,JSON.stringify(layout)).toBeTruthy();
     await page.screenshot({ path: testInfo.outputPath(`resultado-${theme}-${width}.png`) });
     await page.getByText('Datos utilizados y límites del cálculo', { exact: true }).click();
     await expect(page.locator('.simulation-data-scroll')).toContainText('Sistema de agua o riego');

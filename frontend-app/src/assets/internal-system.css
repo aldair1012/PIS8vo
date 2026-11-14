@@ -23,7 +23,7 @@ html:has(.zeasys-workspace) { font-size: 16px; }
 
   /* Semantic theme tokens. */
   --zs-page: var(--zp-forest-950);
-  --zs-sidebar: #102d24;
+  --zs-sidebar: var(--zp-forest-900);
   --zs-surface: var(--zp-forest-800);
   --zs-inset-surface: var(--zp-forest-900);
   --zs-raised: var(--zp-forest-700);
@@ -60,8 +60,8 @@ html:has(.zeasys-workspace) { font-size: 16px; }
   --text-unit: var(--zs-faint);
   --accent-primary: var(--zs-accent);
   --accent-primary-hover: var(--zi-leaf-400);
-  --accent-secondary: var(--zi-sky-300);
-  --accent-warning: var(--zi-maize-400);
+  --accent-secondary: var(--zs-info);
+  --accent-warning: var(--zs-warning);
   --border: var(--zs-border);
   --border-hover: var(--zs-border-strong);
   --border-focus: var(--zs-focus);
@@ -283,7 +283,7 @@ body.light-theme .zeasys-workspace .zeasys-chat-chips button { background: var(-
 }
 .zeasys-workspace .dashboard-intro-assistant:hover { border-color: var(--zs-accent); }
 .zeasys-workspace .dashboard-section-heading { display: flex; align-items: end; justify-content: space-between; gap: 1rem; margin: 1.55rem 0 .8rem; }
-.zeasys-workspace .dashboard-section-heading h2 { margin: .2rem 0 .2rem; color: var(--zs-text); font-size: clamp(1.1rem, 1.55vw, 1.4rem); line-height: 1.2; letter-spacing: -.035em; }
+.zeasys-workspace .dashboard-section-heading :is(h1, h2) { margin: .2rem 0 .2rem; color: var(--zs-text); font-size: clamp(1.1rem, 1.55vw, 1.4rem); line-height: 1.2; letter-spacing: -.035em; }
 .zeasys-workspace .dashboard-section-heading p { max-width: 78ch; margin: 0; color: var(--zs-muted); font-size: .77rem; line-height: 1.45; }
 
 .zeasys-workspace .dashboard-view .glass-panel,
@@ -333,21 +333,6 @@ body.light-theme .zeasys-workspace .zeasys-chat-chips button { background: var(-
   cursor: pointer;
 }
 .zeasys-workspace .kpi-dot.active { background: var(--zs-accent); }
-.zeasys-workspace .kpi-explain-action {
-  display: inline-flex;
-  align-items: center;
-  gap: .25rem;
-  align-self: flex-start;
-  min-height: 44px;
-  margin-top: .05rem;
-  padding: .3rem 0;
-  border: 0;
-  background: transparent;
-  color: var(--zs-accent);
-  font-size: .72rem;
-  font-weight: 750;
-  cursor: pointer;
-}
 .zeasys-workspace .dss-metric-col,
 .zeasys-workspace .dss-risk-badge-box { background: var(--kpi-dss-bg, var(--zs-raised)) !important; border-color: var(--zs-border) !important; box-shadow: var(--zs-shadow-inset); }
 .zeasys-workspace .dss-metric-col::before { background: var(--zs-accent); }
@@ -495,6 +480,9 @@ body.light-theme .zeasys-workspace .zeasys-chat-chips button { background: var(-
 @media (max-width: 480px) {
   .zeasys-workspace .content-body:has(.dashboard-view) { padding: .85rem !important; }
   .zeasys-workspace .kpi-row { grid-template-columns: 1fr; }
+  .zeasys-workspace .history-kpi-row { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .6rem; }
+  .zeasys-workspace .history-kpi-row .kpi-card { min-height: 146px !important; }
+  .zeasys-workspace .history-kpi-row .kpi-card .kpi-heading-title { font-size: 12px; }
   .zeasys-workspace .dashboard-view .glass-card-header,
   .zeasys-workspace .dashboard-view .glass-card-body { padding-inline: .9rem; }
   .zeasys-workspace .zeasys-chat-panel { width: 100vw; }
@@ -504,7 +492,7 @@ body.light-theme .zeasys-workspace .zeasys-chat-chips button { background: var(-
   .zeasys-workspace :not(.yd-kpi-slide), .zeasys-workspace *::before, .zeasys-workspace *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
 }
 
-/* Rendimiento: filas independientes y gráficos con encabezados y ejes alineados. */
+/* Rendimiento: filas independientes y grÃ¡ficos con encabezados y ejes alineados. */
 .zeasys-workspace .dashboard-view--yield { --yield-chart-height: 300px; }
 .zeasys-workspace .dashboard-view--yield .yield-analysis-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1rem; margin: 1rem 0; }
 .zeasys-workspace .dashboard-view--yield .yield-analysis-card { min-width: 0; margin-bottom: 0; display: grid; grid-template-rows: auto auto auto; }
@@ -512,7 +500,7 @@ body.light-theme .zeasys-workspace .zeasys-chat-chips button { background: var(-
 .zeasys-workspace .yield-analysis-card .yield-chart { height: var(--yield-chart-height); margin-top: 0; }
 .zeasys-workspace .yield-input-details summary { display: flex; align-items: center; min-height: 44px; color: var(--zs-accent); cursor: pointer; font-weight: 700; }
 .zeasys-workspace .yield-input-details summary::after { content: '+'; margin-left: auto; }
-.zeasys-workspace .yield-input-details[open] summary::after { content: '−'; }
+.zeasys-workspace .yield-input-details[open] summary::after { content: 'âˆ’'; }
 .zeasys-workspace .dashboard-view--yield summary:focus-visible,
 .zeasys-workspace .dashboard-view--yield button:focus-visible { outline: 2px solid var(--zs-accent); outline-offset: 3px; }
 @media (min-width: 1000px) {
@@ -530,8 +518,9 @@ body.light-theme .zeasys-workspace .zeasys-chat-chips button { background: var(-
 /* Small, non-blocking explanation for a selected simulation datum. */
 .zeasys-workspace .simulation-info-card {
   position: fixed; right: clamp(16px, 2.5vw, 36px); bottom: clamp(16px, 2.5vw, 36px);
-  z-index: 1002; width: min(365px, calc(100vw - 32px)); max-height: min(340px, calc(100dvh - 32px));
-  overflow-y: auto; padding: 18px; border: 1px solid var(--zs-border-strong);
+  /* Above the assistant launcher (10001), outside dashboard stacking contexts. */
+  z-index: 10002; box-sizing: border-box; width: min(480px, calc(100vw - 32px)); max-height: min(680px, calc(100dvh - 32px));
+  overflow-y: auto; overscroll-behavior: contain; padding: 18px; border: 1px solid var(--zs-border-strong);
   border-radius: 18px; background: var(--zs-surface); color: var(--zs-text);
   box-shadow: 0 18px 52px #0005; animation: simulation-info-enter 210ms ease-out both;
 }
@@ -546,6 +535,19 @@ body.light-theme .zeasys-workspace .zeasys-chat-chips button { background: var(-
 .zeasys-workspace .simulation-info-card-value { margin: 14px 0 4px; color: var(--zs-text); font-size: 25px; font-weight: 750; font-variant-numeric: tabular-nums; }
 .zeasys-workspace .simulation-info-card-value span { color: var(--zs-muted); font-size: 12px; font-weight: 600; }
 .zeasys-workspace .simulation-info-card p { margin: 12px 0 0; color: var(--zs-muted); font-size: 13px; line-height: 1.55; }
+.zeasys-workspace .simulation-info-card-head { position:sticky;top:-18px;z-index:2;padding-block:8px 12px;background:var(--zs-surface); }
+.zeasys-workspace .simulation-info-section { margin-top:18px; }
+.zeasys-workspace .simulation-info-section h4 { margin:0;color:var(--zs-text);font-size:14px;font-weight:700; }
+.zeasys-workspace .simulation-info-section p { margin-top:6px;font-size:14px;line-height:1.65; }
+.zeasys-workspace .simulation-info-section ul { margin:8px 0 0;padding-left:20px;color:var(--zs-muted);font-size:14px;line-height:1.65; }
+.zeasys-workspace .simulation-info-section li + li { margin-top:8px; }
+.zeasys-workspace .simulation-info-limit { padding:12px;border-radius:10px;background:var(--zs-raised); }
+.zeasys-workspace .simulation-info-extra { margin-top:16px;border-top:1px solid var(--zs-border);padding-top:10px; }
+.zeasys-workspace .simulation-info-extra summary { display:flex;align-items:center;min-height:44px;cursor:pointer;color:var(--zs-text);font-size:13px; }
+.zeasys-workspace .simulation-info-extra summary:focus-visible { outline:2px solid var(--zs-focus);outline-offset:3px; }
+.zeasys-workspace .kpi-explain-title { appearance:none;min-height:44px;padding:0;border:0;border-radius:4px;background:transparent;color:inherit;font:inherit;text-align:left;cursor:pointer; }
+.zeasys-workspace .kpi-explain-title:focus-visible { outline:2px solid var(--zs-focus);outline-offset:3px; }
+.zeasys-workspace .kpi-explain-hint { display:block;color:var(--zs-muted);font-size:11px;line-height:1.5;margin-top:8px; }
 .zeasys-workspace .simulation-info-card-step { display: grid; gap: 4px; margin-top: 13px; padding: 11px 12px; border-radius: 11px; background: var(--zs-raised); color: var(--zs-muted); font-size: 12px; line-height: 1.5; }
 .zeasys-workspace .simulation-info-card-step strong { color: var(--zs-accent); font-size: 10px; letter-spacing: .06em; text-transform: uppercase; }
 .zeasys-workspace .simulation-info-card-loading { display: block; width: 100%; height: 2px; margin-top: 12px; overflow: hidden; border-radius: 2px; background: var(--zs-accent); animation: simulation-info-loading 1.2s ease-in-out infinite; transform-origin: left; }
@@ -555,3 +557,48 @@ body.light-theme .zeasys-workspace .zeasys-chat-chips button { background: var(-
   .zeasys-workspace *, .zeasys-workspace *::before, .zeasys-workspace *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
   .zeasys-workspace .simulation-info-card, .zeasys-workspace .simulation-info-card-loading { animation: none; }
 }
+
+/* Compatibilidad con controles del legado: superficie interna, sin afectar la portada. */
+.zeasys-workspace :is(button, select, textarea, input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"])) { min-height: 44px; }
+.zeasys-workspace button { min-width: 44px; }
+.zeasys-workspace .leaflet-bar a { width: 44px; height: 44px; line-height: 44px; }
+.zeasys-workspace .leaflet-pm-toolbar .control-icon { width: 44px; height: 44px; background-position: center; }
+.zeasys-workspace .dss-timeline-item { min-width: 68px; min-height: 56px; }
+.zeasys-workspace .dss-timeline-item-name { font-size: .75rem; }
+.zeasys-workspace .dss-timeline-item-sub { font-size: .625rem; }
+.light-theme .zeasys-workspace .dss-timeline-item.recommended :is(.dss-timeline-item-name, .dss-timeline-item-sub) { color: var(--zs-warning); }
+.zeasys-workspace :is(.table-responsive-container, .dss-timeline-track):focus-visible { outline: 3px solid var(--zs-focus); outline-offset: 3px; }
+
+.zeasys-workspace .ydp-dashboard button[aria-pressed="true"] { color: var(--zs-accent-contrast); background: var(--zs-accent); }
+.zeasys-workspace :is(.simulation-mode-btn, .simulation-chip) { background: var(--zs-surface); color: var(--zs-text); border-color: var(--zs-border-strong); }
+.zeasys-workspace .simulation-mode-btn.activo { color: var(--zs-accent-contrast); background: var(--zs-accent); }
+.zeasys-workspace .maize-reference { padding: 1.25rem; background: var(--zs-surface); border: 1px solid var(--zs-border); border-radius: 14px; margin-bottom: 1rem; }
+.zeasys-workspace .maize-reference h2 { margin-top: 0; font-size: 15px; line-height: 1.35; }
+.zeasys-workspace .maize-reference :is(summary,a) { color: var(--zs-accent); min-height: 44px; display: flex; align-items: center; }
+
+.zeasys-workspace .zeasys-chat-sources { margin-top: .65rem; font-size: .8rem; color: var(--zs-muted); }
+.zeasys-workspace .zeasys-chat-sources summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; color: var(--zs-accent); }
+.zeasys-workspace .zeasys-chat-sources ul { padding-left: 1.25rem; }
+
+.zeasys-workspace .ydp-dashboard .ydp-run-bar[aria-pressed="true"] { background: var(--zs-raised); color: var(--zs-text); }
+.zeasys-workspace [role="button"]:focus-visible { outline: 3px solid var(--zs-focus); outline-offset: 3px; }
+
+.zeasys-workspace .scenario-result-badge { color: var(--zs-text); background: var(--zs-inset-surface); font-size: .75rem; }
+
+.zeasys-workspace .cultivos-create-form > * { min-width: 0; }
+@media (max-width: 1000px) {
+  .zeasys-workspace .cultivos-workspace { --cultivos-page-height: auto; --cultivos-page-overflow: visible; --cultivos-form-columns: minmax(0, 1fr); --cultivos-map-height: 340px; --cultivos-map-flex: none; --cultivos-fields-overflow: visible; }
+  .zeasys-workspace .cultivos-workspace .dashboard-title-row { flex-wrap: wrap; gap: .75rem; }
+}
+
+@media (max-width: 1000px) { .zeasys-workspace { --workspace-map-overflow: auto; } }
+
+.zeasys-workspace .leaflet-pm-toolbar .control-icon { background-size: 22px 22px; background-repeat: no-repeat; }
+@media (max-width: 1000px) { .zeasys-workspace .cultivos-workspace { --cultivos-location-columns: repeat(2, minmax(0, 1fr)); } .cultivos-location-fields > .form-group:last-child { grid-column: 1 / -1; } }
+
+/* Referencia climática compartida: métricas anuales independientes del ciclo. */
+.zeasys-workspace .annual-rain-reference { padding: 16px; margin-block: 16px; border: 1px solid var(--border); border-radius: 12px; background: var(--bg-card); color: var(--text-primary); overflow-wrap: anywhere; }
+.zeasys-workspace .annual-rain-reference p { margin: 8px 0; font-size: .875rem; line-height: 1.5; color: var(--text-muted); }
+.zeasys-workspace .annual-rain-reference a { display: inline-flex; align-items: center; min-height: 44px; color: var(--accent-primary); text-decoration: underline; }
+.zeasys-workspace .annual-rain-reference a:focus-visible { outline: 2px solid var(--accent-primary); outline-offset: 3px; }
+.zeasys-workspace .ydp-rain-origin { display: block; margin-top: 4px; font-size: .75rem; color: var(--text-muted); }

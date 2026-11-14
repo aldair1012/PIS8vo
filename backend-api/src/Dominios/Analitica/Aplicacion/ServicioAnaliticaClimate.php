@@ -68,7 +68,7 @@ class ServicioAnaliticaClimate
                 $precipitacionPromedio = in_array('precipitacion', $camposClima, true) ? $this->numero($clima['precipitacion'] ?? null, 0) : null;
                 $precipitacion30d = in_array('precipitacion_30d', $camposClima, true) ? $this->numero($clima['precipitacion_30d'] ?? null, 0) : null;
             }
-            if ($informacionApi['success'] ?? false) {
+            if ($informacionApi['exito'] ?? false) {
                 $fuenteApi = (string) ($informacionApi['source'] ?? 'Proveedor externo');
             }
             if ($informacionApi['suelo_disponible_api'] ?? false) {
@@ -96,6 +96,8 @@ class ServicioAnaliticaClimate
             }
         }
 
+        $lluviaAnual = $this->terreno->referenciaLluvia($cultivoSeleccionado);
+        $precipitacionPromedio = $lluviaAnual['valor'] ?? null;
         $year = $año ?? (int) date('Y');
 
         $ensoEstado = null;
@@ -239,6 +241,8 @@ class ServicioAnaliticaClimate
                 'indice_riesgo' => ['nivel' => $indiceRiesgoClima,'color' => $indiceRiesgoColor,'estado' => 'no_disponible']
             ],
             'api_source' => $fuenteApi,
+            'lluvia_anual_referencia' => $lluviaAnual,
+            'periodo_clima_reciente' => $informacionApi['clima']['periodo_30d'] ?? null,
             // Se conserva clima_actual por compatibilidad con consumidores
             // anteriores, pero ahora declara explícitamente que es un promedio.
             'clima_actual' => [
@@ -249,7 +253,7 @@ class ServicioAnaliticaClimate
                 'precipitacion_anual_estimada' => $precipitacionPromedio,
                 'precipitacion_30d' => $precipitacion30d,
                 'periodo' => 'promedio_30_dias',
-                'nota_precipitacion' => 'Temperatura y humedad: promedio de 30 dias. Precipitacion: estimacion anual; precipitacion_30d es el acumulado real de 30 dias.',
+                'nota_precipitacion' => 'Temperatura y humedad: promedio de 30 dias. Lluvia anual: promedio histórico por ubicación; precipitacion_30d es el acumulado de treinta días completos disponibles.',
                 'nota' => 'Promedio de los últimos 30 días; no es el clima de hoy ni un pronóstico.'
             ],
             'clima_promedio_30d' => [
@@ -259,7 +263,7 @@ class ServicioAnaliticaClimate
                 'precipitacion' => $precipitacionPromedio,
                 'precipitacion_anual_estimada' => $precipitacionPromedio,
                 'precipitacion_30d' => $precipitacion30d,
-                'nota_precipitacion' => 'Precipitacion es estimacion anual; precipitacion_30d es el acumulado real de 30 dias.',
+                'nota_precipitacion' => 'Lluvia anual: referencia histórica independiente del acumulado de treinta días.',
                 'fuente' => $fuenteApi
             ],
             'clima_hoy' => $climaHoy,

@@ -2,11 +2,20 @@ import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from 'lucide-react';
 
-export default function CalendarGrid({ events = [], initialDate = new Date(), title = "" }) {
+function popoverPosition(rect) {
+  const width = Math.min(330, window.innerWidth - 40);
+  const center = rect.left + rect.width / 2;
+  const left = Math.max(width / 2 + 20, Math.min(window.innerWidth - width / 2 - 20, center));
+  const openAbove = rect.top > window.innerHeight * .45;
+  return {width,left,openAbove,top:openAbove?Math.max(20,rect.top-8):Math.min(window.innerHeight-200,rect.bottom+8)};
+}
+
+export default function CalendarGrid({ events = [], initialDate = new Date(), title = "", referenceYear = null, legendItems, eventDetailLabel, resetToInitial = false, fillHeight = true, embedded = false }) {
   const [currentDate, setCurrentDate] = useState(initialDate);
   const [selectedCell, setSelectedCell] = useState(null);
   const [popoverData, setPopoverData] = useState(null);
   const calendarRef = useRef(null);
+  const eventTriggerRef = useRef(null);
 
   useEffect(() => {
     const reset = setTimeout(() => {
@@ -24,7 +33,9 @@ export default function CalendarGrid({ events = [], initialDate = new Date(), ti
       }
     };
     document.addEventListener('mousedown', handleOutsideClick);
-    return () => document.removeEventListener('mousedown', handleOutsideClick);
+    const escape = event => { if (event.key === 'Escape' && popoverData) { setPopoverData(null); eventTriggerRef.current?.focus(); } };
+    document.addEventListener('keydown', escape);
+    return () => { document.removeEventListener('mousedown', handleOutsideClick); document.removeEventListener('keydown', escape); };
   }, [popoverData]);
 
   const year = currentDate.getFullYear();
@@ -34,7 +45,7 @@ export default function CalendarGrid({ events = [], initialDate = new Date(), ti
     'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
     'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
   ];
-  
+
   const dayNames = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 
   const getDaysInMonth = (y, m) => new Date(y, m + 1, 0).getDate();
@@ -54,7 +65,9 @@ export default function CalendarGrid({ events = [], initialDate = new Date(), ti
 
   const handleToday = () => {
     const now = new Date();
-    setCurrentDate(now);
+    const firstEvent = resetToInitial ? events.find(event => event.start instanceof Date && !Number.isNaN(event.start.getTime())) : null;
+    const eventDate = firstEvent ? new Date(firstEvent.start.getFullYear(),firstEvent.start.getMonth(),1) : initialDate;
+    setCurrentDate(resetToInitial ? eventDate : referenceYear === null ? now : new Date(referenceYear,now.getMonth(),1));
     setSelectedCell(null);
     setPopoverData(null);
   };
@@ -67,7 +80,7 @@ export default function CalendarGrid({ events = [], initialDate = new Date(), ti
     const prevMonth = month === 0 ? 11 : month - 1;
     const prevYear = month === 0 ? year - 1 : year;
     const prevMonthTotalDays = getDaysInMonth(prevYear, prevMonth);
-    
+
     for (let i = startDay - 1; i >= 0; i--) {
       cells.push({
         date: new Date(prevYear, prevMonth, prevMonthTotalDays - i),
@@ -88,7 +101,7 @@ export default function CalendarGrid({ events = [], initialDate = new Date(), ti
     const nextMonth = month === 11 ? 0 : month + 1;
     const nextYear = month === 11 ? year + 1 : year;
     const remaining = totalCellsNeeded - cells.length;
-    
+
     for (let i = 1; i <= remaining; i++) {
       cells.push({
         date: new Date(nextYear, nextMonth, i),
@@ -114,42 +127,18 @@ export default function CalendarGrid({ events = [], initialDate = new Date(), ti
     });
   };
 
-  const getEventBadgeStyle = (colorName, isLight) => {
-    switch(colorName) {
-      case 'success': 
-        return {
-          bg: isLight ? '#dcfce7' : 'rgba(34, 197, 94, 0.22)',
-          text: isLight ? '#15803d' : '#86efac',
-          border: isLight ? '#86efac' : 'rgba(34, 197, 94, 0.45)',
-          bar: '#10b981'
-        };
-      case 'warning': 
-        return {
-          bg: isLight ? '#fef3c7' : 'rgba(245, 158, 11, 0.22)',
-          text: isLight ? '#b45309' : '#fde047',
-          border: isLight ? '#fde047' : 'rgba(245, 158, 11, 0.45)',
-          bar: '#f59e0b'
-        };
-      case 'danger': 
-        return {
-          bg: isLight ? '#fee2e2' : 'rgba(239, 68, 68, 0.22)',
-          text: isLight ? '#b91c1c' : '#fca5a5',
-          border: isLight ? '#fca5a5' : 'rgba(239, 68, 68, 0.45)',
-          bar: '#ef4444'
-        };
-      default: 
-        return {
-          bg: isLight ? '#dcfce7' : 'rgba(34, 197, 94, 0.22)',
-          text: isLight ? '#15803d' : '#86efac',
-          border: isLight ? '#86efac' : 'rgba(34, 197, 94, 0.45)',
-          bar: '#10b981'
-        };
-    }
+  const getEventBadgeStyle = colorName => {
+    const token=({harvest:'warning',info:'info',success:'success',warning:'warning',danger:'danger'})[colorName] || 'info';
+    const ink=`var(--zs-${token})`;
+    return {bg:`color-mix(in srgb, ${ink} 10%, var(--zs-surface))`,text:ink,border:'var(--zs-border-strong)',bar:ink};
   };
 
   useEffect(() => {
-    const handleScrollOrResize = () => {
-      setPopoverData(null);
+    const handleScrollOrResize = (event) => {
+      if (event.target instanceof Element && event.target.closest('.calendar-popover-portal')) return;
+      const rect = eventTriggerRef.current?.getBoundingClientRect();
+      if (!rect || rect.bottom < 0 || rect.top > window.innerHeight) { setPopoverData(null);return; }
+      setPopoverData(current => current ? {...current,...popoverPosition(rect)} : current);
     };
     if (popoverData) {
       window.addEventListener('scroll', handleScrollOrResize, true);
@@ -168,91 +157,54 @@ export default function CalendarGrid({ events = [], initialDate = new Date(), ti
       return;
     }
 
-    const cellRect = e.currentTarget.getBoundingClientRect();
-    const windowWidth = typeof window !== 'undefined' ? (window.innerWidth || 1200) : 1200;
-    const windowHeight = typeof window !== 'undefined' ? (window.innerHeight || 800) : 800;
-
-    const cellCenterLeft = cellRect.left + cellRect.width / 2;
-    // Si la casilla está en la mitad inferior (45%), se abre hacia arriba
-    const openAbove = cellRect.top > (windowHeight * 0.45);
-
-    const popoverWidth = Math.min(330, windowWidth - 32);
-    const halfWidth = popoverWidth / 2;
-
-    // Garantizar estrictamente que la tarjeta flotante quede a mínimo 20px de los bordes izquierdo y derecho
-    let leftPos = cellCenterLeft;
-    if (leftPos - halfWidth < 20) {
-      leftPos = halfWidth + 20;
-    } else if (leftPos + halfWidth > windowWidth - 20) {
-      leftPos = windowWidth - halfWidth - 20;
-    }
-
-    let topPos;
-    if (openAbove) {
-      topPos = Math.max(20, cellRect.top - 8);
-    } else {
-      topPos = Math.min(windowHeight - 200, cellRect.bottom + 8);
-    }
-
-    // La flecha siempre apunta directamente al centro del día cliqueado
-    const arrowLeft = Math.max(24, Math.min(popoverWidth - 24, cellCenterLeft - (leftPos - halfWidth)));
-
-    setPopoverData({
-      cell,
-      events: dateEvents,
-      left: leftPos,
-      top: topPos,
-      openAbove,
-      arrowLeft,
-      width: popoverWidth
-    });
+    eventTriggerRef.current = e.currentTarget;
+    setPopoverData({cell,events:dateEvents,...popoverPosition(e.currentTarget.getBoundingClientRect())});
   };
 
-  const isLight = typeof document !== 'undefined' && document.body.classList.contains('light-theme');
 
   return (
-    <div 
-      ref={calendarRef} 
-      className="glass-panel" 
-      style={{ 
-        padding: '0.85rem 1rem 1rem 1rem', 
-        width: '100%', 
-        height: '100%',
+    <div
+      ref={calendarRef}
+      className={embedded ? 'calendar-grid' : 'glass-panel'}
+      style={{
+        padding: embedded ? 0 : '0.85rem 1rem 1rem 1rem',
+        width: '100%',
+        height: fillHeight ? '100%' : 'auto',
         minHeight: '380px',
         display: 'flex',
         flexDirection: 'column',
         position: 'relative',
-        borderRadius: '16px',
-        boxShadow: isLight ? '0 8px 24px rgba(13, 13, 13, 0.03)' : '0 10px 30px rgba(0, 0, 0, 0.25)'
+        borderRadius: embedded ? 0 : '16px',
+        boxShadow: embedded ? 'none' : 'var(--zs-shadow-raised)'
       }}
     >
       {/* Sleek Header Bar */}
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center', 
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
         marginBottom: '0.75rem',
         borderBottom: '1px solid var(--border-subtle)',
         paddingBottom: '0.6rem'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
           <div style={{
-            background: isLight ? 'rgba(34, 197, 94, 0.12)' : 'rgba(34, 197, 94, 0.2)',
-            color: '#10b981',
+            background: 'var(--zs-inset-surface)',
+            color: 'var(--zs-accent)',
             padding: '0.4rem',
             borderRadius: '10px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center'
           }}>
-            <CalendarIcon size={16} />
+            <CalendarIcon size={20} aria-hidden="true" />
           </div>
           <div>
             <h3 style={{ fontSize: '1rem', fontWeight: 800, margin: 0, color: 'var(--text-primary)', letterSpacing: '-0.01em' }}>
               {monthNames[month]} <span style={{ fontWeight: 500, color: 'var(--text-subtle)' }}>{year}</span>
             </h3>
-            {title && <p style={{ fontSize: '0.68rem', color: 'var(--text-muted)', margin: '0.1rem 0 0 0' }}>{title}</p>}
-            {events.length === 0 && <p role="status" style={{ fontSize: '0.68rem', color: 'var(--text-muted)', margin: '0.1rem 0 0 0' }}>Sin datos para este periodo.</p>}
+            {title && <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', margin: '0.1rem 0 0 0' }}>{title}</p>}
+            {events.length === 0 && <p role="status" style={{ fontSize: '0.875rem', color: 'var(--text-muted)', margin: '0.1rem 0 0 0' }}>Sin datos para este periodo.</p>}
           </div>
         </div>
 
@@ -260,8 +212,9 @@ export default function CalendarGrid({ events = [], initialDate = new Date(), ti
           <button
             onClick={handleToday}
             style={{
-              padding: '0.25rem 0.55rem',
-              fontSize: '0.68rem',
+              padding: '0.5rem 0.75rem',
+              minHeight: '44px',
+              fontSize: '0.875rem',
               fontWeight: 700,
               borderRadius: '6px',
               border: '1px solid var(--border-subtle)',
@@ -270,15 +223,17 @@ export default function CalendarGrid({ events = [], initialDate = new Date(), ti
               cursor: 'pointer'
             }}
           >
-            Hoy
+            {resetToInitial ? 'Con fechas' : referenceYear === null ? 'Hoy' : 'Mes actual'}
           </button>
 
           <div style={{ display: 'flex', gap: '0.2rem', background: 'var(--surface-elevated)', padding: '2px', borderRadius: '8px', border: '1px solid var(--border-subtle)' }}>
-            <button 
+            <button
               onClick={handlePrevMonth}
+              disabled={referenceYear !== null && month === 0}
+              aria-label="Mes anterior"
               style={{
-                width: '26px',
-                height: '26px',
+                width: '44px',
+                height: '44px',
                 border: 'none',
                 background: 'transparent',
                 color: 'var(--text-primary)',
@@ -292,11 +247,13 @@ export default function CalendarGrid({ events = [], initialDate = new Date(), ti
             >
               <ChevronLeft size={14} />
             </button>
-            <button 
+            <button
               onClick={handleNextMonth}
+              disabled={referenceYear !== null && month === 11}
+              aria-label="Mes siguiente"
               style={{
-                width: '26px',
-                height: '26px',
+                width: '44px',
+                height: '44px',
                 border: 'none',
                 background: 'transparent',
                 color: 'var(--text-primary)',
@@ -314,13 +271,15 @@ export default function CalendarGrid({ events = [], initialDate = new Date(), ti
         </div>
       </div>
 
+      {events.length>0&&<p style={{fontSize:14,lineHeight:1.5,color:'var(--zs-muted)',margin:'0 0 12px'}}>Pulsa un día marcado con «Ver» para consultar sus fechas.</p>}
+
       {/* Weekdays Row */}
-      <div style={{ 
-        display: 'grid', 
-        gridTemplateColumns: 'repeat(7, 1fr)', 
-        textAlign: 'center', 
-        fontWeight: 700, 
-        fontSize: '0.68rem', 
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(7, 1fr)',
+        textAlign: 'center',
+        fontWeight: 700,
+        fontSize: '0.875rem',
         color: 'var(--text-subtle)',
         marginBottom: '0.4rem',
         textTransform: 'uppercase',
@@ -332,11 +291,11 @@ export default function CalendarGrid({ events = [], initialDate = new Date(), ti
       </div>
 
       {/* Days Grid - Expandido Proporcionalmente */}
-      <div style={{ 
-        display: 'grid', 
-        gridTemplateColumns: 'repeat(7, 1fr)', 
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(7, 1fr)',
         gridTemplateRows: 'repeat(6, 1fr)',
-        gap: '5px',
+        gap: referenceYear === null ? '5px' : '2px',
         flex: 1
       }}>
         {cells.map((cell, index) => {
@@ -344,32 +303,17 @@ export default function CalendarGrid({ events = [], initialDate = new Date(), ti
           const isToday = new Date().toDateString() === cell.date.toDateString();
           const isSelected = selectedCell && selectedCell.date.toDateString() === cell.date.toDateString();
           const hasEvents = dateEvents.length > 0;
-          
-          let cellBg;
-          if (isLight) {
-            cellBg = cell.isCurrentMonth
-              ? (isSelected ? '#e0f2fe' : (isToday ? '#f0fdf4' : '#ffffff'))
-              : '#f8fafc';
-          } else {
-            cellBg = cell.isCurrentMonth
-              ? (isSelected ? 'rgba(59, 130, 246, 0.25)' : (isToday ? 'rgba(34, 197, 94, 0.15)' : 'var(--surface-elevated)'))
-              : 'rgba(15, 23, 42, 0.15)';
-          }
 
-          let numberColor;
-          if (isToday) {
-            numberColor = '#10b981';
-          } else if (isSelected) {
-            numberColor = '#3b82f6';
-          } else if (cell.isCurrentMonth) {
-            numberColor = isLight ? '#0d0d0d' : 'rgba(255,255,255,0.92)';
-          } else {
-            numberColor = isLight ? '#94a3b8' : 'rgba(255,255,255,0.3)';
-          }
+          const cellBg=isSelected?'var(--zs-raised)':cell.isCurrentMonth?'var(--zs-surface)':'var(--zs-inset-surface)';
+          const numberColor=isToday?'var(--zs-accent)':cell.isCurrentMonth?'var(--zs-text)':'var(--zs-muted)';
 
           return (
-            <div 
-              key={index} 
+            <button type="button"
+              key={index}
+              className="calendar-day-cell"
+              disabled={!hasEvents}
+              aria-label={`${cell.date.toLocaleDateString('es-EC',{day:'numeric',month:'long',year:'numeric'})}${hasEvents ? `: ${dateEvents.map(event=>event.title).join('; ')}` : ': sin evento registrado'}`}
+              aria-expanded={hasEvents ? Boolean(popoverData && isSelected) : undefined}
               onClick={(e) => {
                 setSelectedCell(cell);
                 handleCellClick(e, cell, dateEvents);
@@ -383,22 +327,20 @@ export default function CalendarGrid({ events = [], initialDate = new Date(), ti
                 alignItems: 'center',
                 height: '100%',
                 minHeight: '44px',
-                border: isToday 
-                  ? '2px solid #10b981' 
-                  : (isSelected 
-                      ? '2px solid #3b82f6' 
-                      : (isLight ? '1px solid rgba(13, 13, 13, 0.08)' : '1px solid var(--border-subtle)')),
+                border: isToday
+                  ? '2px solid var(--zs-accent)'
+                  : (isSelected
+                      ? '2px solid var(--zs-focus)'
+                      : '1px solid var(--zs-border)'),
                 borderRadius: '8px',
                 position: 'relative',
                 cursor: 'pointer',
-                transition: 'transform 0.15s ease, box-shadow 0.15s ease',
                 boxShadow: isToday ? '0 0 10px rgba(16, 185, 129, 0.2)' : 'none'
               }}
-              className="calendar-day-cell"
             >
               {/* Day Number */}
-              <span style={{ 
-                fontSize: '0.74rem', 
+              <span style={{
+                fontSize: '0.875rem',
                 fontWeight: isToday || isSelected || hasEvents ? 800 : 600,
                 color: numberColor,
                 lineHeight: 1
@@ -409,14 +351,14 @@ export default function CalendarGrid({ events = [], initialDate = new Date(), ti
               {/* Status Badge Chip */}
               {hasEvents ? (
                 dateEvents.slice(0, 1).map((evt, idx) => {
-                  const label = evt.color === 'danger' ? 'alerta' : (evt.color === 'warning' ? 'precaución' : 'evento');
-                  const bStyle = getEventBadgeStyle(evt.color, isLight);
+                  const label = 'Ver';
+                  const bStyle = getEventBadgeStyle(evt.color);
 
                   return (
-                    <div 
-                      key={idx} 
-                      style={{ 
-                        width: '92%', 
+                    <div
+                      key={idx}
+                      style={{
+                        width: '92%',
                         background: bStyle.bg,
                         border: `1px solid ${bStyle.border}`,
                         borderRadius: '4px',
@@ -427,11 +369,11 @@ export default function CalendarGrid({ events = [], initialDate = new Date(), ti
                         gap: '2px'
                       }}
                     >
-                      <span style={{ 
-                        fontSize: '0.58rem', 
-                        fontWeight: 800, 
+                      <span style={{
+                        fontSize: '0.75rem',
+                        fontWeight: 800,
                         color: bStyle.text,
-                        textTransform: 'lowercase',
+                        textTransform: 'none',
                         lineHeight: 1
                       }}>
                         {label}
@@ -442,64 +384,61 @@ export default function CalendarGrid({ events = [], initialDate = new Date(), ti
               ) : (
                 <div style={{ height: '12px' }} />
               )}
-            </div>
+            </button>
           );
         })}
       </div>
 
       {popoverData && (() => {
-        const evt = popoverData.events[0];
-        const badge = getEventBadgeStyle(evt?.color, isLight);
-        const description = typeof evt?.description === 'string'
-          ? evt.description.replace(/\s*\|\s*/g, ' · ').trim()
-          : 'Consulta el evento seleccionado de esta simulación.';
         return createPortal(
-          <aside
+          <div
             className="calendar-popover-portal"
             role="status"
-            aria-label="Detalle del evento de la simulación"
+            aria-label={eventDetailLabel || (referenceYear === null ? 'Detalle del evento de la simulación' : 'Detalle de la referencia de siembra')}
             style={{
               position: 'fixed', left: popoverData.left, top: popoverData.top,
               width: popoverData.width, maxHeight: 'min(320px, 50dvh)', overflowY: 'auto',
               transform: popoverData.openAbove ? 'translate(-50%, -100%)' : 'translateX(-50%)',
               zIndex: 1002, padding: 16, borderRadius: 16,
-              background: isLight ? '#fff' : '#1b2a22',
-              color: isLight ? '#173b2c' : '#effaf3',
-              border: `1px solid ${isLight ? '#bdd4c4' : '#536d5b'}`,
+              background: 'var(--zs-surface)',
+              color: 'var(--zs-text)',
+              border: '1px solid var(--zs-border-strong)',
               boxShadow: '0 16px 42px #0004',
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
-              <span style={{ flex: 1, color: badge.text, fontSize: 12, fontWeight: 750 }}>
-                {evt?.title || evt?.etapa || 'Evento del cultivo'}
-              </span>
-              <button type="button" onClick={() => setPopoverData(null)} aria-label="Cerrar información" style={{ flex: '0 0 44px', width: 44, height: 44, margin: '-10px -10px 0 0', border: 0, borderRadius: 10, background: 'transparent', color: 'inherit', cursor: 'pointer' }}>×</button>
+            <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',gap:12}}>
+              <strong style={{fontSize:14,lineHeight:1.5}}>{popoverData.cell.date.toLocaleDateString('es-EC',{day:'numeric',month:'long',year:'numeric'})}</strong>
+              <button type="button" onClick={()=>{setPopoverData(null);eventTriggerRef.current?.focus();}} aria-label="Cerrar información" style={{flex:'0 0 44px',width:44,height:44,margin:'-10px -10px 0 0',border:0,borderRadius:10,background:'transparent',color:'inherit',cursor:'pointer'}}>×</button>
             </div>
-            <p style={{ margin: '5px 0 0', fontSize: 12, lineHeight: 1.55, color: 'inherit' }}>{description}</p>
-          </aside>,
-          document.body
+            {popoverData.events.map((event,index)=>{
+              const badge=getEventBadgeStyle(event.color);
+              const description=typeof event.description==='string'?event.description.replace(/\s*\|\s*/g,' · ').trim():'';
+              return <div key={`${event.title}:${index}`} style={{borderTop:'1px solid var(--zs-border)',paddingTop:12,marginTop:12}}><strong style={{display:'block',color:badge.text,fontSize:14,lineHeight:1.5}}>{event.title||event.etapa||'Evento del cultivo'}</strong>{description&&<p style={{margin:'8px 0 0',fontSize:14,lineHeight:1.6,color:'inherit'}}>{description}</p>}</div>;
+            })}
+          </div>,
+          document.querySelector('.zeasys-workspace') || document.body
         );
       })()}
 
       {/* Legend Badges at Bottom */}
-      <div style={{ 
-        display: 'flex', 
-        flexWrap: 'wrap', 
-        gap: '0.85rem', 
-        marginTop: '0.85rem', 
-        fontSize: '0.72rem', 
+      <div style={{
+        display: 'flex',
+        flexWrap: 'wrap',
+        gap: '0.85rem',
+        marginTop: '0.85rem',
+        fontSize: '0.875rem',
         color: 'var(--text-muted)',
         justifyContent: 'center',
         padding: '0.4rem 0.2rem 0 0.2rem',
         borderTop: '1px solid var(--border-subtle)'
       }}>
-        {[
-          { color: '#10b981', label: 'Evento favorable' },
-          { color: '#f59e0b', label: 'Precaución' },
-          { color: '#ef4444', label: 'Alerta' }
-        ].map(item => (
+        {(legendItems ?? (referenceYear !== null ? [{color:'var(--zs-info)',label:'Referencia de catálogo; no evalúa condiciones futuras'}] : [
+          { color: 'var(--zs-accent)', label: 'Evento registrado' },
+          { color: 'var(--zs-warning)', label: 'Precaución' },
+          { color: 'var(--zs-danger)', label: 'Alerta' }
+        ])).map(item => (
           <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-            <div style={{ width: '8px', height: '8px', background: item.color, borderRadius: '50%', boxShadow: `0 0 6px ${item.color}60` }}></div>
+            <div style={{ width: '8px', height: '8px', background: item.color, borderRadius: '50%', boxShadow: 'none' }}></div>
             <span style={{ fontWeight: 600 }}>{item.label}</span>
           </div>
         ))}

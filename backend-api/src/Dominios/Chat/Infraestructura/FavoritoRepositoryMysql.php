@@ -33,7 +33,7 @@ final class FavoritoRepositoryMysql implements FavoritoRepositoryInterface
             'INSERT INTO conversaciones_favoritas
                 (usuario_id, parcela_id, año, ambito, vista, conversacion_id, titulo, mensajes_json, contexto_json)
              VALUES
-                (:usuario_id, :parcela_id, :año, :ambito, :vista, :conversacion_id, :titulo, :mensajes_json, :contexto_json)
+                (:usuario_id, :parcela_id, :anio, :ambito, :vista, :conversacion_id, :titulo, :mensajes_json, :contexto_json)
              ON DUPLICATE KEY UPDATE
                 parcela_id = VALUES(parcela_id),
                 año = VALUES(año),
@@ -47,7 +47,7 @@ final class FavoritoRepositoryMysql implements FavoritoRepositoryInterface
         $stmt->execute([
             ':usuario_id' => $usuarioId,
             ':parcela_id' => $datos['parcela_id'] ?? null,
-            ':año' => $datos['año'] ?? null,
+            ':anio' => $datos['año'] ?? null,
             ':ambito' => (string) ($datos['ambito'] ?? 'dashboard'),
             ':vista' => $datos['vista'] ?? null,
             ':conversacion_id' => $conversacionId,
@@ -86,8 +86,8 @@ final class FavoritoRepositoryMysql implements FavoritoRepositoryInterface
             $parametros[':parcela_id'] = $cultivoId;
         }
         if ($año !== null) {
-            $condiciones[] = '(año = :año OR año IS NULL)';
-            $parametros[':año'] = $año;
+            $condiciones[] = '(año = :anio OR año IS NULL)';
+            $parametros[':anio'] = $año;
         }
 
         $stmt = $this->db->prepare(

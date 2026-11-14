@@ -1,19 +1,23 @@
-/* ZeaSys: primitive palette shared by the public and internal interfaces. */
+/* Primitivas HSL: bosque, papel neutro y acentos agrícolas. */
 :root {
-  --zp-forest-950: #101a15;
-  --zp-forest-900: #15251c;
-  --zp-forest-800: #1b2a22;
-  --zp-forest-700: #283b2e;
-  --zp-forest-600: #176441;
-  --zp-leaf-300: #b5d98b;
-  --zp-paper-50: #ffffff;
-  --zp-paper-100: #e4ece2;
-  --zp-paper-200: #eaf2e6;
-  --zp-paper-300: #dcebd8;
-  --zp-ink: #192c23;
-  --zp-ink-muted: #435b4a;
-  --zp-light-text: #f0f4ef;
-  --zp-light-muted: #c2d0c3;
-  --zp-sky: #9ed1ff;
-  --zp-focus-light: #165f9c;
+  --zp-h-forest: 156;
+  --zp-h-leaf: 83;
+  --zp-h-maize: 42;
+  --zp-h-sky: 207;
+  --zp-forest-950: hsl(var(--zp-h-forest) 24% 8%);
+  --zp-forest-900: hsl(var(--zp-h-forest) 23% 12%);
+  --zp-forest-800: hsl(var(--zp-h-forest) 20% 15%);
+  --zp-forest-700: hsl(var(--zp-h-forest) 20% 22%);
+  --zp-forest-600: hsl(var(--zp-h-forest) 52% 28%);
+  --zp-leaf-300: hsl(var(--zp-h-leaf) 48% 73%);
+  --zp-paper-50: hsl(90 20% 99%);
+  --zp-paper-100: hsl(90 18% 96%);
+  --zp-paper-200: hsl(100 20% 93%);
+  --zp-paper-300: hsl(110 21% 89%);
+  --zp-ink: hsl(var(--zp-h-forest) 28% 14%);
+  --zp-ink-muted: hsl(var(--zp-h-forest) 15% 31%);
+  --zp-light-text: hsl(100 25% 96%);
+  --zp-light-muted: hsl(130 16% 79%);
+  --zp-sky: hsl(var(--zp-h-sky) 74% 80%);
+  --zp-focus-light: hsl(var(--zp-h-sky) 74% 33%);
 }
