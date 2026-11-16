@@ -33,9 +33,13 @@
 .climate-reading small { font-size: .85rem; font-weight: 500; color: var(--zs-muted); }
 .climate-reading--enso { grid-column: 1 / -1; }
 .climate-reading--enso > svg { color: var(--zs-warning); margin-top: 2px; }
+.climate-reading--enso > span { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 28px; justify-content: space-between; }
+.climate-reading--enso .climate-reading-body { flex: 1 1 300px; min-width: 0; }
+.climate-reading--enso .climate-reading-title { font-size: clamp(1.7rem, 2.6vw, 2.3rem); font-weight: 800; line-height: 1.15; color: var(--zs-text); overflow-wrap: anywhere; }
+.climate-reading--enso-alerta > svg { color: var(--zs-danger); }
+.climate-reading--enso-alerta .climate-reading-title { color: var(--zs-danger); }
 .climate-reading--enso strong small { display: block; margin-top: 2px; font-size: .85rem; }
 .climate-reading-note { display: block; margin-top: 6px; font-size: .8rem; line-height: 1.45; color: var(--zs-muted); }
-.climate-reading-source { display: block; margin-top: 4px; font-size: .75rem; line-height: 1.4; color: var(--zs-muted); }
 .climate-source { color: var(--zs-muted); font-size: .85rem; line-height: 1.6; }
 .climate-forecast-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; }
 .climate-day { display: flex; flex-direction: column; align-items: center; gap: 10px; min-width: 0; padding: 16px 10px; color: var(--zs-text); background: var(--climate-inset); border: 1px solid var(--climate-line); border-radius: 12px; text-align: center; }

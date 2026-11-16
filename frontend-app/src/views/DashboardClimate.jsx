@@ -125,12 +125,14 @@ export default function DashboardClimate({ cultivoElegidoId, cultivoActivo, onNa
         <button className="climate-reading" onClick={() => ask('¿Qué significa la humedad relativa del aire que muestra mi parcela? Diferénciala de la humedad del suelo.')}><Droplets size={22} aria-hidden="true" /><span>Humedad del aire<strong>{num(climateNumber(actual?.humedad_relativa_pct, 0, 100), 0)}<small> %</small></strong></span></button>
         <button className="climate-reading" onClick={() => ask('¿Qué significa el viento indicado en Clima y cultivo y qué debo revisar antes de trabajar en mi parcela?')}><Wind size={22} aria-hidden="true" /><span>Viento<strong>{num(climateNumber(actual?.viento_kmh, 0))}<small> km/h</small></strong></span></button>
       </div>
-      <button className="climate-reading climate-reading--enso" onClick={() => ask('Explícame el fenómeno de El Niño y La Niña que muestra Clima y cultivo. ¿Cómo se relaciona esta referencia del Pacífico con la fecha de siembra de mi parcela —actual o futura— y qué conviene revisar en el pronóstico de mi ubicación?')}>
+      <button className={`climate-reading climate-reading--enso${ensoEstado === 'Anomalía cálida' || ensoEstado === 'Anomalía fría' ? ' climate-reading--enso-alerta' : ''}`} onClick={() => ask('Explícame el fenómeno de El Niño y La Niña que muestra Clima y cultivo. ¿Cómo se relaciona esta referencia del Pacífico con la fecha de siembra de mi parcela —actual o futura— y qué conviene revisar en el pronóstico de mi ubicación?')}>
         <Waves size={22} aria-hidden="true" />
-        <span>El Niño y La Niña
-          <strong>{ensoEstado ?? 'Sin dato'}<small>{index !== null ? `${enso.indice || 'RONI'}: ${num(index, 2)} °C · ${enso.etiqueta_trimestre || enso.periodo}` : 'Índice del Pacífico no disponible'}</small></strong>
-          <span className="climate-reading-note">{ensoNota}</span>
-          <span className="climate-reading-source">Fenómeno del Pacífico ecuatorial que suele influir en el clima de Ecuador · NOAA CPC · no pronostica la lluvia de tu parcela</span>
+        <span>
+          <span className="climate-reading-body">
+            <strong>{ensoEstado ?? 'Sin dato'}<small>{index !== null ? `${enso.indice || 'RONI'}: ${num(index, 2)} °C · ${enso.etiqueta_trimestre || enso.periodo}` : 'Índice del Pacífico no disponible'}</small></strong>
+            <span className="climate-reading-note">{ensoNota}</span>
+          </span>
+          <span className="climate-reading-title">El Niño y La Niña</span>
         </span>
       </button>
       <p className="climate-source">Fuente: Open-Meteo · estimaciones meteorológicas por ubicación; no son lecturas de una estación instalada en tu parcela.</p>
