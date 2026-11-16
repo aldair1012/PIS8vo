@@ -15,7 +15,7 @@ La descripción central de qué es, para qué sirve, qué incluye y cómo se eje
 - `scripts/`: lanzadores locales de Apache/MySQL, ML, Chroma, Ollama y Flowise.
 - `tools/`: migraciones reproducibles de Flowise y utilidades del corpus RAG.
 - `rag-sources/`: fuentes documentales; los PDF no se versionan (ver `SOURCES.md`).
-- `documentacion/`: instalación, arquitectura, modelos, proveedores de datos, ADRs y configuración del chatbot Gemini/Flowise.
+- `documentacion/`: prototipos, planes internos, instalación, arquitectura, modelos, proveedores de datos, ADRs y configuración del chatbot Gemini/Flowise.
 
 Los artefactos de `assets/`, `models/` e `index.html` en la raíz son intencionales: XAMPP los sirve directamente. No deben editarse a mano; se regeneran desde `frontend-app` con `npm run build`.
 
@@ -56,6 +56,7 @@ La guía completa está en [`documentacion/GUIA_INSTALACION.md`](documentacion/G
 - Fuentes y evaluación de cosechas verificadas: [`documentacion/fuentes-evaluacion-cosechas.md`](documentacion/fuentes-evaluacion-cosechas.md).
 - Copias locales y limitaciones de recuperación: [`documentacion/respaldo-local.md`](documentacion/respaldo-local.md).
 - Auditoría preliminar de los cinco PDF: [`documentacion/chatbot-pdf-20261108.md`](documentacion/chatbot-pdf-20261108.md).
+- Instalación como aplicación, compresión y caché, y orden del repositorio: [`documentacion/revision-fase-2-20261115.md`](documentacion/revision-fase-2-20261115.md).
 
 ## Verificación local
 

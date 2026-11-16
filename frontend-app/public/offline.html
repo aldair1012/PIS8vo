@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ZeaSys: sin conexión</title>
+  <style>
+    :root { color-scheme: light dark; --bg:#f4f7f3; --fg:#14231a; --muted:#3a4a41; --accent:#1f5c38; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#071b21; --fg:#e8ede8; --muted:#9db09f; --accent:#8fbb9a; } }
+    html, body { height: 100%; margin: 0; }
+    body { display: grid; place-items: center; background: var(--bg); color: var(--fg); font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; padding: 24px; box-sizing: border-box; }
+    main { max-width: 28rem; text-align: center; }
+    img { width: 72px; height: 72px; border-radius: 18px; }
+    h1 { font-size: 1.4rem; margin: 1rem 0 .5rem; }
+    p { color: var(--muted); line-height: 1.55; margin: 0 0 1.25rem; }
+    button { min-height: 44px; padding: 0 1.25rem; border: 0; border-radius: 12px; background: var(--accent); color: var(--bg); font-size: 1rem; font-weight: 600; cursor: pointer; }
+    button:focus-visible { outline: 3px solid var(--fg); outline-offset: 3px; }
+  </style>
+</head>
+<body>
+  <main>
+    <img src="./icons/icon-192.png" alt="" width="72" height="72" />
+    <h1>No hay conexión</h1>
+    <p>ZeaSys necesita internet para consultar el clima y calcular escenarios. Tus parcelas y registros siguen guardados en tu cuenta; vuelve a intentarlo cuando tengas señal.</p>
+    <button type="button" onclick="location.reload()">Reintentar</button>
+  </main>
+</body>
+</html>

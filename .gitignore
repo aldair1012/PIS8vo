@@ -49,3 +49,6 @@ docker/.env
 
 # Base de datos real con datos personales (nombres, correos, hashes)
 database/agropredict_db.sql
+
+# Configuración local del frontend (usa frontend-app/.env.example como plantilla)
+frontend-app/.env
