@@ -117,6 +117,7 @@ Las credenciales son propias del entorno que ejecuta el proyecto. No deben inclu
 - Los cambios de base se aplican mediante migraciones incrementales. No se reemplaza una base existente para actualizar una pantalla.
 - Los documentos históricos de revisión conservan su fecha; esta guía y el inventario de fuentes reflejan el funcionamiento vigente.
 - Las páginas internas usan la semántica de color compartida. La página pública mantiene su propia capa de componentes.
+- Los estados de espera usan el componente unificado `PantallaCarga` (`frontend-app/src/components/PantallaCarga.jsx` con su capa en `frontend-app/src/assets/pantalla-carga.css`): brote de maíz animado, puntos en secuencia y esqueletos con brillo en los colores del tema, con soporte de movimiento reducido. Las cargas de vista completa emplean la variante `pantalla`.
 
 ## Qué se comprueba y qué requiere evidencia adicional
 
