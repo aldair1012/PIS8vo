@@ -56,6 +56,7 @@ La guía completa está en [`documentacion/GUIA_INSTALACION.md`](documentacion/G
 - Fuentes y evaluación de cosechas verificadas: [`documentacion/fuentes-evaluacion-cosechas.md`](documentacion/fuentes-evaluacion-cosechas.md).
 - Copias locales y limitaciones de recuperación: [`documentacion/respaldo-local.md`](documentacion/respaldo-local.md).
 - Auditoría preliminar de los cinco PDF: [`documentacion/chatbot-pdf-20261108.md`](documentacion/chatbot-pdf-20261108.md).
+- Error realista de la simulación al planificar (variables futuras imputadas): [`documentacion/evaluacion-realismo-inferencia-20261115.md`](documentacion/evaluacion-realismo-inferencia-20261115.md).
 
 ## Verificación local
 
