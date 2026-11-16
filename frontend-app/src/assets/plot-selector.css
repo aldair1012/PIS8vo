@@ -1,0 +1,24 @@
+/* Selector propio: las filas no reutilizan estilos de las tarjetas de Mis parcelas. */
+.zeasys-workspace .lote-selector-panel { bottom:auto;width:min(400px,calc(100vw - 24px));max-height:calc(100dvh - var(--plot-selector-top,65px) - 12px);background:var(--zs-surface);color:var(--zs-text);animation:none; }
+.zeasys-workspace :is(.lote-selector-panel-header,.lote-selector-search,.lote-selector-year-row,.lote-selector-footer) { flex:0 0 auto; }
+.zeasys-workspace .lote-selector-panel-title { font-size:1rem; }
+.zeasys-workspace .lote-selector-count { color:var(--zs-accent);background:var(--zs-inset-surface);font-size:.8125rem; }
+.zeasys-workspace .lote-selector-close { min-width:44px;min-height:44px;color:var(--zs-muted); }
+.zeasys-workspace .lote-selector-search { padding:12px 16px; }
+.zeasys-workspace .lote-selector-search-input { min-height:46px;font-size:1rem;background:var(--zs-inset-surface); }
+.zeasys-workspace .lote-selector-list { flex:1 1 auto;min-height:0;max-height:none;overflow-y:auto;overscroll-behavior:contain;scrollbar-gutter:stable;padding:12px;gap:10px; }
+.zeasys-workspace .lote-selector-card { flex:0 0 auto;display:grid;grid-template-columns:36px minmax(0,1fr) 24px;align-items:center;gap:12px;min-height:96px;height:auto;padding:14px 12px;white-space:normal;line-height:1.5;background:var(--zs-inset-surface);border-color:var(--zs-border);box-shadow:none;transform:none; }
+.zeasys-workspace .lote-selector-panel .lote-selector-list .lote-selector-card[type="button"] { min-height:96px; }
+.zeasys-workspace .lote-selector-card:hover { transform:none;box-shadow:none;background:var(--zs-raised); }
+.zeasys-workspace .lote-selector-card.selected { border-color:var(--zs-accent);background:var(--zs-raised);box-shadow:inset 3px 0 var(--zs-accent); }
+.zeasys-workspace .plot-option-icon { display:grid;place-items:center;width:36px;height:36px;border:1px solid var(--zs-border);border-radius:10px;color:var(--zs-accent); }
+.zeasys-workspace .plot-option-copy { display:grid;gap:3px;min-width:0;overflow-wrap:anywhere; }
+.zeasys-workspace .plot-option-copy strong { font-size:1rem;color:var(--zs-text);font-weight:650; }
+.zeasys-workspace .plot-option-copy > span { font-size:.875rem;color:var(--zs-muted); }
+.zeasys-workspace .plot-option-copy small { font-size:.8125rem;color:var(--zs-muted); }
+.zeasys-workspace .plot-option-check { grid-column:3;color:var(--zs-accent); }
+.zeasys-workspace .lote-selector-add-btn { min-height:48px;color:var(--zs-text);font-size:.9375rem; }
+.zeasys-workspace .lote-selector-year-pills { flex-wrap:wrap; }
+.zeasys-workspace .lote-selector-year-pill { min-height:44px;font-size:.875rem; }
+.zeasys-workspace .lote-selector-panel :is(button,input):focus-visible { outline:3px solid var(--zs-focus);outline-offset:2px; }
+@media (max-height:450px) { .zeasys-workspace .lote-selector-panel-header { padding:2px 12px; }.zeasys-workspace .lote-selector-search { padding:6px 12px; }.zeasys-workspace .lote-selector-footer { padding:6px 12px; } }

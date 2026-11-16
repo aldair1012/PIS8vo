@@ -2,6 +2,8 @@
 
 Sistema de apoyo a la decisión agrícola para parcelas de maíz en Ecuador.
 
+La descripción central de qué es, para qué sirve, qué incluye y cómo se ejecuta está en [GUIA_DEL_SISTEMA.md](documentacion/GUIA_DEL_SISTEMA.md).
+
 ## Estructura canónica
 
 - `frontend-app/`: código fuente React/Vite. `npm run build` genera y sincroniza el frontend servido por XAMPP en la raíz (`index.html`, `assets/`, `models/` e `images/`).
@@ -50,10 +52,10 @@ La guía completa está en [`documentacion/GUIA_INSTALACION.md`](documentacion/G
 
 ## Mejoras recientes
 
-- Estado y tareas pendientes: [`documentacion/avance-mejoras-20261105.md`](documentacion/avance-mejoras-20261105.md).
+- Estado y tareas pendientes: [`documentacion/revision-integral-20261109.md`](documentacion/revision-integral-20261109.md).
 - Fuentes y evaluación de cosechas verificadas: [`documentacion/fuentes-evaluacion-cosechas.md`](documentacion/fuentes-evaluacion-cosechas.md).
 - Copias locales y limitaciones de recuperación: [`documentacion/respaldo-local.md`](documentacion/respaldo-local.md).
-- Auditoría preliminar de los cinco PDF: [`documentacion/auditoria-pdf-20261105.md`](documentacion/auditoria-pdf-20261105.md).
+- Auditoría preliminar de los cinco PDF: [`documentacion/chatbot-pdf-20261108.md`](documentacion/chatbot-pdf-20261108.md).
 
 ## Verificación local
 
@@ -65,4 +67,4 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\verificar_sistema.ps
 
 Ejecuta lint, pruebas del frontend, cinco suites PHP sin base de datos, pruebas Python con proveedores simulados y el build del frontend. Se detiene ante el primer fallo. El build sincroniza los recursos servidos por XAMPP; usa `-OmitirBuild` para comprobar solo código y pruebas. Si PHP está instalado en otra ubicación, indica `-PhpPath 'D:\ruta\php.exe'`.
 
-Este comando no ejecuta la suite de contrato, que crea usuarios y registros en la base configurada. Las pruebas de navegador también se verifican por separado. El diagnóstico inicial, los cambios y las limitaciones están en [`documentacion/revision-sistema-20261101.md`](documentacion/revision-sistema-20261101.md).
+Este comando no ejecuta la suite de contrato, que crea usuarios y registros en la base configurada. Las pruebas de navegador también se verifican por separado. El diagnóstico inicial, los cambios y las limitaciones están en [`documentacion/revision-integral-20261109.md`](documentacion/revision-integral-20261109.md).

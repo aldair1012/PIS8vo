@@ -1,487 +1,146 @@
-import AnnualRainReference from '../components/AnnualRainReference';
-import { useState, useEffect, useMemo } from 'react';
+import { useEffect, useState } from 'react';
+import { ArrowRight, CalendarDays, Cloud, CloudLightning, CloudRain, CloudSun, Droplets, ExternalLink, Leaf, MapPin, MessageCircle, RefreshCw, Sprout, Sun, Thermometer, Wind } from 'lucide-react';
 import { dssService } from '../services/api';
-import ClimateLine from '../templates/Charts/ClimateLine';
-import CalendarGrid from '../templates/Common/CalendarGrid';
-import SimulationInfoCard from '../templates/Common/SimulationInfoCard';
-import EmptyDashboard from '../templates/Common/EmptyDashboard';
-import { DashboardSectionHeading } from '../templates/Common/DashboardSectionHeading';
-import useExplicacionIA from '../hooks/usarExplicacionIA';
-import { evidenceNumber as toFiniteNumber, evidenceDate, measuredPhenologyEvents, soilWaterRows } from '../utils/agronomicEvidence';
-import {
-  CheckCircle,
-  AlertTriangle,
-  Cloud,
-  CloudLightning,
-  CloudRain,
-  CloudSun,
-  Droplets,
-  Sun,
-  Thermometer,
-  Wind,
-} from 'lucide-react';
+import EChart from '../components/EChart';
+import useTema from '../hooks/useTema';
+import { getDashboardChartColors, getChartTooltip } from '../utils/chartConfig';
+import { climateDate, climateNumber, forecastDays, forecastSummary, historyDays, historyMonths, referenceWaterBalance, soilWaterPercent, validateClimateResponse } from '../utils/climateEvidence';
+import { dateKindLabel, irrigationLabel, sowingPlanning } from '../utils/sowingPlan';
+import '../assets/clm-panel.css';
 
-const formatMetricNumber = (value, maximumFractionDigits = 1) => {
-  const number = toFiniteNumber(value);
-  return number === null ? 'Sin datos' : number.toLocaleString('es-EC', { maximumFractionDigits });
+const num = (value, digits = 1) => {
+  const n = climateNumber(value);
+  return n === null ? 'Sin dato' : n.toLocaleString('es-EC', { maximumFractionDigits: digits });
 };
+const dateLabel = (date, options = { day: 'numeric', month: 'short', year: 'numeric' }) => climateDate(date) ? new Date(`${date}T12:00:00`).toLocaleDateString('es-EC', options) : 'Por registrar';
+const dayLabel = date => dateLabel(date, { weekday: 'short', day: 'numeric', month: 'short' });
+const periodLabel = period => climateDate(period?.inicio) && climateDate(period?.fin) ? `${dateLabel(period.inicio)} al ${dateLabel(period.fin)}` : 'Período no informado por el proveedor';
+const timeLabel = time => typeof time === 'string' && climateDate(time.slice(0, 10)) ? `${dateLabel(time.slice(0, 10))}${/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(time) ? ` · ${time.slice(11, 16)}` : ''}` : 'Hora no informada';
+function WeatherIcon({ code, size = 28 }) {
+  const value = climateNumber(code, 0, 99);
+  const Icon = value === 0 ? Sun : value >= 95 ? CloudLightning : value >= 51 && value <= 82 ? CloudRain : value !== null && value <= 3 ? CloudSun : Cloud;
+  return <Icon size={size} aria-hidden="true" />;
+}
+function SectionTitle({ icon: Icon, id, title, children }) {
+  return <div className="climate-section-title"><span className="climate-icon"><Icon size={22} aria-hidden="true" /></span><div><h2 id={id}>{title}</h2>{children && <p>{children}</p>}</div></div>;
+}
+function Missing({ children }) { return <p className="climate-missing">{children}</p>; }
 
-const weatherIcon = (code) => {
-  const codigo = toFiniteNumber(code);
-  if (codigo === null) return <Cloud size={18} aria-hidden="true" />;
-  if (codigo === 0) return <Sun size={18} aria-hidden="true" />;
-  if (codigo >= 95) return <CloudLightning size={18} aria-hidden="true" />;
-  if ((codigo >= 51 && codigo <= 67) || (codigo >= 80 && codigo <= 82)) return <CloudRain size={18} aria-hidden="true" />;
-  if (codigo === 45 || codigo === 48) return <Cloud size={18} aria-hidden="true" />;
-  return <CloudSun size={18} aria-hidden="true" />;
-};
-
-const interactiveProps = (onActivate, label) => ({
-  role: 'button',
-  tabIndex: 0,
-  'aria-label': label,
-  onKeyDown: (event) => {
-    if (event.key === 'Enter' || event.key === ' ') {
-      event.preventDefault();
-      onActivate();
-    }
-  },
-});
-
-const formatForecastDay = (fecha) => {
-  if (!fecha) return '—';
-  const fechaLocal = new Date(`${String(fecha).slice(0, 10)}T12:00:00`);
-  if (Number.isNaN(fechaLocal.getTime())) return String(fecha);
-  return fechaLocal.toLocaleDateString('es-EC', { weekday: 'short', day: 'numeric' });
-};
-
-export default function DashboardClimate({ cultivoElegidoId, añoSeleccionado, onNavigate, onDashboardData }) {
-  const [response, setResponse] = useState(null);
-  const [recarga, setRecarga] = useState(0);
-  const requestKey = `${cultivoElegidoId ?? ''}:${añoSeleccionado ?? ''}:${recarga}`;
-  const current = response?.key === requestKey ? response : null;
+export default function DashboardClimate({ cultivoElegidoId, cultivoActivo, onNavigate, onDashboardData, onAbrirRegistroCampo, revisionMediciones = 0 }) {
+  const [result, setResult] = useState(null);
+  const [observations, setObservations] = useState(null);
+  const [refresh, setRefresh] = useState(0);
+  const [historyRange, setHistoryRange] = useState('30d');
+  const [historyVariable, setHistoryVariable] = useState('rain');
+  const key = `${cultivoElegidoId ?? ''}:${refresh}`;
+  const current = String(result?.plotId) === String(cultivoElegidoId) ? result : null;
   const data = current?.data;
-  const loading = current === null;
-  const error = current?.error;
-  const initialCalendarDate = useMemo(() => measuredPhenologyEvents(data?.timeline_fenologico)[0]?.start ?? evidenceDate(data?.fecha_siembra) ?? new Date(), [data]);
-
-  const {
-    mostrarModalIa,
-    setMostrarModalIa,
-    cargandoIa,
-    datosIa,
-    pedirExplicacionIa
-  } = useExplicacionIA(cultivoElegidoId, añoSeleccionado);
+  const pending = Boolean(cultivoElegidoId) && current?.key !== key;
+  const field = String(observations?.plotId) === String(cultivoElegidoId) ? observations : null;
+  const colors = getDashboardChartColors(useTema());
 
   useEffect(() => {
+    if (!cultivoElegidoId) return;
     let active = true;
-    async function loadData() {
-      try {
-        const res = await dssService.getClimaData(cultivoElegidoId, añoSeleccionado);
-        if (active) setResponse({ key: requestKey, data: res });
-      } catch {
-        if (active) setResponse({ key: requestKey, error: 'Error al cargar datos de riesgo climático.' });
-      }
-    }
-    loadData();
+    dssService.getClimaData(cultivoElegidoId, null).then(raw => {
+      const payload = validateClimateResponse(raw, cultivoElegidoId);
+      if (active) setResult({ plotId: cultivoElegidoId, key, data: payload, today: new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Guayaquil' }).format(new Date()) });
+    }).catch(() => {
+      if (active) setResult(previous => ({ ...(String(previous?.plotId) === String(cultivoElegidoId) ? previous : {}), plotId: cultivoElegidoId, key, error: 'No se pudo actualizar el clima. Comprueba tu conexión e inténtalo de nuevo.' }));
+    });
     return () => { active = false; };
-  }, [cultivoElegidoId, añoSeleccionado, requestKey, recarga]);
+  }, [cultivoElegidoId, key]);
 
   useEffect(() => {
-    if (data && !data.sin_datos && onDashboardData) onDashboardData(data);
-  }, [data, onDashboardData]);
+    if (!cultivoElegidoId) return;
+    let active = true;
+    dssService.getRendimientoMediciones(cultivoElegidoId).then(record => {
+      if (active) setObservations({ plotId: cultivoElegidoId, revision: revisionMediciones, data: record });
+    }).catch(() => {
+      if (active) setObservations({ plotId: cultivoElegidoId, revision: revisionMediciones, error: true });
+    });
+    return () => { active = false; };
+  }, [cultivoElegidoId, revisionMediciones]);
 
-  if (loading) {
-    return <div className="flex-center" role="status" aria-busy="true" style={{ height: '70vh', color: 'var(--text-muted)', gap: '0.6rem' }}><span aria-hidden="true" style={{ display: 'inline-block', width: 18, height: 18, borderRadius: '50%', border: '2px solid var(--border-subtle)', borderTopColor: 'var(--zs-accent)', animation: 'spin 0.8s linear infinite' }} /> Cargando clima de la parcela…</div>;
-  }
+  useEffect(() => { onDashboardData?.(data && !data.sin_datos ? data : null); }, [data, onDashboardData]);
+  const ask = question => window.dispatchEvent(new CustomEvent('zeasys:ask-chat', { detail: { pregunta: question, cultivo_id: cultivoElegidoId } }));
+  const recordField = () => onAbrirRegistroCampo?.();
+  const reload = () => setRefresh(value => value + 1);
 
-  if (error) {
-    return <div style={{ padding: '1rem', borderRadius: '12px' }}>
-      <div className="bg-danger-alpha text-danger" role="alert" style={{ padding: '1rem', borderRadius: '12px', marginBottom: '0.75rem' }}>{error}</div>
-      <button type="button" className="ydp-primary-action" onClick={() => { setResponse(null); setRecarga((value) => value + 1); }}>Reintentar carga del clima</button>
-    </div>;
-  }
+  if (!cultivoElegidoId || data?.sin_datos) return <div className="dashboard-view climate-page"><div className="climate-state"><MapPin size={32} aria-hidden="true" /><h2>Elige una parcela para consultar su clima</h2><p>La ubicación permite buscar el tiempo y los registros históricos cercanos a tu cultivo. Puedes hacerlo aunque todavía no hayas simulado una cosecha.</p><button className="climate-action" onClick={() => onNavigate?.('cultivos')}>Ir a mis parcelas <ArrowRight size={18} /></button></div></div>;
+  if (!data) return <div className="dashboard-view climate-page"><div className="climate-state" role={current?.error ? 'alert' : 'status'} aria-busy={pending}>{current?.error ? <><h2>No pudimos consultar el clima</h2><p>{current.error}</p><button className="climate-action" onClick={reload}>Reintentar consulta</button></> : <><RefreshCw size={28} aria-hidden="true" /><h2>Consultando el clima de tu parcela…</h2><p>Buscamos el pronóstico y los datos históricos de esta ubicación.</p></>}</div></div>;
 
-  if (data?.sin_datos) {
-    return <EmptyDashboard tipo="climate" onGoToSimulation={() => onNavigate?.('simular')} />;
-  }
+  const actual = data.clima_hoy?.disponible ? data.clima_hoy.actual : null;
+  const forecast = forecastDays(data.pronostico_7d, current.today);
+  const week = forecastSummary(forecast, current.today);
+  const period = data.periodo_clima_reciente;
+  const daily = historyDays(data.clima_diaria_30d, period);
+  const monthly = historyMonths(data.resumen_mensual_12m?.meses);
+  const history = historyRange === '30d' ? daily : monthly;
+  const rain = historyVariable === 'rain';
+  const values = history.map(row => rain ? row.precip_mm : row.temp_media_c);
+  const validCount = values.filter(value => value !== null).length;
+  const balance = referenceWaterBalance(data.clima_diaria_30d, period);
+  const soilWater = soilWaterPercent(data.suelo_ahora?.humedad_0_10cm);
+  const plan = sowingPlanning(cultivoActivo || {});
+  const indicators = field?.data?.indicadores ?? {};
+  const stage = indicators.etapa_observada;
+  const pest = indicators.incidencia_plaga;
+  const annual = data.lluvia_anual_referencia;
+  const enso = data.kpis?.enso;
+  const index = climateNumber(enso?.valor_indice ?? enso?.roni ?? enso?.oni, -10, 10);
+  const title = rain ? 'Lluvia acumulada' : 'Temperatura media';
+  const unit = rain ? 'mm' : '°C';
+  const option = {
+    animation: false, grid: { left: 52, right: 20, top: 28, bottom: 42 },
+    tooltip: getChartTooltip(colors, { renderMode: 'richText', valueFormatter: value => value === null ? 'Sin dato' : `${num(value)} ${unit}` }),
+    xAxis: { type: 'category', data: history.map(row => historyRange === '30d' ? dateLabel(row.fecha, { day: 'numeric', month: 'short' }) : dateLabel(`${row.fecha}-01`, { month: 'short', year: '2-digit' })), axisLabel: { color: colors.muted, fontSize: 12, hideOverlap: true }, axisLine: { lineStyle: { color: colors.border } }, axisTick: { show: false } },
+    yAxis: { type: 'value', name: unit, min: rain ? 0 : undefined, nameTextStyle: { color: colors.muted }, axisLabel: { color: colors.muted, fontSize: 12 }, splitLine: { lineStyle: { color: colors.grid } } },
+    series: [{ name: title, type: rain ? 'bar' : 'line', data: values, connectNulls: false, barMaxWidth: 32, symbolSize: 7, itemStyle: { color: rain ? colors.sky : colors.maize, borderRadius: rain ? [4, 4, 0, 0] : undefined }, lineStyle: { width: 3 } }],
+  };
+  const explainHistory = item => ask(`Explícame ${title.toLowerCase()} ${item ? `del ${history[item.dataIndex]?.fecha}` : `de ${historyRange === '30d' ? 'los últimos 30 días' : 'los últimos 12 meses'}`} que muestra Clima y cultivo. Aclara su fuente, el período y qué conviene revisar en mi parcela, sin convertir datos ausentes en cero.`);
 
-  const { kpis, timeline_anomalia, agua_estratos, timeline_fenologico } = data || {};
-  const climaHoy = data?.clima_hoy;
-  const pronostico = Array.isArray(data?.pronostico_7d) ? data.pronostico_7d : [];
-  const promedio30d = data?.clima_promedio_30d || data?.clima_actual;
-  const ensoEstado = String(kpis?.enso?.estado || '').trim();
-  const probLluviaBaja = toFiniteNumber(kpis?.prob_lluvia_bajo_promedio);
-  const aguaUtilInicial = toFiniteNumber(kpis?.agua_util);
-  const riesgoEstacional = typeof kpis?.indice_riesgo === 'string'
-    ? { nivel: kpis.indice_riesgo }
-    : (kpis?.indice_riesgo && typeof kpis.indice_riesgo === 'object' ? kpis.indice_riesgo : {});
-  const riesgoEstacionalTexto = String(riesgoEstacional.nivel || '').trim();
+  return <div className="dashboard-view climate-page">
+    <header className="climate-heading"><div><span className="climate-eyebrow">Seguimiento de tu parcela</span><h1>{cultivoActivo?.nombre_parcela || 'Clima y cultivo'}</h1><p><MapPin size={16} aria-hidden="true" />{cultivoActivo?.ubicacion || 'Ubicación de la parcela seleccionada'}</p></div><button type="button" className="climate-action climate-action--secondary" onClick={reload} disabled={pending}><RefreshCw size={18} aria-hidden="true" />{pending ? 'Consultando…' : 'Actualizar clima'}</button></header>
+    <p className="climate-intro">Mira el tiempo, prepara tus labores y registra lo que observas en el cultivo. Toca una tarjeta para consultar su significado con el asistente.</p>
+    {current.error && <div className="climate-notice" role="alert">{current.error} Se conserva la consulta anterior, con sus fechas originales.</div>}
 
-  const phenology = Array.isArray(timeline_fenologico) ? timeline_fenologico.filter((row) => row && typeof row.etapa === 'string') : [];
-  const calendarEvents = measuredPhenologyEvents(phenology);
-  const waterRows = soilWaterRows(agua_estratos);
-  const maxWaterValue = Math.max(0, ...waterRows.map((row) => row.value ?? 0)) || 1;
-  const hasMonthlySeries = Array.isArray(timeline_anomalia?.labels) && ['lluvia_historica', 'lluvia_anomala', 'temperatura_anomala'].some((key) => Array.isArray(timeline_anomalia[key]) && timeline_anomalia[key].some((value) => toFiniteNumber(value) !== null));
-
-  return (
-    <div className="dashboard-view dashboard-view--climate">
-      <DashboardSectionHeading level={1}
-        label="01 · Ahora"
-        title="Clima actual y pronóstico"
-        description="Lectura de corto plazo para la parcela. El promedio de 30 días se muestra aparte para no confundir clima observado con pronóstico."
-      />
-
-      <div className="glass-panel" style={{ padding: '1.25rem', marginBottom: '1.5rem', animation: 'page-fade-in 0.45s ease' }}>
-        {climaHoy?.disponible ? (
-          <>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1.25rem', alignItems: 'stretch' }}>
-              <div style={{ flex: '1 1 260px', minWidth: 0, padding: '1rem', borderRadius: '14px', background: 'color-mix(in srgb, var(--zs-info) 9%, transparent)', border: '1px solid color-mix(in srgb, var(--zs-info) 22%, transparent)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem', color: 'var(--text-muted)', fontSize: '0.8rem', fontWeight: 700 }}>
-                  <span style={{ display: 'inline-flex', width: '2rem', height: '2rem', borderRadius: '999px', alignItems: 'center', justifyContent: 'center', background: 'color-mix(in srgb, var(--zs-info) 17%, transparent)', color: 'var(--zs-info)' }}>
-                    {weatherIcon(climaHoy.actual?.codigo_tiempo)}
-                  </span>
-                  {climaHoy.actual?.descripcion || 'Condición actual'}
-                </div>
-                <div style={{ display: 'flex', alignItems: 'flex-end', gap: '0.35rem', marginTop: '0.65rem' }}>
-                  <span style={{ fontSize: '2.7rem', lineHeight: 1, fontWeight: 800, color: 'var(--text-primary)' }}>
-                    {formatMetricNumber(climaHoy.actual?.temperatura_c)}
-                  </span>
-                  <span style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '0.2rem' }}>°C</span>
-                </div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', marginTop: '0.85rem', color: 'var(--text-muted)', fontSize: '0.78rem' }}>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}><Droplets size={14} aria-hidden="true" /> {formatMetricNumber(climaHoy.actual?.humedad_relativa_pct)} % HR</span>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}><CloudRain size={14} aria-hidden="true" /> {formatMetricNumber(climaHoy.actual?.precipitacion_mm)} mm</span>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}><Wind size={14} aria-hidden="true" /> {formatMetricNumber(climaHoy.actual?.viento_kmh)} km/h</span>
-                </div>
-                <div style={{ marginTop: '0.75rem', fontSize: '0.68rem', color: 'var(--text-subtle)', lineHeight: 1.4 }}>
-                  {climaHoy.actual?.fecha_hora ? `Referencia temporal: ${climaHoy.actual.fecha_hora}` : 'Hora de referencia no disponible'} · {climaHoy.fuente || 'Fuente no informada'}
-                </div>
-              </div>
-
-              <div style={{ flex: '2 1 420px', minWidth: 0 }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', marginBottom: '0.65rem' }}>
-                  <div style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-primary)' }}>Pronóstico de 7 días</div>
-                  <span style={{ fontSize: '0.64rem', padding: '0.16rem 0.5rem', borderRadius: '999px', background: 'rgba(34, 197, 94, 0.12)', color: 'var(--zs-success)', fontWeight: 700 }}>Pronóstico</span>
-                </div>
-                {pronostico.length > 0 ? (
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(86px, 1fr))', gap: '0.5rem' }}>
-                    {pronostico.map((dia) => (
-                      <div key={dia.fecha} style={{ padding: '0.65rem 0.5rem', borderRadius: '10px', background: 'var(--surface-elevated)', border: '1px solid var(--border-subtle)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.28rem', textAlign: 'center' }}>
-                        <span style={{ fontSize: '0.64rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'capitalize' }}>{formatForecastDay(dia.fecha)}</span>
-                        <span style={{ color: 'var(--zs-info)' }}>{weatherIcon(dia.codigo_tiempo)}</span>
-                        <span style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-primary)' }}>{formatMetricNumber(dia.temp_max_c)}° / {formatMetricNumber(dia.temp_min_c)}°</span>
-                        <span style={{ fontSize: '0.64rem', color: 'var(--text-muted)' }}>{formatMetricNumber(dia.precipitacion_mm)} mm</span>
-                        <span style={{ fontSize: '0.6rem', color: 'var(--text-subtle)' }}>{formatMetricNumber(dia.prob_precipitacion_pct)} % lluvia</span>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div role="status" style={{ padding: '1rem', borderRadius: '10px', background: 'var(--surface-elevated)', border: '1px solid var(--border-subtle)', color: 'var(--text-muted)', fontSize: '0.78rem' }}>
-                    No hay pronóstico diario disponible para esta parcela.
-                  </div>
-                )}
-              </div>
-            </div>
-
-          </>
-        ) : (
-          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.65rem', color: 'var(--text-muted)', fontSize: '0.82rem', lineHeight: 1.5 }}>
-            <CloudSun size={20} style={{ flexShrink: 0, color: 'var(--zs-info)' }} aria-hidden="true" />
-            <div>
-              <strong style={{ color: 'var(--text-primary)' }}>Clima actual no disponible.</strong>{' '}
-              {climaHoy?.error || 'La parcela necesita coordenadas válidas para consultar Open-Meteo Forecast.'}
-            </div>
-          </div>
-        )}
-        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.45rem 1rem', marginTop: '0.9rem', paddingTop: '0.75rem', borderTop: '1px solid var(--border-subtle)', fontSize: '0.7rem', color: 'var(--text-subtle)' }}>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}><Thermometer size={13} aria-hidden="true" /> Promedio 30 días: {formatMetricNumber(promedio30d?.temperatura)} °C</span>
-          <span>{formatMetricNumber(promedio30d?.humedad)} % HR</span>
-          <span>{promedio30d?.precipitacion_30d != null ? `${formatMetricNumber(promedio30d.precipitacion_30d)} mm en 30 días` : 'Sin acumulado de lluvia de 30 días'}</span>
-
-          {data?.periodo_clima_reciente && <span>Período: {data.periodo_clima_reciente.inicio} a {data.periodo_clima_reciente.fin}</span>}
-          <span>Fuente: {promedio30d?.fuente || data?.api_source || 'No informada'}</span>
-          <span style={{ color: 'var(--text-muted)' }}>El acumulado reciente y el promedio histórico anual tienen períodos distintos; no son mediciones del ciclo del cultivo.</span>
-        </div>
-        <AnnualRainReference reference={data?.lluvia_anual_referencia} unavailable />
+    <section className="climate-panel climate-now" aria-labelledby="climate-now-title">
+      <div className="climate-now-main"><SectionTitle icon={CloudSun} id="climate-now-title" title="El tiempo en tu parcela">Último dato: {timeLabel(actual?.fecha_hora)} · hora de la ubicación</SectionTitle>
+        {actual ? <button className="climate-current-reading" onClick={() => ask('Explícame el último dato del tiempo de mi parcela, con su fecha y hora. ¿Qué conviene revisar antes de organizar las labores?')}><WeatherIcon code={actual.codigo_tiempo} size={44} /><span className="climate-temperature">{num(climateNumber(actual.temperatura_c, -90, 65))}<small> °C</small></span><span>{actual.descripcion || 'Condición no informada'}</span></button> : <Missing>El proveedor no entregó el tiempo actual. El historial y tus observaciones siguen disponibles abajo.</Missing>}
       </div>
+      <div className="climate-now-details">
+        <button className="climate-reading" onClick={() => ask('¿Qué significa la humedad relativa del aire que muestra mi parcela? Diferénciala de la humedad del suelo.')}><Droplets size={22} aria-hidden="true" /><span>Humedad del aire<strong>{num(climateNumber(actual?.humedad_relativa_pct, 0, 100), 0)}<small> %</small></strong></span></button>
+        <button className="climate-reading" onClick={() => ask('¿Qué significa el viento indicado en Clima y cultivo y qué debo revisar antes de trabajar en mi parcela?')}><Wind size={22} aria-hidden="true" /><span>Viento<strong>{num(climateNumber(actual?.viento_kmh, 0))}<small> km/h</small></strong></span></button>
+      </div><p className="climate-source">Fuente: Open-Meteo · estimaciones meteorológicas por ubicación; no son lecturas de una estación instalada en tu parcela.</p>
+    </section>
 
-      <DashboardSectionHeading label="02 · Señales" title="Estado del clima y del cultivo" description="Los indicadores sin una fuente disponible no se presentan como mediciones reales." />
+    <section className="climate-panel" aria-labelledby="climate-week-title">
+      <SectionTitle icon={CalendarDays} id="climate-week-title" title="Los próximos 7 días">Pronóstico para organizar tus labores. Puede cambiar al acercarse cada fecha.</SectionTitle>
+      {forecast.length ? <><div className="climate-forecast-grid">{forecast.map(day => <button type="button" className="climate-day" key={day.fecha} onClick={() => ask(`Explícame el pronóstico del ${day.fecha} de mi parcela. Diferencia la cantidad de lluvia en mm, su probabilidad y la temperatura. ¿Qué conviene revisar para organizar mis labores?`)} aria-label={`Consultar pronóstico del ${day.fecha}`}>
+        <span className="climate-day-date">{dayLabel(day.fecha)}</span><WeatherIcon code={day.codigo_tiempo} /><span className="climate-day-description">{day.descripcion || 'Sin descripción'}</span><strong className="climate-day-temp"><small>Máx.</small> {num(day.temp_max_c, 0)}°<span><small>Mín.</small> {num(day.temp_min_c, 0)}°</span></strong><span className="climate-day-rain"><Droplets size={16} aria-hidden="true" />{day.precipitacion_mm === null ? 'Lluvia sin dato' : `${num(day.precipitacion_mm)} mm`}</span><span className="climate-day-prob">{day.prob_precipitacion_pct === null ? 'Probabilidad sin dato' : `${num(day.prob_precipitacion_pct, 0)} % de lluvia`}</span><span className="climate-card-link">Consultar <ArrowRight size={14} aria-hidden="true" /></span>
+      </button>)}</div><div className="climate-week-summary"><strong>{week.complete ? `${num(week.total)} mm previstos en los 7 días` : `Pronóstico parcial: lluvia informada en ${week.coverage} de 7 días`}</strong><p>Los milímetros indican cantidad de agua; el porcentaje indica probabilidad de precipitación. Ese porcentaje no mide el riesgo de perder la cosecha.</p></div></> : <Missing>No llegó un pronóstico vigente de esta ubicación. Pulsa Actualizar clima para volver a consultar; no se completan los días con valores inventados.</Missing>}
+      {week.wettest?.precipitacion_mm > 0 && <div className="climate-tip"><Leaf size={20} aria-hidden="true" /><p>La mayor cantidad de lluvia prevista entre los días disponibles corresponde a <strong>{dayLabel(week.wettest.fecha)}</strong> ({num(week.wettest.precipitacion_mm)} mm). Revisa el drenaje y el estado del terreno antes de organizar una labor.</p></div>}
+    </section>
 
-      {/* Unified Phenology & Climate Risk Dashboard Card */}
-      <div className="glass-panel dss-unified-card" style={{ animation: 'page-fade-in 0.5s ease' }}>
-        
-        {/* Top metrics and risk badge row */}
-        <div className="dss-card-metrics-row">
-          
-          {/* Left: 3 metrics */}
-          <div className="dss-metrics-left-grid">
-            
-            {/* Metric 1: Estado ENSO */}
-            <div
-              className={`dss-metric-col ${!ensoEstado ? 'dss-metric-empty' : ''}`}
-              {...interactiveProps(() => pedirExplicacionIa({
-                tipo_elemento: "tarjeta",
-                nombre: "Estado ENSO (El Niño / Oscilación del Sur)",
-                cultivo: "maiz",
-                valor: ensoEstado || null,
-                unidad: "",
-                estado: !ensoEstado ? 'sin_datos' : (kpis?.enso?.color === 'danger' ? 'riesgoso' : (kpis?.enso?.color === 'warning' ? 'regular' : 'favorable')),
-                descripcion_tecnica: kpis?.enso?.desc || 'Se requiere una fuente ENSO con fecha y ámbito geográfico identificados. El clima de la parcela no permite deducir la fase de ENSO.'
-              }), `Ver detalle del estado ENSO: ${ensoEstado || 'sin datos'}`)}
-              style={{ cursor: 'pointer' }}
-            >
-              <div 
-                className="dss-metric-value" 
-                style={{ color: !ensoEstado ? 'var(--text-muted)' : (kpis?.enso?.color === 'danger' ? 'var(--zs-danger)' : (kpis?.enso?.color === 'warning' ? 'var(--zs-warning)' : 'var(--zs-success)')) }}
-              >
-                {ensoEstado || 'Sin datos'}
-              </div>
-              <div className="dss-metric-title">ENSO de referencia</div>
-              <div className="dss-metric-trend" style={{ color: 'var(--text-muted)' }}>
-                {ensoEstado ? 'Fase climática actual' : 'Dato no disponible'}
-              </div>
-            </div>
+    <section className="climate-panel" aria-labelledby="climate-crop-title">
+      <div className="climate-panel-heading"><SectionTitle icon={Sprout} id="climate-crop-title" title="Tu cultivo y tus observaciones">La fecha de siembra ayuda a planificar. La etapa del cultivo se confirma observándolo en campo.</SectionTitle><button className="climate-action climate-action--secondary" onClick={recordField}>Registrar observación <ArrowRight size={18} aria-hidden="true" /></button></div>
+      <dl className="climate-crop-grid"><div><dt>Siembra registrada</dt><dd>{dateLabel(plan.start)}<small>{plan.start ? dateKindLabel(plan.kind) : 'Completa el plan en Siembra'}</small></dd></div><div><dt>Agua o riego</dt><dd>{irrigationLabel(plan.water)}<small>Dato declarado por el productor</small></dd></div><div><dt>Última etapa observada</dt><dd>{stage?.valor || (field?.error ? 'No se pudo consultar' : 'Sin observación registrada')}<small>{stage?.valor ? `Observada el ${dateLabel(stage.fecha)}` : 'No se deduce automáticamente por los días transcurridos'}</small></dd></div></dl>
+      {field?.revision !== revisionMediciones && <p role="status" className="climate-source">Actualizando tus observaciones…</p>}
+      {pest?.valor != null && <p className="climate-observation">En tu última observación: {num(pest.valor)} % de plantas afectadas · {dateLabel(pest.fecha)}. {pest.nota}</p>}
+      <div className="climate-crop-footer"><p>El clima por sí solo no confirma enfermedades en tu cultivo. Si ves manchas, daño en hojas o plantas débiles, registra la fecha y consulta los síntomas.</p><button className="climate-text-action" onClick={() => onNavigate?.('scenarios')}>Ver mi plan de siembra <ArrowRight size={17} aria-hidden="true" /></button></div>
+    </section>
 
-            {/* Metric 2: Prob. Lluvia Mínima */}
-            <div
-              className={`dss-metric-col ${probLluviaBaja === null ? 'dss-metric-empty' : ''}`}
-              {...interactiveProps(() => pedirExplicacionIa({
-                tipo_elemento: "tarjeta",
-                nombre: "Probabilidad de Lluvia por debajo del Promedio",
-                cultivo: "maiz",
-                valor: probLluviaBaja,
-                unidad: "%",
-                estado: probLluviaBaja === null ? "sin_datos" : (probLluviaBaja > 60 ? "riesgoso" : (probLluviaBaja > 30 ? "regular" : "favorable")),
-                descripcion_tecnica: data?.procedencia?.riesgo?.motivo || 'Se necesita un modelo probabilístico calibrado y una climatología comparable para estimar lluvia por debajo del promedio.'
-              }), `Ver detalle del riesgo de lluvia baja: ${probLluviaBaja === null ? 'sin datos' : `${formatMetricNumber(probLluviaBaja)} por ciento`}`)}
-              style={{ cursor: 'pointer' }}
-            >
-              <div className="dss-metric-value">
-                {formatMetricNumber(probLluviaBaja)} {probLluviaBaja !== null && <span>%</span>}
-              </div>
-              <div className="dss-metric-title">Riesgo estimado de lluvia baja</div>
-              <div className={`dss-metric-trend ${probLluviaBaja === null ? '' : probLluviaBaja > 60 ? 'down' : probLluviaBaja > 30 ? 'warn' : 'up'}`}>
-                {probLluviaBaja === null ? 'Dato no disponible' : 'Probabilidad del ciclo'}
-              </div>
-            </div>
+    <section className="climate-panel" aria-labelledby="climate-history-title">
+      <SectionTitle icon={CloudRain} id="climate-history-title" title="Cómo ha cambiado el tiempo">Historia reciente de esta ubicación. Ayuda a entender lo que ha ocurrido; no anticipa el tiempo de los próximos meses.</SectionTitle>
+      <div className="climate-history-controls"><div role="group" aria-label="Período del historial">{[['30d', 'Últimos 30 días'], ['12m', 'Últimos 12 meses']].map(([value, label]) => <button key={value} aria-pressed={historyRange === value} onClick={() => setHistoryRange(value)}>{label}</button>)}</div><div role="group" aria-label="Dato del historial">{[['rain', 'Lluvia'], ['temperature', 'Temperatura']].map(([value, label]) => <button key={value} aria-pressed={historyVariable === value} onClick={() => setHistoryVariable(value)}>{label}</button>)}</div></div>
+      <button className="climate-chart-title" onClick={() => explainHistory()} aria-label={`Consultar ${title.toLowerCase()} del historial`}><strong>{title} ({unit})</strong><MessageCircle size={18} aria-hidden="true" /><span>Consultar este dato</span></button>
+      <p className="climate-source">{periodLabel(historyRange === '30d' ? period : data.resumen_mensual_12m?.periodo)} · {validCount} de {history.length} {historyRange === '30d' ? 'días' : 'meses'} con datos de {rain ? 'lluvia' : 'temperatura'}.</p>
+      {validCount ? <><div className="climate-history-chart"><EChart option={option} onClick={explainHistory} ariaLabel={`${title} del historial. ${validCount} períodos disponibles. Los datos ausentes quedan vacíos.`} /></div><details className="climate-table-details"><summary>Ver datos del gráfico en una tabla</summary><div className="climate-table-scroll"><table><caption>{title} · {historyRange === '30d' ? '30 días' : '12 meses'}</caption><thead><tr><th scope="col">{historyRange === '30d' ? 'Fecha' : 'Mes'}</th><th scope="col">{title} ({unit})</th></tr></thead><tbody>{history.map((row, i) => <tr key={row.fecha}><th scope="row">{row.fecha}</th><td>{num(values[i])}</td></tr>)}</tbody></table></div></details></> : <Missing>No hay datos disponibles para este período y variable. Prueba otra opción o vuelve a consultar.</Missing>}
+      <p className="climate-source">Fuente: {historyRange === '12m' ? data.resumen_mensual_12m?.fuente || 'Open-Meteo Archive' : data.api_source || 'Open-Meteo Archive'}. Datos de modelos y reanálisis por ubicación. Los huecos indican información ausente, nunca lluvia cero.{historyRange === '12m' && !rain ? ' Las medias se calculan con los días que tienen temperatura disponible.' : ''}</p>
+    </section>
 
-            {/* Metric 3: Agua Útil Inicial */}
-            <div
-              className={`dss-metric-col ${aguaUtilInicial === null ? 'dss-metric-empty' : ''}`}
-              {...interactiveProps(() => pedirExplicacionIa({
-                tipo_elemento: "tarjeta",
-                nombre: "Agua Útil Inicial en Suelo",
-                cultivo: "maiz",
-                valor: aguaUtilInicial,
-                unidad: "mm",
-                estado: aguaUtilInicial === null ? "sin_datos" : (aguaUtilInicial > 120 ? "favorable" : (aguaUtilInicial > 60 ? "regular" : "riesgoso")),
-                descripcion_tecnica: data?.procedencia?.agua_util?.motivo || 'El agua disponible para raíces requiere mediciones del perfil y propiedades hidráulicas del suelo.'
-              }), `Ver detalle del agua útil estimada: ${aguaUtilInicial === null ? 'sin datos' : `${formatMetricNumber(aguaUtilInicial)} milímetros`}`)}
-              style={{ cursor: 'pointer' }}
-            >
-              <div className="dss-metric-value">
-                {formatMetricNumber(aguaUtilInicial)} {aguaUtilInicial !== null && <span>mm</span>}
-              </div>
-              <div className="dss-metric-title">Agua útil estimada</div>
-              <div className={`dss-metric-trend ${aguaUtilInicial === null ? '' : aguaUtilInicial > 120 ? 'up' : aguaUtilInicial > 60 ? 'warn' : 'down'}`}>
-                {aguaUtilInicial === null ? 'Dato no disponible' : 'Balance hídrico del suelo'}
-              </div>
-            </div>
-
-          </div>
-
-          {/* Right: Risk Badge */}
-          {(() => {
-            const riskText = riesgoEstacionalTexto.toLowerCase();
-            const riskColor = riesgoEstacional.color || '';
-            let levelClass = riesgoEstacionalTexto ? 'level-neutral' : 'level-empty';
-            if (riskColor === 'danger' || /alto|elevado|cr[ií]tico/.test(riskText)) {
-              levelClass = 'level-danger';
-            } else if (riskColor === 'warning' || riskText.includes('medio') || riskText.includes('moderad') || riskText.includes('regular')) {
-              levelClass = 'level-warning';
-            } else if (riskColor === 'success' || (riskText.includes('bajo') && Boolean(riesgoEstacionalTexto))) {
-              levelClass = 'level-success';
-            }
-            return (
-              <div
-                className={`dss-risk-badge-box ${levelClass}`}
-                {...interactiveProps(() => pedirExplicacionIa({
-                  tipo_elemento: "tarjeta",
-                  nombre: "Índice de Riesgo Estacional Compuesto",
-                  cultivo: "maiz",
-                  valor: riesgoEstacionalTexto || null,
-                  unidad: "",
-                  estado: levelClass === 'level-empty' ? 'sin_datos' : (levelClass === 'level-danger' ? 'riesgoso' : (levelClass === 'level-warning' ? 'regular' : 'favorable')),
-                  descripcion_tecnica: data?.procedencia?.riesgo?.motivo || 'No hay una evaluación estacional disponible para esta parcela.'
-                }), `Ver detalle del riesgo estacional: ${riesgoEstacionalTexto || 'sin datos'}`)}
-                style={{ cursor: 'pointer' }}
-              >
-                <div className={`dss-risk-icon-wrap ${levelClass}`}>
-                  {levelClass === 'level-success' ? <CheckCircle size={18} /> : <AlertTriangle size={18} />}
-                </div>
-                <div className="dss-risk-text-info">
-                  <span className="dss-risk-label">Riesgo Estacional</span>
-                  <span className="dss-risk-value">{riesgoEstacionalTexto || 'Sin datos'}</span>
-                  <span className="dss-risk-sub">{riesgoEstacionalTexto ? `Riesgo compuesto · ${riesgoEstacionalTexto}` : 'Se requiere una evaluación climática'}</span>
-                </div>
-              </div>
-            );
-          })()}
-
-        </div>
-
-        {/* Bottom phenology stage track (6 stages) */}
-        <div className="dss-timeline-section">
-          <div className="dss-timeline-title">Etapas fenológicas de referencia — desarrollo actual sin evaluar</div>
-          <div className="dss-timeline-track">
-            {phenology.map((stage, index) => <div key={`${stage.etapa}-${index}`} className="dss-timeline-item"
-              {...interactiveProps(() => pedirExplicacionIa({ tipo_elemento: 'tarjeta', nombre: `Referencia fenológica: ${stage.etapa}`, cultivo: 'maiz', valor: stage.etapa, estado: 'referencia_catalogo', descripcion_tecnica: `${stage.descripcion || 'No hay descripción de catálogo disponible.'} La etapa actual de esta parcela no ha sido observada ni evaluada.` }), `Ver detalle de la etapa ${stage.etapa}`)}
-              style={{ cursor: 'pointer' }}>
-              <span className="dss-timeline-item-name">{stage.etapa}</span>
-              <span className="dss-timeline-item-sub">Referencia; sin evaluación</span>
-              <div className="dss-timeline-dot" />
-            </div>)}
-            {phenology.length === 0 && <p className="chart-empty-state" role="status">No hay referencias fenológicas disponibles.</p>}
-          </div>
-        </div>
-
-      </div>
-
-      {/* Charts section */}
-      <DashboardSectionHeading label="03 · Tendencias" title="Lluvia, temperatura y suelo" description="Los gráficos requieren series y mediciones con fuente. La ausencia de datos no representa un valor cero." />
-      <div className="chart-grid">
-        {/* Anomaly Chart */}
-        <div
-          className="glass-panel chart-panel-interactive"
-          {...interactiveProps(() => pedirExplicacionIa({
-            tipo_elemento: "grafico",
-            nombre: "Series mensuales de lluvia y temperatura",
-            cultivo: "maiz",
-            valor: hasMonthlySeries ? 'Series mensuales disponibles' : null,
-            unidad: "",
-            estado: hasMonthlySeries ? 'serie_disponible' : 'sin_datos',
-            descripcion_tecnica: timeline_anomalia?.motivo || 'La comparación requiere observaciones mensuales y una referencia climatológica identificada. No se puede inferir a partir del promedio de 30 días.',
-            datos_grafico: timeline_anomalia
-          }), 'Ver explicación de las series mensuales de lluvia y temperatura')}
-        >
-          <div className="glass-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', marginBottom: '0.5rem' }}>
-            <h3 style={{ fontSize: '0.95rem', fontWeight: 600, margin: 0 }}>Series mensuales de lluvia y temperatura</h3>
-          </div>
-          <div className="glass-card-body">
-            {hasMonthlySeries ? <ClimateLine
-              labels={timeline_anomalia?.labels || []}
-              lluviaHistorica={timeline_anomalia?.lluvia_historica || []}
-              lluviaAnomala={timeline_anomalia?.lluvia_anomala || []}
-              temperaturaAnomala={timeline_anomalia?.temperatura_anomala || []}
-            /> : <p className="chart-empty-state" role="status">{timeline_anomalia?.motivo || 'No hay una serie mensual y una referencia climatológica disponibles para calcular anomalías.'}</p>}
-            <p className="dashboard-chart-caption">El clima actual y el promedio de 30 días del encabezado no sustituyen una serie mensual de la campaña.</p>
-          </div>
-        </div>
-
-        {/* Soil strata */}
-        <div
-          className="glass-panel chart-panel-interactive"
-          style={{ padding: '0.85rem 1rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}
-          {...interactiveProps(() => pedirExplicacionIa({
-            tipo_elemento: "grafico",
-            nombre: "Agua útil por estrato de suelo",
-            cultivo: "maiz",
-                valor: waterRows.some((row) => row.value !== null) ? 'Agua útil disponible por estrato' : null,
-            unidad: "mm",
-            estado: waterRows.some((row) => row.value !== null) ? 'perfil_disponible' : 'sin_datos',
-            descripcion_tecnica: agua_estratos?.motivo || 'El agua útil por profundidad requiere mediciones y propiedades hidráulicas; no se obtiene de la humedad del aire.',
-            datos_grafico: agua_estratos
-          }), 'Ver explicación del agua útil por estrato de suelo')}
-        >
-          <div className="glass-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', marginBottom: '0.5rem', paddingBottom: '0.35rem', borderBottom: '1px solid var(--border-subtle)' }}>
-            <h3 style={{ fontSize: '0.95rem', fontWeight: 600, margin: 0 }}>Agua útil por estrato de suelo</h3>
-            <span style={{ fontSize: '0.64rem', padding: '0.12rem 0.45rem', borderRadius: '999px', background: 'color-mix(in srgb, var(--zs-info) 16%, transparent)', color: 'var(--zs-info)', fontWeight: 700, letterSpacing: '0.05em' }}>PERFIL HÍDRICO</span>
-          </div>
-          
-          <div className="glass-card-body" style={{ padding: 0, display: 'flex', flexDirection: 'column', gap: '0.45rem', flex: 1, justifyContent: 'center' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-              {waterRows.map(({ label, value: val }) => {
-                const percentage = val === null ? 0 : Math.min(100, Math.max(0, (val / maxWaterValue) * 100));
-                
-                return (
-                  <div key={label} style={{ display: 'grid', gridTemplateColumns: '75px 1fr 70px', alignItems: 'center', gap: '0.6rem' }}>
-                    <span style={{ color: 'var(--text-muted)', fontSize: '0.74rem', fontWeight: 600 }}>{label}</span>
-                    <div style={{ height: '7px', background: 'var(--border-subtle)', borderRadius: '999px', overflow: 'hidden', width: '100%' }}>
-                      <div
-                        className={val !== null && val > 0 ? 'soil-meter-fill' : ''}
-                        style={{
-                          width: `${percentage}%`,
-                          height: '100%',
-                          background: val !== null && val > 0 ? undefined : 'var(--border-strong)',
-                          borderRadius: '999px',
-                          transition: 'width 0.6s cubic-bezier(0.4, 0, 0.2, 1)'
-                        }}
-                      />
-                    </div>
-                    <span style={{ fontSize: '0.78rem', fontWeight: 700, color: val !== null && val > 0 ? 'var(--zs-info)' : 'var(--text-subtle)', textAlign: 'right' }}>{val === null ? 'Sin datos' : `${formatMetricNumber(val)} mm`}</span>
-                  </div>
-                );
-              })}
-              {waterRows.length === 0 && <p className="chart-empty-state">No hay un perfil hídrico medido disponible.</p>}
-            </div>
-
-            <div style={{ marginTop: '0.35rem', padding: '0.5rem 0.7rem', background: 'color-mix(in srgb, var(--zs-info) 7%, transparent)', borderRadius: '10px', border: '1px solid color-mix(in srgb, var(--zs-info) 16%, transparent)', fontSize: '0.7rem' }}>
-              <span style={{ fontWeight: 700, color: 'var(--zs-info)', marginRight: '0.4rem' }}>Nota edafológica:</span>
-              <span style={{ color: 'var(--zs-muted)', lineHeight: '1.35' }}>
-                {agua_estratos?.motivo || 'El agua útil requiere mediciones por profundidad y propiedades hidráulicas del suelo. La humedad relativa del aire no permite obtener este perfil.'}
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Calendar & Recommendations */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 360px), 1fr))', gap: '1.25rem', marginBottom: '1.5rem', alignItems: 'stretch' }}>
-        {/* Calendar (Left Column) */}
-        {calendarEvents.length > 0 ? <CalendarGrid
-          type="fenologico"
-          events={calendarEvents} 
-          initialDate={initialCalendarDate} 
-          title="Fechas fenológicas registradas"
-        /> : <div className="glass-panel" style={{ padding: '1.25rem' }}>
-          <h3 style={{ fontSize: '1rem', marginTop: 0 }}>Fechas fenológicas no disponibles</h3>
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.82rem', lineHeight: 1.5 }}>La fecha de siembra y la descripción de etapas del catálogo no acreditan el desarrollo observado del cultivo. Se necesitan fechas de etapa registradas para mostrar eventos en este calendario.</p>
-        </div>}
-
-        {/* Referencias de catálogo, separadas de una evaluación del lote. */}
-        <div className="glass-panel" style={{ padding: '1.25rem', height: '100%', display: 'flex', flexDirection: 'column' }}>
-          <div className="glass-card-header" style={{ paddingBottom: '0.75rem', marginBottom: '0.85rem', borderBottom: '1px solid var(--border-subtle)' }}>
-            <h3 style={{ fontSize: '1.05rem', fontWeight: 700, margin: 0 }}>Referencias de manejo por fase</h3>
-            <span style={{ fontSize: '0.72rem', color: 'var(--text-subtle)', display: 'block', marginTop: '0.15rem' }}>Información del catálogo; requiere comprobar la fase y las condiciones de la parcela antes de decidir una intervención.</span>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.85rem', flex: 1 }}>
-            {phenology.map((stage, index) => <div key={`${stage.etapa}-${index}`} className="custom-card phase-step-card"
-              {...interactiveProps(() => pedirExplicacionIa({
-                tipo_elemento: 'tarjeta',
-                nombre: `Referencia de manejo: ${stage.etapa}`,
-                cultivo: 'maiz',
-                valor: stage.etapa,
-                estado: 'referencia_catalogo',
-                descripcion_tecnica: `${stage.descripcion || 'No hay descripción disponible.'} Fuente: catálogo agronómico local. No se ha evaluado el estado actual del cultivo.`,
-              }), `Ver detalle de la referencia de manejo de la etapa ${stage.etapa}`)}
-              style={{ padding: '1rem 0.85rem', background: 'var(--surface-elevated)', border: '1px solid var(--border-subtle)', borderRadius: '12px', cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              <span style={{ fontSize: '0.68rem', color: 'var(--text-subtle)', fontWeight: 700 }}>REFERENCIA DE CATÁLOGO</span>
-              <h4 style={{ color: 'var(--text-primary)', fontSize: '0.95rem', margin: 0 }}>{stage.etapa}</h4>
-              <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', lineHeight: '1.45', margin: 0 }}>{stage.descripcion || 'Sin descripción de manejo disponible.'}</p>
-              <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Estado de la parcela: sin evaluar</span>
-            </div>)}
-            {phenology.length === 0 && <p className="chart-empty-state" role="status">No hay referencias de manejo disponibles.</p>}
-          </div>
-        </div>
-      </div>
-
-      <SimulationInfoCard
-        isOpen={mostrarModalIa}
-        onClose={() => setMostrarModalIa(false)}
-        loading={cargandoIa}
-        data={datosIa}
-      />
-    </div>
-  );
+    <div className="climate-secondary-grid"><section className="climate-panel" aria-labelledby="climate-soil-title"><SectionTitle icon={Droplets} id="climate-soil-title" title="Suelo y agua">Una referencia para saber qué conviene medir en campo.</SectionTitle><div className="climate-soil-readings"><button className="climate-reading" onClick={() => ask('Explícame la humedad estimada del suelo de 0 a 10 cm que muestra Clima y cultivo. ¿Por qué no basta ese porcentaje para decidir cuándo y cuánto regar?')}><Droplets size={22} aria-hidden="true" /><span>Agua en los primeros 10 cm<strong>{num(soilWater)}<small> % del volumen</small></strong></span></button><button className="climate-reading" onClick={() => ask('¿Qué significa la temperatura estimada del suelo de 0 a 10 cm y cómo se diferencia de la temperatura del aire?')}><Thermometer size={22} aria-hidden="true" /><span>Temperatura del suelo (0–10 cm)<strong>{num(climateNumber(data.suelo_ahora?.temperatura_0_10cm, -90, 65))}<small> °C</small></strong></span></button></div><p>Estimación del modelo meteorológico, no de un sensor en la parcela. No indica por sí sola que el suelo esté seco, óptimo o saturado.</p><details className="climate-water-details"><summary>Entender la relación entre lluvia y evaporación</summary><p>La lluvia aporta agua. La evapotranspiración de referencia (ET₀) estima la demanda de agua de una superficie de pasto de referencia.</p>{balance.complete ? <dl><div><dt>Lluvia del período</dt><dd>{num(balance.rain)} mm</dd></div><div><dt>ET₀ del mismo período</dt><dd>{num(balance.et0)} mm</dd></div><div><dt>Diferencia lluvia − ET₀</dt><dd>{num(balance.balance)} mm</dd></div></dl> : <p>Faltan días con lluvia y ET₀ coincidentes para calcular una diferencia completa.</p>}<p>Esta diferencia no es la dosis de riego de tu maíz ni mide el agua que queda en las raíces. Para decidir hacen falta el suelo, la etapa del cultivo, el agua aplicada y mediciones de campo.</p><p className="climate-source">Período: {periodLabel(period)} · Open-Meteo Archive.</p></details></section>
+      <section className="climate-panel" aria-labelledby="climate-references-title"><SectionTitle icon={Leaf} id="climate-references-title" title="Referencias de la zona">Información adicional para consultar cuando la necesites.</SectionTitle><details className="climate-reference"><summary>Lluvia histórica anual de referencia</summary>{climateNumber(annual?.valor, 0) !== null ? <><strong className="climate-reference-number">{num(annual.valor)} mm/año</strong><p>Promedio histórico; no es la lluvia de este año ni la cantidad prevista para tu campaña.</p><p className="climate-source">{annual.fuente} · {typeof annual.periodo === 'string' ? annual.periodo : periodLabel(annual.periodo)}{annual.estacion ? ` · Estación ${annual.estacion}` : ''}</p></> : <Missing>No hay una referencia anual disponible para esta ubicación.</Missing>}</details><details className="climate-reference"><summary>El Niño y La Niña: referencia del Pacífico</summary>{index !== null ? <><p><strong>{enso.indice || (enso.roni != null ? 'RONI' : 'ONI')}: {num(index, 2)} °C</strong> · {enso.etiqueta_trimestre || enso.periodo}</p><p>{enso.estado_texto}. {enso.vigente === false ? 'La referencia no es reciente; revisa la fecha antes de usarla.' : 'El valor más reciente puede ser revisado por NOAA.'}</p><p>Este índice describe el Pacífico tropical. No pronostica cuánta lluvia caerá en tu parcela ni confirma un riesgo para tu cosecha.</p><a href="https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso/roni/" target="_blank" rel="noreferrer">Consultar NOAA <ExternalLink size={14} aria-hidden="true" /></a></> : <Missing>No se pudo consultar el índice de NOAA. El pronóstico local no se reemplaza por este índice.</Missing>}</details><button className="climate-help" onClick={() => ask('Ayúdame a interpretar Clima y cultivo. Resume los datos disponibles de mi parcela, distingue pronóstico, historial y observaciones, y dime qué información conviene registrar para decidir mejor.')}><MessageCircle size={22} aria-hidden="true" /><span><strong>¿Qué significa esto para mi cultivo?</strong><small>Consulta al asistente con los datos de esta parcela.</small></span><ArrowRight size={20} aria-hidden="true" /></button></section></div>
+  </div>;
 }

@@ -47,3 +47,25 @@ test('Siembra guarda el plan con la API real y lo conserva al recargar',async({p
   await expect(page.getByText('Tu plan quedó guardado.',{exact:true})).toBeVisible({timeout:30000});await expect(page.locator('.sowing-campaign-summary')).toContainText('150 días');
   await page.reload();await page.getByRole('button',{name:'Siembra',exact:true}).click();await expect(page.locator('.sowing-campaign-summary')).toContainText('150 días',{timeout:30000});await expect(page.locator('.sowing-campaign-summary')).toContainText('Riego por goteo');
 });
+
+test('Clima conserva una observación real de la API y la muestra después de recargar', async ({ page }) => {
+  const root = '/backend-api/public/index.php/api';
+  const login = await page.request.post(`${root}/auth/iniciar-sesion`, { data: { correo: 'a@example.test', contrasena: ' ClavePrueba-2026! ' } });
+  expect(login.ok()).toBeTruthy();
+  const plots = await (await page.request.get(`${root}/parcelas`)).json();
+  const plot = plots[0]; expect(plot.id).toBeGreaterThan(0);
+  const me = await (await page.request.get(`${root}/auth/yo`)).json();
+  const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Guayaquil' }).format(new Date());
+  const saved = await page.request.post(`${root}/rendimiento/mediciones`, { data: { parcela_id: plot.id, etapa: 'V2-V8', fecha_observacion: today } });
+  expect(saved.ok()).toBeTruthy();
+  const weather = await (await page.request.get(`${root}/clima?parcela_id=${plot.id}`)).json();
+  expect(weather.cultivo_activo.id).toBe(plot.id);
+  await page.addInitScript(id => localStorage.setItem(`onboarding_done_${id}`, 'true'), me.usuario.id);
+  await page.setViewportSize({ width: 1440, height: 1000 }); await page.goto('/'); await waitForWorkspace(page);
+  await page.getByRole('button', { name: 'Clima y cultivo', exact: true }).click();
+  await expect(page.locator('.climate-crop-grid')).toContainText('Vegetativo V2–V8', { timeout: 30000 });
+  await page.reload(); await page.getByRole('button', { name: 'Clima y cultivo', exact: true }).click();
+  await expect(page.locator('.climate-crop-grid')).toContainText('Vegetativo V2–V8', { timeout: 30000 });
+  await page.getByRole('button', { name: 'Registrar observación', exact: true }).click();
+  await expect(page.getByRole('dialog', { name: 'Registro de campo', exact: true })).toBeVisible();
+});

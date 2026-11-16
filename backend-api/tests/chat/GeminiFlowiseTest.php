@@ -2,6 +2,17 @@
 // Pruebas del contrato del cliente Flowise que alimenta el chatbot.
 declare(strict_types=1);
 
+test('Gemini: las fuentes web se validan y el widget de búsqueda permanece separado del texto',function():void{
+    $provider=new \ZeaSys\Dominios\Chat\Infraestructura\GeminiFlowise();
+    $method=new ReflectionMethod($provider,'normalizarInvestigacion');
+    $r=$method->invoke($provider,['proveedor'=>'Gemini','busqueda_realizada'=>true,'fuentes_web'=>[
+        ['url'=>'https://www.iniap.gob.ec/','titulo'=>'INIAP'],['url'=>'https://www.iniap.gob.ec/'],
+        ['url'=>'javascript:alert(1)'],['url'=>'https://127.0.0.1/secreto'],['url'=>'https://usuario:clave@example.com/'],
+    ],'sugerencias_busqueda_html'=>'<div>Google</div>']);
+    assert_equals(1,count($r['fuentes_web']));assert_equals(true,$r['busqueda_realizada']);assert_equals('<div>Google</div>',$r['sugerencias_busqueda_html']);
+    assert_equals([],$method->invoke($provider,null));
+});
+
 use ZeaSys\Dominios\Chat\Infraestructura\GeminiFlowise;
 
 test('GeminiFlowise: la consulta enviada al modelo es corta y conserva el dashboard', function (): void {
@@ -11,9 +22,11 @@ test('GeminiFlowise: la consulta enviada al modelo es corta y conserva el dashbo
     $prompt = $metodo->invoke($gemini, '¿Cómo afectará la lluvia al cultivo?', '{"precipitacion":68}');
 
     assert_contains('Pregunta del usuario:', $prompt);
+    assert_contains("\nResponde en español", $prompt);
+    assert_contains("\nContexto autorizado de ZeaSys:", $prompt);
     assert_contains('Contexto autorizado de ZeaSys:', $prompt);
     assert_contains('precipitacion', $prompt);
-    assert_true(mb_strlen($prompt, 'UTF-8') <= 10000, 'La consulta no debe superar el límite del prompt');
+    assert_true(mb_strlen($prompt, 'UTF-8') <= 12000, 'La consulta no debe superar el límite del prompt');
 });
 
 test('GeminiFlowise: recorta consultas extensas sin lanzar una excepción', function (): void {
@@ -22,7 +35,7 @@ test('GeminiFlowise: recorta consultas extensas sin lanzar una excepción', func
     $metodo->setAccessible(true);
     $prompt = $metodo->invoke($gemini, str_repeat('pregunta agrícola ', 300), str_repeat('dato dashboard ', 300));
 
-    assert_true(mb_strlen($prompt, 'UTF-8') <= 10000);
+    assert_true(mb_strlen($prompt, 'UTF-8') <= 12000);
     assert_contains('[recortado]', $prompt);
 });
 
@@ -40,6 +53,13 @@ test('GeminiFlowise: no envía el historial gigante al prompt', function (): voi
     assert_true(mb_strlen($resumen, 'UTF-8') <= 6400);
     assert_true(strpos($resumen, 'historial') === false, 'El historial debe quedar en la memoria del flujo');
     assert_contains('rendimiento_predicho', $resumen);
+});
+
+test('GeminiFlowise: conserva el final de una pregunta dentro del límite visible de 2000 caracteres', function (): void {
+    $provider = new GeminiFlowise();
+    $question = str_repeat('Necesito entender mi parcela. ', 45) . ' DATO_FINAL_IMPORTANTE';
+    $prompt = (new ReflectionMethod($provider, 'construirPrompt'))->invoke($provider, $question, '{}');
+    assert_contains('DATO_FINAL_IMPORTANTE', $prompt);
 });
 
 test('GeminiFlowise: incluye clima actual, precio y nutrición en el contexto combinado', function (): void {
@@ -160,7 +180,7 @@ test('GeminiFlowise: el prompt pide respuestas directas y cita documentos utiliz
     assert_contains('sin plantillas', $prompt);
     assert_contains('incluye la cita cuando uses documentos', $prompt);
     assert_contains('evita proveedores y datos de relleno', $prompt);
-    assert_true(mb_strlen($prompt, 'UTF-8') <= 10000, 'La consulta no debe superar el límite del prompt');
+    assert_true(mb_strlen($prompt, 'UTF-8') <= 12000, 'La consulta no debe superar el límite del prompt');
 });
 
 test('GeminiFlowise: conserva instrucciones de claridad y seguridad aun con contexto extenso', function (): void {
@@ -170,7 +190,7 @@ test('GeminiFlowise: conserva instrucciones de claridad y seguridad aun con cont
     assert_contains('español sencillo', $prompt);
     assert_contains('por qué importa', $prompt);
     assert_contains('análisis de suelo y validación local', $prompt);
-    assert_true(mb_strlen($prompt, 'UTF-8') <= 10000);
+    assert_true(mb_strlen($prompt, 'UTF-8') <= 12000);
 });
 
 test('GeminiFlowise: incorpora referencias válidas con documento y página sin aceptar fuentes ajenas', function (): void {
@@ -240,6 +260,19 @@ test('GeminiFlowise: evita mezclar guías regionales opuestas en preguntas espec
     assert_true(($normalizar->invoke(new GeminiFlowise(), $docs, 'plagas en el Litoral')[0]['texto'] ?? '') === 'Litoral');
     assert_true(count($normalizar->invoke(new GeminiFlowise(), $docs, 'comparar Sierra y Litoral')) === 2);
     assert_true(count($normalizar->invoke(new GeminiFlowise(), $docs, 'manejo de maíz')) === 2);
+});
+
+test('GeminiFlowise: la respuesta mínima acepta contenido con sentido y descarta ruido', function (): void {
+    $gemini = new GeminiFlowise();
+    $metodo = new ReflectionMethod(GeminiFlowise::class, 'esRespuestaSuficiente');
+    $metodo->setAccessible(true);
+
+    assert_true($metodo->invoke($gemini, 'Rendimiento favorable para el lote.'));
+    assert_true($metodo->invoke($gemini, '1234567890'));
+    assert_true(!$metodo->invoke($gemini, ''));
+    assert_true(!$metodo->invoke($gemini, '[object Object]'));
+    assert_true(!$metodo->invoke($gemini, 'corto'));
+    assert_true(!$metodo->invoke($gemini, '123456789'));
 });
 
  test('RecuperadorChroma: conserva texto y metadatos sin generar respuesta', function (): void {

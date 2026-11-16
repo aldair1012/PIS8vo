@@ -1,4 +1,5 @@
 import AnnualRainReference from '../components/AnnualRainReference';
+import PantallaCarga from '../components/PantallaCarga';
 import { comparisonAnnualRain } from '../utils/annualRain';
 import { useEffect, useMemo, useState } from 'react';
 import { Activity, ArrowUpRight, BarChart3, CalendarDays, MapPin, Play, Plus, Sprout, Wheat } from 'lucide-react';
@@ -215,7 +216,7 @@ export default function DashboardRendimiento({ cultivoElegidoId, onNavigate, onD
   const historyYears = sipa.periodos.map((item) => item.año);
 
 
-  if (!current) return <div className="dashboard-view ydp-dashboard"><div className="ydp-state" role="status"><span className="ydp-loader" />Cargando rendimiento de la parcela…</div></div>;
+  if (!current) return <div className="dashboard-view ydp-dashboard"><PantallaCarga mensaje="Cargando rendimiento de la parcela…" pantalla /></div>;
   if (current.error) return <div className="dashboard-view ydp-dashboard"><h1>Rendimiento</h1><div className="ydp-state ydp-state--error" role="alert">{current.error}</div><button type="button" className="ydp-primary-action" onClick={() => { setResponse(null); setRecarga(value => value + 1); }}>Reintentar rendimiento</button></div>;
   if (!lot) return <div className="dashboard-view ydp-dashboard"><div className="ydp-empty"><span className="ydp-empty-icon"><Sprout size={24} /></span><p className="ydp-eyebrow">ÁREA DE RENDIMIENTO</p><h1>Elige una parcela para empezar</h1><p>Cuando selecciones un lote, verás su proyección de cosecha, las referencias provinciales y los factores que influyen en el resultado.</p><button type="button" onClick={() => onNavigate?.('cultivos')}>Ir a mis parcelas <ArrowUpRight size={16} /></button></div></div>;
 

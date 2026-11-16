@@ -27,6 +27,7 @@ export default defineConfig({
   },
   base: './',
   build: {
+    cssTarget: 'chrome111',
     rolldownOptions: {
       output: {
         entryFileNames: 'assets/app-[hash].js',

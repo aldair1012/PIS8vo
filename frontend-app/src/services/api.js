@@ -107,8 +107,8 @@ export const parcelasService = {
     const response = await API.get('/api/parcelas/mapa');
     return response.data;
   },
-  obtenerValoresUbicacion: async (id) => {
-    const response = await API.get(`/api/parcelas/valores-ubicacion?id=${id}`);
+  obtenerValoresUbicacion: async (id, options = {}) => {
+    const response = await API.get(`/api/parcelas/valores-ubicacion?id=${id}`, options);
     return response.data;
   }
 };

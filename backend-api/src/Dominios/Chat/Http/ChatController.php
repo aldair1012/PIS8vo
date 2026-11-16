@@ -13,6 +13,8 @@ use ZeaSys\Kernel\SesionSinBloqueo;
 
 final class ChatController
 {
+    private const VISTAS_VALIDAS = ['yield', 'scenarios', 'climate', 'finance', 'map', 'simular', 'history'];
+
     public function __construct(private ChatService $servicio) {}
 
     public function preguntar(Peticion $peticion): void
@@ -32,7 +34,7 @@ final class ChatController
 
         $vista = $peticion->query('vista') ?? ($cuerpo['vista'] ?? null);
         $vista = is_string($vista) ? $vista : null;
-        if ($vista !== null && mb_strlen($vista) > 50) {
+        if ($vista !== null && !$this->esVistaValida($vista)) {
             throw new ValidacionException('La vista indicada no es válida.');
         }
         $cultivoIdRaw = $cuerpo['cultivo_id'] ?? null;
@@ -122,5 +124,10 @@ final class ChatController
             throw new ValidacionException("El campo {$campo} no es válido.");
         }
         return $entero;
+    }
+
+    private function esVistaValida(string $vista): bool
+    {
+        return in_array($vista, self::VISTAS_VALIDAS, true);
     }
 }

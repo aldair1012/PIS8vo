@@ -62,13 +62,18 @@ return static function (): Container {
     );
     $contenedor->registrar(
         \ZeaSys\Dominios\Terreno\Dominio\ProveedorClimaInterface::class,
-        static fn (): \ZeaSys\Dominios\Terreno\Infraestructura\ProveedorOpenMeteo =>
-            new \ZeaSys\Dominios\Terreno\Infraestructura\ProveedorOpenMeteo()
+        static fn (Container $c): \ZeaSys\Dominios\Terreno\Infraestructura\ProveedorOpenMeteo =>
+            new \ZeaSys\Dominios\Terreno\Infraestructura\ProveedorOpenMeteo($c->get(\ZeaSys\Dominios\Terreno\Dominio\CacheInterface::class))
     );
     $contenedor->registrar(
         \ZeaSys\Dominios\Terreno\Dominio\ProveedorSueloInterface::class,
         static fn (): \ZeaSys\Dominios\Terreno\Infraestructura\ProveedorSoilGrids =>
             new \ZeaSys\Dominios\Terreno\Infraestructura\ProveedorSoilGrids()
+    );
+    $contenedor->registrar(
+        \ZeaSys\Dominios\Terreno\Infraestructura\ProveedorNoaaOni::class,
+        static fn (Container $c): \ZeaSys\Dominios\Terreno\Infraestructura\ProveedorNoaaOni =>
+            new \ZeaSys\Dominios\Terreno\Infraestructura\ProveedorNoaaOni($c->get(\ZeaSys\Dominios\Terreno\Dominio\CacheInterface::class))
     );
     $contenedor->registrar(
         \ZeaSys\Dominios\Terreno\Dominio\ProveedorClimaActualInterface::class,
@@ -281,6 +286,8 @@ return static function (): Container {
                 $c->get(\ZeaSys\Dominios\Lotes\Dominio\CultivoRepositoryInterface::class),
                 $c->get(\ZeaSys\Dominios\Terreno\Aplicacion\ServicioDatosTerreno::class),
                 $c->get(\ZeaSys\Dominios\Terreno\Aplicacion\ServicioClimaActual::class),
+                $c->get(\ZeaSys\Dominios\Terreno\Infraestructura\ProveedorNoaaOni::class),
+                $c->get(\ZeaSys\Dominios\Terreno\Dominio\ProveedorClimaInterface::class),
             )
     );
     $contenedor->registrar(

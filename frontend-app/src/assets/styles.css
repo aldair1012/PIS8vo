@@ -1991,7 +1991,6 @@ body.light-theme {
 body.light-theme .glass-panel,
 body.light-theme .kpi-card,
 body.light-theme .chart-panel-interactive,
-body.light-theme .dss-unified-card,
 body.light-theme .empty-state-container,
 body.light-theme .metric-helper-card {
   background: #FFFFFF !important;
@@ -2003,8 +2002,7 @@ body.light-theme .metric-helper-card {
 
 body.light-theme .glass-panel:hover,
 body.light-theme .kpi-card:hover,
-body.light-theme .chart-panel-interactive:hover,
-body.light-theme .dss-unified-card:hover {
+body.light-theme .chart-panel-interactive:hover {
   border-color: #2563EB !important;
   box-shadow: 0 10px 26px rgba(37, 99, 235, 0.14) !important;
   transform: translateY(-2px);
@@ -2031,7 +2029,6 @@ body.light-theme .navbar {
 /* Tarjetas Internas, Sub-bloques y Celdas — Mantiener bordes suaves/tenues (#CBD5E1) */
 body.light-theme .custom-card,
 body.light-theme .phase-step-card,
-body.light-theme .dss-metric-col,
 body.light-theme .surface-elevated,
 body.light-theme div[style*="background: var(--surface-elevated)"],
 body.light-theme div[style*="background: 'var(--surface-elevated)'"] {
@@ -2046,15 +2043,6 @@ body.light-theme .kpi-top-row {
 
 body.light-theme .kpi-icon-wrapper {
   background: #F1F5F9 !important;
-  border: 1px solid #CBD5E1 !important;
-}
-
-body.light-theme .dss-risk-badge-box {
-  border: 1px solid #CBD5E1 !important;
-}
-
-body.light-theme .dss-timeline-section {
-  background: #F8FAFC !important;
   border: 1px solid #CBD5E1 !important;
 }
 
@@ -2936,8 +2924,8 @@ body.light-theme .lote-geojson-indicator {
 /* Dropdown Panel */
 .lote-selector-panel {
   position: fixed !important;
-  top: 65px !important;
-  right: 20px !important;
+  top: var(--plot-selector-top, 65px) !important;
+  right: 12px !important;
   left: auto !important;
   transform: none !important;
   width: 370px;
@@ -3580,7 +3568,6 @@ body.light-theme .glass-panel,
 body.light-theme .lote-card,
 body.light-theme .alternative-scenario-card,
 body.light-theme .lote-selector-panel,
-body.light-theme .dss-unified-card,
 body.light-theme .phase-step-card,
 body.light-theme .custom-card,
 body.light-theme .surface-card {
@@ -3809,307 +3796,6 @@ body.light-theme .kpi-card:hover {
 .kpi-card {
   min-height: 185px !important;
   padding: 1rem 1.15rem 0.95rem 1.15rem !important;
-}
-
-/* 7. DSS 2 & DSS 3 Unified Cards Styling */
-.dss-unified-card {
-  padding: 1.25rem 1.5rem !important;
-  margin-bottom: 1.25rem !important;
-}
-
-.dss-card-metrics-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 1.5rem;
-  margin-bottom: 1.25rem;
-  flex-wrap: wrap;
-}
-
-.dss-metrics-left-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 1.25rem;
-  flex: 1;
-  min-width: 260px;
-}
-
-@media (max-width: 640px) {
-  .dss-metrics-left-grid {
-    grid-template-columns: 1fr;
-    gap: 0.85rem;
-  }
-}
-
-.dss-metric-col {
-  display: flex;
-  flex-direction: column;
-  padding: 0.5rem 0.75rem;
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.04);
-  transition: transform 0.2s ease, border-color 0.2s ease;
-}
-
-.dss-metric-col:hover {
-  transform: translateY(-2px);
-  border-color: rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.04);
-}
-
-.dss-metric-title {
-  font-size: 0.68rem;
-  font-weight: 700;
-  color: var(--text-subtle);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  margin-top: 0.25rem;
-}
-
-.dss-metric-value {
-  font-size: 1.5rem;
-  font-weight: 800;
-  color: var(--text-primary);
-  font-family: var(--font-mono);
-  letter-spacing: -0.02em;
-  line-height: 1.15;
-}
-
-.dss-metric-value span {
-  font-size: 0.85rem;
-  font-weight: 500;
-  color: var(--text-unit);
-  margin-left: 0.1rem;
-}
-
-.dss-metric-trend {
-  font-size: 0.68rem;
-  font-weight: 700;
-  margin-top: 0.2rem;
-}
-
-.dss-metric-trend.up {
-  color: #10b981;
-}
-
-.dss-metric-trend.down {
-  color: #ef4444;
-}
-
-/* Right-side Risk Badge */
-.dss-risk-badge-box {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.65rem 1rem;
-  border-radius: 18px;
-  min-width: 220px;
-  background: rgba(16, 185, 129, 0.06);
-  border: 1px solid rgba(16, 185, 129, 0.25);
-  transition: all 0.2s ease;
-}
-
-.dss-risk-badge-box.level-success {
-  background: rgba(16, 185, 129, 0.06);
-  border-color: rgba(16, 185, 129, 0.25);
-}
-
-.dss-risk-badge-box.level-warning {
-  background: rgba(245, 158, 11, 0.06);
-  border-color: rgba(245, 158, 11, 0.25);
-}
-
-.dss-risk-badge-box.level-danger {
-  background: rgba(239, 68, 68, 0.06);
-  border-color: rgba(239, 68, 68, 0.25);
-}
-
-.dss-risk-icon-wrap {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-}
-
-.dss-risk-icon-wrap.level-success {
-  background: rgba(16, 185, 129, 0.15);
-  color: #10b981;
-}
-
-.dss-risk-icon-wrap.level-warning {
-  background: rgba(245, 158, 11, 0.15);
-  color: #fb923c;
-}
-
-.dss-risk-icon-wrap.level-danger {
-  background: rgba(239, 68, 68, 0.15);
-  color: #f87171;
-}
-
-.dss-risk-text-info {
-  display: flex;
-  flex-direction: column;
-}
-
-.dss-risk-label {
-  font-size: 0.62rem;
-  font-weight: 700;
-  color: var(--text-subtle);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.dss-risk-value {
-  font-size: 1.05rem;
-  font-weight: 800;
-  color: var(--text-primary);
-  line-height: 1.2;
-}
-
-.dss-risk-sub {
-  font-size: 0.65rem;
-  color: var(--text-muted);
-}
-
-/* Timeline/Track Styles */
-.dss-timeline-section {
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
-  padding-top: 0.85rem;
-  margin-top: 0.5rem;
-}
-
-body.light-theme .dss-timeline-section {
-  border-top-color: rgba(15, 23, 42, 0.06);
-}
-
-.dss-timeline-title {
-  font-size: 0.65rem;
-  font-weight: 700;
-  color: var(--text-subtle);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-bottom: 0.65rem;
-}
-
-.dss-timeline-track {
-  display: flex;
-  gap: 0.35rem;
-  overflow-x: auto;
-  padding-bottom: 0.25rem;
-  scrollbar-width: thin;
-}
-
-.dss-timeline-item {
-  flex: 1;
-  min-width: 65px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 0.45rem 0.25rem;
-  background: rgba(255, 255, 255, 0.015);
-  border: 1px solid rgba(255, 255, 255, 0.04);
-  border-radius: 12px;
-  transition: all 0.2s ease;
-}
-
-body.light-theme .dss-timeline-item {
-  background: rgba(15, 23, 42, 0.015);
-  border-color: rgba(15, 23, 42, 0.03);
-}
-
-.dss-timeline-item.active {
-  background: rgba(134, 59, 255, 0.08);
-  border-color: rgba(34, 197, 94, 0.4) !important;
-  box-shadow: 0 0 10px rgba(134, 59, 255, 0.1);
-}
-
-body.light-theme .dss-timeline-item.active {
-  background: rgba(99, 102, 241, 0.08);
-  border-color: rgba(99, 102, 241, 0.3) !important;
-}
-
-.dss-timeline-item.recommended {
-  background: rgba(234, 179, 8, 0.06);
-  border-color: rgba(234, 179, 8, 0.3) !important;
-  box-shadow: 0 0 10px rgba(234, 179, 8, 0.08);
-}
-
-.dss-timeline-item-name {
-  font-size: 0.68rem;
-  font-weight: 700;
-  color: var(--text-muted);
-}
-
-.dss-timeline-item.active .dss-timeline-item-name {
-  color: #c084fc;
-}
-
-body.light-theme .dss-timeline-item.active .dss-timeline-item-name {
-  color: #4f46e5;
-}
-
-.dss-timeline-item.recommended .dss-timeline-item-name {
-  color: #fbbf24;
-}
-
-.dss-timeline-item-sub {
-  font-size: 0.52rem;
-  font-weight: 600;
-  color: var(--text-subtle);
-  margin-top: 0.1rem;
-  text-transform: uppercase;
-}
-
-.dss-timeline-item.active .dss-timeline-item-sub {
-  color: #c084fc;
-}
-
-body.light-theme .dss-timeline-item.active .dss-timeline-item-sub {
-  color: #4f46e5;
-}
-
-.dss-timeline-item.recommended .dss-timeline-item-sub {
-  color: #fbbf24;
-}
-
-.dss-timeline-dot {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.2);
-  margin-top: 0.3rem;
-}
-
-body.light-theme .dss-timeline-dot {
-  background: rgba(15, 23, 42, 0.25);
-}
-
-.dss-timeline-item.active .dss-timeline-dot {
-  background: #c084fc;
-  box-shadow: 0 0 6px #c084fc;
-}
-
-body.light-theme .dss-timeline-item.active .dss-timeline-dot {
-  background: #4f46e5;
-}
-
-.dss-timeline-item.recommended .dss-timeline-dot {
-  background: #fbbf24;
-  box-shadow: 0 0 6px #fbbf24;
-}
-
-@media (max-width: 768px) {
-  .dss-metrics-left-grid {
-    grid-template-columns: 1fr;
-    gap: 1rem;
-  }
-
-  .dss-risk-badge-box {
-    width: 100%;
-  }
 }
 
 /* ==========================================================================
@@ -4472,8 +4158,18 @@ body.light-theme .kpi-trend-badge.badge-neutral {
 .zeasys-chat-followups button:disabled { opacity: 0.45; cursor: not-allowed; }
 .zeasys-chat-followups button svg { flex: 0 0 auto; color: #4ade80; }
 .zeasys-chat-retry { display: inline-flex; align-items: center; gap: 0.3rem; margin-top: 0.4rem; border: 0; background: transparent; color: #fca5a5; font-size: 0.67rem; cursor: pointer; }
+.zeasys-chat-useful { display: inline-flex; align-items: center; gap: 0.3rem; margin-top: 0.35rem; padding: 0.18rem 0.55rem; border: 1px solid var(--border-subtle); border-radius: 999px; background: transparent; color: var(--text-muted); font-size: 0.66rem; font-weight: 700; cursor: pointer; }
+.zeasys-chat-useful:hover:not(:disabled), .zeasys-chat-useful:focus-visible { color: var(--text-primary); background: rgba(34, 197, 94, 0.08); border-color: rgba(34, 197, 94, 0.4); outline: none; }
+.zeasys-chat-useful:disabled { opacity: 0.45; cursor: not-allowed; }
+.zeasys-chat-useful.is-marked { color: #4ade80; border-color: rgba(34, 197, 94, 0.42); background: rgba(34, 197, 94, 0.1); }
 .zeasys-chat-typing { display: flex; align-items: center; gap: 0.4rem; color: var(--text-muted); }
 .zeasys-chat-typing svg { color: #4ade80; animation: spin 1s linear infinite; }
+.zeasys-chat-typing-dot { width: 7px; height: 7px; border-radius: 50%; background: #4ade80; opacity: 0.35; animation: zeasysChatTypingBounce 1.2s ease-in-out infinite; }
+.zeasys-chat-typing-dot:nth-child(2) { animation-delay: 0.15s; }
+.zeasys-chat-typing-dot:nth-child(3) { animation-delay: 0.3s; }
+.zeasys-chat-typing-text { font-size: 0.68rem; }
+@keyframes zeasysChatTypingBounce { 0%, 60%, 100% { transform: translateY(0); opacity: 0.35; } 30% { transform: translateY(-4px); opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .zeasys-chat-typing-dot { animation: none; opacity: 0.6; } }
 
 .zeasys-chat-composer { position: relative; display: grid; grid-template-columns: 1fr 40px; gap: 0.55rem; padding: 0.8rem 1rem 0.75rem; border-top: 1px solid var(--border-subtle); background: var(--surface-elevated); }
 .zeasys-chat-composer textarea { min-height: 40px; max-height: 100px; resize: vertical; padding: 0.68rem 0.75rem; border: 1px solid var(--border-strong); border-radius: 11px !important; background: var(--input-bg, rgba(255, 255, 255, 0.04)); color: var(--text-primary); outline: none; font-size: 0.75rem; line-height: 1.35; }
@@ -4713,76 +4409,6 @@ body.light-theme .zeasys-chat-favorite-note.is-error { color: #b91c1c; }
 
 .kpi-empty-footer-dot { width: 6px; height: 6px; flex: 0 0 6px; border-radius: 50%; background: var(--kpi-accent); box-shadow: 0 0 0 3px var(--kpi-accent-soft); }
 
-/* The DSS 2/3 metric tiles use the same hierarchy as InteractiveKPI. */
-.dss-unified-card {
-  border-radius: 20px !important;
-  padding: 1rem !important;
-  background: linear-gradient(155deg, rgba(30, 41, 59, 0.66), rgba(10, 15, 29, 0.82)) !important;
-  border-color: rgba(148, 163, 184, 0.18) !important;
-}
-
-.dss-card-metrics-row { gap: 0.8rem; margin-bottom: 0.9rem; }
-.dss-metrics-left-grid { gap: 0.7rem; }
-.dss-metric-col {
-  position: relative;
-  min-height: 122px;
-  justify-content: flex-start;
-  padding: 0.8rem 0.9rem !important;
-  border: 1px solid rgba(148, 163, 184, 0.2) !important;
-  border-radius: 16px !important;
-  background: rgba(15, 23, 42, 0.44) !important;
-  overflow: hidden;
-}
-
-.dss-metric-col::before {
-  content: '';
-  position: absolute;
-  inset: 0 auto 0 0;
-  width: 3px;
-  background: #60a5fa;
-  border-radius: 0 999px 999px 0;
-}
-
-.dss-metric-empty {
-  --dss-empty-accent: #94a3b8;
-  background: rgba(71, 85, 105, 0.24) !important;
-  border-style: dashed !important;
-}
-
-/* Un KPI sin observación no debe ocupar una celda del dashboard. */
-.dss-metric-empty,
-.dss-risk-badge-box.level-empty { display: none !important; }
-
-.dss-metric-empty::before { background: var(--dss-empty-accent); }
-.dss-metric-empty .dss-metric-value { color: var(--text-muted) !important; font-size: clamp(1.2rem, 2vw, 1.55rem) !important; }
-.dss-metric-empty .dss-metric-trend { color: var(--text-subtle) !important; }
-
-.dss-metric-col:hover { transform: translateY(-2px); border-color: rgba(96, 165, 250, 0.48) !important; background: rgba(30, 41, 59, 0.68) !important; }
-.dss-metric-title { order: 0; margin-top: 0 !important; color: var(--text-subtle) !important; font-size: var(--kpi-dss-title-size, 0.65rem) !important; letter-spacing: 0.055em; }
-.dss-metric-value { order: 1; margin-top: 0.45rem; font-size: var(--kpi-dss-value-size, clamp(1.45rem, 2vw, 1.9rem)) !important; color: var(--text-primary); }
-.dss-metric-trend { order: 2; margin-top: auto !important; color: var(--text-subtle) !important; font-size: var(--kpi-dss-detail-size, 0.65rem) !important; }
-
-.dss-risk-badge-box {
-  min-height: 122px;
-  min-width: 220px;
-  padding: 0.85rem 1rem !important;
-  border-radius: 16px !important;
-  background: rgba(15, 23, 42, 0.44) !important;
-}
-
-.dss-risk-badge-box.level-empty {
-  border-color: rgba(148, 163, 184, 0.3) !important;
-  background: rgba(71, 85, 105, 0.24) !important;
-}
-
-.dss-risk-icon-wrap.level-empty {
-  color: #94a3b8 !important;
-  background: rgba(148, 163, 184, 0.12) !important;
-  border-color: rgba(148, 163, 184, 0.4) !important;
-}
-
-.dss-risk-badge-box.level-empty .dss-risk-value { color: var(--text-muted) !important; }
-
 body.light-theme .kpi-card {
   background: var(--kpi-card-bg, linear-gradient(155deg, #ffffff, #f8fafc)) !important;
   border-color: var(--kpi-card-border, var(--kpi-border)) !important;
@@ -4790,9 +4416,6 @@ body.light-theme .kpi-card {
 }
 
 body.light-theme .kpi-card-empty { background: linear-gradient(155deg, #f8fafc, #f1f5f9) !important; }
-body.light-theme .dss-unified-card { background: linear-gradient(155deg, #ffffff, #f8fafc) !important; }
-body.light-theme .dss-metric-col { background: #f8fafc !important; border-color: rgba(15, 23, 42, 0.1) !important; }
-body.light-theme .dss-metric-col:hover { background: #ffffff !important; border-color: rgba(37, 99, 235, 0.28) !important; }
 
 @media (max-width: 640px) {
   .kpi-row { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.65rem; }

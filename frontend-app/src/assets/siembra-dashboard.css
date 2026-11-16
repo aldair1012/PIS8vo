@@ -112,8 +112,6 @@
 .zeasys-workspace .sowing-dashboard .sowing-form-errors ul { padding-left:24px;margin-bottom:0; }
 .zeasys-workspace .sowing-dashboard .sowing-form-errors a { display:inline-block;min-height:44px;padding-block:10px;color:var(--zs-danger);text-decoration:underline; }
 .zeasys-workspace .sowing-dashboard .sowing-plan-actions { display:flex;flex-wrap:wrap;gap:12px; }
-.zeasys-workspace .sowing-dashboard .sowing-loading { min-height:400px;display:grid;align-content:start;justify-items:start;gap:16px;padding:24px;color:var(--zs-muted); }
-.zeasys-workspace .sowing-dashboard .sowing-loading-placeholder { width:100%;height:220px;border:1px solid var(--zs-border);border-radius:16px;background:var(--zs-inset-surface); }
 .zeasys-workspace .sowing-dashboard .sowing-refresh-error { padding:20px;border:1px solid var(--zs-border-strong);border-radius:12px;background:var(--zs-inset-surface); }
 .zeasys-workspace .sowing-dashboard .sowing-refresh-error p { max-width:70ch;font-size:1rem; }
 @media(max-width:1000px) { .zeasys-workspace .sowing-dashboard .ydp-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); } }

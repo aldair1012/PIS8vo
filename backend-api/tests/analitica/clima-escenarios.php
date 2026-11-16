@@ -65,11 +65,12 @@ final class Cache implements CacheInterface {
     public function limpiarExpirados(): void {}
 }
 final class Clima implements ProveedorClimaInterface {
-    public function __construct(private array $datos = [], private bool $fallar = false) {}
+    public function __construct(private array $datos = [], private bool $fallar = false, private ?array $resumen = null) {}
     public function obtenerClima(float $latitud, float $longitud, ?float $altitud): array {
         if ($this->fallar) throw new ServicioExternoException('Proveedor fuera de línea.');
         return $this->datos;
     }
+    public function obtenerResumenMensual12Meses(float $latitud, float $longitud): ?array { return $this->resumen; }
 }
 final class Suelo implements ProveedorSueloInterface {
     public function __construct(private array $datos = [], private bool $fallar = false) {}
@@ -91,9 +92,12 @@ final class ClimaActual implements ProveedorClimaActualInterface {
 function comprobar(bool $valor, string $mensaje): void { if (!$valor) throw new \RuntimeException($mensaje); }
 function lote(array $extra = []): array { return array_replace(['id' => 1, 'usuario_id' => 7, 'latitud' => -2.0, 'longitud' => -80.0, 'ubicacion' => 'Guayas'], $extra); }
 function climate(array $clima = [], array $suelo = [], array $extraLote = [], bool $fallar = false, array $actual = []): array {
+    putenv('ZEASYS_ONI_URL=http://127.0.0.1:1/oni');
     $terreno = new ServicioDatosTerreno(new Cache(), new Clima($clima, $fallar), new Suelo($suelo, $fallar), new Altitud());
     return (new ServicioAnaliticaClimate(new Catalogo(), new Cultivos(lote($extraLote)), $terreno,
-        new ServicioClimaActual(new Cache(), new ClimaActual($actual, $fallar))))->construir(7, 1, 2026);
+        new ServicioClimaActual(new Cache(), new ClimaActual($actual, $fallar)),
+        new \ZeaSys\Dominios\Terreno\Infraestructura\ProveedorNoaaOni(new Cache()),
+        new Clima([], $fallar)))->construir(7, 1, 2026);
 }
 function scenario(array $filas, array $catalogo = [], array $extraLote = [], ?int $año = 2026): array {
     return (new ServicioAnaliticaScenario(new Catalogo($catalogo), new Cultivos(lote($extraLote)), new Simulaciones($filas)))->construir(7, 1, $año);

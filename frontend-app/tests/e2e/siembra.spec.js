@@ -1,10 +1,11 @@
+import {agriculturalGuide} from '../fixtures/agriculturalGuide.mjs';
 import { test, expect } from '@playwright/test';
 import { waitForWorkspace } from './workspace-ready.js';
 
 const plot = { id:1,nombre_parcela:'Parcela A',area:2,ubicacion:'Manabí',latitud:-1,longitud:-80,fecha_siembra:'2024-01-01' };
 const otherPlot = { ...plot,id:2,nombre_parcela:'Parcela B' };
 const windowRow = {rango:'1–29 FEB',estado:'Siembra: Manabí',fuente:'Catálogo agronómico local',tipo:'ventana_catalogo_no_pronostico',nota:'Referencia provincial'};
-const payload = (value=4) => ({cultivo_activo:plot,años_disponibles:[2001,2024,2025,2026],kpis:{rendimiento_esperado:value,riesgo_agronomico:{nivel:null,texto:null,motivo:'No existe un modelo calibrado de riesgo.'}},percentiles:{p10:value,p50:value,p90:value,muestra:2},resumen_descriptivo:{muestra:2,coeficiente_variacion_pct:0},simulaciones_count:2,heatmap:[{tipo:'resultado_guardado',simulacion_id:101,fecha:'Simulación #101',hibrido:'INIAP H-551',valor:value}],ranking:[{tipo:'resultado_guardado',simulacion_id:101,estrategia:'Prueba guardada',combinacion:'INIAP H-551 · Simulación #101',valor:value,unidad:'t/ha',badge:'Resultado guardado',porque:'Orden descriptivo de resultados guardados.'}],viabilidad_siembra:[windowRow],recomendaciones:[],procedencia:{rendimiento:{limite:50,año:2024}}});
+const payload = (value=4) => ({guia_agricola:agriculturalGuide,cultivo_activo:plot,años_disponibles:[2001,2024,2025,2026],kpis:{rendimiento_esperado:value,riesgo_agronomico:{nivel:null,texto:null,motivo:'No existe un modelo calibrado de riesgo.'}},percentiles:{p10:value,p50:value,p90:value,muestra:2},resumen_descriptivo:{muestra:2,coeficiente_variacion_pct:0},simulaciones_count:2,heatmap:[{tipo:'resultado_guardado',simulacion_id:101,fecha:'Simulación #101',hibrido:'INIAP H-551',valor:value}],ranking:[{tipo:'resultado_guardado',simulacion_id:101,estrategia:'Prueba guardada',combinacion:'INIAP H-551 · Simulación #101',valor:value,unidad:'t/ha',badge:'Resultado guardado',porque:'Orden descriptivo de resultados guardados.'}],viabilidad_siembra:[windowRow],recomendaciones:[],procedencia:{rendimiento:{limite:50,año:2024}}});
 
 async function prepare(page,{data=payload(),handler}={}) {
   await page.setViewportSize({width:1440,height:1000});
@@ -60,26 +61,18 @@ test('un resultado cero conserva sus indicadores y datos de comparación',async(
 async function openResults(page) { const trigger=page.getByRole('button',{name:/Consultar simulaciones guardadas/});if(await trigger.getAttribute('aria-expanded')==='false')await trigger.click();if(await page.locator('.sowing-advanced > summary').isVisible())await page.locator('.sowing-advanced > summary').click(); }
 async function year2024(page) {
   await page.getByLabel('Año de las simulaciones').selectOption('2024');
-  await page.getByRole('button',{name:/Consultar meses habituales/}).click();
-  await page.locator('.sowing-reference-calendar > summary').click();
+
 }
 
-test('el calendario sigue el mes anual, conserva el año bisiesto y cierra su detalle con Escape',async({page})=>{
-  await prepare(page);await year2024(page);
-  const day=page.getByRole('button',{name:'29 de febrero de 2024: Siembra: Manabí',exact:true});
-  await day.focus();await page.keyboard.press('Enter');await expect(page.getByRole('status',{name:'Detalle de la referencia de siembra'})).toContainText('Referencia provincial');
-  await page.evaluate(()=>window.dispatchEvent(new Event('scroll')));await expect(page.getByRole('status',{name:'Detalle de la referencia de siembra'})).toBeVisible();
-  await page.keyboard.press('Escape');await expect(page.getByRole('status',{name:'Detalle de la referencia de siembra'})).toHaveCount(0);await expect(day).toBeFocused();
-  await page.getByRole('button',{name:'Mes anterior',exact:true}).click();await expect(page.getByRole('button',{name:'Mes anterior',exact:true})).toBeDisabled();
-  for(let month=0;month<11;month++)await page.getByRole('button',{name:'Mes siguiente',exact:true}).click();await expect(page.getByRole('button',{name:'Mes siguiente',exact:true})).toBeDisabled();
-  await page.getByRole('button',{name:'Con fechas',exact:true}).click();await expect(page.locator('.sowing-reference-calendar h3')).toContainText('Febrero');await expect(page.locator('.sowing-reference-calendar h3')).toContainText('2024');
+test('la selección mensual se puede consultar con teclado sin cambiar el plan',async({page})=>{
+  await prepare(page);const month=page.locator('.ag-calendar-month').filter({hasText:'Febrero'});await month.focus();await page.keyboard.press('Enter');await expect(month).toHaveAttribute('aria-pressed','true');await expect(page.locator('#ag-calendar-month-detail')).toContainText('Dentro de la época publicada');await expect(page.locator('.sowing-dates')).toContainText('2024');
 });
 
 test('un año sin simulaciones mantiene referencias y no inventa indicadores',async({page})=>{
   const data={...payload(),sin_datos:true,sin_simulaciones:true,kpis:{rendimiento_esperado:null},percentiles:{p10:null,p50:null,p90:null,muestra:0},resumen_descriptivo:{muestra:0},simulaciones_count:0,heatmap:[],ranking:[]};
   await prepare(page,{data});await year2024(page);await expect(page.getByRole('heading',{name:'No hay simulaciones guardadas en 2024',exact:true})).toBeVisible();
   await expect(page.getByRole('region',{name:'Indicadores avanzados de siembra'})).toHaveCount(0);
-  await expect(page.getByRole('button',{name:'29 de febrero de 2024: Siembra: Manabí',exact:true})).toBeVisible();
+  await expect(page.locator('.ag-calendar-month')).toHaveCount(12);
 });
 
 test('una respuesta tardía de otra parcela no sustituye la selección actual',async({page})=>{
@@ -108,12 +101,8 @@ test('el selector incluye años guardados aunque no coincidan con la fecha de si
   await expect.poll(()=>requestedYear).toBe('2001');
 });
 
-test('el calendario abre un mes con información y permite consultar las ventanas de cosecha',async({page})=>{
-  const data=payload();data.viabilidad_siembra=[{...windowRow,rango:'1–28 FEB'},{...windowRow,rango:'1–31 AGO',estado:'Cosecha: Manabí'}];await prepare(page,{data});
-  await page.getByRole('button',{name:/Consultar meses habituales/}).click();
-  await page.locator('.sowing-reference-calendar > summary').click();await expect(page.locator('.sowing-reference-calendar h3')).toContainText('Febrero');
-  await page.getByLabel('Tipo de referencia agrícola').selectOption('cosecha');
-  await expect(page.getByRole('button',{name:/^1 de agosto de .*: Cosecha: Manabí$/})).toBeVisible();
+test('las fuentes de la guía se pueden consultar sin fabricar una cosecha regional',async({page})=>{
+  await prepare(page);await page.locator('.ag-calendar-sources > summary').click();await expect(page.locator('.ag-calendar-sources')).toContainText('Invierno 2022');await expect(page.locator('.ag-calendar')).not.toContainText('Cosecha de referencia');
 });
 
 test('sin catálogo se utiliza la fecha registrada de la parcela y se explica que falta un fin de ciclo',async({page})=>{

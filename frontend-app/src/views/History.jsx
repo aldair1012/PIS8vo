@@ -1,5 +1,6 @@
 import { useCallback, useState, useEffect, useRef } from 'react';
 import { simulacionService } from '../services/api';
+import PantallaCarga from '../components/PantallaCarga';
 import { Trash2, TrendingUp, Award, Activity, Database, Clock } from 'lucide-react';
 import InteractiveKPI from '../templates/Common/InteractiveKPI';
 import { historyYears } from '../utils/historyYears';
@@ -92,7 +93,7 @@ export default function History({ recargarDatos }) {
   const recargarHistorial = useRef(loadHistory);
   useEffect(() => { recargarHistorial.current = loadHistory; }, [loadHistory]);
 
-  if (loading && !data) return <div role="status" className="flex-center" style={{ height: '70vh' }}>Cargando historial...</div>;
+  if (loading && !data) return <div className="flex-center" style={{ height: '70vh' }}><PantallaCarga mensaje="Cargando historial..." pantalla /></div>;
   const { simulaciones, estadisticas } = data || { simulaciones: [], estadisticas: {} };
   const totalSimulaciones = toFiniteNumber(estadisticas.total_simulaciones);
   const rendimientoPromedio = toFiniteNumber(estadisticas.rendimiento_promedio);

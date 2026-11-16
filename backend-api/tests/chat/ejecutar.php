@@ -52,6 +52,7 @@ function assert_contains(string $needle, string $haystack, string $message = '')
 }
 
 require_once __DIR__ . '/GeminiFlowiseTest.php';
+require_once __DIR__ . '/ChatControllerVistasTest.php';
 require_once __DIR__ . '/RecuperacionHibridaTest.php';
 require_once __DIR__ . '/MemoriaSesionTest.php';
 require_once __DIR__ . '/FavoritoServiceTest.php';

@@ -1,4 +1,5 @@
 import AnnualRainReference from '../components/AnnualRainReference';
+import PantallaCarga from '../components/PantallaCarga';
 import { numeroFertilizacion, validarProductoFertilizante } from '../utils/fertilizerInput';
 import { useEffect, useRef, useState } from 'react';
 import { MapPin, Pencil, Check, ArrowRight, RefreshCw, Info, Sprout } from 'lucide-react';
@@ -264,7 +265,7 @@ export default function Simular({ cultivos, onSimulationCompleted, onNavigate, o
         <section className="simulation-section"><header className="simulation-section-heading"><div><span className="simulation-section-number">02</span><h2>Revisa los datos del escenario</h2></div><button type="button" className="simulation-edit" onClick={() => setEditarDatos(value => !value)} disabled={!cultivoId}>{editarDatos ? <Check size={16} /> : <Pencil size={16} />}{editarDatos ? 'Listo, usar estos datos' : 'Modificar datos'}</button></header>
           <p>Precargamos las referencias disponibles de ubicación. Puedes modificarlas para este cálculo; no cambiarán el registro de tu parcela.</p>
           {referencias && <AnnualRainReference reference={referencias.lluvia_anual_referencia} unavailable />}
-          {cargandoDatos && <p role="status" className="simulation-loading"><span /> Consultando clima, suelo y provincia…</p>}
+          {cargandoDatos && <PantallaCarga mensaje="Consultando clima, suelo y provincia…" />}
           {aviso && <p role="status" className="simulation-notice">{aviso}</p>}
           <div className="simulation-fields-grid">
             {campoNumero('area', 'simular-area', 'Área a simular (ha)')}

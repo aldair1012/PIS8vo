@@ -1,0 +1,33 @@
+<?php
+declare(strict_types=1);
+require_once __DIR__.'/../../src/Kernel/AutoloaderPsr4.php';
+\ZeaSys\Kernel\AutoloaderPsr4::registrar(__DIR__.'/../../src');
+use ZeaSys\Dominios\Analitica\Aplicacion\GuiaCalendarioAgricola;
+$guia=new GuiaCalendarioAgricola();$n=0;
+function comprobar(bool $estado,string $texto):void {global $n;if(!$estado)throw new RuntimeException($texto);$n++;echo "[OK] $texto\n";}
+$p=['provincia'=>'Manabí','variedad_maiz'=>'INIAP H-551','altitud'=>120];$r=$guia->paraParcela($p);
+comprobar($r['ventana']['meses']===[1,2]&&$r['ventana']['tipo']==='practica_observada_2022','Maíz duro conserva meses observados y fecha de la encuesta, no un óptimo inventado.');
+comprobar($r['sanidad']['periodo']==='Invierno 2022'&&$r['sanidad']['problemas'][0]['tipo']==='síntoma reportado','Sanidad histórica distingue síntoma, enfermedad y plaga.');
+comprobar($r['vigilancia_actual']['estado']==='sin_reporte_verificado_por_parcela','Un antecedente no confirma un brote actual.');
+$r=$guia->paraParcela(['provincia'=>'Pichincha','variedad_maiz'=>'INIAP-198 Canguil','tipo_maiz'=>'Duro Amarillo','altitud'=>2600]);
+comprobar($r['familia']==='sierra'&&$r['ventana']['meses']===[9,10,11,12,1],'Canguil se trata como maíz de altura aunque el grupo legado diga duro.');
+comprobar($r['sanidad']===null,'Una provincia sin antecedente curado no hereda enfermedades de otra.');
+$r=$guia->paraParcela(['provincia'=>'Manabí','variedad_maiz'=>'INIAP-101 Blanco Harinoso']);
+comprobar($r['ventana']===null&&$r['avisos']!==[],'Una variedad de Sierra en la Costa no obtiene una ventana falsa.');
+$r=$guia->paraParcela(['provincia'=>'Azuay','variedad_maiz'=>'INIAP-101 Blanco Harinoso','altitud'=>2500]);
+comprobar($r['ventana']['meses']===[9,10,11,12]&&str_contains($r['ventana']['etiqueta'],'Finales'),'Azuay conserva los límites parciales de septiembre.');
+$r=$guia->paraParcela(['provincia'=>'Loja','variedad_maiz'=>'INIAP-103 Mishqui Sara','altitud'=>2000]);
+comprobar($r['familia']==='sierra'&&$r['sanidad']['fuente_id']==='iniap_sierra_2021','Loja de maíz suave usa la guía del Austro, no la encuesta de duro.');
+$r=$guia->paraParcela(['provincia'=>'Loja','variedad_maiz'=>'INIAP H-554 Renacer','altitud'=>200]);
+comprobar($r['familia']==='duro'&&$r['sanidad']['fuente_id']==='mag_invierno_2022','Loja de maíz duro conserva su fuente específica.');
+$r=$guia->paraParcela($p+['riego_tipo'=>'goteo']);comprobar($r['ventana']['meses']===[1,2],'Riego no convierte automáticamente todos los meses en recomendados.');
+$r=$guia->paraParcela(array_replace($p,['variedad_maiz'=>'INIAP H-603 Superior','altitud'=>3000]));comprobar($r['ventana']===null,'Altitud fuera de la ficha requiere confirmación, sin ventana automática.');
+foreach ([['provincia'=>'Manabí','variedad_maiz'=>'variedad desconocida'],['variedad_maiz'=>'INIAP H-551'],['provincia'=>'Pastaza','variedad_maiz'=>'INIAP H-551']] as $v) comprobar($guia->paraParcela($v)['ventana']===null,'Sin cobertura se mantiene un estado vacío explícito.');
+comprobar($guia->paraParcela($p)['suelo']['ph_min']===5.5,'Rango de pH conserva la guía y no se fabrica una medición.');
+$r=$guia->paraParcela(['provincia'=>'Manabí','variedad_maiz'=>'Híbrido convencional','tipo_maiz'=>'Duro Amarillo']);
+comprobar($r['ventana']['meses']===[1,2]&&$r['avisos']!==[],'Un registro genérico recibe guía de su grupo con aviso, sin atribuirle una ficha varietal.');
+$r=$guia->paraParcela(['provincia'=>'Manabí','variedad_maiz'=>'Canguil local','tipo_maiz'=>'Duro Amarillo']);
+comprobar($r['ventana']===null,'Un canguil desconocido no hereda el calendario de maíz duro costero.');
+$r=$guia->paraParcela(['provincia'=>'Pichincha','variedad_maiz'=>'Maíz blanco local','tipo_maiz'=>'Duro Amarillo / Blanco']);
+comprobar($r['ventana']===null,'El grupo mixto legado no determina una región sin ficha.');
+echo "$n passed\n";

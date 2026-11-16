@@ -1,5 +1,5 @@
 {
-  "fecha_revision": "2026-11-10",
+  "fecha_revision": "2026-11-15",
   "titulo": "Fuentes, campos y usos de datos en ZeaSys",
   "fuentes": [
     {
@@ -7,11 +7,13 @@
       "institucion": "Open-Meteo",
       "titulo": "Weather Forecast API",
       "url": "https://open-meteo.com/en/docs",
-      "campos": "Temperatura a 2 m (°C), humedad relativa (%), precipitación (mm), probabilidad de precipitación (%) y pronóstico de corto plazo.",
+      "campos": "Temperatura a 2 m (°C), humedad relativa (%), viento (km/h), precipitación (mm), probabilidad de precipitación (%), pronóstico de corto plazo; agua volumétrica y temperatura estimadas del suelo 0–10 cm.",
       "pantallas": "Clima y cultivo; valores de ubicación de la parcela; contexto del asistente.",
       "codigo": [
         "ml-engine/src/data_providers.py",
-        "backend-api/src/Dominios/Lotes/Aplicacion/CultivoService.php"
+        "backend-api/src/Dominios/Lotes/Aplicacion/CultivoService.php",
+        "backend-api/src/Dominios/Terreno/Infraestructura/ProveedorOpenMeteoForecast.php",
+        "frontend-app/src/views/DashboardClimate.jsx"
       ],
       "limite": "Salida de modelos meteorológicos interpolados; no una estación instalada en la parcela. No cubre todo el ciclo futuro.",
       "estado": "Fuente institucional identificada"
@@ -26,9 +28,25 @@
       "codigo": [
         "ml-engine/src/data_providers.py",
         "backend-api/src/Dominios/Analitica/Infraestructura/ProveedorReferenciasPublicas.php",
-        "backend-api/src/Dominios/Terreno/Infraestructura/ProveedorLluviaAnual.php"
+        "backend-api/src/Dominios/Terreno/Infraestructura/ProveedorLluviaAnual.php",
+        "backend-api/src/Dominios/Terreno/Infraestructura/ProveedorOpenMeteo.php",
+        "frontend-app/src/utils/climateEvidence.js"
       ],
       "limite": "Reanálisis/modelos en malla. Se conserva el periodo consultado; un promedio anual no sustituye la lluvia del ciclo.",
+      "estado": "Fuente institucional identificada"
+    },
+    {
+      "id": "MET-06",
+      "institucion": "NOAA Climate Prediction Center",
+      "titulo": "Relative Oceanic Niño Index (RONI), ERSSTv6",
+      "url": "https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso/roni/",
+      "campos": "Índice RONI, anomalía trimestral relativa, período y serie reciente. NOAA lo usa para seguimiento oficial desde febrero de 2026.",
+      "pantallas": "Clima y cultivo → Referencias de la zona → El Niño y La Niña; contexto del asistente.",
+      "codigo": [
+        "backend-api/src/Dominios/Terreno/Infraestructura/ProveedorNoaaOni.php",
+        "frontend-app/src/views/DashboardClimate.jsx"
+      ],
+      "limite": "Referencia del Pacífico tropical, no lluvia ni riesgo de la parcela. Cinco períodos consecutivos son un criterio histórico; no se declara un episodio oficial automáticamente. Los valores recientes pueden revisarse dos meses.",
       "estado": "Fuente institucional identificada"
     },
     {
@@ -435,6 +453,81 @@
       ],
       "limite": "No se completa una condición ausente con valores inventados. Compatibilidad documental no equivale a ensayo local ni precisión predictiva.",
       "estado": "Publicación institucional identificada en catálogo"
+    },
+    {
+      "id": "IA-01",
+      "institucion": "Google AI for Developers",
+      "titulo": "Gemini: Grounding with Google Search",
+      "url": "https://ai.google.dev/gemini-api/docs/google-search",
+      "campos": "Explicación generativa, búsqueda pública cuando se requiere, metadatos de enlaces y sugerencias de búsqueda.",
+      "pantallas": "Asistente de ZeaSys: conocimiento general, datos autorizados de parcela y documentos solicitados como apoyo.",
+      "codigo": [
+        "flowise-nodes/ZeaSysGeminiSearch/ZeaSysGeminiSearch.js",
+        "backend-api/src/Dominios/Chat/Infraestructura/GeminiFlowise.php",
+        "frontend-app/src/components/FuentesChat.jsx"
+      ],
+      "limite": "Una respuesta generativa no es un dato agrícola certificado. La web se identifica sólo cuando hay búsqueda real. El 15/11/2026 las llamadas con búsqueda devolvieron cuota excedida (429); las llamadas normales funcionaron. El sistema conserva orientación general y no fabrica enlaces.",
+      "estado": "Documentación técnica del proveedor; no certificación de respuestas o cosechas"
+    },
+    {
+      "id": "CAL-01",
+      "institucion": "INIAP / KOPIA",
+      "titulo": "Guía para la producción sustentable de maíz en la Sierra ecuatoriana",
+      "url": "https://repositorio.iniap.gob.ec/server/api/core/bitstreams/8be596ce-a0d6-43ae-b085-8d0c3fc51540/content",
+      "campos": "Épocas de siembra de Sierra y del Austro, condiciones para choclo con riego, texturas/pH de referencia para maíz de altura y antecedentes sanitarios documentados. Páginas PDF: 36, 122, 126, 128, 129, 131, 137",
+      "pantallas": "Siembra → Calendario agrícola de tu zona; contexto verificado del asistente.",
+      "codigo": [
+        "backend-api/data/referencias/calendario-agricola-ecuador.json",
+        "backend-api/src/Dominios/Analitica/Aplicacion/GuiaCalendarioAgricola.php",
+        "frontend-app/src/components/AgriculturalCalendar.jsx"
+      ],
+      "limite": "Referencia por provincia y familia, no óptimo varietal ni diagnóstico actual. MAG 2022 es una encuesta histórica; Agrocalidad 2014 es la edición de la guía. Riego no habilita todas las épocas para grano. El mapa SoilGrids es una estimación superficial, no medición en campo.",
+      "estado": "Fuente institucional identificada"
+    },
+    {
+      "id": "CAL-02",
+      "institucion": "Agrocalidad",
+      "titulo": "Guía de buenas prácticas agrícolas para maíz duro",
+      "url": "https://www.agrocalidad.gob.ec/wp-content/uploads/2022/02/Gui%CC%81a-de-BPA-para-mai%CC%81z-duro-.pdf",
+      "campos": "Texturas, pH, drenaje del maíz duro y condición de inicio de lluvias para la siembra. No se aplican recetas de plaguicidas. Páginas PDF: 14, 17, 41",
+      "pantallas": "Siembra → Calendario agrícola de tu zona; contexto verificado del asistente.",
+      "codigo": [
+        "backend-api/data/referencias/calendario-agricola-ecuador.json",
+        "backend-api/src/Dominios/Analitica/Aplicacion/GuiaCalendarioAgricola.php",
+        "frontend-app/src/components/AgriculturalCalendar.jsx"
+      ],
+      "limite": "Referencia por provincia y familia, no óptimo varietal ni diagnóstico actual. MAG 2022 es una encuesta histórica; Agrocalidad 2014 es la edición de la guía. Riego no habilita todas las épocas para grano. El mapa SoilGrids es una estimación superficial, no medición en campo.",
+      "estado": "Fuente institucional identificada"
+    },
+    {
+      "id": "CAL-03",
+      "institucion": "MAG / SIPA",
+      "titulo": "Informe de rendimientos de maíz amarillo · Invierno 2022",
+      "url": "https://sipa.agricultura.gob.ec/descargas/estudios/rendimientos/maiz/resultados_rendimiento_maiz_invierno_2022.pdf",
+      "campos": "Meses declarados de siembra y nombres de problemas fitosanitarios por provincia en la encuesta de invierno de 2022. No se publican esos porcentajes como riesgo actual. Páginas PDF: 4, 8, 16",
+      "pantallas": "Siembra → Calendario agrícola de tu zona; contexto verificado del asistente.",
+      "codigo": [
+        "backend-api/data/referencias/calendario-agricola-ecuador.json",
+        "backend-api/src/Dominios/Analitica/Aplicacion/GuiaCalendarioAgricola.php",
+        "frontend-app/src/components/AgriculturalCalendar.jsx"
+      ],
+      "limite": "Referencia por provincia y familia, no óptimo varietal ni diagnóstico actual. MAG 2022 es una encuesta histórica; Agrocalidad 2014 es la edición de la guía. Riego no habilita todas las épocas para grano. El mapa SoilGrids es una estimación superficial, no medición en campo.",
+      "estado": "Fuente institucional identificada"
+    },
+    {
+      "id": "CAL-04",
+      "institucion": "Agrocalidad",
+      "titulo": "Vigilancia fitosanitaria y notificación de problemas",
+      "url": "https://www.agrocalidad.gob.ec/direccion-de-vigilancia-fitosanitaria/",
+      "campos": "Enlace oficial para conocer vigilancia y comunicar síntomas desconocidos. No proporciona un feed integrado de brotes por parcela.",
+      "pantallas": "Siembra → Calendario agrícola de tu zona; contexto verificado del asistente.",
+      "codigo": [
+        "backend-api/data/referencias/calendario-agricola-ecuador.json",
+        "backend-api/src/Dominios/Analitica/Aplicacion/GuiaCalendarioAgricola.php",
+        "frontend-app/src/components/AgriculturalCalendar.jsx"
+      ],
+      "limite": "Referencia por provincia y familia, no óptimo varietal ni diagnóstico actual. MAG 2022 es una encuesta histórica; Agrocalidad 2014 es la edición de la guía. Riego no habilita todas las épocas para grano. El mapa SoilGrids es una estimación superficial, no medición en campo.",
+      "estado": "Fuente institucional identificada"
     }
   ],
   "pdf_originales": [

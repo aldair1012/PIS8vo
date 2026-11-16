@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace ZeaSys\Dominios\Terreno\Infraestructura;
 
 use ZeaSys\Dominios\Terreno\Dominio\ProveedorClimaInterface;
+use ZeaSys\Dominios\Terreno\Dominio\CacheInterface;
 use ZeaSys\Kernel\Errores\ServicioExternoException;
 
 final class ProveedorOpenMeteo implements ProveedorClimaInterface
 {
+    public function __construct(private ?CacheInterface $cache = null) {}
     public function obtenerClima(float $latitud, float $longitud, ?float $altitud): array
     {
         // Treinta días completos del archivo reciente, con siete días de margen
@@ -21,6 +23,7 @@ final class ProveedorOpenMeteo implements ProveedorClimaInterface
             . "&start_date={$fechaInicio}&end_date={$fechaFin}"
             . "&daily=temperature_2m_mean,temperature_2m_min,temperature_2m_max"
             .         ",precipitation_sum,relative_humidity_2m_mean,wind_speed_10m_max,shortwave_radiation_sum"
+            .         ",et0_fao_evapotranspiration"
             . "&timezone=auto";
 
         $ch = curl_init($urlClima);
@@ -85,6 +88,38 @@ final class ProveedorOpenMeteo implements ProveedorClimaInterface
             $actualizaciones['radiacion_par'] = round(max(0.0, $promedioRadiacionSolar * 2.06), 1);
         }
 
+        // ET₀ de referencia FAO-56; acumulado y promedio de 30 días, solo si la serie está completa.
+        $et0 = $this->serie($datosDiarios, 'et0_fao_evapotranspiration');
+        $et0Validos = array_values(array_filter($et0, static fn($v) => $v !== null && is_numeric($v)));
+        $et0Completo = count($et0Validos) === count($et0) ? array_sum($et0Validos) : null;
+        if ($et0Completo !== null) {
+            $actualizaciones['et0_30d'] = round($et0Completo, 1);
+        }
+
+        // Serie diaria completa de los últimos 30 días; el frontend la grafica tal cual.
+        $fechas = $this->serie($datosDiarios, 'time');
+        $tMin = $this->serie($datosDiarios, 'temperature_2m_min');
+        $tMax = $this->serie($datosDiarios, 'temperature_2m_max');
+        $tempMedia = $this->serie($datosDiarios, 'temperature_2m_mean');
+        $precipitacion = $this->serie($datosDiarios, 'precipitation_sum');
+        $humedad = $this->serie($datosDiarios, 'relative_humidity_2m_mean');
+        $serieDiaria = [];
+        foreach ($fechas as $i => $fecha) {
+            if (!is_string($fecha)) continue;
+            $serieDiaria[] = [
+                'fecha' => $fecha,
+                'precip_mm' => isset($precipitacion[$i]) && is_numeric($precipitacion[$i]) ? (float) $precipitacion[$i] : null,
+                'temp_media_c' => isset($tempMedia[$i]) && is_numeric($tempMedia[$i]) ? (float) $tempMedia[$i] : null,
+                'temp_max_c' => isset($tMax[$i]) && is_numeric($tMax[$i]) ? (float) $tMax[$i] : null,
+                'temp_min_c' => isset($tMin[$i]) && is_numeric($tMin[$i]) ? (float) $tMin[$i] : null,
+                'et0_mm' => isset($et0[$i]) && is_numeric($et0[$i]) ? (float) $et0[$i] : null,
+                'humedad_media_pct' => isset($humedad[$i]) && is_numeric($humedad[$i]) ? (float) $humedad[$i] : null,
+            ];
+        }
+        if (count($serieDiaria) === 30) {
+            $actualizaciones['serie_diaria_30d'] = $serieDiaria;
+        }
+
         if ($actualizaciones !== []) $actualizaciones['periodo_30d'] = ['inicio'=>$fechaInicio,'fin'=>$fechaFin,'dias'=>30];
         return $actualizaciones;
     }
@@ -95,6 +130,96 @@ final class ProveedorOpenMeteo implements ProveedorClimaInterface
      * @param array<string, mixed> $datosDiarios
      * @return array<int, mixed>
      */
+    /**
+     * Resumen mensual de los últimos 12 meses desde el archivo. Calcula totales
+     * modelados de precipitación y temperatura. Un mes con lluvia incompleta
+     * conserva null, sin contar los días faltantes como cero.
+     */
+    public function obtenerResumenMensual12Meses(float $latitud, float $longitud): ?array
+    {
+        $fin = (new \DateTimeImmutable('first day of this month', new \DateTimeZone('America/Guayaquil')))->setTime(0, 0);
+        $fechaFin = $fin->modify('- 1 second')->format('Y-m-d');
+        $fechaInicio = $fin->modify('first day of -12 months')->format('Y-m-d');
+        $cacheKey = sprintf('clima_12m_v2_%.4f_%.4f_%s', $latitud, $longitud, $fin->format('Ym'));
+        $cached = $this->cache?->obtener($cacheKey, 86400);
+        if (is_array($cached)) return $cached;
+        $url = "https://archive-api.open-meteo.com/v1/archive"
+            . "?latitude={$latitud}&longitude={$longitud}"
+            . "&start_date={$fechaInicio}&end_date={$fechaFin}"
+            . "&daily=precipitation_sum,temperature_2m_mean"
+            . "&timezone=auto&models=era5";
+
+        $ch = curl_init($url);
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT => 10,
+            CURLOPT_CONNECTTIMEOUT => 5,
+            CURLOPT_USERAGENT => 'ZeaSys/2.0 (resumen mensual 12 meses)',
+        ]);
+        $respuesta = curl_exec($ch);
+        $status = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        if (!is_string($respuesta) || $respuesta === '' || $status < 200 || $status >= 300) return null;
+        $json = json_decode($respuesta, true);
+        if (!is_array($json) || !isset($json['daily']) || !is_array($json['daily'])) return null;
+
+        $summary = $this->resumirMeses($json['daily'], $fechaInicio, $fechaFin);
+        if ($summary !== null) $this->cache?->guardar($cacheKey, $summary);
+        return $summary;
+    }
+
+    private function resumirMeses(array $daily, string $fechaInicio, string $fechaFin): ?array
+    {
+        $fechas = $this->serie($daily, 'time');
+        $precipitacion = $this->serie($daily, 'precipitation_sum');
+        $temperaturaMedia = $this->serie($daily, 'temperature_2m_mean');
+
+        $porMes = [];
+        $seen = [];
+        foreach ($fechas as $i => $fecha) {
+            if (!is_string($fecha) || isset($seen[$fecha]) || $fecha < $fechaInicio || $fecha > $fechaFin) continue;
+            $date = \DateTimeImmutable::createFromFormat('!Y-m-d', $fecha);
+            if ($date === false || $date->format('Y-m-d') !== $fecha) continue;
+            $seen[$fecha] = true;
+            $ym = substr($fecha, 0, 7);
+            if (!isset($porMes[$ym])) {
+                $porMes[$ym] = ['lluvia_mm' => 0.0, 'rain_count' => 0, 'temp_sum' => 0.0, 'temp_count' => 0, 'dias' => 0];
+            }
+            if (is_numeric($precipitacion[$i] ?? null) && is_finite((float) $precipitacion[$i]) && $precipitacion[$i] >= 0) {
+                $porMes[$ym]['lluvia_mm'] += (float) $precipitacion[$i];
+                $porMes[$ym]['rain_count']++;
+            }
+            if (is_numeric($temperaturaMedia[$i] ?? null) && is_finite((float) $temperaturaMedia[$i]) && $temperaturaMedia[$i] >= -90 && $temperaturaMedia[$i] <= 65) {
+                $porMes[$ym]['temp_sum'] += (float) $temperaturaMedia[$i];
+                $porMes[$ym]['temp_count']++;
+            }
+            $porMes[$ym]['dias']++;
+        }
+        ksort($porMes);
+        $meses = [];
+        foreach ($porMes as $ym => $info) {
+            $expected = (int) (new \DateTimeImmutable($ym . '-01'))->format('t');
+            $meses[] = [
+                'ym' => $ym,
+                'mes' => $ym,
+                'precipitacion_mm' => $info['rain_count'] === $expected ? round($info['lluvia_mm'], 1) : null,
+                'temp_media_c' => $info['temp_count'] > 0 ? round($info['temp_sum'] / $info['temp_count'], 1) : null,
+                'dias' => $info['dias'],
+                'dias_lluvia' => $info['rain_count'],
+                'dias_temperatura' => $info['temp_count'],
+                'dias_esperados' => $expected,
+            ];
+        }
+
+        return $meses === [] ? null : [
+            'meses' => $meses,
+            'periodo' => ['inicio' => $fechaInicio, 'fin' => $fechaFin],
+            'fuente' => 'Open-Meteo Archive · ERA5',
+            'nota' => 'Historia reciente modelada por ERA5 para esta ubicación, no mediciones del lote. La lluvia mensual requiere todos los días; una media de temperatura puede tener cobertura parcial, indicada en dias_temperatura.',
+        ];
+    }
+
     private function serie(array $datosDiarios, string $clave): array
     {
         $valores = $datosDiarios[$clave] ?? [];

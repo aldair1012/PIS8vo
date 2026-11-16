@@ -9,13 +9,28 @@ function explainSurface(event, onExplain) {
 }
 
 /** Presentación compartida de datos; cada pantalla conserva sus fuentes y cálculos. */
-export function DashboardMetric({ label, value, unit, detail, icon: Icon, feature = false, onExplain }) {
-  return <article onClick={event => explainSurface(event, onExplain)} className={`ydp-metric${feature ? ' ydp-metric--feature' : ''}${onExplain ? ' dashboard-metric--interactive' : ''}`}>
+export function DashboardMetric({ label, value, unit, detail, icon: Icon, feature = false, onExplain, qualifier, severity }) {
+  const QualifierIcon = qualifier?.icon;
+  const showSeverity = severity !== undefined;
+  const severityAbsent = severity === null;
+  return <article onClick={event => explainSurface(event, onExplain)} className={`ydp-metric${feature ? ' ydp-metric--feature' : ''}${onExplain ? ' dashboard-metric--interactive' : ''}${qualifier ? ' ydp-metric--qualified' : ''}${showSeverity ? ' ydp-metric--with-severity' : ''}`}>
+    <div className="ydp-metric-qualifier-zone">
+      {qualifier ? <span className={`ydp-metric-qualifier ydp-metric-qualifier--${qualifier.tone ?? 'neutral'}`}>
+        {QualifierIcon && <QualifierIcon size={13} aria-hidden="true" />}
+        <span>{qualifier.label}</span>
+      </span> : <span className="ydp-metric-label-spacer" aria-hidden="true" />}
+    </div>
     <div className="ydp-metric-label">{Icon && <Icon size={18} aria-hidden="true" />}{onExplain ? <button type="button" className="dashboard-explain-title" aria-label={`Ver explicación de ${label}`} onClick={onExplain}>{label}</button> : <span>{label}</span>}</div>
     <div className="ydp-metric-window"><div className="ydp-metric-frame">
       <p className={`ydp-metric-value ${String(value ?? '').length > 9 ? 'ydp-metric-value--long' : ''}`}>{value ?? '—'}<small>{unit}</small></p>
       <p className="ydp-metric-detail">{detail}</p>
     </div></div>
+    {showSeverity && <div className="ydp-metric-severity">
+      <div className={`ydp-metric-severity-track${severityAbsent ? ' ydp-metric-severity-track--absent' : ''}`} role="presentation">
+        {!severityAbsent && <span className="ydp-metric-severity-fill" style={{ width: `${Math.max(2, Math.min(100, severity.level))}%` }} />}
+      </div>
+      <span className="ydp-metric-severity-caption">{severityAbsent ? 'Sin evaluación' : (severity.label ?? 'Referencia útil')}</span>
+    </div>}
     {onExplain && <span className="dashboard-explain-hint">Toca la tarjeta para entender este dato</span>}
   </article>;
 }

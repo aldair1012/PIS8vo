@@ -273,7 +273,7 @@ export default function CornCobModel() {
         aria-label="Modelo tridimensional interactivo de una mazorca de maíz"
       />
       <div className="zeasys-corn-model-glow" aria-hidden="true" />
-      {status === 'loading' && <span className="zeasys-corn-model-loading">Preparando modelo 3D</span>}
+      {status === 'loading' && <span className="zs-carga-linea zeasys-corn-model-loading"><span className="zs-carga-puntos" aria-hidden="true"><i /><i /><i /></span>Preparando modelo 3D</span>}
       {status === 'error' && <img className="zeasys-corn-model-fallback" src={fallbackPhoto} alt="Cultivo de maíz" loading="lazy" decoding="async" />}
     </div>
   );

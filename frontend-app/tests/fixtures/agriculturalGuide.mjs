@@ -1,0 +1,3 @@
+import {readFileSync} from 'node:fs';
+const facts=JSON.parse(readFileSync(new URL('../../../backend-api/data/referencias/calendario-agricola-ecuador.json',import.meta.url),'utf8'));
+export const agriculturalGuide={version:facts.version,estado:'referencia_disponible',provincia:'Manabí',variedad:'INIAP H-551',familia:'duro',alcance:'Guía general de maíz duro',ventana:facts.ventanas.duro,suelo:facts.suelo.duro,sanidad:facts.sanidad['duro:Manabí'],fuentes:facts.fuentes,avisos:[],riego:{nota:'Confirma el agua disponible antes de sembrar.'},vigilancia_actual:{nota:'No hay un reporte actual integrado para esta parcela. Los antecedentes provinciales no confirman una plaga o enfermedad activa.'}};

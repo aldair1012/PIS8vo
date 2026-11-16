@@ -14,15 +14,20 @@ def main():
             if not (ROOT/path).is_file(): raise ValueError(f'No existe {path}')
         sources.append(dict(id=id,institucion=publisher,titulo=title,url=url,campos=fields,pantallas=views,codigo=code,limite=limit,estado=status))
     add('MET-01','Open-Meteo','Weather Forecast API','https://open-meteo.com/en/docs',
-        'Temperatura a 2 m (°C), humedad relativa (%), precipitación (mm), probabilidad de precipitación (%) y pronóstico de corto plazo.',
+        'Temperatura a 2 m (°C), humedad relativa (%), viento (km/h), precipitación (mm), probabilidad de precipitación (%), pronóstico de corto plazo; agua volumétrica y temperatura estimadas del suelo 0–10 cm.',
         'Clima y cultivo; valores de ubicación de la parcela; contexto del asistente.',
-        ['ml-engine/src/data_providers.py','backend-api/src/Dominios/Lotes/Aplicacion/CultivoService.php'],
+        ['ml-engine/src/data_providers.py','backend-api/src/Dominios/Lotes/Aplicacion/CultivoService.php','backend-api/src/Dominios/Terreno/Infraestructura/ProveedorOpenMeteoForecast.php','frontend-app/src/views/DashboardClimate.jsx'],
         'Salida de modelos meteorológicos interpolados; no una estación instalada en la parcela. No cubre todo el ciclo futuro.')
     add('MET-02','Open-Meteo / ECMWF','Historical Weather API','https://open-meteo.com/en/docs/historical-weather-api',
         'Lluvia acumulada de un periodo; lluvia anual de referencia ERA5 1991–2020 (promedio de 30 totales anuales completos); temperatura y humedad recientes; radiación solar.',
         'Clima y cultivo; comparación con periodos anteriores; referencias de rendimiento; simulación si se solicita el periodo histórico.',
-        ['ml-engine/src/data_providers.py','backend-api/src/Dominios/Analitica/Infraestructura/ProveedorReferenciasPublicas.php','backend-api/src/Dominios/Terreno/Infraestructura/ProveedorLluviaAnual.php'],
+        ['ml-engine/src/data_providers.py','backend-api/src/Dominios/Analitica/Infraestructura/ProveedorReferenciasPublicas.php','backend-api/src/Dominios/Terreno/Infraestructura/ProveedorLluviaAnual.php','backend-api/src/Dominios/Terreno/Infraestructura/ProveedorOpenMeteo.php','frontend-app/src/utils/climateEvidence.js'],
         'Reanálisis/modelos en malla. Se conserva el periodo consultado; un promedio anual no sustituye la lluvia del ciclo.')
+    add('MET-06','NOAA Climate Prediction Center','Relative Oceanic Niño Index (RONI), ERSSTv6','https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso/roni/',
+        'Índice RONI, anomalía trimestral relativa, período y serie reciente. NOAA lo usa para seguimiento oficial desde febrero de 2026.',
+        'Clima y cultivo → Referencias de la zona → El Niño y La Niña; contexto del asistente.',
+        ['backend-api/src/Dominios/Terreno/Infraestructura/ProveedorNoaaOni.php','frontend-app/src/views/DashboardClimate.jsx'],
+        'Referencia del Pacífico tropical, no lluvia ni riesgo de la parcela. Cinco períodos consecutivos son un criterio histórico; no se declara un episodio oficial automáticamente. Los valores recientes pueden revisarse dos meses.')
     add('MET-03','NASA POWER','Daily point API','https://power.larc.nasa.gov/docs/services/api/',
         'Variables meteorológicas diarias de respaldo para series históricas compatibles.',
         'Motor de datos climáticos, cuando falla el proveedor principal y el periodo permite respaldo.',
@@ -104,8 +109,27 @@ def main():
             ['backend-api/data/referencias/catalogo-maiz-ecuador.json','frontend-app/src/data/variedadesMaizEcuador.js','backend-api/src/Dominios/Analitica/Infraestructura/RepositorioCatalogoAgronomico.php'],
             'No se completa una condición ausente con valores inventados. Compatibilidad documental no equivale a ensayo local ni precisión predictiva.',
             'Fuente comercial del fabricante; no organismo certificador' if private else 'Publicación institucional identificada en catálogo')
+    add('IA-01','Google AI for Developers','Gemini: Grounding with Google Search','https://ai.google.dev/gemini-api/docs/google-search',
+        'Explicación generativa, búsqueda pública cuando se requiere, metadatos de enlaces y sugerencias de búsqueda.',
+        'Asistente de ZeaSys: conocimiento general, datos autorizados de parcela y documentos solicitados como apoyo.',
+        ['flowise-nodes/ZeaSysGeminiSearch/ZeaSysGeminiSearch.js','backend-api/src/Dominios/Chat/Infraestructura/GeminiFlowise.php','frontend-app/src/components/FuentesChat.jsx'],
+        'Una respuesta generativa no es un dato agrícola certificado. La web se identifica sólo cuando hay búsqueda real. El 15/11/2026 las llamadas con búsqueda devolvieron cuota excedida (429); las llamadas normales funcionaron. El sistema conserva orientación general y no fabrica enlaces.',
+        'Documentación técnica del proveedor; no certificación de respuestas o cosechas')
+    calendar=load('backend-api/data/referencias/calendario-agricola-ecuador.json')
+    calendar_fields={
+        'iniap_sierra_2021':'Épocas de siembra de Sierra y del Austro, condiciones para choclo con riego, texturas/pH de referencia para maíz de altura y antecedentes sanitarios documentados.',
+        'agrocalidad_bpa_2014':'Texturas, pH, drenaje del maíz duro y condición de inicio de lluvias para la siembra. No se aplican recetas de plaguicidas.',
+        'mag_invierno_2022':'Meses declarados de siembra y nombres de problemas fitosanitarios por provincia en la encuesta de invierno de 2022. No se publican esos porcentajes como riesgo actual.',
+        'agrocalidad_vigilancia':'Enlace oficial para conocer vigilancia y comunicar síntomas desconocidos. No proporciona un feed integrado de brotes por parcela.',
+    }
+    for idx,(key,source) in enumerate(calendar['fuentes'].items(),1):
+        add(f'CAL-{idx:02d}',source['institucion'],source['titulo'],source['url'],
+            calendar_fields[key]+(' Páginas PDF: '+', '.join(map(str,source['paginas_pdf'])) if source.get('paginas_pdf') else ''),
+            'Siembra → Calendario agrícola de tu zona; contexto verificado del asistente.',
+            ['backend-api/data/referencias/calendario-agricola-ecuador.json','backend-api/src/Dominios/Analitica/Aplicacion/GuiaCalendarioAgricola.php','frontend-app/src/components/AgriculturalCalendar.jsx'],
+            'Referencia por provincia y familia, no óptimo varietal ni diagnóstico actual. MAG 2022 es una encuesta histórica; Agrocalidad 2014 es la edición de la guía. Riego no habilita todas las épocas para grano. El mapa SoilGrids es una estimación superficial, no medición en campo.')
     varieties=[{k:v.get(k) for k in ['nombre','tipo_grano_documentado','usos_documentados','categorias_consumo','fuentes','datos_no_documentados','simulacion_grano_habilitada']} for v in catalog['variedades']]
-    result={'fecha_revision':'2026-11-10','titulo':'Fuentes, campos y usos de datos en ZeaSys','fuentes':sources,'pdf_originales':pdfs,'variedades':varieties,
+    result={'fecha_revision':'2026-11-15','titulo':'Fuentes, campos y usos de datos en ZeaSys','fuentes':sources,'pdf_originales':pdfs,'variedades':varieties,
         'advertencia':'Autoría institucional y trazabilidad no equivalen a certificación de la precisión del modelo. El CSV histórico de entrenamiento continúa con procedencia no acreditada; los datos personales y supuestos no son datos certificados.'}
     out=ROOT/'documentacion/referencias-datos-sistema-20261109.json';out.write_text(json.dumps(result,ensure_ascii=False,indent=2)+'\n',encoding='utf8'); print(f'{len(sources)} fuentes; {len(varieties)} variedades; {len(pdfs)} PDF.')
 

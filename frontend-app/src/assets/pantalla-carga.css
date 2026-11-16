@@ -1,0 +1,222 @@
+/* ZeaSys · PantallaCarga: estados de espera con el lenguaje visual del sistema.
+   Brote de maíz animado sobre superficie del tema, puntos en secuencia y
+   esqueletos con brillo. Respeta prefers-reduced-motion. */
+
+.zs-carga {
+  --carga-panel: var(--zs-surface, #103221);
+  --carga-inset: var(--zs-inset-surface, #061a0f);
+  --carga-maiz: var(--zi-maize-400, #d8a83f);
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 14px;
+  padding: 32px 24px;
+  min-height: 220px;
+  width: 100%;
+  color: var(--zs-text);
+  text-align: center;
+}
+
+.zs-carga--pantalla {
+  min-height: min(58vh, 420px);
+  gap: 20px;
+  padding: 48px 24px;
+}
+
+/* Emblema: brote de maíz sobre anillo cálido del tema. */
+.zs-carga-emblema {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  background: radial-gradient(130% 130% at 30% 18%,
+      color-mix(in srgb, var(--zs-accent) 20%, var(--carga-inset)),
+      var(--carga-inset) 72%);
+  border: 1px solid var(--zs-border);
+  box-shadow: 0 12px 32px color-mix(in srgb, var(--zs-accent) 16%, transparent);
+  animation: zs-carga-respira 2.6s ease-in-out infinite;
+}
+
+.zs-carga-emblema::after {
+  content: "";
+  position: absolute;
+  inset: -7px;
+  border-radius: 50%;
+  border: 1.5px dashed color-mix(in srgb, var(--zs-accent) 42%, transparent);
+  opacity: .8;
+  animation: zs-carga-giro 14s linear infinite;
+}
+
+.zs-carga-brote {
+  width: 46px;
+  height: 46px;
+  overflow: visible;
+}
+
+.zs-carga-brote-tierra {
+  fill: none;
+  stroke: color-mix(in srgb, var(--zs-text) 30%, transparent);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-dasharray: 3 5;
+}
+
+.zs-carga-brote-tallo {
+  fill: none;
+  stroke: var(--zs-accent);
+  stroke-width: 3.2;
+  stroke-linecap: round;
+  stroke-dasharray: 24;
+  stroke-dashoffset: 24;
+  transform-origin: 24px 43px;
+  animation: zs-carga-crece 1.4s ease-out forwards,
+    zs-carga-balanceo 3.4s ease-in-out 1.4s infinite;
+}
+
+.zs-carga-brote-hoja {
+  transform-origin: 24px 22.5px;
+  opacity: 0;
+}
+
+.zs-carga-brote-hoja--izq {
+  fill: var(--zs-accent);
+  animation: zs-carga-hoja 1.1s ease-out .45s forwards,
+    zs-carga-hoja-izq 3.4s ease-in-out 1.4s infinite;
+}
+
+.zs-carga-brote-hoja--der {
+  fill: var(--carga-maiz);
+  animation: zs-carga-hoja 1.1s ease-out .7s forwards,
+    zs-carga-hoja-der 3.4s ease-in-out 1.4s infinite;
+}
+
+/* Mensaje con puntos en secuencia. */
+.zs-carga-linea {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.zs-carga-texto {
+  font-size: .95rem;
+  font-weight: 600;
+  letter-spacing: .01em;
+}
+
+.zs-carga-puntos {
+  display: inline-flex;
+  gap: 4px;
+  align-self: center;
+}
+
+.zs-carga-puntos i {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--zs-accent);
+  animation: zs-carga-punto 1.2s ease-in-out infinite;
+}
+
+.zs-carga-puntos i:nth-child(2) { animation-delay: .15s; }
+.zs-carga-puntos i:nth-child(3) { animation-delay: .3s; }
+
+/* Esqueleto con brillo (variante pantalla). */
+.zs-carga-esqueleto {
+  display: grid;
+  gap: 12px;
+  width: min(100%, 620px);
+}
+
+.zs-carga-hilera {
+  position: relative;
+  height: 13px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--carga-inset) 88%, var(--zs-text) 12%);
+}
+
+.zs-carga-hilera::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg,
+      transparent,
+      color-mix(in srgb, var(--zs-accent) 18%, transparent) 45%,
+      color-mix(in srgb, var(--carga-maiz) 14%, transparent) 55%,
+      transparent);
+  animation: zs-carga-brillo 1.7s ease-in-out infinite;
+}
+
+.zs-carga-hilera--panel {
+  height: 104px;
+  border-radius: 16px;
+}
+
+.zs-carga-hilera--corta { width: 62%; justify-self: center; }
+
+/* Animaciones. */
+@keyframes zs-carga-respira {
+  0%, 100% { transform: scale(1); box-shadow: 0 12px 32px color-mix(in srgb, var(--zs-accent) 16%, transparent); }
+  50% { transform: scale(1.035); box-shadow: 0 14px 38px color-mix(in srgb, var(--zs-accent) 24%, transparent); }
+}
+
+@keyframes zs-carga-giro {
+  to { transform: rotate(1turn); }
+}
+
+@keyframes zs-carga-crece {
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes zs-carga-balanceo {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(1.6deg); }
+}
+
+@keyframes zs-carga-hoja {
+  from { opacity: 0; transform: scale(.55); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes zs-carga-hoja-izq {
+  0%, 100% { transform: scale(1) rotate(0deg); }
+  50% { transform: scale(1) rotate(-4.5deg); }
+}
+
+@keyframes zs-carga-hoja-der {
+  0%, 100% { transform: scale(1) rotate(0deg); }
+  50% { transform: scale(1) rotate(4.5deg); }
+}
+
+@keyframes zs-carga-punto {
+  0%, 100% { opacity: .25; transform: translateY(0); }
+  40% { opacity: 1; transform: translateY(-2px); }
+}
+
+@keyframes zs-carga-brillo {
+  60%, 100% { transform: translateX(100%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .zs-carga-emblema,
+  .zs-carga-emblema::after,
+  .zs-carga-brote-tallo,
+  .zs-carga-brote-hoja--izq,
+  .zs-carga-brote-hoja--der,
+  .zs-carga-puntos i,
+  .zs-carga-hilera::after {
+    animation: none;
+  }
+
+  .zs-carga-brote-tallo {
+    stroke-dashoffset: 0;
+  }
+
+  .zs-carga-brote-hoja--izq,
+  .zs-carga-brote-hoja--der {
+    opacity: 1;
+  }
+}

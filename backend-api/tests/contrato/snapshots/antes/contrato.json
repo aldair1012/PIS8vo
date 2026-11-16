@@ -1,5 +1,5 @@
 {
-    "fecha_captura": "2026-10-18T03:44:13+02:00",
+    "fecha_captura": "2026-11-16T01:33:40+01:00",
     "base_url": "http://localhost/ZeaSys/backend-api/public/index.php",
     "tolerancia": 25,
     "pasos": [
@@ -16,13 +16,13 @@
         {
             "nombre": "registro",
             "metodo": "POST",
-            "ruta": "/api/auth/register",
+            "ruta": "/api/auth/registrarse",
             "volatilidad": "exacto",
             "http": 200,
             "cuerpo": {
-                "success": true,
-                "message": "¡Registro exitoso! Bienvenido a AgroPredict.",
-                "user": {
+                "exito": true,
+                "mensaje": "¡Registro exitoso! Bienvenido a AgroPredict.",
+                "usuario": {
                     "id": "<volatil>",
                     "nombre": "Contrato Test",
                     "correo": "contrato_<ts>@zeasys.local",
@@ -34,12 +34,12 @@
         {
             "nombre": "me tras registro",
             "metodo": "GET",
-            "ruta": "/api/auth/me",
+            "ruta": "/api/auth/yo",
             "volatilidad": "exacto",
             "http": 200,
             "cuerpo": {
-                "authenticated": true,
-                "user": {
+                "autenticado": true,
+                "usuario": {
                     "id": "<volatil>",
                     "nombre": "Contrato Test",
                     "correo": "contrato_<ts>@zeasys.local",
@@ -51,13 +51,13 @@
         {
             "nombre": "login",
             "metodo": "POST",
-            "ruta": "/api/auth/login",
+            "ruta": "/api/auth/iniciar-sesion",
             "volatilidad": "exacto",
             "http": 200,
             "cuerpo": {
-                "success": true,
-                "message": "¡Bienvenido, Contrato Test!",
-                "user": {
+                "exito": true,
+                "mensaje": "¡Bienvenido, Contrato Test!",
+                "usuario": {
                     "id": "<volatil>",
                     "nombre": "Contrato Test",
                     "correo": "contrato_<ts>@zeasys.local",
@@ -67,9 +67,9 @@
             }
         },
         {
-            "nombre": "cultivos lista vacia",
+            "nombre": "parcelas lista vacia",
             "metodo": "GET",
-            "ruta": "/api/cultivos",
+            "ruta": "/api/parcelas",
             "volatilidad": "exacto",
             "http": 200,
             "cuerpo": []
@@ -77,12 +77,12 @@
         {
             "nombre": "crear cultivo",
             "metodo": "POST",
-            "ruta": "/api/cultivos",
+            "ruta": "/api/parcelas",
             "volatilidad": "exacto",
             "http": 200,
             "cuerpo": {
-                "success": true,
-                "message": "Parcela registrada exitosamente.",
+                "exito": true,
+                "mensaje": "Parcela registrada exitosamente.",
                 "cultivo": {
                     "usuario_id": "<volatil>",
                     "nombre_parcela": "Lote Contrato",
@@ -99,43 +99,17 @@
                     "fertilizacion_fecha": "<volatil>",
                     "fertilizacion_dosis": null,
                     "fertilizacion_tipo": null,
+                    "tipo_fecha_siembra": null,
+                    "ciclo_dias": null,
+                    "riego_tipo": null,
                     "id": "<volatil>"
                 }
             }
         },
         {
-            "nombre": "cultivos lista con 1",
+            "nombre": "parcelas lista con 1",
             "metodo": "GET",
-            "ruta": "/api/cultivos",
-            "volatilidad": "exacto",
-            "http": 200,
-            "cuerpo": [
-                {
-                    "id": "<volatil>",
-                    "usuario_id": "<volatil>",
-                    "nombre_parcela": "Lote Contrato",
-                    "variedad_maiz": "Pioneer P4039",
-                    "ubicacion": "Quito - Pichincha",
-                    "area": "2.50",
-                    "latitud": "-0.1807000",
-                    "longitud": "-78.4678000",
-                    "fecha_siembra": "<volatil>",
-                    "fecha_registro": "<volatil>",
-                    "activo": 1,
-                    "geojson": null,
-                    "altitud": "2850.0",
-                    "ph": "6.2",
-                    "tipo_maiz": "Duro Amarillo",
-                    "fertilizacion_fecha": "<volatil>",
-                    "fertilizacion_dosis": null,
-                    "fertilizacion_tipo": null
-                }
-            ]
-        },
-        {
-            "nombre": "cultivos mapa",
-            "metodo": "GET",
-            "ruta": "/api/cultivos/mapa",
+            "ruta": "/api/parcelas",
             "volatilidad": "exacto",
             "http": 200,
             "cuerpo": [
@@ -158,6 +132,41 @@
                     "fertilizacion_fecha": "<volatil>",
                     "fertilizacion_dosis": null,
                     "fertilizacion_tipo": null,
+                    "tipo_fecha_siembra": null,
+                    "ciclo_dias": null,
+                    "riego_tipo": null
+                }
+            ]
+        },
+        {
+            "nombre": "parcelas mapa",
+            "metodo": "GET",
+            "ruta": "/api/parcelas/mapa",
+            "volatilidad": "exacto",
+            "http": 200,
+            "cuerpo": [
+                {
+                    "id": "<volatil>",
+                    "usuario_id": "<volatil>",
+                    "nombre_parcela": "Lote Contrato",
+                    "variedad_maiz": "Pioneer P4039",
+                    "ubicacion": "Quito - Pichincha",
+                    "area": "2.50",
+                    "latitud": "-0.1807000",
+                    "longitud": "-78.4678000",
+                    "fecha_siembra": "<volatil>",
+                    "fecha_registro": "<volatil>",
+                    "activo": 1,
+                    "geojson": null,
+                    "altitud": "2850.0",
+                    "ph": "6.2",
+                    "tipo_maiz": "Duro Amarillo",
+                    "fertilizacion_fecha": "<volatil>",
+                    "fertilizacion_dosis": null,
+                    "fertilizacion_tipo": null,
+                    "tipo_fecha_siembra": null,
+                    "ciclo_dias": null,
+                    "riego_tipo": null,
                     "nombre_usuario": "Contrato Test"
                 }
             ]
@@ -165,18 +174,500 @@
         {
             "nombre": "valores ubicacion (externo)",
             "metodo": "GET",
-            "ruta": "/api/cultivos/valores-ubicacion?id=188",
+            "ruta": "/api/parcelas/valores-ubicacion?id=211",
             "volatilidad": "estructural",
             "http": 200,
             "cuerpo": {
-                "success": true,
-                "source": "SoilGrids API (Tiempo real) (Caché local de la parcela)",
-                "temperatura": 13.1,
-                "humedad": 78.7,
-                "precipitacion": 2827.2,
+                "exito": true,
+                "source": "Open-Meteo Archive (promedio 30 días) + suelo de respaldo + lluvia anual: INAMHI · serie mensual local del proyecto (Caché local de la parcela)",
+                "provincia": "Pichincha",
+                "fuente_provincia": "Coordenadas de la parcela · INEC/HDX vía geoBoundaries (2018)",
+                "referencia_suelo": null,
+                "temperatura": 12.9,
+                "humedad": 83.4,
+                "precipitacion": 1067.8,
                 "ph_suelo": 6.2,
-                "tipo_suelo": "franco",
-                "area_simulada": 2.5
+                "tipo_suelo": null,
+                "area_simulada": 2.5,
+                "periodo_precipitacion": "mm/año de referencia histórica; no equivale al ciclo",
+                "lluvia_anual_referencia": {
+                    "estacion": "QUITO INAMHI-I¥AQUITO",
+                    "codigo_estacion": "M0024",
+                    "distancia_km": 2.2,
+                    "fuente": "INAMHI · serie mensual local del proyecto",
+                    "sha256": "f3ccb2c1b18f20d2add3b0274d910cc125cf1bab66a476e15ef5178ae580356f",
+                    "sha256_fuente_original": "1a7740828032630f26eec7e0e68443b50cc5ede06cd7a2164856bf442c0526fd",
+                    "transformacion": "Subconjunto de filas oficiales entre 2000 y 2019; valores mensuales conservados sin modificación",
+                    "url": "https://www.datosabiertos.gob.ec/dataset/eaa8894f-68d1-4a15-80f8-1a6f528f946c/resource/98c77d18-e863-4e00-8a22-eb47f2981d9c",
+                    "archivo_fuente": "ml-engine/data/inamhi-precipitacion-2019diciembre.csv",
+                    "tipo": "observaciones_mensuales_estacion",
+                    "periodo": "2000–2019",
+                    "unidad": "mm/año",
+                    "años_con_12_meses": 16,
+                    "criterio_estacion": "Estación más cercana dentro de 100 km con al menos ocho años de doce meses reportados",
+                    "serie": [
+                        {
+                            "año": 2000,
+                            "precipitacion_mm": 1106.1,
+                            "meses_reportados": 12
+                        },
+                        {
+                            "año": 2001,
+                            "precipitacion_mm": 865.4,
+                            "meses_reportados": 12
+                        },
+                        {
+                            "año": 2002,
+                            "precipitacion_mm": 1075.5,
+                            "meses_reportados": 12
+                        },
+                        {
+                            "año": 2003,
+                            "precipitacion_mm": null,
+                            "meses_reportados": 11
+                        },
+                        {
+                            "año": 2004,
+                            "precipitacion_mm": 870.7,
+                            "meses_reportados": 12
+                        },
+                        {
+                            "año": 2005,
+                            "precipitacion_mm": 881.8,
+                            "meses_reportados": 12
+                        },
+                        {
+                            "año": 2006,
+                            "precipitacion_mm": 1250.4,
+                            "meses_reportados": 12
+                        },
+                        {
+                            "año": 2007,
+                            "precipitacion_mm": null,
+                            "meses_reportados": 11
+                        },
+                        {
+                            "año": 2008,
+                            "precipitacion_mm": 1532.2,
+                            "meses_reportados": 12
+                        },
+                        {
+                            "año": 2009,
+                            "precipitacion_mm": 1011.8,
+                            "meses_reportados": 12
+                        },
+                        {
+                            "año": 2010,
+                            "precipitacion_mm": null,
+                            "meses_reportados": 11
+                        },
+                        {
+                            "año": 2011,
+                            "precipitacion_mm": 1334.2,
+                            "meses_reportados": 12
+                        },
+                        {
+                            "año": 2012,
+                            "precipitacion_mm": 1081.5,
+                            "meses_reportados": 12
+                        },
+                        {
+                            "año": 2013,
+                            "precipitacion_mm": 835.6,
+                            "meses_reportados": 12
+                        },
+                        {
+                            "año": 2014,
+                            "precipitacion_mm": 1022.1,
+                            "meses_reportados": 12
+                        },
+                        {
+                            "año": 2015,
+                            "precipitacion_mm": 773.3,
+                            "meses_reportados": 12
+                        },
+                        {
+                            "año": 2016,
+                            "precipitacion_mm": 963.2,
+                            "meses_reportados": 12
+                        },
+                        {
+                            "año": 2017,
+                            "precipitacion_mm": 1622.1,
+                            "meses_reportados": 12
+                        },
+                        {
+                            "año": 2018,
+                            "precipitacion_mm": 859.1,
+                            "meses_reportados": 12
+                        },
+                        {
+                            "año": 2019,
+                            "precipitacion_mm": null,
+                            "meses_reportados": 6
+                        }
+                    ],
+                    "serie_mensual": [
+                        {
+                            "año": 2000,
+                            "meses": [
+                                177.3,
+                                165.8,
+                                149.5,
+                                187.6,
+                                123.8,
+                                66.4,
+                                22.1,
+                                9.7,
+                                67.3,
+                                43.8,
+                                16.7,
+                                76.1
+                            ]
+                        },
+                        {
+                            "año": 2001,
+                            "meses": [
+                                84.1,
+                                63.9,
+                                186.4,
+                                63.1,
+                                88.8,
+                                8.5,
+                                35,
+                                0,
+                                94.6,
+                                9.3,
+                                113.6,
+                                118.1
+                            ]
+                        },
+                        {
+                            "año": 2002,
+                            "meses": [
+                                36.6,
+                                59.1,
+                                123.1,
+                                256.6,
+                                133.1,
+                                37.3,
+                                8.2,
+                                9.8,
+                                19.2,
+                                144.6,
+                                95,
+                                152.9
+                            ]
+                        },
+                        {
+                            "año": 2003,
+                            "meses": [
+                                25.4,
+                                79.1,
+                                100.9,
+                                244.6,
+                                28.7,
+                                54.1,
+                                15.7,
+                                null,
+                                67.8,
+                                117.7,
+                                159.4,
+                                103.2
+                            ]
+                        },
+                        {
+                            "año": 2004,
+                            "meses": [
+                                56,
+                                34.4,
+                                75.2,
+                                156.3,
+                                113.8,
+                                11,
+                                6.7,
+                                0.6,
+                                97.6,
+                                98.8,
+                                125.5,
+                                94.8
+                            ]
+                        },
+                        {
+                            "año": 2005,
+                            "meses": [
+                                37.9,
+                                150.6,
+                                134.3,
+                                84.2,
+                                37.7,
+                                31.8,
+                                53.4,
+                                26.8,
+                                35.6,
+                                116,
+                                58.4,
+                                115.1
+                            ]
+                        },
+                        {
+                            "año": 2006,
+                            "meses": [
+                                52.3,
+                                105.2,
+                                202.5,
+                                209.5,
+                                113.6,
+                                50.2,
+                                3.1,
+                                3.5,
+                                35.6,
+                                109.5,
+                                182.4,
+                                183
+                            ]
+                        },
+                        {
+                            "año": 2007,
+                            "meses": [
+                                66.2,
+                                67.5,
+                                177.2,
+                                188.1,
+                                101,
+                                22.2,
+                                12.5,
+                                33.4,
+                                3,
+                                160.1,
+                                194.7,
+                                null
+                            ]
+                        },
+                        {
+                            "año": 2008,
+                            "meses": [
+                                156.5,
+                                218.4,
+                                188.8,
+                                203.8,
+                                171.3,
+                                56.5,
+                                12.3,
+                                37,
+                                58.7,
+                                235.3,
+                                72.4,
+                                121.2
+                            ]
+                        },
+                        {
+                            "año": 2009,
+                            "meses": [
+                                165.8,
+                                141.5,
+                                173.8,
+                                161.3,
+                                62.7,
+                                35,
+                                2.6,
+                                1,
+                                7.4,
+                                69.4,
+                                71.3,
+                                120
+                            ]
+                        },
+                        {
+                            "año": 2010,
+                            "meses": [
+                                4.6,
+                                46,
+                                26.5,
+                                220.4,
+                                null,
+                                34.5,
+                                93.6,
+                                59.4,
+                                87.8,
+                                51.8,
+                                167.6,
+                                181.7
+                            ]
+                        },
+                        {
+                            "año": 2011,
+                            "meses": [
+                                82.4,
+                                182.5,
+                                145.8,
+                                372.9,
+                                55.2,
+                                28.5,
+                                117.2,
+                                48.9,
+                                73.3,
+                                54.8,
+                                65.7,
+                                107
+                            ]
+                        },
+                        {
+                            "año": 2012,
+                            "meses": [
+                                158.9,
+                                125.3,
+                                143.8,
+                                203.4,
+                                40.2,
+                                21.4,
+                                1.8,
+                                2.6,
+                                12.5,
+                                133.8,
+                                177,
+                                60.8
+                            ]
+                        },
+                        {
+                            "año": 2013,
+                            "meses": [
+                                43,
+                                196.4,
+                                83.1,
+                                111,
+                                115.4,
+                                0.3,
+                                0.1,
+                                18.2,
+                                31.8,
+                                141.7,
+                                48,
+                                46.6
+                            ]
+                        },
+                        {
+                            "año": 2014,
+                            "meses": [
+                                138,
+                                60.6,
+                                213.6,
+                                46.2,
+                                219.2,
+                                10.9,
+                                0.1,
+                                1.7,
+                                85.3,
+                                144.6,
+                                79.2,
+                                22.7
+                            ]
+                        },
+                        {
+                            "año": 2015,
+                            "meses": [
+                                63.3,
+                                112.8,
+                                177.4,
+                                102.8,
+                                30.8,
+                                2.5,
+                                46,
+                                2.1,
+                                6.5,
+                                91.5,
+                                109.3,
+                                28.3
+                            ]
+                        },
+                        {
+                            "año": 2016,
+                            "meses": [
+                                119.8,
+                                18.6,
+                                99.5,
+                                307.2,
+                                70.6,
+                                40.3,
+                                0.9,
+                                16.2,
+                                64,
+                                95.5,
+                                46.8,
+                                83.8
+                            ]
+                        },
+                        {
+                            "año": 2017,
+                            "meses": [
+                                204.9,
+                                162.9,
+                                319.6,
+                                174.1,
+                                236.3,
+                                88.8,
+                                1.1,
+                                39.3,
+                                16.9,
+                                166.4,
+                                64.9,
+                                146.9
+                            ]
+                        },
+                        {
+                            "año": 2018,
+                            "meses": [
+                                100,
+                                133.1,
+                                82.6,
+                                135.5,
+                                167.8,
+                                30.2,
+                                10.9,
+                                16.4,
+                                24.1,
+                                5.7,
+                                146.8,
+                                6
+                            ]
+                        },
+                        {
+                            "año": 2019,
+                            "meses": [
+                                79.7,
+                                190.4,
+                                189.5,
+                                168.2,
+                                35.4,
+                                null,
+                                15.4,
+                                null,
+                                null,
+                                null,
+                                null,
+                                null
+                            ]
+                        }
+                    ],
+                    "nota": "Cada total es la suma de los doce valores mensuales publicados. Si falta un mes, el total anual queda vacío; los meses ausentes nunca se cuentan como cero. Es una estación meteorológica de referencia, no un pluviómetro instalado en la parcela.",
+                    "valor": 1067.8,
+                    "años_completos": 16,
+                    "metodo": "Promedio de totales de años con doce meses reportados",
+                    "consultado_utc": "<fecha>+00:00",
+                    "ubicacion_referencia": {
+                        "tipo": "coordenadas_parcela",
+                        "latitud": -0.1807,
+                        "longitud": -78.4678
+                    },
+                    "uso": "Referencia histórica por ubicación; no es lluvia del ciclo, pronóstico ni medición del lote."
+                },
+                "procedencia": {
+                    "ph_suelo": "Registro de la parcela",
+                    "area_simulada": "Registro de la parcela",
+                    "temperatura": "Proveedor externo",
+                    "humedad": "Proveedor externo",
+                    "precipitacion": "INAMHI · serie mensual local del proyecto"
+                }
             }
         },
         {
@@ -186,46 +677,188 @@
             "volatilidad": "tolerante",
             "http": 200,
             "cuerpo": {
-                "success": true,
-                "message": "Simulación completada exitosamente.",
+                "exito": true,
+                "mensaje": "Simulación completada exitosamente.",
                 "resultado": {
                     "area": 2.5,
                     "categoria_cosecha": "Baja",
-                    "confianza": 67,
+                    "confianza": 58.2,
+                    "confianza_tipo": "calidad_global_r2",
+                    "entradas_modelo": {
+                        "altitud_msnm": 2850,
+                        "aplicaciones_nitrogeno": 3,
+                        "azufre_kg_ha": 13.6,
+                        "biofertilizante": 0,
+                        "ciclo_dias": 122,
+                        "control_plaga": "integrado",
+                        "densidad_plantas_ha": 75875.5,
+                        "fosforo_p2o5_kg_ha": 52.6,
+                        "horas_luz_dia": 8.1,
+                        "humedad_relativa_pct": 70,
+                        "lamina_riego_mm": 99.7,
+                        "magnesio_kg_ha": 15.05,
+                        "materia_organica_pct": 2.2,
+                        "ndvi_r3_llenado_grano": 0.659,
+                        "ndvi_v6_vegetativo": 0.604,
+                        "ndvi_vt_floracion": 0.71,
+                        "nitrogeno_kg_ha": 150,
+                        "ph_suelo": 6.2,
+                        "plagas_presentes": "Ninguna",
+                        "potasio_k2o_kg_ha": 50.45,
+                        "precipitacion_mm": 800,
+                        "presion_plaga_score": 0.575,
+                        "profundidad_suelo_cm": 67.5,
+                        "provincia": "Pichincha",
+                        "riego_tipo": "goteo_aspersion",
+                        "semilla_certificada": 1,
+                        "temperatura_max_c": 30,
+                        "temperatura_media_c": 24.5,
+                        "temperatura_min_c": 20,
+                        "textura_arcilla_pct": 36.849999999999994,
+                        "textura_arena_pct": 21.799999999999997,
+                        "textura_limo_pct": 38,
+                        "tipo_grano": "Duro Amarillo",
+                        "tipo_suelo": "Franco limoso",
+                        "variedad": "Pioneer P4039",
+                        "zona": "Sierra_Norte"
+                    },
                     "escenarios": {
                         "lluvioso": {
-                            "produccion": 10.56,
+                            "condiciones": {
+                                "humedad_pct": 80,
+                                "precipitacion_mm_ciclo": 1000
+                            },
+                            "produccion": 10.54,
                             "rendimiento": 4.22
                         },
                         "sequia": {
-                            "produccion": 9.05,
-                            "rendimiento": 3.62
+                            "condiciones": {
+                                "humedad_pct": 40,
+                                "precipitacion_mm_ciclo": 300,
+                                "temperatura_c": 33
+                            },
+                            "produccion": 9.01,
+                            "rendimiento": 3.6
                         },
                         "verano": {
-                            "produccion": 10.35,
-                            "rendimiento": 4.14
+                            "condiciones": {
+                                "humedad_pct": 60,
+                                "precipitacion_mm_ciclo": 700
+                            },
+                            "produccion": 10.13,
+                            "rendimiento": 4.05
                         }
                     },
+                    "explicacion_modelo": {
+                        "aportes": {
+                            "altitud_msnm": -0.4158913493156433,
+                            "aplicaciones_nitrogeno": -0.005592143163084984,
+                            "azufre_kg_ha": -0.01858537457883358,
+                            "biofertilizante": -0.1389363557100296,
+                            "ciclo_dias": -0.0050196293741464615,
+                            "control_plaga": 0.1582244336605072,
+                            "densidad_plantas_ha": 0.04740472137928009,
+                            "fosforo_p2o5_kg_ha": 0.012556400150060654,
+                            "horas_luz_dia": 0.4656277298927307,
+                            "humedad_relativa_pct": -0.004027566872537136,
+                            "lamina_riego_mm": 0.016673848032951355,
+                            "magnesio_kg_ha": -0.031600628048181534,
+                            "materia_organica_pct": -0.019140029326081276,
+                            "ndvi_r3_llenado_grano": -0.0427226722240448,
+                            "ndvi_v6_vegetativo": 0.006097652018070221,
+                            "ndvi_vt_floracion": -0.09563188999891281,
+                            "nitrogeno_kg_ha": -0.018372749909758568,
+                            "ph_suelo": 0.16360174119472504,
+                            "plagas_presentes": -0.006361081264913082,
+                            "potasio_k2o_kg_ha": 0.06566515564918518,
+                            "precipitacion_mm": 0.01599622704088688,
+                            "presion_plaga_score": -0.1187213882803917,
+                            "profundidad_suelo_cm": -0.04423815757036209,
+                            "provincia": -0.00846147071570158,
+                            "riego_tipo": -0.125025674700737,
+                            "semilla_certificada": 0.10858922451734543,
+                            "temperatura_max_c": -0.035310517996549606,
+                            "temperatura_media_c": 0.06546837836503983,
+                            "temperatura_min_c": 0.002110755769535899,
+                            "textura_arcilla_pct": -0.02923494391143322,
+                            "textura_arena_pct": -0.0004971360322088003,
+                            "textura_limo_pct": 0.0005798675119876862,
+                            "tipo_grano": 0.0008305157534778118,
+                            "tipo_suelo": 0.00425282446667552,
+                            "variedad": -0.005703176837414503,
+                            "zona": -0.012679812498390675
+                        },
+                        "base": 4.243541717529297,
+                        "prediccion_sin_recorte": 4.195464611053467,
+                        "recortada": false
+                    },
+                    "intervalo_rendimiento": {
+                        "error_medio_validacion": 0.82,
+                        "margen_aproximado": 2.05,
+                        "max": 6.24,
+                        "min": 2.15,
+                        "nivel": "orientativo_no_calibrado"
+                    },
                     "metricas_modelo": {
-                        "mae": 0.7832886621418884,
-                        "r2": 0.6698154354455734,
-                        "rmse": 1.0098229766510727
+                        "mae": 0.8166106498749832,
+                        "r2": 0.5820256434519516,
+                        "rmse": 1.044246811324636,
+                        "validacion": "GroupKFold por provincia"
                     },
                     "modelo": "xgboost",
                     "precision_data": {
                         "inamhi_historico": {
                             "estacion": {
                                 "altitud": 2789,
+                                "criterio": "Más cercana dentro del radio con lluvia y temperatura disponibles en al menos un mismo año del periodo consultado",
                                 "distancia_km": 2.23,
                                 "id": "<volatil>",
                                 "lat": -0.1783,
                                 "lon": -78.4877,
-                                "nombre": "QUITO INAMHI-I¥AQUITO"
+                                "nombre": "QUITO INAMHI-I¥AQUITO",
+                                "radio_busqueda_km": 100,
+                                "representatividad_agronomica": "No validada por distancia: pendiente contrastar altitud y relieve de la parcela"
                             },
                             "estadisticas": {
+                                "anios_completos_precipitacion": 16,
+                                "anios_completos_temperatura": 17,
+                                "fuente": "INAMHI, observaciones históricas mensuales de estación",
                                 "mejor_anio_precip": 2017,
-                                "peor_anio_precip": 2019,
-                                "precipitacion_anual_promedio": 1038,
+                                "meses_reportados_precipitacion": {
+                                    "abr": 20,
+                                    "ago": 18,
+                                    "dic": 18,
+                                    "ene": 20,
+                                    "feb": 20,
+                                    "jul": 20,
+                                    "jun": 19,
+                                    "mar": 20,
+                                    "may": 19,
+                                    "nov": 19,
+                                    "oct": 19,
+                                    "sep": 19
+                                },
+                                "meses_reportados_temperatura": {
+                                    "abr": 20,
+                                    "ago": 18,
+                                    "dic": 19,
+                                    "ene": 20,
+                                    "feb": 20,
+                                    "jul": 19,
+                                    "jun": 20,
+                                    "mar": 20,
+                                    "may": 19,
+                                    "nov": 19,
+                                    "oct": 19,
+                                    "sep": 19
+                                },
+                                "nota": "No es una medición de la parcela ni clima observado o pronosticado del ciclo actual. Los totales anuales requieren doce meses y no se rellenan vacíos con cero.",
+                                "peor_anio_precip": 2015,
+                                "periodo": {
+                                    "desde": 2000,
+                                    "hasta": 2019
+                                },
+                                "precipitacion_anual_promedio": 1067.81,
                                 "precipitacion_media_mensual": {
                                     "abr": 179.84,
                                     "ago": 18.14,
@@ -254,7 +887,7 @@
                                     "oct": 57.3,
                                     "sep": 32.44
                                 },
-                                "temperatura_anual_promedio": 15.35,
+                                "temperatura_anual_promedio": 15.32,
                                 "temperatura_media_mensual": {
                                     "abr": 15.09,
                                     "ago": 15.93,
@@ -282,31 +915,672 @@
                                     "nov": 0.52,
                                     "oct": 0.56,
                                     "sep": 0.78
-                                }
+                                },
+                                "tipo": "referencia_historica_estacion"
                             }
                         },
+                        "nasa_power": null,
                         "open_meteo": "<externo>",
-                        "soilgrids": "<externo>"
+                        "open_meteo_historico": null,
+                        "soilgrids": "<externo>",
+                        "weather": null
+                    },
+                    "probabilidad_cosecha": 29,
+                    "probabilidades_cosecha": {
+                        "Alta": 0.9,
+                        "Baja": 68.5,
+                        "Media": 28.1,
+                        "Muy Baja": 2.5
                     },
                     "produccion_total": "<externo:double>",
                     "recomendaciones": [
                         "Temperatura elevada (24.5°C) superior al óptimo (14-18°C). Implementar riego para reducir estrés térmico.",
                         "Humedad relativa adecuada (70.0%) para el cultivo.",
-                        "Precipitación adecuada (800 mm) en rango óptimo (800-1200 mm).",
+                        "Precipitación del ciclo no disponible: la entrada anual (800 mm/año) no permite evaluar el rango de referencia (800-1200 mm/ciclo). Registrar la precipitación acumulada del ciclo; no se aplica una conversión automática.",
                         "Dosis de Nitrógeno (150 kg/ha) en rango sugerido (135-160 kg/ha).",
                         "pH del suelo alcalino (6.2). Rango óptimo: 6.0-6.0. Considerar materia orgánica para bajar el pH."
                     ],
                     "rendimiento_estimado": "<externo:double>",
                     "shap_values": {
                         "area": 0,
-                        "fertilizante": 0.0697,
-                        "humedad": -0.0062,
-                        "phSuelo": 0.1573,
-                        "precipitacion": 0.0413,
-                        "temperatura": 0.1255,
-                        "tipoSuelo": 0.0127
+                        "fertilizante": -0.0184,
+                        "humedad": -0.004,
+                        "phSuelo": 0.1636,
+                        "precipitacion": 0.016,
+                        "temperatura": 0.0655,
+                        "tipoSuelo": 0.0043
                     },
                     "success": true,
+                    "trazabilidad": {
+                        "advertencias": [
+                            "La entrada precipitacion conserva el contrato anual legacy y se envía al modelo sin conversión. El catálogo de features describe precipitacion_mm como acumulado del ciclo; esta discrepancia de periodo limita la interpretación del rendimiento y no se corrige reetiquetando el dato.",
+                            "Sin precipitación acumulada explícita del ciclo no se evalúan recomendaciones de lluvia por mm/ciclo.",
+                            "INAMHI aporta una referencia histórica de estación cercana, no una medición del lote ni el clima del ciclo actual. La representatividad por altitud y relieve no está validada.",
+                            "El modelo también utiliza vegetación y plagas de etapas posteriores del cultivo. En esta planificación se completan con referencias, no con observaciones futuras conocidas; la salida es un escenario exploratorio.",
+                            "El modelo completa 23 variables sin dato propio con referencias del conjunto de entrenamiento, cuyo origen sigue sin acreditar. Revisa cuáles son en Datos utilizados; no son mediciones de la parcela.",
+                            "No se ingresaron parámetros adicionales de campo: la duración, densidad, riego y manejo restantes siguen siendo referencias asumidas."
+                        ],
+                        "calendario": {
+                            "ciclo_dias": 122,
+                            "fecha_fin_estimada": "<volatil>",
+                            "fecha_siembra": "<volatil>",
+                            "nota": "Fecha orientativa: no demuestra madurez, clima futuro ni fecha real de cosecha. La fecha sitúa el periodo; XGBoost utiliza ciclo_dias, no una nueva variable de fecha.",
+                            "origen_duracion": "Referencia del conjunto de entrenamiento"
+                        },
+                        "calidad_referencias": {
+                            "duplicados_adicionales": 100,
+                            "filas_elegibles_experimento": 1970,
+                            "filas_invalidas": 296,
+                            "filas_originales": 2366,
+                            "nota": "Excluir filas en un experimento no acredita la procedencia ni convierte las demás observaciones en cosechas verificadas.",
+                            "problemas": {
+                                "canguil_clasificado_como_suave": 49,
+                                "categorias_ausentes": 0,
+                                "magnitudes_imposibles": 0,
+                                "numeros_ausentes_o_no_finitos": 0,
+                                "temperaturas_inconsistentes": 201,
+                                "textura_inconsistente": 58
+                            }
+                        },
+                        "clima_ciclo": {
+                            "estado": "no_solicitado",
+                            "nota": "El clima del proveedor es contexto; el cálculo conserva el escenario ingresado."
+                        },
+                        "contrato_campo": "1.0",
+                        "evaluacion_precipitacion_ciclo": "no_evaluable_sin_dato_del_ciclo",
+                        "evidencia_modelo": {
+                            "ficha_coincide_con_artefactos": true,
+                            "modelo_espac2025_publicado": false,
+                            "procedencia_entrenamiento": "no_acreditada",
+                            "producto_objetivo": "grano_seco",
+                            "uso": "exploracion_de_escenarios",
+                            "validacion_cosechas_independientes": false,
+                            "variables_posteriores_asumidas": [
+                                "ndvi_v6_vegetativo",
+                                "ndvi_vt_floracion",
+                                "ndvi_r3_llenado_grano",
+                                "plagas_presentes",
+                                "presion_plaga_score",
+                                "control_plaga"
+                            ]
+                        },
+                        "fuentes": {
+                            "altitud_msnm": "Altitud enviada por la aplicación; puede ser un valor predeterminado",
+                            "aplicaciones_nitrogeno": "Referencia del conjunto de entrenamiento (origen sin acreditar)",
+                            "azufre_kg_ha": "Referencia del conjunto de entrenamiento (origen sin acreditar)",
+                            "biofertilizante": "Referencia del conjunto de entrenamiento (origen sin acreditar)",
+                            "ciclo_dias": "Referencia del conjunto de entrenamiento (origen sin acreditar)",
+                            "control_plaga": "Referencia del conjunto de entrenamiento (origen sin acreditar)",
+                            "densidad_plantas_ha": "Referencia del conjunto de entrenamiento (origen sin acreditar)",
+                            "fosforo_p2o5_kg_ha": "Referencia del conjunto de entrenamiento (origen sin acreditar)",
+                            "horas_luz_dia": "Referencia del conjunto de entrenamiento (origen sin acreditar)",
+                            "humedad_relativa_pct": "Entrada de la simulación",
+                            "lamina_riego_mm": "Referencia del conjunto de entrenamiento (origen sin acreditar)",
+                            "magnesio_kg_ha": "Referencia del conjunto de entrenamiento (origen sin acreditar)",
+                            "materia_organica_pct": "Referencia del conjunto de entrenamiento (origen sin acreditar)",
+                            "ndvi_r3_llenado_grano": "Referencia del conjunto de entrenamiento (origen sin acreditar)",
+                            "ndvi_v6_vegetativo": "Referencia del conjunto de entrenamiento (origen sin acreditar)",
+                            "ndvi_vt_floracion": "Referencia del conjunto de entrenamiento (origen sin acreditar)",
+                            "nitrogeno_kg_ha": "Entrada de la simulación",
+                            "ph_suelo": "Entrada de la simulación",
+                            "plagas_presentes": "Referencia del conjunto de entrenamiento (origen sin acreditar)",
+                            "potasio_k2o_kg_ha": "Referencia del conjunto de entrenamiento (origen sin acreditar)",
+                            "precipitacion_mm": "Entrada anual legacy sin conversión al periodo del modelo (mm/año)",
+                            "presion_plaga_score": "Referencia del conjunto de entrenamiento (origen sin acreditar)",
+                            "profundidad_suelo_cm": "Referencia del conjunto de entrenamiento (origen sin acreditar)",
+                            "provincia": "Coordenadas de la parcela · INEC/HDX vía geoBoundaries (2018)",
+                            "riego_tipo": "Referencia del conjunto de entrenamiento (origen sin acreditar)",
+                            "semilla_certificada": "Referencia del conjunto de entrenamiento (origen sin acreditar)",
+                            "temperatura_max_c": "Estimación a partir de temperatura media",
+                            "temperatura_media_c": "Entrada de la simulación",
+                            "temperatura_min_c": "Estimación a partir de temperatura media",
+                            "textura_arcilla_pct": "Referencia del conjunto de entrenamiento (origen sin acreditar)",
+                            "textura_arena_pct": "Referencia del conjunto de entrenamiento (origen sin acreditar)",
+                            "textura_limo_pct": "Referencia del conjunto de entrenamiento (origen sin acreditar)",
+                            "tipo_grano": "Tipo registrado homologado al modelo",
+                            "tipo_suelo": "Textura ingresada; categoría homologada del modelo",
+                            "variedad": "Variedad registrada",
+                            "zona": "Ubicación reconocida"
+                        },
+                        "periodo_precipitacion": "mm/año",
+                        "periodo_precipitacion_catalogo_modelo": "mm/ciclo",
+                        "precipitacion_ciclo_mm": null,
+                        "precipitacion_payload_mm": 800,
+                        "suelo_ubicacion_utilizado": false,
+                        "supuestos": [
+                            "riego_tipo",
+                            "materia_organica_pct",
+                            "profundidad_suelo_cm",
+                            "textura_arcilla_pct",
+                            "textura_arena_pct",
+                            "textura_limo_pct",
+                            "horas_luz_dia",
+                            "densidad_plantas_ha",
+                            "ciclo_dias",
+                            "fosforo_p2o5_kg_ha",
+                            "potasio_k2o_kg_ha",
+                            "magnesio_kg_ha",
+                            "azufre_kg_ha",
+                            "aplicaciones_nitrogeno",
+                            "lamina_riego_mm",
+                            "biofertilizante",
+                            "semilla_certificada",
+                            "ndvi_v6_vegetativo",
+                            "ndvi_vt_floracion",
+                            "ndvi_r3_llenado_grano",
+                            "plagas_presentes",
+                            "presion_plaga_score",
+                            "control_plaga"
+                        ],
+                        "unidad_fertilizante": "kg N/ha",
+                        "origen_fecha_siembra": "Sin fecha registrada",
+                        "provincia_identificada": {
+                            "provincia": "Pichincha",
+                            "fuente": "Coordenadas de la parcela · INEC/HDX vía geoBoundaries (2018)"
+                        },
+                        "variedad_simulada": {
+                            "registrada": "Pioneer P4039",
+                            "enviada_al_motor": "Pioneer P4039",
+                            "utilizada_por_modelo": "Pioneer P4039",
+                            "estado": "referencia_general",
+                            "nota": "Añadir una ficha al catálogo no entrena al modelo para esa variedad ni acredita precisión agrícola."
+                        }
+                    },
+                    "version_modelo": "9e865aee66f4175a",
+                    "lluvia_anual_referencia": {
+                        "estacion": "QUITO INAMHI-I¥AQUITO",
+                        "codigo_estacion": "M0024",
+                        "distancia_km": 2.2,
+                        "fuente": "INAMHI · serie mensual local del proyecto",
+                        "sha256": "f3ccb2c1b18f20d2add3b0274d910cc125cf1bab66a476e15ef5178ae580356f",
+                        "sha256_fuente_original": "1a7740828032630f26eec7e0e68443b50cc5ede06cd7a2164856bf442c0526fd",
+                        "transformacion": "Subconjunto de filas oficiales entre 2000 y 2019; valores mensuales conservados sin modificación",
+                        "url": "https://www.datosabiertos.gob.ec/dataset/eaa8894f-68d1-4a15-80f8-1a6f528f946c/resource/98c77d18-e863-4e00-8a22-eb47f2981d9c",
+                        "archivo_fuente": "ml-engine/data/inamhi-precipitacion-2019diciembre.csv",
+                        "tipo": "observaciones_mensuales_estacion",
+                        "periodo": "2000–2019",
+                        "unidad": "mm/año",
+                        "años_con_12_meses": 16,
+                        "criterio_estacion": "Estación más cercana dentro de 100 km con al menos ocho años de doce meses reportados",
+                        "serie": [
+                            {
+                                "año": 2000,
+                                "precipitacion_mm": 1106.1,
+                                "meses_reportados": 12
+                            },
+                            {
+                                "año": 2001,
+                                "precipitacion_mm": 865.4,
+                                "meses_reportados": 12
+                            },
+                            {
+                                "año": 2002,
+                                "precipitacion_mm": 1075.5,
+                                "meses_reportados": 12
+                            },
+                            {
+                                "año": 2003,
+                                "precipitacion_mm": null,
+                                "meses_reportados": 11
+                            },
+                            {
+                                "año": 2004,
+                                "precipitacion_mm": 870.7,
+                                "meses_reportados": 12
+                            },
+                            {
+                                "año": 2005,
+                                "precipitacion_mm": 881.8,
+                                "meses_reportados": 12
+                            },
+                            {
+                                "año": 2006,
+                                "precipitacion_mm": 1250.4,
+                                "meses_reportados": 12
+                            },
+                            {
+                                "año": 2007,
+                                "precipitacion_mm": null,
+                                "meses_reportados": 11
+                            },
+                            {
+                                "año": 2008,
+                                "precipitacion_mm": 1532.2,
+                                "meses_reportados": 12
+                            },
+                            {
+                                "año": 2009,
+                                "precipitacion_mm": 1011.8,
+                                "meses_reportados": 12
+                            },
+                            {
+                                "año": 2010,
+                                "precipitacion_mm": null,
+                                "meses_reportados": 11
+                            },
+                            {
+                                "año": 2011,
+                                "precipitacion_mm": 1334.2,
+                                "meses_reportados": 12
+                            },
+                            {
+                                "año": 2012,
+                                "precipitacion_mm": 1081.5,
+                                "meses_reportados": 12
+                            },
+                            {
+                                "año": 2013,
+                                "precipitacion_mm": 835.6,
+                                "meses_reportados": 12
+                            },
+                            {
+                                "año": 2014,
+                                "precipitacion_mm": 1022.1,
+                                "meses_reportados": 12
+                            },
+                            {
+                                "año": 2015,
+                                "precipitacion_mm": 773.3,
+                                "meses_reportados": 12
+                            },
+                            {
+                                "año": 2016,
+                                "precipitacion_mm": 963.2,
+                                "meses_reportados": 12
+                            },
+                            {
+                                "año": 2017,
+                                "precipitacion_mm": 1622.1,
+                                "meses_reportados": 12
+                            },
+                            {
+                                "año": 2018,
+                                "precipitacion_mm": 859.1,
+                                "meses_reportados": 12
+                            },
+                            {
+                                "año": 2019,
+                                "precipitacion_mm": null,
+                                "meses_reportados": 6
+                            }
+                        ],
+                        "serie_mensual": [
+                            {
+                                "año": 2000,
+                                "meses": [
+                                    177.3,
+                                    165.8,
+                                    149.5,
+                                    187.6,
+                                    123.8,
+                                    66.4,
+                                    22.1,
+                                    9.7,
+                                    67.3,
+                                    43.8,
+                                    16.7,
+                                    76.1
+                                ]
+                            },
+                            {
+                                "año": 2001,
+                                "meses": [
+                                    84.1,
+                                    63.9,
+                                    186.4,
+                                    63.1,
+                                    88.8,
+                                    8.5,
+                                    35,
+                                    0,
+                                    94.6,
+                                    9.3,
+                                    113.6,
+                                    118.1
+                                ]
+                            },
+                            {
+                                "año": 2002,
+                                "meses": [
+                                    36.6,
+                                    59.1,
+                                    123.1,
+                                    256.6,
+                                    133.1,
+                                    37.3,
+                                    8.2,
+                                    9.8,
+                                    19.2,
+                                    144.6,
+                                    95,
+                                    152.9
+                                ]
+                            },
+                            {
+                                "año": 2003,
+                                "meses": [
+                                    25.4,
+                                    79.1,
+                                    100.9,
+                                    244.6,
+                                    28.7,
+                                    54.1,
+                                    15.7,
+                                    null,
+                                    67.8,
+                                    117.7,
+                                    159.4,
+                                    103.2
+                                ]
+                            },
+                            {
+                                "año": 2004,
+                                "meses": [
+                                    56,
+                                    34.4,
+                                    75.2,
+                                    156.3,
+                                    113.8,
+                                    11,
+                                    6.7,
+                                    0.6,
+                                    97.6,
+                                    98.8,
+                                    125.5,
+                                    94.8
+                                ]
+                            },
+                            {
+                                "año": 2005,
+                                "meses": [
+                                    37.9,
+                                    150.6,
+                                    134.3,
+                                    84.2,
+                                    37.7,
+                                    31.8,
+                                    53.4,
+                                    26.8,
+                                    35.6,
+                                    116,
+                                    58.4,
+                                    115.1
+                                ]
+                            },
+                            {
+                                "año": 2006,
+                                "meses": [
+                                    52.3,
+                                    105.2,
+                                    202.5,
+                                    209.5,
+                                    113.6,
+                                    50.2,
+                                    3.1,
+                                    3.5,
+                                    35.6,
+                                    109.5,
+                                    182.4,
+                                    183
+                                ]
+                            },
+                            {
+                                "año": 2007,
+                                "meses": [
+                                    66.2,
+                                    67.5,
+                                    177.2,
+                                    188.1,
+                                    101,
+                                    22.2,
+                                    12.5,
+                                    33.4,
+                                    3,
+                                    160.1,
+                                    194.7,
+                                    null
+                                ]
+                            },
+                            {
+                                "año": 2008,
+                                "meses": [
+                                    156.5,
+                                    218.4,
+                                    188.8,
+                                    203.8,
+                                    171.3,
+                                    56.5,
+                                    12.3,
+                                    37,
+                                    58.7,
+                                    235.3,
+                                    72.4,
+                                    121.2
+                                ]
+                            },
+                            {
+                                "año": 2009,
+                                "meses": [
+                                    165.8,
+                                    141.5,
+                                    173.8,
+                                    161.3,
+                                    62.7,
+                                    35,
+                                    2.6,
+                                    1,
+                                    7.4,
+                                    69.4,
+                                    71.3,
+                                    120
+                                ]
+                            },
+                            {
+                                "año": 2010,
+                                "meses": [
+                                    4.6,
+                                    46,
+                                    26.5,
+                                    220.4,
+                                    null,
+                                    34.5,
+                                    93.6,
+                                    59.4,
+                                    87.8,
+                                    51.8,
+                                    167.6,
+                                    181.7
+                                ]
+                            },
+                            {
+                                "año": 2011,
+                                "meses": [
+                                    82.4,
+                                    182.5,
+                                    145.8,
+                                    372.9,
+                                    55.2,
+                                    28.5,
+                                    117.2,
+                                    48.9,
+                                    73.3,
+                                    54.8,
+                                    65.7,
+                                    107
+                                ]
+                            },
+                            {
+                                "año": 2012,
+                                "meses": [
+                                    158.9,
+                                    125.3,
+                                    143.8,
+                                    203.4,
+                                    40.2,
+                                    21.4,
+                                    1.8,
+                                    2.6,
+                                    12.5,
+                                    133.8,
+                                    177,
+                                    60.8
+                                ]
+                            },
+                            {
+                                "año": 2013,
+                                "meses": [
+                                    43,
+                                    196.4,
+                                    83.1,
+                                    111,
+                                    115.4,
+                                    0.3,
+                                    0.1,
+                                    18.2,
+                                    31.8,
+                                    141.7,
+                                    48,
+                                    46.6
+                                ]
+                            },
+                            {
+                                "año": 2014,
+                                "meses": [
+                                    138,
+                                    60.6,
+                                    213.6,
+                                    46.2,
+                                    219.2,
+                                    10.9,
+                                    0.1,
+                                    1.7,
+                                    85.3,
+                                    144.6,
+                                    79.2,
+                                    22.7
+                                ]
+                            },
+                            {
+                                "año": 2015,
+                                "meses": [
+                                    63.3,
+                                    112.8,
+                                    177.4,
+                                    102.8,
+                                    30.8,
+                                    2.5,
+                                    46,
+                                    2.1,
+                                    6.5,
+                                    91.5,
+                                    109.3,
+                                    28.3
+                                ]
+                            },
+                            {
+                                "año": 2016,
+                                "meses": [
+                                    119.8,
+                                    18.6,
+                                    99.5,
+                                    307.2,
+                                    70.6,
+                                    40.3,
+                                    0.9,
+                                    16.2,
+                                    64,
+                                    95.5,
+                                    46.8,
+                                    83.8
+                                ]
+                            },
+                            {
+                                "año": 2017,
+                                "meses": [
+                                    204.9,
+                                    162.9,
+                                    319.6,
+                                    174.1,
+                                    236.3,
+                                    88.8,
+                                    1.1,
+                                    39.3,
+                                    16.9,
+                                    166.4,
+                                    64.9,
+                                    146.9
+                                ]
+                            },
+                            {
+                                "año": 2018,
+                                "meses": [
+                                    100,
+                                    133.1,
+                                    82.6,
+                                    135.5,
+                                    167.8,
+                                    30.2,
+                                    10.9,
+                                    16.4,
+                                    24.1,
+                                    5.7,
+                                    146.8,
+                                    6
+                                ]
+                            },
+                            {
+                                "año": 2019,
+                                "meses": [
+                                    79.7,
+                                    190.4,
+                                    189.5,
+                                    168.2,
+                                    35.4,
+                                    null,
+                                    15.4,
+                                    null,
+                                    null,
+                                    null,
+                                    null,
+                                    null
+                                ]
+                            }
+                        ],
+                        "nota": "Cada total es la suma de los doce valores mensuales publicados. Si falta un mes, el total anual queda vacío; los meses ausentes nunca se cuentan como cero. Es una estación meteorológica de referencia, no un pluviómetro instalado en la parcela.",
+                        "valor": 1067.8,
+                        "años_completos": 16,
+                        "metodo": "Promedio de totales de años con doce meses reportados",
+                        "consultado_utc": "<fecha>+00:00",
+                        "ubicacion_referencia": {
+                            "tipo": "coordenadas_parcela",
+                            "latitud": -0.1807,
+                            "longitud": -78.4678
+                        },
+                        "uso": "Referencia histórica por ubicación; no es lluvia del ciclo, pronóstico ni medición del lote."
+                    },
+                    "evaluacion_variedades": {
+                        "version_catalogo": "2026-11-07.3",
+                        "objetivo": "grano_seco",
+                        "objetivo_etiqueta": "Grano seco",
+                        "contexto": {
+                            "altitud_registrada_m": 2850,
+                            "ph_ingresado": 6.2,
+                            "provincia_reconocida": "Pichincha",
+                            "region_reconocida": "Sierra"
+                        },
+                        "variedad_registrada": "Pioneer P4039",
+                        "actual": null,
+                        "alternativas": [],
+                        "total_alternativas_con_coincidencias": 0,
+                        "materiales_catalogados": 14,
+                        "criterio_catalogo": "Catálogo reducido para Ecuador con fichas de grano, choclo blanco, choclo amarillo y canguil. No es un ranking nacional de popularidad de 2026.",
+                        "nota": "Coincidencias parciales con referencias publicadas; no es un ranking de rendimiento ni una garantía de adaptación. Las alternativas son para planificar otra siembra. La variedad registrada se conserva.",
+                        "limites": [
+                            "Solo se comparan altitud registrada, referencias territoriales y, cuando existe, una guía general de pH para maíz de altura.",
+                            "Temperatura actual, lluvia del ciclo y humedad no se convierten en requisitos climáticos propios de una variedad.",
+                            "La simulación de rendimiento actual sigue siendo de grano; esta consulta puede mostrar otros usos sin convertir las toneladas de grano en choclo o forraje."
+                        ]
+                    },
                     "simulacion_id": "<volatil>"
                 }
             }
@@ -314,7 +1588,7 @@
         {
             "nombre": "historial",
             "metodo": "GET",
-            "ruta": "/api/simulaciones/historial?anio=2026",
+            "ruta": "/api/simulaciones/historial?año=2026",
             "volatilidad": "exacto",
             "http": 200,
             "cuerpo": {
@@ -322,7 +1596,7 @@
                     {
                         "id": "<volatil>",
                         "usuario_id": "<volatil>",
-                        "cultivo_id": "<volatil>",
+                        "parcela_id": "<volatil>",
                         "nombre": "Simulación Contrato",
                         "modelo_usado": "xgboost",
                         "temperatura": "24.50",
@@ -334,9 +1608,9 @@
                         "area_simulada": "2.50",
                         "rendimiento_estimado": "<externo:string>",
                         "produccion_total": "<externo:string>",
-                        "confianza": "67.00",
+                        "confianza": "58.20",
                         "shap_json": "<externo:string>",
-                        "recomendaciones_json": "[\"Temperatura elevada (24.5\\u00b0C) superior al \\u00f3ptimo (14-18\\u00b0C). Implementar riego para reducir estr\\u00e9s t\\u00e9rmico.\",\"Humedad relativa adecuada (70.0%) para el cultivo.\",\"Precipitaci\\u00f3n adecuada (800 mm) en rango \\u00f3ptimo (800-1200 mm).\",\"Dosis de Nitr\\u00f3geno (150 kg\\/ha) en rango sugerido (135-160 kg\\/ha).\",\"pH del suelo alcalino (6.2). Rango \\u00f3ptimo: 6.0-6.0. Considerar materia org\\u00e1nica para bajar el pH.\"]",
+                        "recomendaciones_json": "[\"Temperatura elevada (24.5\\u00b0C) superior al \\u00f3ptimo (14-18\\u00b0C). Implementar riego para reducir estr\\u00e9s t\\u00e9rmico.\",\"Humedad relativa adecuada (70.0%) para el cultivo.\",\"Precipitaci\\u00f3n del ciclo no disponible: la entrada anual (800 mm\\/a\\u00f1o) no permite evaluar el rango de referencia (800-1200 mm\\/ciclo). Registrar la precipitaci\\u00f3n acumulada del ciclo; no se aplica una conversi\\u00f3n autom\\u00e1tica.\",\"Dosis de Nitr\\u00f3geno (150 kg\\/ha) en rango sugerido (135-160 kg\\/ha).\",\"pH del suelo alcalino (6.2). Rango \\u00f3ptimo: 6.0-6.0. Considerar materia org\\u00e1nica para bajar el pH.\"]",
                         "fecha": "<volatil>",
                         "categoria_cosecha": "Baja",
                         "escenarios_json": "<externo:string>",
@@ -348,15 +1622,24 @@
                     "rendimiento_promedio": "<externo:string>",
                     "rendimiento_maximo": "<externo:string>",
                     "rendimiento_minimo": "<externo:string>",
-                    "confianza_promedio": "67.000000",
+                    "confianza_promedio": "58.200000",
                     "produccion_total": "<externo:string>"
+                },
+                "años_disponibles": [
+                    2026
+                ],
+                "paginacion": {
+                    "pagina": 1,
+                    "por_pagina": 100,
+                    "total": 1,
+                    "paginas": 1
                 }
             }
         },
         {
             "nombre": "explain cascada",
             "metodo": "POST",
-            "ruta": "/api/simulaciones/explain",
+            "ruta": "/api/simulaciones/explicar",
             "volatilidad": "tolerante",
             "http": 200,
             "cuerpo": {
@@ -365,25 +1648,25 @@
                 "nivel_del_resultado": "riesgoso",
                 "secciones": [
                     {
-                        "titulo": "1. Que significa?",
+                        "titulo": "1. Lectura del indicador",
                         "tipo": "info",
-                        "contenido": "El indicador Cascada de Brechas de Rendimiento registra 4.2 t/ha en Quito (2.5 ha, Pioneer P4039). indicador de desempeno del sistema."
+                        "contenido": "Descomposición de los aportes suministrados al resultado del modelo. proyeccion_actual: 4 valores presentes, mínimo 6.9 y máximo 11.2."
                     },
                     {
-                        "titulo": "2. Por que importa?",
-                        "tipo": "warning",
-                        "contenido": "Importa porque afecta directamente el rendimiento final. El factor limitante principal es Nitrógeno (0.47 t/ha, ~170.61 USD/ha)."
+                        "titulo": "2. Alcance y evidencia",
+                        "tipo": "info",
+                        "contenido": "Los aportes SHAP explican una predicción respecto a su base; no prueban efectos causales ni ganancias recuperables. Se resume cada serie por separado, sin completar huecos ni combinar magnitudes diferentes."
                     },
                     {
-                        "titulo": "3. Que hacer?",
-                        "tipo": "success",
-                        "contenido": "Accion: optimiza Nitrógeno y re-simula el escenario. Cierre: monitorea el indicador y ajusta antes de la siguiente etapa fenologica."
+                        "titulo": "3. Seguimiento",
+                        "tipo": "info",
+                        "contenido": "Verifica la base, los aportes y si la predicción fue recortada antes de interpretar la suma."
                     }
                 ],
-                "que_significa": "El indicador Cascada de Brechas de Rendimiento registra 4.2 t/ha en Quito (2.5 ha, Pioneer P4039). indicador de desempeno del sistema.",
-                "por_que_pudo_pasar": "Importa porque afecta directamente el rendimiento final. El factor limitante principal es Nitrógeno (0.47 t/ha, ~170.61 USD/ha).",
-                "como_mejorarlo": "Accion: optimiza Nitrógeno y re-simula el escenario. Cierre: monitorea el indicador y ajusta antes de la siguiente etapa fenologica.",
-                "alerta_clave": "Revisar recomendaciones.",
+                "que_significa": "Descomposición de los aportes suministrados al resultado del modelo. proyeccion_actual: 4 valores presentes, mínimo 6.9 y máximo 11.2.",
+                "por_que_pudo_pasar": "Los aportes SHAP explican una predicción respecto a su base; no prueban efectos causales ni ganancias recuperables. Se resume cada serie por separado, sin completar huecos ni combinar magnitudes diferentes.",
+                "como_mejorarlo": "Verifica la base, los aportes y si la predicción fue recortada antes de interpretar la suma.",
+                "alerta_clave": "Revisar la fuente y el alcance del indicador.",
                 "source": "Intérprete Agrícola ZeaSys",
                 "offline": true
             }
@@ -391,7 +1674,7 @@
         {
             "nombre": "explain ROI",
             "metodo": "POST",
-            "ruta": "/api/simulaciones/explain",
+            "ruta": "/api/simulaciones/explicar",
             "volatilidad": "tolerante",
             "http": 200,
             "cuerpo": {
@@ -400,25 +1683,25 @@
                 "nivel_del_resultado": "favorable",
                 "secciones": [
                     {
-                        "titulo": "1. Inversion y retorno",
+                        "titulo": "1. Lectura del indicador",
                         "tipo": "info",
-                        "contenido": "Tu indicador ROI Anual registra 35 % para 2.5 ha en Quito con la variedad Pioneer P4039: rendimiento 4.24 t/ha e ingreso bruto estimado de 3847.8 USD a 16.50 USD/qq."
+                        "contenido": "ROI Anual: 35 %. Resultado neto dividido por la inversión incluida, expresado como porcentaje cuando esa sea su unidad."
                     },
                     {
-                        "titulo": "2. Escenarios",
+                        "titulo": "2. Alcance y evidencia",
                         "tipo": "info",
-                        "contenido": "Escenarios: base 4.24 t/ha (3847.8 USD); optimista 4.88 t/ha (4428.6 USD); pesimista 3.6 t/ha (3267 USD)."
+                        "contenido": "Origen: valor explícito de la tarjeta; no verificado como observación de campo. Requiere inversión distinta de cero y costos e ingresos del mismo alcance; no garantiza retornos futuros. El resultado aportado es positivo bajo los supuestos del cálculo."
                     },
                     {
-                        "titulo": "3. Riesgo financiero",
-                        "tipo": "success",
-                        "contenido": "Riesgo financiero: el factor que mas afecta es Nitrógeno (0.47 t/ha, ~170.61 USD/ha). Recomendacion: reduce costos variables, asegura precio minimo antes de la siembra y protege el margen con cobertura de insumos. Cierre: valida el flujo de caja mensual y el punto de equilibrio antes de sembrar."
+                        "titulo": "3. Seguimiento",
+                        "tipo": "info",
+                        "contenido": "Revisa la inversión de origen, el periodo y los supuestos de ingreso y costo."
                     }
                 ],
-                "que_significa": "Tu indicador ROI Anual registra 35 % para 2.5 ha en Quito con la variedad Pioneer P4039: rendimiento 4.24 t/ha e ingreso bruto estimado de 3847.8 USD a 16.50 USD/qq.",
-                "por_que_pudo_pasar": "Escenarios: base 4.24 t/ha (3847.8 USD); optimista 4.88 t/ha (4428.6 USD); pesimista 3.6 t/ha (3267 USD).",
-                "como_mejorarlo": "Riesgo financiero: el factor que mas afecta es Nitrógeno (0.47 t/ha, ~170.61 USD/ha). Recomendacion: reduce costos variables, asegura precio minimo antes de la siembra y protege el margen con cobertura de insumos. Cierre: valida el flujo de caja mensual y el punto de equilibrio antes de sembrar.",
-                "alerta_clave": "Revisar recomendaciones.",
+                "que_significa": "ROI Anual: 35 %. Resultado neto dividido por la inversión incluida, expresado como porcentaje cuando esa sea su unidad.",
+                "por_que_pudo_pasar": "Origen: valor explícito de la tarjeta; no verificado como observación de campo. Requiere inversión distinta de cero y costos e ingresos del mismo alcance; no garantiza retornos futuros. El resultado aportado es positivo bajo los supuestos del cálculo.",
+                "como_mejorarlo": "Revisa la inversión de origen, el periodo y los supuestos de ingreso y costo.",
+                "alerta_clave": "Revisar la fuente y el alcance del indicador.",
                 "source": "Intérprete Agrícola ZeaSys",
                 "offline": true
             }
@@ -426,7 +1709,7 @@
         {
             "nombre": "explain probabilidad",
             "metodo": "POST",
-            "ruta": "/api/simulaciones/explain",
+            "ruta": "/api/simulaciones/explicar",
             "volatilidad": "tolerante",
             "http": 200,
             "cuerpo": {
@@ -435,25 +1718,25 @@
                 "nivel_del_resultado": "favorable",
                 "secciones": [
                     {
-                        "titulo": "1. Definicion y valor",
+                        "titulo": "1. Lectura del indicador",
                         "tipo": "info",
-                        "contenido": "En la parcela Lote Contrato, Probabilidad de Cosecha = 82%; indicador de desempeno del sistema. Condiciones: 24.5 °C, 800 mm, pH 6.2."
+                        "contenido": "Probabilidad de Cosecha: 82%. Probabilidad comunicada para la categoría de cosecha definida por el modelo."
                     },
                     {
-                        "titulo": "2. Impacto en el cultivo",
-                        "tipo": "success",
-                        "contenido": "Impacto: afecta directamente el rendimiento final. Principal cuello de botella: Nitrógeno con 0.47 t/ha de perdida (~170.61 USD/ha)."
+                        "titulo": "2. Alcance y evidencia",
+                        "tipo": "info",
+                        "contenido": "Origen: valor explícito de la tarjeta; no verificado como observación de campo. Debe identificarse la categoría y calibración; no equivale automáticamente a una probabilidad de rentabilidad."
                     },
                     {
-                        "titulo": "3. Accion recomendada",
-                        "tipo": "success",
-                        "contenido": "Siguiente paso: optimiza Nitrógeno y re-simula el escenario. Cierra con una re-simulacion y seguimiento semanal."
+                        "titulo": "3. Seguimiento",
+                        "tipo": "info",
+                        "contenido": "Revisa la categoría objetivo, la versión del modelo y sus limitaciones."
                     }
                 ],
-                "que_significa": "En la parcela Lote Contrato, Probabilidad de Cosecha = 82%; indicador de desempeno del sistema. Condiciones: 24.5 °C, 800 mm, pH 6.2.",
-                "por_que_pudo_pasar": "Impacto: afecta directamente el rendimiento final. Principal cuello de botella: Nitrógeno con 0.47 t/ha de perdida (~170.61 USD/ha).",
-                "como_mejorarlo": "Siguiente paso: optimiza Nitrógeno y re-simula el escenario. Cierra con una re-simulacion y seguimiento semanal.",
-                "alerta_clave": "Revisar recomendaciones.",
+                "que_significa": "Probabilidad de Cosecha: 82%. Probabilidad comunicada para la categoría de cosecha definida por el modelo.",
+                "por_que_pudo_pasar": "Origen: valor explícito de la tarjeta; no verificado como observación de campo. Debe identificarse la categoría y calibración; no equivale automáticamente a una probabilidad de rentabilidad.",
+                "como_mejorarlo": "Revisa la categoría objetivo, la versión del modelo y sus limitaciones.",
+                "alerta_clave": "Revisar la fuente y el alcance del indicador.",
                 "source": "Intérprete Agrícola ZeaSys",
                 "offline": true
             }
@@ -461,687 +1744,281 @@
         {
             "nombre": "dashboard yield",
             "metodo": "GET",
-            "ruta": "/api/yield?cultivo_id=188&anio=2026",
+            "ruta": "/api/rendimiento?cultivo_id=211&año=2026",
             "volatilidad": "tolerante",
             "http": 200,
             "cuerpo": {
-                "cultivo_activo": {
-                    "id": "<volatil>",
-                    "usuario_id": "<volatil>",
-                    "nombre_parcela": "Lote Contrato",
-                    "variedad_maiz": "Pioneer P4039",
-                    "ubicacion": "Quito - Pichincha",
-                    "area": "2.50",
-                    "latitud": "-0.1807000",
-                    "longitud": "-78.4678000",
-                    "fecha_siembra": "<volatil>",
-                    "fecha_registro": "<volatil>",
-                    "activo": 1,
-                    "geojson": null,
-                    "altitud": "2850.0",
-                    "ph": "6.2",
-                    "tipo_maiz": "Duro Amarillo",
-                    "fertilizacion_fecha": "<volatil>",
-                    "fertilizacion_dosis": null,
-                    "fertilizacion_tipo": null
-                },
-                "kpis": {
-                    "rendimiento_potencial": 10,
-                    "rendimiento_alcanzable": 8.14,
-                    "rendimiento_predicho": 4.24,
-                    "yield_gap_total": 5.8,
-                    "principal_limitante": "Temperatura"
-                },
-                "waterfall_losses": [
-                    {
-                        "name": "Potencial Teórico",
-                        "value": 10,
-                        "is_kpi": true
-                    },
-                    {
-                        "name": "Pérdida Nitrógeno",
-                        "value": -1
-                    },
-                    {
-                        "name": "Pérdida Agua",
-                        "value": -1
-                    },
-                    {
-                        "name": "Pérdida Temperatura",
-                        "value": -3.1
-                    },
-                    {
-                        "name": "Pérdida Fecha Siembra",
-                        "value": "<volatil>"
-                    },
-                    {
-                        "name": "Pérdida Suelo (pH)",
-                        "value": -0.2
-                    },
-                    {
-                        "name": "Rendimiento Final Predicho",
-                        "value": 4.24,
-                        "is_kpi": true
-                    }
-                ],
-                "fenologia_comparativa": {
-                    "labels": [
-                        "Sem 2",
-                        "Sem 4",
-                        "Sem 6",
-                        "Sem 8 (Floración)",
-                        "Sem 10",
-                        "Sem 12",
-                        "Sem 14 (Madurez)"
-                    ],
-                    "proyeccion_actual": [
-                        0,
-                        1.1,
-                        2.12,
-                        3,
-                        3.67,
-                        4.1,
-                        4.24
-                    ],
-                    "mejor_ano": [
-                        0,
-                        1.22,
-                        2.35,
-                        3.32,
-                        4.07,
-                        4.54,
-                        4.7
-                    ],
-                    "peor_ano": [
-                        0,
-                        0.93,
-                        1.8,
-                        2.55,
-                        3.12,
-                        3.48,
-                        3.6
-                    ]
-                },
-                "factores_contribucion": [
-                    {
-                        "factor": "Nitrógeno",
-                        "porcentaje": 17.2
-                    },
-                    {
-                        "factor": "Agua",
-                        "porcentaje": 17.2
-                    },
-                    {
-                        "factor": "Temperatura",
-                        "porcentaje": 53.4
-                    },
-                    {
-                        "factor": "Fecha de Siembra",
-                        "porcentaje": "<volatil>"
-                    },
-                    {
-                        "factor": "Suelo (pH)",
-                        "porcentaje": 3.4
-                    }
-                ]
+                "sin_datos": true,
+                "sin_simulaciones": true,
+                "mensaje": "Selecciona una parcela para consultar su proyección."
             }
         },
         {
             "nombre": "dashboard scenarios",
             "metodo": "GET",
-            "ruta": "/api/scenarios?cultivo_id=188&anio=2026",
+            "ruta": "/api/escenarios?cultivo_id=211&año=2026",
             "volatilidad": "tolerante",
             "http": 200,
             "cuerpo": {
-                "cultivo_activo": {
-                    "id": "<volatil>",
-                    "usuario_id": "<volatil>",
-                    "nombre_parcela": "Lote Contrato",
-                    "variedad_maiz": "Pioneer P4039",
-                    "ubicacion": "Quito - Pichincha",
-                    "area": "2.50",
-                    "latitud": "-0.1807000",
-                    "longitud": "-78.4678000",
-                    "fecha_siembra": "<volatil>",
-                    "fecha_registro": "<volatil>",
-                    "activo": 1,
-                    "geojson": null,
-                    "altitud": "2850.0",
-                    "ph": "6.2",
-                    "tipo_maiz": "Duro Amarillo",
-                    "fertilizacion_fecha": "<volatil>",
-                    "fertilizacion_dosis": null,
-                    "fertilizacion_tipo": null
-                },
-                "recomendaciones": [
-                    {
-                        "tipo": "success",
-                        "icono": "CheckCircle",
-                        "titulo": "Condiciones Óptimas",
-                        "texto": "Todos los parámetros están dentro de los rangos óptimos para el cultivo de maíz. Mantener el manejo actual.",
-                        "accion": "Mantener plan actual"
-                    }
-                ],
-                "kpis": {
-                    "rendimiento_esperado": 4.24,
-                    "prob_superar_objetivo": 12,
-                    "riesgo_agronomico": {
-                        "nivel": "bajo",
-                        "color": "success",
-                        "texto": "Bajo"
-                    },
-                    "estabilidad": 85,
-                    "fecha_siembra_recomendada": "<volatil>"
-                },
-                "percentiles": {
-                    "p10": 4.24,
-                    "p50": 4.24,
-                    "p90": 4.24
-                },
-                "heatmap": [
-                    {
-                        "fecha": "<volatil>",
-                        "hibrido": "INIAP 180 'Alto Rendimiento'",
-                        "valor": 5.8
-                    },
-                    {
-                        "fecha": "<volatil>",
-                        "hibrido": "INIAP 122 'Chaucho Mejorado'",
-                        "valor": 4.8
-                    },
-                    {
-                        "fecha": "<volatil>",
-                        "hibrido": "Bonanza (dulce)",
-                        "valor": 4.8
-                    },
-                    {
-                        "fecha": "<volatil>",
-                        "hibrido": "INIAP 111 'Guagal Mejorado'",
-                        "valor": 4.4
-                    },
-                    {
-                        "fecha": "<volatil>",
-                        "hibrido": "INIAP 101 'Blanco Harinoso Precoz'",
-                        "valor": 4.8
-                    },
-                    {
-                        "fecha": "<volatil>",
-                        "hibrido": "INIAP 180 'Alto Rendimiento'",
-                        "valor": 5.8
-                    },
-                    {
-                        "fecha": "<volatil>",
-                        "hibrido": "INIAP 122 'Chaucho Mejorado'",
-                        "valor": 4.7
-                    },
-                    {
-                        "fecha": "<volatil>",
-                        "hibrido": "Bonanza (dulce)",
-                        "valor": 4.4
-                    },
-                    {
-                        "fecha": "<volatil>",
-                        "hibrido": "INIAP 111 'Guagal Mejorado'",
-                        "valor": 4
-                    },
-                    {
-                        "fecha": "<volatil>",
-                        "hibrido": "INIAP 101 'Blanco Harinoso Precoz'",
-                        "valor": 3.9
-                    },
-                    {
-                        "fecha": "<volatil>",
-                        "hibrido": "INIAP 180 'Alto Rendimiento'",
-                        "valor": 5.3
-                    },
-                    {
-                        "fecha": "<volatil>",
-                        "hibrido": "INIAP 122 'Chaucho Mejorado'",
-                        "valor": 4.4
-                    },
-                    {
-                        "fecha": "<volatil>",
-                        "hibrido": "Bonanza (dulce)",
-                        "valor": 4
-                    },
-                    {
-                        "fecha": "<volatil>",
-                        "hibrido": "INIAP 111 'Guagal Mejorado'",
-                        "valor": 3.6
-                    },
-                    {
-                        "fecha": "<volatil>",
-                        "hibrido": "INIAP 101 'Blanco Harinoso Precoz'",
-                        "valor": 3.8
-                    }
-                ],
-                "ranking": [
-                    {
-                        "estrategia": "Rendimiento Máximo",
-                        "combinacion": "INIAP 180 'Alto Rendimiento' + Siembra Temprana",
-                        "valor": 7,
-                        "unidad": "t/ha",
-                        "badge": "Recomendado",
-                        "porque": "Maximiza la captación de radiación solar y la fotosíntesis C4 en la fase vegetativa, evitando pérdidas por estrés hídrico en floración VT."
-                    },
-                    {
-                        "estrategia": "Menor Riesgo Climático",
-                        "combinacion": "INIAP 122 'Chaucho Mejorado' + Siembra Media",
-                        "valor": 4.5,
-                        "unidad": "t/ha",
-                        "badge": "Estable",
-                        "porque": "Evita las lluvias extremas o variaciones térmicas bruscas de inicio de temporada, protegiendo las plántulas en su germinación."
-                    },
-                    {
-                        "estrategia": "Máxima Estabilidad",
-                        "combinacion": "Bonanza (dulce) + Siembra Temprana",
-                        "valor": 4.18,
-                        "unidad": "t/ha",
-                        "badge": "Resiliente",
-                        "porque": "Mantiene un rendimiento constante (<8% de variación) tanto en años secos como en temporadas con exceso de precipitaciones."
-                    },
-                    {
-                        "estrategia": "Alta Eficiencia de N",
-                        "combinacion": "INIAP 111 'Guagal Mejorado' + Siembra Temprana",
-                        "valor": 4.1,
-                        "unidad": "t/ha",
-                        "badge": "Eficiente",
-                        "porque": "Presenta la mayor tasa de conversión de nitrógeno a biomasa de grano, reduciendo la necesidad de sobre-fertilización sintética."
-                    },
-                    {
-                        "estrategia": "Resiliencia Hídrica",
-                        "combinacion": "INIAP 101 'Blanco Harinoso Precoz' + Siembra Media",
-                        "valor": 4,
-                        "unidad": "t/ha",
-                        "badge": "Tolerante",
-                        "porque": "Su arquitectura radicular profunda le permite tolerar veranillos imprevistos de hasta 18 días sin reducir el llenado de mazorca."
-                    }
-                ],
-                "viabilidad_siembra": [
-                    {
-                        "rango": "1–31 MAR",
-                        "estado": "Siembra: Imbabura / Carchi / Pichincha",
-                        "evaluacion": "muy_favorable",
-                        "color": "success",
-                        "nota": "Época óptima de siembra recomendada en la zona Imbabura / Carchi / Pichincha (Maíz Suave (Sierra Norte)) para obtener el máximo rendimiento."
-                    },
-                    {
-                        "rango": "1–30 ABR",
-                        "estado": "Siembra: Imbabura / Carchi / Pichincha",
-                        "evaluacion": "muy_favorable",
-                        "color": "success",
-                        "nota": "Época óptima de siembra recomendada en la zona Imbabura / Carchi / Pichincha (Maíz Suave (Sierra Norte)) para obtener el máximo rendimiento."
-                    },
-                    {
-                        "rango": "1–31 MAY",
-                        "estado": "Siembra: Imbabura / Carchi / Pichincha",
-                        "evaluacion": "muy_favorable",
-                        "color": "success",
-                        "nota": "Época óptima de siembra recomendada en la zona Imbabura / Carchi / Pichincha (Maíz Suave (Sierra Norte)) para obtener el máximo rendimiento."
-                    },
-                    {
-                        "rango": "1–31 OCT",
-                        "estado": "Cosecha: Imbabura / Carchi / Pichincha",
-                        "evaluacion": "favorable",
-                        "color": "info",
-                        "nota": "Periodo de cosecha estimado en la zona Imbabura / Carchi / Pichincha (Maíz Suave (Sierra Norte)) según ciclo fenológico."
-                    },
-                    {
-                        "rango": "1–30 NOV",
-                        "estado": "Cosecha: Imbabura / Carchi / Pichincha",
-                        "evaluacion": "favorable",
-                        "color": "info",
-                        "nota": "Periodo de cosecha estimado en la zona Imbabura / Carchi / Pichincha (Maíz Suave (Sierra Norte)) según ciclo fenológico."
-                    }
-                ],
-                "simulaciones_count": 1
+                "sin_datos": true,
+                "cultivo_activo": null,
+                "mensaje": "Selecciona una parcela para consultar Siembra."
             }
         },
         {
             "nombre": "dashboard climate (externo)",
             "metodo": "GET",
-            "ruta": "/api/climate?cultivo_id=188&anio=2026",
+            "ruta": "/api/clima?cultivo_id=211&año=2026",
             "volatilidad": "estructural",
             "http": 200,
             "cuerpo": {
-                "kpis": {
-                    "enso": {
-                        "estado": "Neutral",
-                        "color": "info",
-                        "desc": "Escenario neutral de referencia para 2026; ZeaSys no tiene integrada una fuente ENSO en tiempo real."
-                    },
-                    "prob_lluvia_bajo_promedio": 10,
-                    "prob_estres_termico": 5,
-                    "agua_util": 112,
-                    "indice_riesgo": {
-                        "nivel": "Bajo",
-                        "color": "success"
-                    }
-                },
-                "api_source": "SoilGrids API (Tiempo real) (Caché local de la parcela)",
-                "clima_actual": {
-                    "temperatura": 13.1,
-                    "humedad": 78.7,
-                    "precipitacion": 2827.2
-                },
-                "timeline_anomalia": {
-                    "labels": [
-                        "Ene",
-                        "Feb",
-                        "Mar",
-                        "Abr",
-                        "May",
-                        "Jun",
-                        "Jul",
-                        "Ago",
-                        "Sep",
-                        "Oct",
-                        "Nov",
-                        "Dic"
-                    ],
-                    "lluvia_historica": [
-                        80,
-                        106,
-                        106,
-                        80,
-                        54,
-                        54,
-                        80,
-                        106,
-                        106,
-                        80,
-                        54,
-                        54
-                    ],
-                    "lluvia_anomala": [
-                        80,
-                        100,
-                        113,
-                        81,
-                        58,
-                        44,
-                        75,
-                        105,
-                        109,
-                        89,
-                        65,
-                        57
-                    ],
-                    "temperatura_anomala": [
-                        16.8,
-                        16.1,
-                        16.6,
-                        15.3,
-                        15.6,
-                        14.7,
-                        13.5,
-                        13.8,
-                        13.2,
-                        14.1,
-                        15,
-                        16
-                    ]
-                },
-                "agua_estratos": {
-                    "labels": [
-                        "0-20 cm",
-                        "20-40 cm",
-                        "40-60 cm",
-                        "60-100 cm"
-                    ],
-                    "valores": [
-                        30,
-                        36,
-                        46,
-                        0
-                    ]
-                },
-                "timeline_fenologico": [
-                    {
-                        "etapa": "Emergencia",
-                        "mes": "Oct-Nov",
-                        "riesgo": "Bajo Riesgo",
-                        "alerta": "Bajo",
-                        "color": "success",
-                        "descripcion": "Suelo: Andosol (suelo volcánico rico en MO) Franco-arcilloso (pH óptimo: 6.0). Densidad objetivo: 45,000–62,500 pl/ha. Riego: Lluvia + riego complementario Aspersión/goteo. Plagas clave: Gusano Alambre (Umbral: 3–5 larvas/m²; Control: Clorpirifos al suelo Carbofurán)"
-                    },
-                    {
-                        "etapa": "Crecimiento",
-                        "mes": "Nov-Dic",
-                        "riesgo": "Riesgo Moderado",
-                        "alerta": "Moderado",
-                        "color": "warning",
-                        "descripcion": "Fertilización recomendada: 135–160 kg/ha de N. Fraccionamiento: 3 aplicaciones: • Siembra (P+K base) • 45 dds (N1) • 75 dds (N2). Biofertilización: INIAP Biofertilizante (bacterias promotoras). Plagas clave: Gusano Cogollero (Umbral: ≥30% plantas afectadas; Control: Clorpirifos, Lambda-cialotrina, Emamectina benzoato) | Pulgón del Maíz (Umbral: 100+ pulgones por planta; Control: Imidacloprid, Pirimicarb) | Tizón Foliar (Umbral: Alta HR + Temp 18–25°C > 7 días; Control: Mancozeb, Trifloxistrobin + Propiconazol) | Roya Común (Umbral: Alta HR (>85%) Temperatura fresca; Control: Mancozeb, Azoxistrobina + Propiconazol) | Carbón del Maíz (Umbral: Condiciones cálidas con heridas; Control: —) | Mancha Foliar (Umbral: HR >75% Altas lluvias; Control: Mancozeb, Clorotalonil)"
-                    },
-                    {
-                        "etapa": "Floración",
-                        "mes": "Ene-Feb",
-                        "riesgo": "Alto Riesgo",
-                        "alerta": "Alto",
-                        "color": "danger",
-                        "descripcion": "Temperatura óptima de desarrollo: 14–18 °C. Evitar encharcamientos o sequías extremas durante polinización. Plagas clave: Gusano del Choclo (Umbral: ≥20% mazorcas infestadas; Control: Lambdacialotrina, Deltametrina (aplicar en seda fresca)) | Mosca del Choclo (Umbral: Monitoreo visual; Control: Cipermetrina, Malatión) | Pulgón del Maíz (Umbral: 100+ pulgones por planta; Control: Imidacloprid, Pirimicarb) | Roya Común (Umbral: Alta HR (>85%) Temperatura fresca; Control: Mancozeb, Azoxistrobina + Propiconazol) | Carbón del Maíz (Umbral: Condiciones cálidas con heridas; Control: —)"
-                    },
-                    {
-                        "etapa": "Llenado de grano",
-                        "mes": "Mar-Apr",
-                        "riesgo": "Riesgo Moderado",
-                        "alerta": "Moderado",
-                        "color": "warning",
-                        "descripcion": "Duración estimada del ciclo en esta zona: 180–220 días. Mantener humedad residual. Plagas clave: Gusano del Choclo (Umbral: ≥20% mazorcas infestadas; Control: Lambdacialotrina, Deltametrina (aplicar en seda fresca)) | Pudrición de Mazorca (Umbral: Alta HR + calor; Control: Fungicidas preventivos (antes de aparición))"
-                    }
-                ],
-                "fecha_siembra": "<volatil>"
+                "sin_datos": true,
+                "total_cultivos": 1
             }
         },
         {
             "nombre": "dashboard financial",
             "metodo": "GET",
-            "ruta": "/api/financial?cultivo_id=188&anio=2026",
+            "ruta": "/api/financiero?cultivo_id=211&año=2026",
             "volatilidad": "tolerante",
             "http": 200,
             "cuerpo": {
                 "datos_base_sistema": {
                     "precio_maiz_qq": 16.5,
-                    "rendimiento_qq": 93.5,
+                    "rendimiento_qq": 92.495,
                     "costo_semilla": 85,
                     "costo_fert": 120,
                     "costo_riego": 60,
                     "costo_proteccion": 45,
                     "otros_var": 80,
                     "costos_fijos": 120,
-                    "area_parcela": 2.5,
-                    "nombre_parcela": "Lote Contrato",
-                    "rendimiento_tha": 4.241
+                    "area_parcela": null,
+                    "nombre_parcela": "Sin parcela seleccionada",
+                    "rendimiento_tha": 4.196
                 },
                 "kpis": {
-                    "margen_neto": 1032.71,
-                    "margen_bruto": 1152.71,
-                    "punto_equilibrio": 1.4,
-                    "prob_superar_break_even": 88,
-                    "roi": 202.5,
+                    "ingreso_bruto": 1526.16,
+                    "margen_neto": 1016.16,
+                    "margen_bruto": 1136.16,
+                    "punto_equilibrio": 1.402,
+                    "prob_superar_break_even": null,
+                    "roi": 199.2,
                     "precio_maiz": 363.76,
                     "precio_maiz_qq": 16.5,
-                    "precio_piso_qq": 5.45,
-                    "ganancia_por_dolar": 2.02,
-                    "area_parcela": 2.5,
-                    "nombre_parcela": "Lote Contrato",
-                    "ingreso_bruto_parcela": 3856.78,
-                    "costo_total_parcela": 1275,
-                    "margen_neto_parcela": 2581.78,
-                    "produccion_total_qq": 233.8
+                    "precio_piso_qq": 5.51,
+                    "ganancia_por_dolar": 1.99,
+                    "area_parcela": null,
+                    "nombre_parcela": "Sin parcela seleccionada",
+                    "ingreso_bruto_parcela": null,
+                    "costo_total_parcela": null,
+                    "margen_neto_parcela": null,
+                    "produccion_total_qq": null
                 },
                 "costo_total": 510,
                 "sensibilidad": [
                     {
-                        "precio": 12,
-                        "rendimiento": 70,
-                        "margen": 330
+                        "precio": 12.38,
+                        "rendimiento": 69.4,
+                        "margen": 349.17,
+                        "tipo": "escenario_hipotetico"
                     },
                     {
-                        "precio": 12,
-                        "rendimiento": 90,
-                        "margen": 570
+                        "precio": 12.38,
+                        "rendimiento": 83.2,
+                        "margen": 520.02,
+                        "tipo": "escenario_hipotetico"
                     },
                     {
-                        "precio": 12,
-                        "rendimiento": 110,
-                        "margen": 810
+                        "precio": 12.38,
+                        "rendimiento": 92.5,
+                        "margen": 635.15,
+                        "tipo": "escenario_hipotetico"
                     },
                     {
-                        "precio": 12,
-                        "rendimiento": 130,
-                        "margen": 1050
+                        "precio": 12.38,
+                        "rendimiento": 101.7,
+                        "margen": 749.05,
+                        "tipo": "escenario_hipotetico"
                     },
                     {
-                        "precio": 12,
-                        "rendimiento": 150,
-                        "margen": 1290
+                        "precio": 12.38,
+                        "rendimiento": 115.6,
+                        "margen": 921.13,
+                        "tipo": "escenario_hipotetico"
                     },
                     {
-                        "precio": 14.5,
-                        "rendimiento": 70,
-                        "margen": 505
+                        "precio": 14.85,
+                        "rendimiento": 69.4,
+                        "margen": 520.59,
+                        "tipo": "escenario_hipotetico"
                     },
                     {
-                        "precio": 14.5,
-                        "rendimiento": 90,
-                        "margen": 795
+                        "precio": 14.85,
+                        "rendimiento": 83.2,
+                        "margen": 725.52,
+                        "tipo": "escenario_hipotetico"
                     },
                     {
-                        "precio": 14.5,
-                        "rendimiento": 110,
-                        "margen": 1085
+                        "precio": 14.85,
+                        "rendimiento": 92.5,
+                        "margen": 863.63,
+                        "tipo": "escenario_hipotetico"
                     },
                     {
-                        "precio": 14.5,
-                        "rendimiento": 130,
-                        "margen": 1375
+                        "precio": 14.85,
+                        "rendimiento": 101.7,
+                        "margen": 1000.25,
+                        "tipo": "escenario_hipotetico"
                     },
                     {
-                        "precio": 14.5,
-                        "rendimiento": 150,
-                        "margen": 1665
-                    },
-                    {
-                        "precio": 16.5,
-                        "rendimiento": 70,
-                        "margen": 645
-                    },
-                    {
-                        "precio": 16.5,
-                        "rendimiento": 90,
-                        "margen": 975
-                    },
-                    {
-                        "precio": 16.5,
-                        "rendimiento": 110,
-                        "margen": 1305
+                        "precio": 14.85,
+                        "rendimiento": 115.6,
+                        "margen": 1206.66,
+                        "tipo": "escenario_hipotetico"
                     },
                     {
                         "precio": 16.5,
-                        "rendimiento": 130,
-                        "margen": 1635
+                        "rendimiento": 69.4,
+                        "margen": 635.1,
+                        "tipo": "escenario_hipotetico"
                     },
                     {
                         "precio": 16.5,
-                        "rendimiento": 150,
-                        "margen": 1965
+                        "rendimiento": 83.2,
+                        "margen": 862.8,
+                        "tipo": "escenario_hipotetico"
                     },
                     {
-                        "precio": 18.5,
-                        "rendimiento": 70,
-                        "margen": 785
+                        "precio": 16.5,
+                        "rendimiento": 92.5,
+                        "margen": 1016.25,
+                        "tipo": "escenario_hipotetico"
                     },
                     {
-                        "precio": 18.5,
-                        "rendimiento": 90,
-                        "margen": 1155
+                        "precio": 16.5,
+                        "rendimiento": 101.7,
+                        "margen": 1168.05,
+                        "tipo": "escenario_hipotetico"
                     },
                     {
-                        "precio": 18.5,
-                        "rendimiento": 110,
-                        "margen": 1525
+                        "precio": 16.5,
+                        "rendimiento": 115.6,
+                        "margen": 1397.4,
+                        "tipo": "escenario_hipotetico"
                     },
                     {
-                        "precio": 18.5,
-                        "rendimiento": 130,
-                        "margen": 1895
+                        "precio": 18.15,
+                        "rendimiento": 69.4,
+                        "margen": 749.61,
+                        "tipo": "escenario_hipotetico"
                     },
                     {
-                        "precio": 18.5,
-                        "rendimiento": 150,
-                        "margen": 2265
+                        "precio": 18.15,
+                        "rendimiento": 83.2,
+                        "margen": 1000.08,
+                        "tipo": "escenario_hipotetico"
                     },
                     {
-                        "precio": 21,
-                        "rendimiento": 70,
-                        "margen": 960
+                        "precio": 18.15,
+                        "rendimiento": 92.5,
+                        "margen": 1168.88,
+                        "tipo": "escenario_hipotetico"
                     },
                     {
-                        "precio": 21,
-                        "rendimiento": 90,
-                        "margen": 1380
+                        "precio": 18.15,
+                        "rendimiento": 101.7,
+                        "margen": 1335.86,
+                        "tipo": "escenario_hipotetico"
                     },
                     {
-                        "precio": 21,
-                        "rendimiento": 110,
-                        "margen": 1800
+                        "precio": 18.15,
+                        "rendimiento": 115.6,
+                        "margen": 1588.14,
+                        "tipo": "escenario_hipotetico"
                     },
                     {
-                        "precio": 21,
-                        "rendimiento": 130,
-                        "margen": 2220
+                        "precio": 20.63,
+                        "rendimiento": 69.4,
+                        "margen": 921.72,
+                        "tipo": "escenario_hipotetico"
                     },
                     {
-                        "precio": 21,
-                        "rendimiento": 150,
-                        "margen": 2640
+                        "precio": 20.63,
+                        "rendimiento": 83.2,
+                        "margen": 1206.42,
+                        "tipo": "escenario_hipotetico"
+                    },
+                    {
+                        "precio": 20.63,
+                        "rendimiento": 92.5,
+                        "margen": 1398.28,
+                        "tipo": "escenario_hipotetico"
+                    },
+                    {
+                        "precio": 20.63,
+                        "rendimiento": 101.7,
+                        "margen": 1588.07,
+                        "tipo": "escenario_hipotetico"
+                    },
+                    {
+                        "precio": 20.63,
+                        "rendimiento": 115.6,
+                        "margen": 1874.83,
+                        "tipo": "escenario_hipotetico"
                     }
                 ],
                 "precios_rango": [
-                    12,
-                    14.5,
+                    12.38,
+                    14.85,
                     16.5,
-                    18.5,
-                    21
+                    18.15,
+                    20.63
                 ],
                 "rendimientos_rango": [
-                    70,
-                    90,
-                    110,
-                    130,
-                    150
+                    69.4,
+                    83.2,
+                    92.5,
+                    101.7,
+                    115.6
                 ],
                 "roi_estrategias": [
                     {
-                        "nombre": "Manejo Convencional (Base)",
-                        "roi": 202.5,
-                        "margen": 1032.71,
-                        "rendimiento": 4.24
+                        "nombre": "Escenario base",
+                        "tipo": "escenario_hipotetico",
+                        "roi": 199.2,
+                        "costo": 510,
+                        "margen": 1016.16,
+                        "rendimiento": 4.196
                     },
                     {
-                        "nombre": "Biofertilizante INIAP (Ahorro 40% Fert.)",
-                        "roi": 233.9,
-                        "margen": 1080.71,
-                        "rendimiento": 4.24
+                        "nombre": "Supuesto: 40% menos costo de fertilización",
+                        "tipo": "escenario_hipotetico",
+                        "roi": 230.3,
+                        "costo": 462,
+                        "margen": 1064.16,
+                        "rendimiento": 4.196
                     },
                     {
-                        "nombre": "Fertirriego por Goteo (Alta Precisión)",
-                        "roi": 222.6,
-                        "margen": 1224.12,
-                        "rendimiento": 4.88
+                        "nombre": "Supuesto: 15% más producción y USD 40 más de costo",
+                        "tipo": "escenario_hipotetico",
+                        "roi": 219.1,
+                        "costo": 550,
+                        "margen": 1205.08,
+                        "rendimiento": 4.825
                     },
                     {
-                        "nombre": "Materia Orgánica (Compost/Enmienda)",
-                        "roi": 205.7,
-                        "margen": 1100.27,
-                        "rendimiento": 4.5
+                        "nombre": "Supuesto: 6% más producción y USD 25 más de costo",
+                        "tipo": "escenario_hipotetico",
+                        "roi": 202.4,
+                        "costo": 535,
+                        "margen": 1082.73,
+                        "rendimiento": 4.447
                     }
                 ],
                 "waterfall_costos": [
                     {
                         "label": "Ingreso Bruto",
-                        "amount": 1542.71,
+                        "amount": 1526.16,
                         "is_total": true
                     },
                     {
@@ -1170,52 +2047,80 @@
                     },
                     {
                         "label": "Margen Neto",
-                        "amount": 1032.71,
+                        "amount": 1016.16,
                         "is_total": true
                     }
-                ]
+                ],
+                "resumen_descriptivo": {
+                    "muestra": 1,
+                    "fraccion_cubre_costos_pct": null,
+                    "nota": "Fracción de al menos cinco simulaciones guardadas bajo el precio y costos supuestos; no es una probabilidad calibrada ni cosechas observadas. Incluye rendimientos cero."
+                },
+                "supuestos": {
+                    "tipo": "escenario_financiero_hipotetico",
+                    "fuentes": {
+                        "precio_maiz_qq": "supuesto_configurable_sin_cotizacion_mercado",
+                        "rendimiento_qq": "media_rendimientos_modelo_guardados",
+                        "costo_semilla": "supuesto_configurable_sin_costo_observado",
+                        "costo_fert": "supuesto_configurable_sin_costo_observado",
+                        "costo_riego": "supuesto_configurable_sin_costo_observado",
+                        "costo_proteccion": "supuesto_configurable_sin_costo_observado",
+                        "otros_var": "supuesto_configurable_sin_costo_observado",
+                        "costos_fijos": "supuesto_configurable_sin_costo_observado"
+                    },
+                    "area_fuente": "no_disponible",
+                    "conversion_qq_por_tonelada": 22.0462,
+                    "unidad_costos": "USD/ha",
+                    "unidad_precio": "USD/qq",
+                    "unidad_rendimiento": "qq/ha",
+                    "nota": "Los costos y precios son supuestos configurables, no facturas ni una cotización de mercado. Los kilogramos de nitrógeno no determinan dólares. Los cambios de estrategia no aseguran respuestas agronómicas. Un resultado null no puede calcularse con los datos disponibles o excede la representación numérica."
+                }
             }
         },
         {
             "nombre": "chat responde indicador",
             "metodo": "POST",
             "ruta": "/api/chat/preguntar",
-            "volatilidad": "tolerante",
+            "volatilidad": "generativo",
             "http": 200,
             "cuerpo": {
-                "texto": "Sobre **¿Qué significa mi ROI?** en tu parcela *Lote Contrato*:\n\n**Inversion y retorno** — Tu indicador ¿Qué significa mi ROI? registra 4.2357 t/ha para 2.5 ha en Quito con la variedad Pioneer P4039: rendimiento 4.24 t/ha e ingreso bruto estimado de 3847.8 USD a 16.50 USD/qq.\n\n**Escenarios** — Escenarios: base 4.24 t/ha (3847.8 USD); optimista 4.88 t/ha (4428.6 USD); pesimista 3.6 t/ha (3267 USD).\n\n**Riesgo financiero** — Riesgo financiero: el factor que mas afecta es Nitrógeno (0.47 t/ha, ~170.61 USD/ha). Recomendacion: reduce costos variables, asegura precio minimo antes de la siembra y protege el margen con cobertura de insumos. Cierre: valida el flujo de caja mensual y el punto de equilibrio antes de sembrar.\n\n📊 *En tu situación:* Tu rendimiento estimado actual es **4.2357 t/ha**.",
-                "secciones": [
-                    {
-                        "titulo": "1. Inversion y retorno",
-                        "tipo": "info",
-                        "contenido": "Tu indicador ¿Qué significa mi ROI? registra 4.2357 t/ha para 2.5 ha en Quito con la variedad Pioneer P4039: rendimiento 4.24 t/ha e ingreso bruto estimado de 3847.8 USD a 16.50 USD/qq."
-                    },
-                    {
-                        "titulo": "2. Escenarios",
-                        "tipo": "info",
-                        "contenido": "Escenarios: base 4.24 t/ha (3847.8 USD); optimista 4.88 t/ha (4428.6 USD); pesimista 3.6 t/ha (3267 USD)."
-                    },
-                    {
-                        "titulo": "3. Riesgo financiero",
-                        "tipo": "success",
-                        "contenido": "Riesgo financiero: el factor que mas afecta es Nitrógeno (0.47 t/ha, ~170.61 USD/ha). Recomendacion: reduce costos variables, asegura precio minimo antes de la siembra y protege el margen con cobertura de insumos. Cierre: valida el flujo de caja mensual y el punto de equilibrio antes de sembrar."
-                    }
-                ],
-                "accion": "Riesgo financiero: el factor que mas afecta es Nitrógeno (0.47 t/ha, ~170.61 USD/ha). Recomendacion: reduce costos variables, asegura precio minimo antes de la siembra y protege el margen con cobertura de insumos. Cierre: valida el flujo de caja mensual y el punto de equilibrio antes de sembrar.",
-                "confianza": 0.64,
-                "intencion": "indicador"
+                "texto": "El ROI (Retorno de Inversión) es un indicador financiero que mide la rentabilidad obtenida en relación con el dinero invertido. En términos sencillos, te muestra cuánto dinero estás ganando o perdiendo por cada dólar que pusiste en la producción de tu maíz. \n\nPara calcularlo de forma general, se divide la ganancia neta entre el costo total de la inversión y el resultado se multiplica por 100 para expresarlo en porcentaje. Un ROI positivo indica que el cultivo generó más ingresos de lo que costó producirlo, mientras que un valor negativo o bajo señala que los costos superaron las ganancias o el margen es muy ajustado.",
+                "secciones": [],
+                "accion": null,
+                "confianza": null,
+                "intencion": "asistente",
+                "fuente_datos": {
+                    "proveedor": "Gemini",
+                    "busqueda_realizada": false,
+                    "busqueda_no_disponible": false,
+                    "fuentes_web": [],
+                    "sugerencias_busqueda_html": null,
+                    "respuesta_directa_del_flujo": true,
+                    "referencias_consultadas": [],
+                    "parcela_id": "<volatil>",
+                    "año": null,
+                    "vista": "finance",
+                    "ambito": "dashboard",
+                    "conversacion_id": "<volatil>",
+                    "dashboard_sincronizado": false,
+                    "simulacion_borrador": false,
+                    "contexto_combinado": true,
+                    "clima_actual_disponible": true,
+                    "clima_pronostico_dias": 7,
+                    "precio_referencia_disponible": true
+                }
             }
         },
         {
             "nombre": "auth update",
             "metodo": "POST",
-            "ruta": "/api/auth/update",
+            "ruta": "/api/auth/actualizar",
             "volatilidad": "exacto",
             "http": 200,
             "cuerpo": {
-                "success": true,
-                "message": "¡Nombre de perfil actualizado correctamente!",
-                "user": {
+                "exito": true,
+                "mensaje": "¡Nombre de perfil actualizado correctamente!",
+                "usuario": {
                     "id": "<volatil>",
                     "nombre": "Contrato Test Editado",
                     "correo": "contrato_<ts>@zeasys.local",
@@ -1227,13 +2132,13 @@
         {
             "nombre": "subir avatar",
             "metodo": "POST",
-            "ruta": "/api/auth/upload-avatar",
+            "ruta": "/api/auth/subir-avatar",
             "volatilidad": "exacto",
             "http": 200,
             "cuerpo": {
-                "success": true,
-                "message": "¡Foto de perfil actualizada correctamente!",
-                "user": {
+                "exito": true,
+                "mensaje": "¡Foto de perfil actualizada correctamente!",
+                "usuario": {
                     "id": "<volatil>",
                     "nombre": "Contrato Test Editado",
                     "correo": "contrato_<ts>@zeasys.local",
@@ -1245,13 +2150,13 @@
         {
             "nombre": "eliminar avatar",
             "metodo": "POST",
-            "ruta": "/api/auth/delete-avatar",
+            "ruta": "/api/auth/eliminar-avatar",
             "volatilidad": "exacto",
             "http": 200,
             "cuerpo": {
-                "success": true,
-                "message": "¡Foto de perfil eliminada!",
-                "user": {
+                "exito": true,
+                "mensaje": "¡Foto de perfil eliminada!",
+                "usuario": {
                     "id": "<volatil>",
                     "nombre": "Contrato Test Editado",
                     "correo": "contrato_<ts>@zeasys.local",
@@ -1263,13 +2168,13 @@
         {
             "nombre": "sync google avatar",
             "metodo": "POST",
-            "ruta": "/api/auth/sync-google-avatar",
+            "ruta": "/api/auth/sincronizar-avatar-google",
             "volatilidad": "exacto",
             "http": 200,
             "cuerpo": {
-                "success": true,
-                "message": "¡Foto de Google sincronizada correctamente!",
-                "user": {
+                "exito": true,
+                "mensaje": "¡Foto de Google sincronizada correctamente!",
+                "usuario": {
                     "id": "<volatil>",
                     "nombre": "Contrato Test Editado",
                     "correo": "contrato_<ts>@zeasys.local",
@@ -1281,13 +2186,13 @@
         {
             "nombre": "eliminar avatar (google)",
             "metodo": "POST",
-            "ruta": "/api/auth/delete-avatar",
+            "ruta": "/api/auth/eliminar-avatar",
             "volatilidad": "exacto",
             "http": 200,
             "cuerpo": {
-                "success": true,
-                "message": "¡Foto de perfil eliminada!",
-                "user": {
+                "exito": true,
+                "mensaje": "¡Foto de perfil eliminada!",
+                "usuario": {
                     "id": "<volatil>",
                     "nombre": "Contrato Test Editado",
                     "correo": "contrato_<ts>@zeasys.local",
@@ -1299,24 +2204,24 @@
         {
             "nombre": "logout",
             "metodo": "POST",
-            "ruta": "/api/auth/logout",
+            "ruta": "/api/auth/cerrar-sesion",
             "volatilidad": "exacto",
             "http": 200,
             "cuerpo": {
-                "success": true,
-                "message": "Sesión cerrada correctamente."
+                "exito": true,
+                "mensaje": "Sesión cerrada correctamente."
             }
         },
         {
             "nombre": "login de nuevo",
             "metodo": "POST",
-            "ruta": "/api/auth/login",
+            "ruta": "/api/auth/iniciar-sesion",
             "volatilidad": "exacto",
             "http": 200,
             "cuerpo": {
-                "success": true,
-                "message": "¡Bienvenido, Contrato Test Editado!",
-                "user": {
+                "exito": true,
+                "mensaje": "¡Bienvenido, Contrato Test Editado!",
+                "usuario": {
                     "id": "<volatil>",
                     "nombre": "Contrato Test Editado",
                     "correo": "contrato_<ts>@zeasys.local",
@@ -1328,44 +2233,44 @@
         {
             "nombre": "eliminar simulacion",
             "metodo": "DELETE",
-            "ruta": "/api/simulaciones/eliminar?id=196",
+            "ruta": "/api/simulaciones/eliminar?id=214",
             "volatilidad": "exacto",
             "http": 200,
             "cuerpo": {
-                "success": true,
-                "message": "Simulación eliminada correctamente."
+                "exito": true,
+                "mensaje": "Simulación eliminada correctamente."
             }
         },
         {
             "nombre": "eliminar cultivo",
             "metodo": "DELETE",
-            "ruta": "/api/cultivos?id=188",
+            "ruta": "/api/parcelas?id=211",
             "volatilidad": "exacto",
             "http": 200,
             "cuerpo": {
-                "success": true,
-                "message": "Parcela eliminada correctamente."
+                "exito": true,
+                "mensaje": "Parcela eliminada correctamente."
             }
         },
         {
             "nombre": "eliminar cuenta",
             "metodo": "POST",
-            "ruta": "/api/auth/delete",
+            "ruta": "/api/auth/eliminar-cuenta",
             "volatilidad": "exacto",
             "http": 200,
             "cuerpo": {
-                "success": true,
-                "message": "¡Su cuenta y todos sus datos han sido eliminados permanentemente del sistema!"
+                "exito": true,
+                "mensaje": "¡Su cuenta y todos sus datos han sido eliminados permanentemente del sistema!"
             }
         },
         {
             "nombre": "me tras eliminar cuenta",
             "metodo": "GET",
-            "ruta": "/api/auth/me",
+            "ruta": "/api/auth/yo",
             "volatilidad": "exacto",
             "http": 200,
             "cuerpo": {
-                "authenticated": false
+                "autenticado": false
             }
         }
     ]

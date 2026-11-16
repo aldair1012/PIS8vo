@@ -60,7 +60,7 @@ export default function SimulationInfoCard({ isOpen, onClose, loading, data }) {
       {!summary && nextStep && !loading && <div className="simulation-info-card-step"><strong>Qué revisar</strong><span>{nextStep}</span></div>}
       {summary && !loading && !data?.detalle_no_disponible && (meaning || nextStep || context) && <details className="simulation-info-extra"><summary>Ver detalle adicional</summary>{meaning && <p>{meaning}</p>}{context && <p>{context}</p>}{nextStep && <p>{nextStep}</p>}</details>}
       {data?.detalle_no_disponible && <p className="simulation-info-notice" role="status">{summary ? 'No se pudo cargar el detalle adicional. La explicación de los datos visibles sigue disponible.' : 'No se pudo cargar el detalle adicional. Cierra esta ventana y pulsa de nuevo la tarjeta para reintentar.'}</p>}
-      {loading && <><p className="simulation-info-notice" role="status">Cargando detalle adicional…</p><span className="simulation-info-card-loading" aria-hidden="true" /></>}
+      {loading && <><p className="simulation-info-notice" role="status">Cargando detalle adicional…</p><span className="zs-carga-linea" aria-hidden="true"><span className="zs-carga-puntos"><i /><i /><i /></span></span></>}
     </div>,
     document.querySelector('.zeasys-workspace') || document.body
   );

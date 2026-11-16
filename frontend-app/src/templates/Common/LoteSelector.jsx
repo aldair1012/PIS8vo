@@ -3,14 +3,13 @@ import {
   ChevronDown, 
   Search, 
   Sprout, 
-  Grid, 
   MapPin, 
-  Layers, 
   Plus, 
   Calendar,
   X,
   Check
 } from 'lucide-react';
+import '../../assets/plot-selector.css';
 
 /**
  * LoteSelector — Premium dropdown panel for selecting parcelas/lotes and year.
@@ -38,6 +37,7 @@ export default function LoteSelector({
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const panelRef = useRef(null);
+  const restoreSelectionFocus = useRef(false);
   const triggerRef = useRef(null);
 
   const cultivoActivo = cultivos.find(c => c.id === cultivoElegidoId);
@@ -71,12 +71,30 @@ export default function LoteSelector({
     }
 
     // Asegurar que el año seleccionado actualmente esté presente
-    if (!['yield','scenarios'].includes(vistaActual) && añoSeleccionado) {
+    if (!['yield','scenarios','climate'].includes(vistaActual) && añoSeleccionado) {
       yearSet.add(Number(añoSeleccionado));
     }
 
     return Array.from(yearSet).sort((a, b) => a - b);
   }, [cultivos, añoSeleccionado, vistaActual, aniosDisponibles]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const position = () => {
+      const bottom = triggerRef.current?.getBoundingClientRect().bottom ?? 64;
+      panelRef.current?.style.setProperty('--plot-selector-top', `${window.innerHeight < 500 ? 8 : Math.min(bottom + 8, Math.max(8, window.innerHeight - 240))}px`);
+    };
+    position();
+    window.addEventListener('resize', position);
+    return () => window.removeEventListener('resize', position);
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (isOpen || !restoreSelectionFocus.current) return;
+    restoreSelectionFocus.current = false;
+    const frame = requestAnimationFrame(() => triggerRef.current?.focus({preventScroll:true}));
+    return () => cancelAnimationFrame(frame);
+  }, [isOpen]);
 
   // Close on click outside
   useEffect(() => {
@@ -120,6 +138,7 @@ export default function LoteSelector({
   });
 
   const handleSelectLote = (id) => {
+    restoreSelectionFocus.current = true;
     setCultivoElegidoId(id);
     setIsOpen(false);
     setSearchQuery('');
@@ -138,7 +157,7 @@ export default function LoteSelector({
         ref={triggerRef}
         className={`lote-selector-trigger ${isOpen ? 'active' : ''}`}
         onClick={() => setIsOpen(!isOpen)}
-        title={['yield','scenarios'].includes(vistaActual) ? 'Seleccionar parcela' : 'Seleccionar parcela y año'}
+        title={['yield','scenarios','climate'].includes(vistaActual) ? 'Seleccionar parcela' : 'Seleccionar parcela y año'}
         aria-label={cultivoActivo ? `Seleccionar parcela. Actual: ${cultivoActivo.nombre_parcela}` : 'Seleccionar parcela'}
         aria-expanded={isOpen}
         aria-controls={isOpen ? 'selector-parcelas' : undefined}
@@ -153,7 +172,7 @@ export default function LoteSelector({
           </span>
           <span className="lote-selector-trigger-sub">
             {cultivoActivo 
-              ? `${cultivoActivo.area} ha${['yield','scenarios'].includes(vistaActual) ? '' : ` · ${añoSeleccionado}`}`
+              ? `${cultivoActivo.area} ha${['yield','scenarios','climate'].includes(vistaActual) ? '' : ` · ${añoSeleccionado}`}`
               : 'Elige un lote'
             }
           </span>
@@ -198,7 +217,7 @@ export default function LoteSelector({
           </div>
 
           {/* Year Selector */}
-          {!['yield','scenarios'].includes(vistaActual) && <div className="lote-selector-year-row">
+          {!['yield','scenarios','climate'].includes(vistaActual) && <div className="lote-selector-year-row">
             <span className="lote-selector-year-label">
               <Calendar size={13} />
               Año:
@@ -243,45 +262,18 @@ export default function LoteSelector({
                 return (
                   <button
                     key={c.id}
+                    type="button"
+                    aria-pressed={isActive}
                     className={`lote-selector-card ${isActive ? 'selected' : ''}`}
                     onClick={() => handleSelectLote(c.id)}
                   >
-                    {/* Selection indicator */}
-                    {isActive && (
-                      <div className="lote-selector-card-check">
-                        <Check size={12} />
-                      </div>
-                    )}
-
-                    {/* Card header */}
-                    <div className="lote-selector-card-top">
-                      <div className="lote-card-icon" style={{ width: '32px', height: '32px' }}>
-                        <Sprout size={15} />
-                      </div>
-                      <div style={{ minWidth: 0, flex: 1 }}>
-                        <h4 className="lote-card-title" style={{ fontSize: '0.88rem' }}>
-                          {c.nombre_parcela}
-                        </h4>
-                        <span className="lote-card-subtitle">
-                          {c.ubicacion || 'Sin ubicación'}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Card info row */}
-                    <div className="lote-selector-card-info">
-                      <span className="lote-selector-card-tag">
-                        <Layers size={11} /> {c.variedad_maiz || 'N/D'}
-                      </span>
-                      <span className="lote-selector-card-tag">
-                        <Grid size={11} /> {c.area} ha
-                      </span>
-                      {c.latitud && c.longitud && (
-                        <span className="lote-selector-card-tag muted">
-                          <MapPin size={10} /> {Number(c.latitud).toFixed(3)}, {Number(c.longitud).toFixed(3)}
-                        </span>
-                      )}
-                    </div>
+                    <span className="plot-option-icon"><Sprout size={20} aria-hidden="true" /></span>
+                    <span className="plot-option-copy">
+                      <strong>{c.nombre_parcela || 'Parcela sin nombre'}</strong>
+                      <span>{c.ubicacion || 'Ubicación por completar'}</span>
+                      <small>{c.area != null ? `${Number(c.area).toLocaleString('es-EC')} ha` : 'Área por completar'}{c.variedad_maiz ? ` · ${c.variedad_maiz}` : ''}</small>
+                    </span>
+                    {isActive && <span className="plot-option-check"><Check size={18} aria-hidden="true"/></span>}
                   </button>
                 );
               })
@@ -291,6 +283,7 @@ export default function LoteSelector({
           {/* Footer: Add new */}
           <div className="lote-selector-footer">
             <button 
+              type="button"
               className="lote-selector-add-btn"
               onClick={handleAddField}
             >

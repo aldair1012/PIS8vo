@@ -11,6 +11,9 @@ use ZeaSys\Dominios\Terreno\Aplicacion\ServicioClimaActual;
 use ZeaSys\Dominios\Terreno\Aplicacion\ServicioDatosTerreno;
 use ZeaSys\Kernel\Errores\AccesoDenegadoException;
 
+use ZeaSys\Dominios\Terreno\Dominio\ProveedorClimaInterface;
+use ZeaSys\Dominios\Terreno\Infraestructura\ProveedorNoaaOni;
+
 class ServicioAnaliticaClimate
 {
     public function __construct(
@@ -18,6 +21,8 @@ class ServicioAnaliticaClimate
         private CultivoRepositoryInterface $cultivos,
         private ServicioDatosTerreno $terreno,
         private ServicioClimaActual $climaActual,
+        private ProveedorNoaaOni $ensoOni,
+        private ProveedorClimaInterface $climaArchive,
     ) {}
 
     public function construir(int $usuarioId, ?int $cultivoId = null, ?int $año = null): array
@@ -26,7 +31,7 @@ class ServicioAnaliticaClimate
 
         if ($cultivoId) {
             $cultivoSeleccionado = $this->cultivos->obtenerPorId($cultivoId);
-            if (!$cultivoSeleccionado || $cultivoSeleccionado['usuario_id'] != $usuarioId) {
+            if (!$cultivoSeleccionado || (int) ($cultivoSeleccionado['usuario_id'] ?? 0) !== $usuarioId || (isset($cultivoSeleccionado['activo']) && !(bool) $cultivoSeleccionado['activo'])) {
                 throw new AccesoDenegadoException('Esta parcela no es válida o no está registrada a tu nombre.');
             }
         }
@@ -44,6 +49,12 @@ class ServicioAnaliticaClimate
         $sueloInfo = null;
         $climaHoy = null;
         $pronostico7d = [];
+        $sueloAhora = null;
+        $serieDiaria30d = null;
+        $et0Acumulado = null;
+        $radiacionPar = null;
+        $informacionApi = [];
+        $resumenMensual12M = null;
 
         $tieneCoordenadas = $this->numero($cultivoSeleccionado['latitud'] ?? null, -90, 90) !== null
             && $this->numero($cultivoSeleccionado['longitud'] ?? null, -180, 180) !== null;
@@ -71,9 +82,28 @@ class ServicioAnaliticaClimate
             if ($informacionApi['exito'] ?? false) {
                 $fuenteApi = (string) ($informacionApi['source'] ?? 'Proveedor externo');
             }
+            if (is_array($clima['serie_diaria_30d'] ?? null)) {
+                $serieDiaria30d = $clima['serie_diaria_30d'];
+            }
+            if (is_numeric($clima['et0_30d'] ?? null)) {
+                $et0Acumulado = (float) $clima['et0_30d'];
+            }
+            if (is_numeric($clima['radiacion_par'] ?? null)) {
+                $radiacionPar = (float) $clima['radiacion_par'];
+            }
             if ($informacionApi['suelo_disponible_api'] ?? false) {
                 $camposSuelo = is_array($informacionApi['suelo_campos_api'] ?? null) ? $informacionApi['suelo_campos_api'] : [];
                 $sueloInfo = array_intersect_key($informacionApi['suelo'] ?? [], array_flip($camposSuelo));
+            }
+
+            // Historia reciente modelada; no se compara una ventana móvil con una normal mensual.
+            try {
+                $resumenMensual12M = $this->climaArchive->obtenerResumenMensual12Meses(
+                    (float) $cultivoSeleccionado['latitud'],
+                    (float) $cultivoSeleccionado['longitud'],
+                );
+            } catch (\Throwable) {
+                $resumenMensual12M = null;
             }
 
             // El clima actual es una observación/pronóstico de corto plazo.
@@ -90,6 +120,22 @@ class ServicioAnaliticaClimate
                     $pronostico7d = is_array($climaConsulta['pronostico_7d'] ?? null)
                         ? $climaConsulta['pronostico_7d']
                         : [];
+                    $actualAhora = is_array($climaConsulta['actual'] ?? null) ? $climaConsulta['actual'] : [];
+                    $sueloAhora = [
+                        'humedad_0_10cm' => is_numeric($actualAhora['humedad_suelo_0_10cm'] ?? null)
+                            ? (float) $actualAhora['humedad_suelo_0_10cm'] : null,
+                        'temperatura_0_10cm' => is_numeric($actualAhora['temperatura_suelo_0_10cm'] ?? null)
+                            ? (float) $actualAhora['temperatura_suelo_0_10cm'] : null,
+                        'temperatura_aparente_c' => is_numeric($actualAhora['temperatura_aparente_c'] ?? null)
+                            ? (float) $actualAhora['temperatura_aparente_c'] : null,
+                        'direccion_viento_deg' => is_numeric($actualAhora['direccion_viento_deg'] ?? null)
+                            ? (float) $actualAhora['direccion_viento_deg'] : null,
+                        'presion_hpa' => is_numeric($actualAhora['presion_hpa'] ?? null)
+                            ? (float) $actualAhora['presion_hpa'] : null,
+                        'consultado_utc' => $climaConsulta['consultado_en'] ?? null,
+                        'perfil_humedad' => is_array($actualAhora['perfil_humedad'] ?? null)
+                            ? $actualAhora['perfil_humedad'] : [],
+                    ];
                 }
             } catch (\Throwable) {
                 // La indisponibilidad no debe impedir mostrar los otros bloques.
@@ -98,11 +144,25 @@ class ServicioAnaliticaClimate
 
         $lluviaAnual = $this->terreno->referenciaLluvia($cultivoSeleccionado);
         $precipitacionPromedio = $lluviaAnual['valor'] ?? null;
-        $year = $año ?? (int) date('Y');
 
-        $ensoEstado = null;
-        $ensoColor = 'info';
-        $ensoDesc = "No disponible: ZeaSys no tiene integrada una fuente ENSO para {$year}.";
+        $enso = $this->ensoOni->obtenerOni() ?? [
+            'indice' => 'RONI', 'valor_indice' => null, 'roni' => null,
+            'estado' => null,
+            'estado_texto' => 'Sin datos',
+            'oni' => null,
+            'etiqueta_trimestre' => null,
+            'consecutivos' => null,
+            'signo_episodico' => null,
+            'episodio_declarado' => false,
+            'intensidad' => null,
+            'serie' => [],
+            'fuente' => 'NOAA CPC · RONI',
+            'url' => ProveedorNoaaOni::URL,
+            'consultado_utc' => null,
+            'nota' => 'Referencia regional trimestral de NOAA; sin datos publicados disponibles no se inventa un índice ni se declara un episodio.',
+            'desde_cache' => null,
+        ];
+        $climatologiaMensual = $informacionApi['climatologia_mensual'] ?? null;
         $probLluviaBaja = null;
         $probEstrTermico = null;
         $aguaUtil = null;
@@ -226,6 +286,8 @@ class ServicioAnaliticaClimate
         unset($etapa);
 
         return [
+            'cultivo_activo' => array_intersect_key($cultivoSeleccionado, array_flip(['id', 'nombre_parcela', 'ubicacion', 'provincia', 'area', 'fecha_siembra', 'tipo_fecha_siembra', 'ciclo_dias', 'riego_tipo'])),
+            'consultado_en' => date('c'),
             'procedencia' => [
                 'clima' => ['tipo' => 'modelo_reanalisis', 'fuente' => $fuenteApi, 'campos_api' => $camposClima ?? [],
                     'nota' => 'Promedios y acumulados del proveedor; no son mediciones del lote. Campos ausentes permanecen null.'],
@@ -234,7 +296,7 @@ class ServicioAnaliticaClimate
                 'anomalias' => ['estado' => 'no_disponible', 'motivo' => 'Falta una serie mensual del año solicitado y una climatología comparable.'],
             ],
             'kpis' => [
-                'enso' => ['estado' => $ensoEstado,'color' => $ensoColor,'desc' => $ensoDesc],
+                'enso' => $enso,
                 'prob_lluvia_bajo_promedio' => $probLluviaBaja,
                 'prob_estres_termico' => $probEstrTermico,
                 'agua_util' => $aguaUtil,
@@ -242,6 +304,12 @@ class ServicioAnaliticaClimate
             ],
             'api_source' => $fuenteApi,
             'lluvia_anual_referencia' => $lluviaAnual,
+            'climatologia_mensual' => $climatologiaMensual,
+            'clima_diaria_30d' => $serieDiaria30d,
+            'et0_30d' => $et0Acumulado,
+            'radiacion_par' => $radiacionPar,
+            'suelo_ahora' => $sueloAhora,
+            'resumen_mensual_12m' => $resumenMensual12M,
             'periodo_clima_reciente' => $informacionApi['clima']['periodo_30d'] ?? null,
             // Se conserva clima_actual por compatibilidad con consumidores
             // anteriores, pero ahora declara explícitamente que es un promedio.
@@ -267,7 +335,8 @@ class ServicioAnaliticaClimate
                 'fuente' => $fuenteApi
             ],
             'clima_hoy' => $climaHoy,
-            'pronostico_7d' => $pronostico7d,
+            'pronostico_7d' => array_slice($pronostico7d, 0, 7),
+            'pronostico_16d' => $pronostico7d,
             'suelo' => $sueloInfo ? [
                 'ph' => $sueloInfo['ph'] ?? null,
                 'materia_organica_pct' => $sueloInfo['materia_organica'] ?? null,

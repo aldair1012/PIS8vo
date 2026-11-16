@@ -1,11 +1,13 @@
 import { lazy, Suspense, useState, useEffect, useMemo, useRef } from 'react';
 import { dssService } from '../services/api';
+import PantallaCarga from '../components/PantallaCarga';
+import AgriculturalCalendar from '../components/AgriculturalCalendar';
 import SowingPlanForm from '../components/SowingPlanForm';
 import { savedSowingRows, sowingPlanning, irrigationLabel } from '../utils/sowingPlan';
 import SimulationInfoCard from '../templates/Common/SimulationInfoCard';
 import { DashboardMetric, DashboardPanel } from '../templates/Common/DashboardPrimitives';
 import useExplicacionIA from '../hooks/usarExplicacionIA';
-import { evidenceNumber as toFiniteNumber, evidenceDate, descriptivePercentiles, catalogSowingEvents, catalogHarvestEvents, recordedCropEvents, calendarStartDate, validateSowingResponse } from '../utils/agronomicEvidence';
+import { evidenceNumber as toFiniteNumber, evidenceDate, descriptivePercentiles, recordedCropEvents, calendarStartDate, validateSowingResponse } from '../utils/agronomicEvidence';
 import '../assets/siembra-dashboard.css';
 import { Sprout, Activity, BarChart3, CalendarDays, MapPin, ArrowUpRight, Layers, ChevronDown, Info, Check, Pencil } from 'lucide-react';
 
@@ -31,7 +33,6 @@ export default function DashboardScenario({ cultivoElegidoId, añoSeleccionado, 
   const restorePlanFocus=useRef(false);
   const disclosureOpen=name=>Boolean(disclosures[`${cultivoElegidoId}:${name}`]);
   const toggleDisclosure=name=>setDisclosures(previous=>({...previous,[`${cultivoElegidoId}:${name}`]:!previous[`${cultivoElegidoId}:${name}`]}));
-  const [calendarPhase, setCalendarPhase] = useState('ambos');
   const requestKey = `${cultivoElegidoId ?? ''}:${añoSeleccionado ?? ''}`;
   const current = response?.key === requestKey ? response : null;
   const data = current?.data;
@@ -43,17 +44,13 @@ export default function DashboardScenario({ cultivoElegidoId, añoSeleccionado, 
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const selectedYear = toFiniteNumber(añoSeleccionado);
   const baseYearNum = Number.isInteger(selectedYear) && selectedYear >= 2000 && selectedYear <= 2100 ? selectedYear : new Date().getFullYear();
-  const zoneEvents = useMemo(() => [...catalogSowingEvents(data?.viabilidad_siembra, baseYearNum), ...catalogHarvestEvents(data?.viabilidad_siembra, baseYearNum)], [data?.viabilidad_siembra, baseYearNum]);
   const plan=useMemo(()=>sowingPlanning(data?.cultivo_activo,data?.calendario_parcela),[data]);
   const personalCalendar=useMemo(()=>({eventos:[
     ...(plan.start?[{fecha:plan.start,tipo:plan.fromSimulation?'siembra_simulada':'siembra_registrada',titulo:plan.kind==='real_declarada'?'Siembra realizada (declarada por ti)':plan.kind==='prevista'?'Siembra prevista':'Siembra: fecha por confirmar',fuente:plan.fromSimulation?'Fecha usada en una simulación':'Fecha guardada por ti'}]:[]),
     ...(plan.end?[{fecha:plan.end,tipo:'fin_ciclo_estimado',titulo:'Fin aproximado del cultivo',fuente:plan.durationFromSimulation?'Duración usada en una simulación':'Calculado con tu fecha y duración'}]:[]),
   ]}),[plan]);
   const plotEvents=useMemo(()=>recordedCropEvents(personalCalendar),[personalCalendar]);
-  const calendarEvents=useMemo(()=>zoneEvents.filter(event=>calendarPhase==='ambos'||event.phase===calendarPhase),[zoneEvents,calendarPhase]);
   const personalDate=useMemo(()=>calendarStartDate(plotEvents,baseYearNum),[plotEvents,baseYearNum]);
-  const zoneDate=useMemo(()=>calendarStartDate(calendarEvents,baseYearNum),[calendarEvents,baseYearNum]);
-  const referencesOpen=disclosureOpen('references');
   const historyOpen=disclosureOpen('history');
   const ownCalendarOpen=disclosureOpen('calendar');
 
@@ -83,8 +80,8 @@ export default function DashboardScenario({ cultivoElegidoId, añoSeleccionado, 
   }, [cultivoElegidoId, añoSeleccionado, requestKey, reload]);
 
   useEffect(() => {
-    onDashboardData?.(data ? {...data,calendario_visible:{origen:referencesOpen?'zona':'parcela',fase:referencesOpen?calendarPhase:'fechas_de_la_parcela'}} : null);
-  }, [data, onDashboardData, referencesOpen, calendarPhase]);
+    onDashboardData?.(data ? {...data,calendario_visible:{origen:'guia_institucional_y_plan_parcela',fase:'meses_de_referencia'}} : null);
+  }, [data, onDashboardData]);
 
   useEffect(() => {
     if (editingKey !== null || !restorePlanFocus.current) return;
@@ -99,7 +96,7 @@ export default function DashboardScenario({ cultivoElegidoId, añoSeleccionado, 
   }, [notice]);
 
   if (loading) {
-    return <div className="dashboard-view dashboard-view--scenario ydp-dashboard sowing-dashboard"><div className="sowing-loading" role="status" aria-busy="true"><span className="ydp-loader" aria-hidden="true"/><p>Cargando el plan de tu parcela…</p><div className="sowing-loading-placeholder" aria-hidden="true"/></div></div>;
+    return <div className="dashboard-view dashboard-view--scenario ydp-dashboard sowing-dashboard"><PantallaCarga mensaje="Cargando el plan de tu parcela…" pantalla /></div>;
   }
 
   if (error) {
@@ -180,16 +177,9 @@ export default function DashboardScenario({ cultivoElegidoId, añoSeleccionado, 
       </>}
     </DashboardPanel>
 
-    <div className="sowing-optional-heading"><h2>Si necesitas más información</h2><p>Abre sólo la opción que te ayude en este momento.</p></div>
-    <SowingDisclosure id="sowing-zone-reference" title="Consultar meses habituales de la zona" description="Una guía general si todavía estás eligiendo cuándo sembrar." icon={CalendarDays} open={referencesOpen} onToggle={()=>toggleDisclosure('references')}>
-      <div className="sowing-reference-heading"><h3>Referencias para {lot.provincia||'la ubicación de esta parcela'}</h3><p>Son meses publicados en el catálogo agrícola. No consideran el clima futuro de tu parcela ni cambian tu plan.</p></div>
-      {zoneEvents.length?<><label className="sowing-filter">¿Qué fechas quieres consultar?<select aria-label="Tipo de referencia agrícola" value={calendarPhase} onChange={event=>setCalendarPhase(event.target.value)}><option value="ambos">Siembra y cosecha</option><option value="siembra">Meses de siembra</option><option value="cosecha">Meses de cosecha</option></select></label>
-        <ul className="sowing-reference-list">{calendarEvents.map((event,index)=><li key={`${event.title}:${index}`}><span className="sowing-reference-type">{event.phase==='cosecha'?'Cosecha de referencia':'Siembra de referencia'}</span><strong>{event.start.toLocaleDateString('es-EC',{day:'numeric',month:'long'})}{event.end.getTime()!==event.start.getTime()?` al ${event.end.toLocaleDateString('es-EC',{day:'numeric',month:'long'})}`:''}</strong><span>{event.title}</span></li>)}</ul>
-        {calendarEvents.length===0?<p className="sowing-empty">El catálogo no tiene referencias para esta opción. Esto no significa que el mes sea malo para cultivar.</p>:<details className="sowing-reference-calendar"><summary>Ver estas referencias en calendario</summary><Suspense fallback={<p role="status">Abriendo calendario de referencia…</p>}><CalendarGrid events={calendarEvents} initialDate={zoneDate} referenceYear={baseYearNum} resetToInitial fillHeight={false} embedded title="Referencia general del catálogo" eventDetailLabel="Detalle de la referencia de siembra" legendItems={[{color:'var(--zs-info)',label:'Siembra de referencia'},{color:'var(--zs-warning)',label:'Cosecha de referencia'}]}/></Suspense></details>}
-        <p className="sowing-source-caption">Fuente: catálogo agrícola de la zona y el tipo de maíz registrados. Los meses sin referencia no han sido evaluados.</p>
-      </>:<div className="sowing-empty"><h3>No encontramos una referencia para esta parcela</h3><p>Puedes guardar tu fecha de siembra igualmente. La falta de una ficha no significa que no puedas cultivar en esa zona.</p></div>}
-    </SowingDisclosure>
+    <AgriculturalCalendar key={lot.id} guide={data.guia_agricola} plot={lot} plan={plan} onEditPlan={()=>{openPlan();document.getElementById('sowing-main-plan')?.scrollIntoView({block:'start'});}}/>
 
+    <div className="sowing-optional-heading"><h2>Si necesitas más información</h2><p>Abre sólo la opción que te ayude en este momento.</p></div>
     <SowingDisclosure id="sowing-saved-results" title="Consultar simulaciones guardadas" description={hasSample?`${muestra} ${muestra===1?'cálculo disponible':'cálculos disponibles'} de ${baseYearNum}. Son estimaciones, no cosechas reales.`:'Consulta los cálculos que ya hiciste para esta parcela.'} icon={BarChart3} open={historyOpen} onToggle={()=>toggleDisclosure('history')}>
       <div className="sowing-history-heading"><div><h3>Resultados que ya calculaste</h3><p>Sirven para revisar tus pruebas. Para analizar el rendimiento de tu parcela, abre la sección Rendimiento.</p></div><button type="button" className="sowing-secondary" onClick={()=>onNavigate?.('yield')}>Ir a Rendimiento <ArrowUpRight size={18} aria-hidden="true"/></button></div>
       <div className="sowing-history-filters"><label className="sowing-filter">Año en que hiciste las simulaciones<select aria-label="Año de las simulaciones" value={baseYearNum} disabled={editing} onChange={event=>onSelectYear?.(Number(event.target.value))}>{years.map(year=><option key={year} value={year}>{year}</option>)}</select></label>{hasSample&&<label className="sowing-filter">Ordenar resultados<select aria-label="Ordenar simulaciones guardadas" value={historyOrder} onChange={event=>setHistoryOrder(event.target.value)}><option value="recientes">Más recientes primero</option><option value="mayor">Mayor rendimiento primero</option><option value="menor">Menor rendimiento primero</option></select></label>}</div>

@@ -1,5 +1,6 @@
 import { useCallback, useRef, useState, useEffect } from 'react';
 import { dssService } from '../services/api';
+import PantallaCarga from '../components/PantallaCarga';
 import { Doughnut } from 'react-chartjs-2';
 import { Chart as ChartJS, registerables } from 'chart.js';
 import FinancialROI from '../templates/Charts/FinancialROI';
@@ -256,7 +257,7 @@ export default function DashboardFinance({ cultivoElegidoId, añoSeleccionado, o
   };
 
   if (loading && !data) {
-    return <div className="flex-center" style={{ height: '70vh', color: 'var(--text-muted)' }}>Cargando DSS Financiero...</div>;
+    return <div className="flex-center" style={{ height: '70vh' }}><PantallaCarga mensaje="Cargando DSS Financiero..." pantalla /></div>;
   }
 
   const { kpis = {}, costo_total } = data ?? {};

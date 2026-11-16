@@ -184,6 +184,7 @@ final class ProveedorLluviaAnual implements \ZeaSys\Dominios\Terreno\Dominio\Pro
 
         $byYear = $selected['station']['años'];
         $series = [];
+        $serieMensual = [];
         $completeYears = 0;
         for ($year = 2000; $year <= 2019; $year++) {
             $values = $byYear[$year] ?? array_fill(0, 12, null);
@@ -191,6 +192,7 @@ final class ProveedorLluviaAnual implements \ZeaSys\Dominios\Terreno\Dominio\Pro
             $annual = $validMonths === 12 ? round(array_sum($values), 1) : null;
             if ($annual !== null) $completeYears++;
             $series[] = ['año' => $year, 'precipitacion_mm' => $annual, 'meses_reportados' => $validMonths];
+            $serieMensual[] = ['año' => $year, 'meses' => $values];
         }
 
         $result = [
@@ -209,10 +211,51 @@ final class ProveedorLluviaAnual implements \ZeaSys\Dominios\Terreno\Dominio\Pro
             'años_con_12_meses' => $completeYears,
             'criterio_estacion' => $selection,
             'serie' => $series,
+            'serie_mensual' => $serieMensual,
             'nota' => 'Cada total es la suma de los doce valores mensuales publicados. Si falta un mes, el total anual queda vacío; los meses ausentes nunca se cuentan como cero. Es una estación meteorológica de referencia, no un pluviómetro instalado en la parcela.',
         ];
         $this->cache->guardar($cacheKey, $result);
         return $result;
+    }
+
+    /**
+     * Climatología mensual de la estación de referencia más cercana:
+     * media de los meses con dato en el período 2000–2019. Solo incluye un mes
+     * si al menos cinco años traen su valor; nunca rellena con cero.
+     */
+    public function climatologiaMensual(float $lat, float $lon): ?array
+    {
+        $estacion = $this->historicoLluviaInamhi($lat, $lon);
+        if (!is_array($estacion) || !isset($estacion['serie_mensual']) || !is_array($estacion['serie_mensual'])) {
+            return null;
+        }
+        $etiquetas = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+        $meses = [];
+        $mesesDelEstacion = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+        foreach (range(0, 11) as $indice) {
+            $valores = [];
+            foreach ($estacion['serie_mensual'] as $fila) {
+                $v = $fila['meses'][$indice] ?? null;
+                if (is_numeric($v) && (float) $v >= 0) {
+                    $valores[] = (float) $v;
+                }
+            }
+            $meses[] = [
+                'mes' => $mesesDelEstacion[$indice],
+                'etiqueta' => $etiquetas[$indice],
+                'mm' => count($valores) >= 5 ? round(array_sum($valores) / count($valores), 1) : null,
+                'n' => count($valores),
+            ];
+        }
+        return [
+            'estacion' => $estacion['estacion'],
+            'distancia_km' => $estacion['distancia_km'],
+            'periodo' => '2000–2019',
+            'minimo_anos' => 5,
+            'fuente' => $estacion['fuente'],
+            'meses' => $meses,
+            'nota' => 'Media mensual calculada con los años que traen ese mes reportado; los meses ausentes nunca se cuentan como cero. Es una estación de referencia, no un pluviómetro instalado en tu parcela.',
+        ];
     }
 
     private function decimal(mixed $value): ?float

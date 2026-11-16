@@ -379,22 +379,22 @@ function ejecutarEscenario(string $modo, array &$temporales): array
     // 5) Dashboards DSS
     $q = '?cultivo_id=' . $ids['cultivo'] . '&año=' . date('Y');
     $registrar('dashboard yield', 'GET', '/api/rendimiento' . $q, null, 'tolerante');
-    $registrar('dashboard scenarios', 'GET', '/api/escenarioss' . $q, null, 'tolerante');
+    $registrar('dashboard scenarios', 'GET', '/api/escenarios' . $q, null, 'tolerante');
     $registrar('dashboard climate (externo)', 'GET', '/api/clima' . $q, null, 'estructural');
     $registrar('dashboard financial', 'GET', '/api/financiero' . $q, null, 'tolerante');
 
     // 5b) Chatbot (paso 30): pregunta por un indicador conocido y verifica respuesta
     $registrar('chat responde indicador', 'POST', '/api/chat/preguntar', [
         'pregunta' => '¿Qué significa mi ROI?',
-        'vista' => 'dashboard-financial',
-    ], 'tolerante');
+        'vista' => 'finance',
+    ], 'generativo');
 
     // 6) Perfil y cierre
     $registrar('auth update', 'POST', '/api/auth/actualizar', ['nombre' => 'Contrato Test Editado'], 'exacto');
     $registrar('subir avatar', 'POST', '/api/auth/subir-avatar', ['foto' => new CURLFile($tmpPng, 'image/png', 'contrato.png')], 'exacto', multipart: true);
-    $registrar('eliminar avatar', 'POST', '/api/auth/eliminar-cuenta-avatar', null, 'exacto');
-    $registrar('sync google avatar', 'POST', '/api/auth/sync-google-avatar', ['foto_url' => 'https://lh3.googleusercontent.com/a/contrato_test=s96-c'], 'exacto');
-    $registrar('eliminar avatar (google)', 'POST', '/api/auth/eliminar-cuenta-avatar', null, 'exacto');
+    $registrar('eliminar avatar', 'POST', '/api/auth/eliminar-avatar', null, 'exacto');
+    $registrar('sync google avatar', 'POST', '/api/auth/sincronizar-avatar-google', ['foto_url' => 'https://lh3.googleusercontent.com/a/contrato_test=s96-c'], 'exacto');
+    $registrar('eliminar avatar (google)', 'POST', '/api/auth/eliminar-avatar', null, 'exacto');
     $registrar('logout', 'POST', '/api/auth/cerrar-sesion', null, 'exacto');
     $registrar('login de nuevo', 'POST', '/api/auth/iniciar-sesion', ['correo' => $email, 'contrasena' => $password, 'remember' => false], 'exacto');
 
@@ -472,12 +472,19 @@ if ($modo === 'comparar') {
             $diferencias[] = "paso '{$pasoA['nombre']}': volatilidad cambió (antes " . ($pasoA['volatilidad'] ?? '?') . ', ahora ' . ($pasoB['volatilidad'] ?? '?') . ')';
         }
         $modoPaso = $pasoA['volatilidad']; // la de la referencia manda en la evaluación
+        $cuerpoA = $pasoA['cuerpo'];
+        $cuerpoB = $pasoB['cuerpo'];
+        if ($modoPaso === 'generativo') {
+            // El texto del asistente es generado: se compara el resto de la respuesta.
+            if (is_array($cuerpoA)) { unset($cuerpoA['texto'], $cuerpoA['explicacion']); }
+            if (is_array($cuerpoB)) { unset($cuerpoB['texto'], $cuerpoB['explicacion']); }
+        }
         if ($modoPaso === 'estructural') {
-            $estructuraA = estructura($pasoA['cuerpo']);
-            $estructuraB = estructura($pasoB['cuerpo']);
+            $estructuraA = estructura($cuerpoA);
+            $estructuraB = estructura($cuerpoB);
             comparar($estructuraA, $estructuraB, 'estructura', 'exacto', $tolerancia, $diferencias);
         } else {
-            comparar($pasoA['cuerpo'], $pasoB['cuerpo'], 'cuerpo', $modoPaso, $tolerancia, $diferencias);
+            comparar($cuerpoA, $cuerpoB, 'cuerpo', $modoPaso === 'generativo' ? 'tolerante' : $modoPaso, $tolerancia, $diferencias);
         }
 
         if ($diferencias === []) {

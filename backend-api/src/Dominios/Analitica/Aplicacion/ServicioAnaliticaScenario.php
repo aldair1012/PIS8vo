@@ -95,6 +95,7 @@ class ServicioAnaliticaScenario
             'cultivo_activo' => $cultivo,
             'años_disponibles' => $this->simulaciones->obtenerAniosPorUsuario($usuarioId),
             'año_ultima_simulacion' => $fechaUltima !== null ? (int) substr($fechaUltima, 0, 4) : null,
+            'guia_agricola' => (new GuiaCalendarioAgricola())->paraParcela($cultivo),
             'calendario_parcela' => $this->calendarioParcela($cultivo, $ultima),
             'kpis' => [
                 'rendimiento_esperado' => $media === null ? null : round($media, 3),

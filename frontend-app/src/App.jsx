@@ -4,6 +4,7 @@ import Navbar from './templates/Common/Navbar';
 import Login from './views/Login';
 import { AlertTriangle } from 'lucide-react';
 import { authService, parcelasService, simulacionService } from './services/api';
+import PantallaCarga from './components/PantallaCarga';
 
 const DashboardScenario = lazy(() => import('./views/DashboardScenario'));
 const DashboardClimate = lazy(() => import('./views/DashboardClimate'));
@@ -16,6 +17,7 @@ const History = lazy(() => import('./views/History'));
 const MapPage = lazy(() => import('./views/MapPage'));
 const Configuracion = lazy(() => import('./views/Configuracion'));
 const ChatbotWidget = lazy(() => import('./components/ChatbotWidget'));
+const ConsejoModal = lazy(() => import('./components/ConsejoModal'));
 
 export default function App() {
   const [user, setUser] = useState(null);
@@ -65,6 +67,11 @@ export default function App() {
   const ambitoChat = enSimulacion ? 'simulacion' : 'dashboard';
   // Mis lotes y Configuración no ofrecen asistente: allí el chat no aplica.
   const chatOculto = vistaActual === 'cultivos' || vistaActual === 'configuracion';
+  // Inicialización perezosa desde localStorage; evita setState en efecto.
+  // El modal solo se renderiza cuando hay usuario autenticado.
+  const [consejoPendiente, setConsejoPendiente] = useState(() => {
+    try { return localStorage.getItem('zeasys-consejo-mostrado') !== '1'; } catch { return true; }
+  });
 
   // Aplicar tema
   useEffect(() => {
@@ -368,13 +375,13 @@ export default function App() {
             flex: 1
           }}
         >
-          {cultivosCargando && cultivos.length === 0 && vistaActual !== 'configuracion' ? <p role="status">Cargando tus parcelas…</p> : cultivosError && vistaActual !== 'configuracion' ? (
+          {cultivosCargando && cultivos.length === 0 && vistaActual !== 'configuracion' ? <PantallaCarga mensaje="Cargando tus parcelas…" pantalla /> : cultivosError && vistaActual !== 'configuracion' ? (
             <div role="alert">
               <h2>No se pudieron cargar tus parcelas</h2>
               <p>Comprueba la conexión y vuelve a intentarlo. Tus datos guardados no se han modificado.</p>
               <button type="button" onClick={cargarCultivos}>Reintentar carga</button>
             </div>
-          ) : <Suspense fallback={<p role="status">Cargando vista…</p>}>
+          ) : <Suspense fallback={<PantallaCarga mensaje="Cargando vista…" />}>
           {fueraDeEcuador && ['scenarios', 'climate', 'yield', 'finance'].includes(vistaActual) && (
             <div className="bg-danger-alpha text-danger" style={{
               padding: '1rem',
@@ -411,9 +418,12 @@ export default function App() {
           {vistaActual === 'climate' && (
             <DashboardClimate
               cultivoElegidoId={cultivoElegidoId}
+              cultivoActivo={cultivoActivo}
               añoSeleccionado={añoSeleccionado}
               onNavigate={setVistaActual}
               onDashboardData={registrarClimate}
+              onAbrirRegistroCampo={() => setRegistroCampoId(cultivoElegidoId)}
+              revisionMediciones={revisionMediciones}
             />
           )}
           {vistaActual === 'yield' && (
@@ -466,7 +476,7 @@ export default function App() {
             />
           )}
           {registroCampoId !== null && (
-            <Suspense fallback={<p role="status">Cargando registro…</p>}>
+            <Suspense fallback={<PantallaCarga mensaje="Cargando registro…" />}>
               <RegistroCampo
                 cultivos={cultivos}
                 initialId={registroCampoId}
@@ -497,6 +507,12 @@ export default function App() {
           </Suspense>}
         </main>
       </div>
+
+      {user && consejoPendiente && !cultivosCargando && (
+        <Suspense fallback={null}>
+          <ConsejoModal onClose={() => setConsejoPendiente(false)} />
+        </Suspense>
+      )}
 
       {/* Chatbot Widget */}
       {user && !chatOculto && !cultivosError && (

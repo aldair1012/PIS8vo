@@ -4,10 +4,11 @@ import hashlib
 import json
 import re
 import zipfile
+import argparse
 
 ROOT=Path(__file__).resolve().parents[1]
 TREES=['frontend-app/src','frontend-app/public','frontend-app/tests','backend-api/src','backend-api/tests','backend-api/public',
-       'ml-engine/src','ml-engine/config','ml-engine/tests','ml-engine/scripts','assets','models','scripts','tools','database/migraciones','design-system']
+       'ml-engine/src','ml-engine/config','ml-engine/tests','ml-engine/scripts','assets','models','scripts','tools','database/migraciones','design-system','flowise-nodes','docs']
 FILES=['index.html','.htaccess','AGENTS.md','README.md','ml-engine/app.py','ml-engine/requirements.txt',
        'database/schema-demo.sql','documentacion/REVISION_DOCENTES.md','documentacion/ZeaSys-referencias-datos-20261109.docx',
        'documentacion/referencias-datos-sistema-20261109.json','documentacion/revision-integral-20261109.md',
@@ -20,13 +21,20 @@ FILES=['index.html','.htaccess','AGENTS.md','README.md','ml-engine/app.py','ml-e
        'documentacion/revision-explicaciones-20261110.md',
        'documentacion/revision-siembra-lluvia-20261110.md',
        'documentacion/revision-siembra-ux-pro-max-20261110.md',
+       'documentacion/revision-calendario-selector-20261115.md',
+       'documentacion/GUIA_DEL_SISTEMA.md','documentacion/arquitectura.md','documentacion/revision-clima-chatbot-20261115.md',
+       'documentacion/proveedores-datos.md','documentacion/modelos_simulacion.md','documentacion/variedades-maiz-ecuador.md',
        'documentacion/auditoria-ui-20261109.json','documentacion/paleta-colores.md','documentacion/GUIA_INSTALACION.md',
        'documentacion/evaluacion-espac2025-choclo-20261109.json','documentacion/plan-bloques-1-7-6-2-20261108.md',
        'documentacion/chatbot-pdf-20261108.md','documentacion/datos-modelo-bloque7-20261108.md','documentacion/rendimiento-estabilidad-20261108.md',
        'documentacion/fuentes-maiz/perfil-candidato-espac2025.json','documentacion/fuentes-maiz/diccionario-transitorios2025.json',
        'rag-sources/SOURCES.md']
 def main():
-    target=ROOT/'ZeaSys-revision-docentes-20261109.zip'
+    parser=argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--nombre', default='ZeaSys-revision-docentes-20261115-clima-chat.zip')
+    args=parser.parse_args()
+    if Path(args.nombre).name != args.nombre or not args.nombre.endswith('.zip'): raise ValueError('El nombre debe ser un archivo .zip dentro del proyecto.')
+    target=ROOT/args.nombre
     if target.exists(): raise FileExistsError('No se sobrescribe una entrega existente; verifica su huella antes de retirarla.')
     paths=set()
     for folder in TREES:

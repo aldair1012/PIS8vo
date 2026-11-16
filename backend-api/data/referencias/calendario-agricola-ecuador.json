@@ -1,0 +1,378 @@
+{
+  "version": "2026-11-15",
+  "fuentes": {
+    "iniap_sierra_2021": {
+      "institucion": "INIAP / KOPIA",
+      "titulo": "Guía para la producción sustentable de maíz en la Sierra ecuatoriana",
+      "anio": 2021,
+      "url": "https://repositorio.iniap.gob.ec/server/api/core/bitstreams/8be596ce-a0d6-43ae-b085-8d0c3fc51540/content",
+      "sha256": "cc41ccee362b5c597011b55a06ad9423da4b40afaa01490a5cc6d1d2f9122a84",
+      "paginas_pdf": [
+        36,
+        122,
+        126,
+        128,
+        129,
+        131,
+        137
+      ],
+      "pagina_publicacion": "https://repositorio.iniap.gob.ec/items/2d83f169-720c-4671-a03d-6d8f5fd19867"
+    },
+    "agrocalidad_bpa_2014": {
+      "institucion": "Agrocalidad",
+      "titulo": "Guía de buenas prácticas agrícolas para maíz duro",
+      "anio": 2014,
+      "url": "https://www.agrocalidad.gob.ec/wp-content/uploads/2022/02/Gui%CC%81a-de-BPA-para-mai%CC%81z-duro-.pdf",
+      "paginas_pdf": [
+        14,
+        17,
+        41
+      ],
+      "nota": "Edición aprobada en 2014; alojamiento web de 2022."
+    },
+    "mag_invierno_2022": {
+      "institucion": "MAG / SIPA",
+      "titulo": "Informe de rendimientos de maíz amarillo · Invierno 2022",
+      "anio": 2022,
+      "url": "https://sipa.agricultura.gob.ec/descargas/estudios/rendimientos/maiz/resultados_rendimiento_maiz_invierno_2022.pdf",
+      "sha256": "d8d6380a04a75d2b004c20d114b4699445e5f209a75d6bdfe08b6156a87fe14a",
+      "paginas_pdf": [
+        4,
+        8,
+        16
+      ],
+      "nota": "Encuesta de julio de 2022, 630 productores. Los problemas son declaraciones históricas; no vigilancia actual."
+    },
+    "agrocalidad_vigilancia": {
+      "institucion": "Agrocalidad",
+      "titulo": "Vigilancia fitosanitaria y notificación de problemas",
+      "url": "https://www.agrocalidad.gob.ec/direccion-de-vigilancia-fitosanitaria/",
+      "anio": null
+    }
+  },
+  "ventanas": {
+    "sierra": {
+      "meses": [
+        9,
+        10,
+        11,
+        12,
+        1
+      ],
+      "etiqueta": "Septiembre a mediados de enero",
+      "detalle": "La época depende de la localidad, el comienzo de las lluvias y el agua disponible. Enero sólo hasta mediados de mes.",
+      "tipo": "recomendacion_general",
+      "fuente_id": "iniap_sierra_2021",
+      "pagina_pdf": 36
+    },
+    "sierra:Azuay": {
+      "meses": [
+        9,
+        10,
+        11,
+        12
+      ],
+      "etiqueta": "Finales de septiembre a diciembre",
+      "detalle": "Inicio de las lluvias; septiembre sólo desde finales de mes. Referencia provincial, no una fecha óptima para cada variedad.",
+      "tipo": "practica_documentada",
+      "fuente_id": "iniap_sierra_2021",
+      "pagina_pdf": 129
+    },
+    "sierra:Loja": {
+      "meses": [
+        9,
+        10,
+        11,
+        12
+      ],
+      "etiqueta": "Finales de septiembre a principios de diciembre",
+      "detalle": "Maíz suave de zonas altas de Loja. Septiembre y diciembre son meses parciales.",
+      "tipo": "practica_documentada",
+      "fuente_id": "iniap_sierra_2021",
+      "pagina_pdf": 131
+    },
+    "duro": {
+      "meses": [
+        1,
+        2
+      ],
+      "etiqueta": "Enero y febrero · antecedente de invierno",
+      "detalle": "Meses más declarados en la encuesta de invierno de 2022. La guía de Agrocalidad indica empezar con las lluvias; confirma agua y condiciones locales antes de elegir el día.",
+      "tipo": "practica_observada_2022",
+      "fuente_id": "mag_invierno_2022",
+      "pagina_pdf": 8,
+      "fuente_complementaria_id": "agrocalidad_bpa_2014",
+      "pagina_complementaria_pdf": 17
+    }
+  },
+  "suelo": {
+    "sierra": {
+      "texturas": [
+        "Franco",
+        "Franco arcilloso",
+        "Franco arcillo arenoso",
+        "Franco arcillo limoso"
+      ],
+      "ph_min": 5.5,
+      "ph_max": 6.5,
+      "detalle": "Referencia de zonificación para maíz de altura: suelo profundo y buen drenaje. No determina por sí sola la aptitud de una parcela.",
+      "fuente_id": "iniap_sierra_2021",
+      "pagina_pdf": 137
+    },
+    "duro": {
+      "texturas": [
+        "Franco",
+        "Franco arcilloso",
+        "Franco limoso"
+      ],
+      "ph_min": 5.5,
+      "ph_max": 6.5,
+      "detalle": "Guía general de maíz duro: suelo profundo, con buen drenaje y sin encharcamiento.",
+      "fuente_id": "agrocalidad_bpa_2014",
+      "pagina_pdf": 14
+    }
+  },
+  "sanidad": {
+    "duro:Guayas": {
+      "alcance": "Guayas · maíz duro seco",
+      "periodo": "Invierno 2022",
+      "fuente_id": "mag_invierno_2022",
+      "pagina_pdf": 16,
+      "problemas": [
+        {
+          "nombre": "Mancha de asfalto",
+          "tipo": "enfermedad"
+        },
+        {
+          "nombre": "Quemazón",
+          "tipo": "síntoma reportado"
+        },
+        {
+          "nombre": "Tizón foliar",
+          "tipo": "enfermedad"
+        }
+      ]
+    },
+    "duro:Los Ríos": {
+      "alcance": "Los Ríos · maíz duro seco",
+      "periodo": "Invierno 2022",
+      "fuente_id": "mag_invierno_2022",
+      "pagina_pdf": 16,
+      "problemas": [
+        {
+          "nombre": "Quemazón",
+          "tipo": "síntoma reportado"
+        },
+        {
+          "nombre": "Pudrición de mazorca",
+          "tipo": "enfermedad"
+        },
+        {
+          "nombre": "Mancha de asfalto",
+          "tipo": "enfermedad"
+        }
+      ]
+    },
+    "duro:Manabí": {
+      "alcance": "Manabí · maíz duro seco",
+      "periodo": "Invierno 2022",
+      "fuente_id": "mag_invierno_2022",
+      "pagina_pdf": 16,
+      "problemas": [
+        {
+          "nombre": "Quemazón",
+          "tipo": "síntoma reportado"
+        },
+        {
+          "nombre": "Gusano cogollero",
+          "tipo": "plaga"
+        },
+        {
+          "nombre": "Pudrición de mazorca",
+          "tipo": "enfermedad"
+        }
+      ]
+    },
+    "duro:El Oro": {
+      "alcance": "El Oro · maíz duro seco",
+      "periodo": "Invierno 2022",
+      "fuente_id": "mag_invierno_2022",
+      "pagina_pdf": 16,
+      "problemas": [
+        {
+          "nombre": "Gusano cogollero",
+          "tipo": "plaga"
+        },
+        {
+          "nombre": "Mancha de asfalto",
+          "tipo": "enfermedad"
+        },
+        {
+          "nombre": "Quemazón",
+          "tipo": "síntoma reportado"
+        }
+      ]
+    },
+    "duro:Loja": {
+      "alcance": "Loja · maíz duro seco",
+      "periodo": "Invierno 2022",
+      "fuente_id": "mag_invierno_2022",
+      "pagina_pdf": 16,
+      "problemas": [
+        {
+          "nombre": "Gusano cogollero",
+          "tipo": "plaga"
+        },
+        {
+          "nombre": "Mancha de asfalto",
+          "tipo": "enfermedad"
+        }
+      ]
+    },
+    "duro:Santa Elena": {
+      "alcance": "Santa Elena · maíz duro seco",
+      "periodo": "Invierno 2022",
+      "fuente_id": "mag_invierno_2022",
+      "pagina_pdf": 16,
+      "problemas": [
+        {
+          "nombre": "Gusano cogollero",
+          "tipo": "plaga"
+        },
+        {
+          "nombre": "Mancha de asfalto",
+          "tipo": "enfermedad"
+        },
+        {
+          "nombre": "Tizón foliar",
+          "tipo": "enfermedad"
+        }
+      ]
+    },
+    "sierra:Cotopaxi": {
+      "alcance": "Cotopaxi · maíz de altura",
+      "periodo": "Guía publicada en 2021",
+      "fuente_id": "iniap_sierra_2021",
+      "pagina_pdf": 126,
+      "problemas": [
+        {
+          "nombre": "Roya",
+          "tipo": "enfermedad"
+        },
+        {
+          "nombre": "Trozador",
+          "tipo": "plaga"
+        },
+        {
+          "nombre": "Gusano de la mazorca",
+          "tipo": "plaga"
+        }
+      ]
+    },
+    "sierra:Chimborazo": {
+      "alcance": "Chimborazo · maíz de altura",
+      "periodo": "Guía publicada en 2021",
+      "fuente_id": "iniap_sierra_2021",
+      "pagina_pdf": 128,
+      "problemas": [
+        {
+          "nombre": "Mancha de asfalto",
+          "tipo": "enfermedad"
+        },
+        {
+          "nombre": "Gorgojos",
+          "tipo": "plaga"
+        }
+      ]
+    },
+    "sierra:Bolívar": {
+      "alcance": "Bolívar · maíz de altura",
+      "periodo": "Guía publicada en 2021",
+      "fuente_id": "iniap_sierra_2021",
+      "pagina_pdf": 122,
+      "problemas": [
+        {
+          "nombre": "Mancha de asfalto",
+          "tipo": "enfermedad"
+        }
+      ]
+    },
+    "sierra:Azuay": {
+      "alcance": "Azuay · referencia del Austro",
+      "periodo": "Guía publicada en 2021",
+      "fuente_id": "iniap_sierra_2021",
+      "pagina_pdf": 131,
+      "problemas": [
+        {
+          "nombre": "Mancha de asfalto",
+          "tipo": "enfermedad"
+        },
+        {
+          "nombre": "Tizón foliar",
+          "tipo": "enfermedad"
+        },
+        {
+          "nombre": "Trozador",
+          "tipo": "plaga"
+        },
+        {
+          "nombre": "Gusano cogollero",
+          "tipo": "plaga"
+        }
+      ]
+    },
+    "sierra:Cañar": {
+      "alcance": "Cañar · referencia del Austro",
+      "periodo": "Guía publicada en 2021",
+      "fuente_id": "iniap_sierra_2021",
+      "pagina_pdf": 131,
+      "problemas": [
+        {
+          "nombre": "Mancha de asfalto",
+          "tipo": "enfermedad"
+        },
+        {
+          "nombre": "Tizón foliar",
+          "tipo": "enfermedad"
+        },
+        {
+          "nombre": "Trozador",
+          "tipo": "plaga"
+        },
+        {
+          "nombre": "Gusano cogollero",
+          "tipo": "plaga"
+        }
+      ]
+    },
+    "sierra:Loja": {
+      "alcance": "Loja · referencia del Austro",
+      "periodo": "Guía publicada en 2021",
+      "fuente_id": "iniap_sierra_2021",
+      "pagina_pdf": 131,
+      "problemas": [
+        {
+          "nombre": "Mancha de asfalto",
+          "tipo": "enfermedad"
+        },
+        {
+          "nombre": "Tizón foliar",
+          "tipo": "enfermedad"
+        },
+        {
+          "nombre": "Trozador",
+          "tipo": "plaga"
+        },
+        {
+          "nombre": "Gusano cogollero",
+          "tipo": "plaga"
+        }
+      ]
+    }
+  },
+  "limites": [
+    "Meses de referencia, no pronósticos ni fechas óptimas de una variedad.",
+    "Sin vigilancia actual por parcela: los antecedentes no confirman un brote activo.",
+    "No se deducen cosechas reales ni rendimientos a partir de esta guía."
+  ]
+}

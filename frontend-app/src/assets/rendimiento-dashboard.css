@@ -83,15 +83,12 @@
 .ydp-dashboard .ydp-region-empty p {margin-top:4px;font-size:12px;line-height:1.5}
 .ydp-dashboard .ydp-state {color:var(--zs-muted);align-items:center;gap:10px;padding:20px;font-size:13px;display:flex}
 .ydp-dashboard .ydp-state--error {border-color:var(--zs-border-strong)}
-.ydp-dashboard .ydp-loader {border:2px solid var(--ydp-border);border-top-color:var(--ydp-accent);border-radius:50%;width:17px;height:17px;animation:.8s linear infinite ydp-spin}
 .ydp-dashboard .ydp-empty {text-align:center;max-width:620px;margin:6vh auto;padding:32px}
 .ydp-dashboard .ydp-empty-icon {background:var(--ydp-raised);width:48px;height:48px;color:var(--ydp-accent);border-radius:14px;justify-content:center;align-items:center;margin-bottom:15px;display:inline-flex}
 .ydp-dashboard .ydp-empty h1 {font-size:clamp(1.5rem,3vw,1.9rem)}
 .ydp-dashboard .ydp-empty>p:not(.ydp-eyebrow) {max-width:48ch;color:var(--zs-muted);margin:9px auto 18px;font-size:14px;line-height:1.6}
 @keyframes ydp-enter {0% {opacity:0;transform:translateY(8px)}
 to {opacity:1;transform:translateY(0)}
-}
-@keyframes ydp-spin {to {transform:rotate(360deg)}
 }
 .ydp-dashboard .ydp-metric {border-top:3px solid var(--zs-border-strong);padding:16px 16px 6px;position:relative}
 .ydp-dashboard .ydp-metric--feature {background:var(--ydp-raised);color:var(--zs-text);border:1px solid var(--ydp-border);border-top:3px solid var(--ydp-accent)}

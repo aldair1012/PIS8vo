@@ -60,5 +60,10 @@ if errorlevel 1 (
   exit /b 1
 )
 
+if exist "%FLOWISE_HOME%\data\database.sqlite" (
+  python "%PROJECT_ROOT%\tools\instalar_chat_gemini_busqueda.py"
+  if errorlevel 1 exit /b 1
+)
+
 echo [ZeaSys] Iniciando Flowise en http://%HOST%:%PORT% ...
-"%NODE_EXE%" "%FLOWISE_HOME%\node_modules\flowise\bin\run" start
+powershell -NoProfile -ExecutionPolicy Bypass -File "%PROJECT_ROOT%\tools\ejecutar_flowise_seguro.ps1" -NodeExe "%NODE_EXE%" -FlowiseHome "%FLOWISE_HOME%"

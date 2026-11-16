@@ -135,6 +135,13 @@ final class ServicioDatosTerreno
             $datosClimaYSuelo['clima_campos_api'][] = 'precipitacion';
             $datosClimaYSuelo['exito'] = true;
         }
+        if ($this->lluvia !== null) {
+            try {
+                $datosClimaYSuelo['climatologia_mensual'] = $this->lluvia->climatologiaMensual($latitud, $longitud);
+            } catch (\Throwable) {
+                $datosClimaYSuelo['climatologia_mensual'] = null;
+            }
+        }
 
         // API de SoilGrids
         try {

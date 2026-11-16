@@ -54,9 +54,7 @@
 .simulation-error { color: var(--zs-danger, var(--text-primary)); border-color: currentColor; }
 .simulation-error p { margin: 0; }
 .simulation-notice > svg, .simulation-error > svg { flex-shrink: 0; margin-top: .15rem; }
-.simulation-loading { display: flex; align-items: center; gap: .55rem; font-size: .82rem; color: var(--sim-muted); }
-.simulation-loading > span { width: .55rem; height: .55rem; background: var(--sim-accent); border-radius: 50%; animation: simulation-pulse 1s ease-in-out infinite alternate; }
-@keyframes simulation-pulse { to { opacity: .35; } }
+
 .simulation-optional { padding: 0; overflow: hidden; }
 .simulation-optional > summary, .simulation-disclosure > summary { display: flex; align-items: center; justify-content: space-between; gap: .65rem; cursor: pointer; min-height: 52px; font-weight: 600; color: var(--sim-ink); }
 .simulation-optional > summary { padding: 1rem 1.5rem; }

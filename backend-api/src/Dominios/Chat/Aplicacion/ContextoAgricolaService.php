@@ -41,14 +41,14 @@ final class ContextoAgricolaService
             if (is_array($siembra)) {
                 $contexto['siembra'] = [
                     'año'=>$año, 'sin_simulaciones'=>(bool)($siembra['sin_simulaciones']??true),
-                    'kpis'=>$siembra['kpis']??null, 'percentiles'=>$siembra['percentiles']??null,
+                    'kpis'=>array_intersect_key($siembra['kpis']??[],array_flip(['rendimiento_esperado','prob_superar_objetivo','riesgo_agronomico','estabilidad'])), 'percentiles'=>$siembra['percentiles']??null,
                     'resumen_descriptivo'=>$siembra['resumen_descriptivo']??null,
                     'provincia'=>$siembra['cultivo_activo']['provincia']??null,
                     'limite_muestra'=>50,
                     'fechas_parcela'=>$siembra['calendario_parcela']['eventos']??[],
-                    'viabilidad_siembra'=>array_values(array_map(static fn(array $row):array=>array_intersect_key($row,array_flip(['rango','estado','fuente'])),$siembra['viabilidad_siembra']??[])),
+                    'guia_agricola'=>$siembra['guia_agricola']??null,
                     'ranking'=>array_map(static fn(array $row):array=>array_intersect_key($row,array_flip(['simulacion_id','combinacion','valor','unidad'])),array_slice($siembra['ranking']??[],0,5)),
-                    'nota'=>'Calendario de catálogo local y muestra de predicciones guardadas; no son probabilidades de cosecha ni fechas óptimas calculadas.',
+                    'nota'=>'Guía institucional por provincia y familia de maíz; conserva periodo, fuente y alcance. Antecedentes de sanidad no son alertas actuales. La muestra describe predicciones guardadas.',
                 ];
             }
         }
@@ -62,7 +62,7 @@ final class ContextoAgricolaService
         }
 
         $rendimiento = $this->seguro(fn (): mixed => $this->rendimiento->construir($usuarioId, $cultivoId, $año));
-        if (is_array($rendimiento) && !($rendimiento['sin_datos'] ?? false)) {
+        if (is_array($rendimiento) && (!($rendimiento['sin_datos'] ?? false) || is_array($rendimiento['mediciones_campo'] ?? null))) {
             $contexto['rendimiento'] = $this->compactarRendimiento($rendimiento);
         }
 
@@ -104,12 +104,16 @@ final class ContextoAgricolaService
         $hoy = is_array($clima['clima_hoy'] ?? null) ? $clima['clima_hoy'] : [];
         $actual = is_array($hoy['actual'] ?? null) ? $hoy['actual'] : null;
         $pronostico = [];
+        $seen = [];
         // Formato compacto para que los 7 días quepan sin repetir nombres de
         // campo siete veces. El orden se declara en "formato_pronostico".
         foreach (array_slice(is_array($clima['pronostico_7d'] ?? null) ? $clima['pronostico_7d'] : [], 0, 7) as $dia) {
-            if (!is_array($dia)) {
+            if (!is_array($dia) || !is_string($dia['fecha'] ?? null)) {
                 continue;
             }
+            $date = \DateTimeImmutable::createFromFormat('!Y-m-d', $dia['fecha']);
+            if ($date === false || $date->format('Y-m-d') !== $dia['fecha'] || isset($seen[$dia['fecha']])) continue;
+            $seen[$dia['fecha']] = true;
             $pronostico[] = [
                 $dia['fecha'] ?? null,
                 $dia['temp_max_c'] ?? null,
@@ -118,6 +122,7 @@ final class ContextoAgricolaService
                 $dia['prob_precipitacion_pct'] ?? null,
             ];
         }
+        usort($pronostico, static fn (array $a, array $b): int => strcmp($a[0], $b[0]));
 
         $promedio = is_array($clima['clima_promedio_30d'] ?? null)
             ? $clima['clima_promedio_30d']
@@ -125,13 +130,15 @@ final class ContextoAgricolaService
 
         $lluviaTotal = 0.0;
         $diasConLluvia = 0;
+        $diasValidos = 0;
+        $consecutivos = count($pronostico) === 7;
         $tmax = [];
         $tmin = [];
-        foreach ($pronostico as $dia) {
-            $lluvia = is_numeric($dia[3] ?? null) ? (float) $dia[3] : 0.0;
-            $probabilidad = is_numeric($dia[4] ?? null) ? (float) $dia[4] : 0.0;
-            $lluviaTotal += $lluvia;
-            if ($lluvia > 0 || $probabilidad >= 50) {
+        foreach ($pronostico as $i => $dia) {
+            $lluvia = is_numeric($dia[3] ?? null) && $dia[3] >= 0 ? (float) $dia[3] : null;
+            if ($lluvia !== null) { $lluviaTotal += $lluvia; $diasValidos++; }
+            if ($i > 0 && (new \DateTimeImmutable($pronostico[$i - 1][0]))->modify('+1 day')->format('Y-m-d') !== $dia[0]) $consecutivos = false;
+            if ($lluvia !== null && $lluvia > 0) {
                 $diasConLluvia++;
             }
             if (is_numeric($dia[1] ?? null)) {
@@ -155,8 +162,10 @@ final class ContextoAgricolaService
             'formato_pronostico' => '[fecha, tmax_c, tmin_c, lluvia_mm, prob_lluvia_pct]',
             'pronostico_7d' => $pronostico,
             'resumen_7d' => [
-                'lluvia_total_mm' => round($lluviaTotal, 1),
-                'dias_con_lluvia' => $diasConLluvia,
+                'lluvia_total_mm' => $consecutivos && $diasValidos === 7 ? round($lluviaTotal, 1) : null,
+                'dias_con_lluvia' => $consecutivos && $diasValidos === 7 ? $diasConLluvia : null,
+                'dias_con_lluvia_informada' => $diasValidos,
+                'nota' => 'Cantidad prevista y probabilidad son distintas. No representan riesgo de pérdida de cosecha. Un pronóstico incompleto no tiene total semanal.',
                 'tmax_rango_c' => $tmax !== [] ? [min($tmax), max($tmax)] : null,
                 'tmin_rango_c' => $tmin !== [] ? [min($tmin), max($tmin)] : null,
             ],
@@ -168,6 +177,12 @@ final class ContextoAgricolaService
 
             ],
             'fuente' => $hoy['fuente'] ?? null,
+            'suelo_estimado' => is_array($clima['suelo_ahora'] ?? null) ? array_intersect_key($clima['suelo_ahora'], array_flip(['humedad_0_10cm', 'temperatura_0_10cm', 'consultado_utc'])) + ['unidad_humedad' => 'm³/m³: multiplicar por 100 para porcentaje del volumen; no capacidad de campo', 'fuente' => 'Open-Meteo Forecast, modelo sin sensor de parcela'] : null,
+            'referencia_pacifico' => is_array($clima['kpis']['enso'] ?? null) ? array_intersect_key($clima['kpis']['enso'], array_flip(['indice', 'valor_indice', 'periodo', 'estado_texto', 'vigente', 'fuente', 'nota'])) : null,
+            'periodo_historial_30d' => $clima['periodo_clima_reciente'] ?? null,
+            'historial_30d' => array_map(static fn (array $row): string => json_encode(array_intersect_key($row, array_flip(['fecha', 'precip_mm', 'et0_mm', 'temp_media_c'])), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '', array_slice(array_filter(is_array($clima['clima_diaria_30d'] ?? null) ? $clima['clima_diaria_30d'] : [], 'is_array'), -30)),
+            'historial_12m' => array_map(static fn (array $row): string => json_encode(array_intersect_key($row, array_flip(['mes', 'precipitacion_mm', 'temp_media_c', 'dias_lluvia', 'dias_temperatura', 'dias_esperados'])), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '', array_slice(array_filter($clima['resumen_mensual_12m']['meses'] ?? [], 'is_array'), -12)),
+            'periodo_historial_12m' => $clima['resumen_mensual_12m']['periodo'] ?? null,
         ];
     }
 
@@ -242,6 +257,7 @@ final class ContextoAgricolaService
                 'rendimiento_maximo_catalogo' => $kpis['rendimiento_maximo_catalogo'] ?? null,
             ],
             'simulaciones_count' => $rendimiento['simulaciones_count'] ?? null,
+            'mediciones_campo' => is_array($rendimiento['mediciones_campo'] ?? null) ? $rendimiento['mediciones_campo'] : null,
             'nota' => 'Predicción de la última simulación de esta parcela; no es una cosecha observada ni una brecha de rendimiento medida.',
         ];
     }

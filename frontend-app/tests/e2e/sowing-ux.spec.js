@@ -35,7 +35,7 @@ async function history(page){await page.getByRole('button',{name:/Consultar simu
 test('la primera lectura muestra sólo el plan, con palabras claras y una acción principal',async({page})=>{
   await prepare(page);await expect(page.getByRole('button',{name:'Editar mi plan',exact:true})).toBeVisible();
   await expect(page.locator('.sowing-dates')).toContainText('1 de enero de 2027');await expect(page.locator('.sowing-dates')).toContainText('30 de abril de 2027');
-  await expect(page.getByRole('button',{name:/Consultar meses habituales/})).toHaveAttribute('aria-expanded','false');
+  await expect(page.getByRole('heading',{name:'Calendario agrícola de tu zona',exact:true})).toBeVisible();
   await expect(page.getByRole('button',{name:/Consultar simulaciones guardadas/})).toHaveAttribute('aria-expanded','false');
   await expect(page.locator('.ydp-metrics')).toHaveCount(0);await expect(page.locator('.sowing-history-list')).toHaveCount(0);
   await page.getByRole('button',{name:/Seleccionar parcela/}).click();await expect(page.getByRole('button',{name:'2027',exact:true})).toHaveCount(0);
@@ -53,7 +53,7 @@ test('si falla el guardado conserva los datos y explica cómo volver a intentarl
   await expect(form.getByRole('alert')).toBeFocused();await expect(form.getByLabel('Duración del cultivo en días')).toHaveValue('150');await form.getByRole('button',{name:'Cancelar',exact:true}).click();await expect(page.getByRole('button',{name:'Editar mi plan',exact:true})).toBeFocused();
 });
 test('las referencias no cambian el plan y las simulaciones mantienen sus ceros y fechas',async({page})=>{
-  await prepare(page);await page.getByRole('button',{name:/Consultar meses habituales/}).click();await page.getByLabel('Tipo de referencia agrícola').selectOption('cosecha');await expect(page.locator('.sowing-reference-list')).toContainText('agosto');await expect(page.locator('.sowing-dates')).toContainText('enero de 2027');
+  await prepare(page);await page.locator('.ag-calendar-month').filter({hasText:'Agosto'}).click();await expect(page.locator('#ag-calendar-month-detail')).toContainText('Sin una ventana publicada');await expect(page.locator('.sowing-dates')).toContainText('enero de 2027');
   await history(page);await page.getByLabel('Ordenar simulaciones guardadas').selectOption('menor');await expect(page.locator('.sowing-result').first()).toContainText('0,00');
   await page.getByRole('button',{name:'Ver explicación de simulación #102',exact:true}).click();await expect(page.getByRole('dialog')).toContainText('0 t/ha');await page.keyboard.press('Escape');
   await page.getByLabel('Año de las simulaciones').selectOption('2001');await expect(page.getByRole('heading',{name:'No hay simulaciones guardadas en 2001'})).toBeVisible();await expect(page.locator('.sowing-dates')).toContainText('enero de 2027');
@@ -98,7 +98,6 @@ for(const theme of ['light','dark'])test(`el calendario y sus detalles usan el t
   await page.keyboard.press('Escape');await expect(page.getByRole('button',{name:'1 de enero de 2027: Siembra prevista',exact:true})).toBeFocused();expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
 });
 
-test('un día con siembra y cosecha de referencia permite leer ambos eventos',async({page})=>{
-  await prepare(page,{overlap:true});await page.getByRole('button',{name:/Consultar meses habituales/}).click();await page.locator('.sowing-reference-calendar > summary').click();
-  await page.getByRole('button',{name:/^1 de febrero de .*: Siembra: Manabí; Cosecha: Manabí$/}).click();const detail=page.getByRole('status',{name:'Detalle de la referencia de siembra'});await expect(detail).toContainText('Siembra: Manabí');await expect(detail).toContainText('Cosecha: Manabí');
+test('el calendario agrícola separa las fechas propias de las referencias mensuales',async({page})=>{
+  await prepare(page);await page.locator('.ag-calendar-month').filter({hasText:'Enero'}).click();await expect(page.locator('#ag-calendar-month-detail')).toContainText('1 de enero de 2027');await expect(page.locator('#ag-calendar-month-detail')).toContainText('encuesta');
 });

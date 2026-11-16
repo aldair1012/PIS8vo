@@ -11,4 +11,11 @@ interface ProveedorClimaInterface
      *                               (solo las claves que el proveedor pudo calcular)
      */
     public function obtenerClima(float $latitud, float $longitud, ?float $altitud): array;
+
+    /**
+     * @return array<string, mixed>|null  resumen mensual de los últimos 12 meses
+     *                                     (totales de lluvia y medias de temperatura),
+     *                                     o null si no se pudo calcular.
+     */
+    public function obtenerResumenMensual12Meses(float $latitud, float $longitud): ?array;
 }

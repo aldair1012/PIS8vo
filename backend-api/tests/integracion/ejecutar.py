@@ -217,6 +217,9 @@ def main():
                         assert body['lluvia_anual_referencia']['periodo'] == '2000–2019'
                     if endpoint == "escenarios":
                         assert body['cultivo_activo']['provincia'] == 'Manabí'
+                        assert body['guia_agricola']['provincia'] == 'Manabí'
+                        assert body['guia_agricola']['vigilancia_actual']['estado'] == 'sin_reporte_verificado_por_parcela'
+                        assert all(source['url'].startswith('https://') for source in body['guia_agricola']['fuentes'].values())
                         assert 2001 in body['años_disponibles'] and 2025 in body['años_disponibles']
                         empty_year = a.call('GET', f'escenarios?parcela_id={crop_id}&a%C3%B1o=2099')
                         assert empty_year['sin_simulaciones'] and empty_year['simulaciones_count'] == 0

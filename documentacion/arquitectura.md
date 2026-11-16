@@ -2,51 +2,25 @@
 
 ## 1. Visión general
 
-ZeaSys es un DSS (Sistema de Apoyo a la Decisión) para cultivo de maíz en Ecuador. El backend está organizado en **6 dominios lógicos** sobre XAMPP (Apache + PHP + MySQL + Python/Flask + Flowise), sin microservicios físicos ni framework.
+ZeaSys es un DSS (Sistema de Apoyo a la Decisión) para cultivo de maíz en Ecuador. El backend está organizado en **6 dominios lógicos** sobre XAMPP (Apache + PHP + MariaDB + motor Python + Flowise), sin microservicios físicos ni framework.
 
+```mermaid
+flowchart TD
+    Navegador[React + Vite: interfaz web] --> PHP[Apache + PHP: API y sesión]
+    PHP --> DB[MariaDB: parcelas, campañas y simulaciones]
+    PHP --> ML[Motor Python / XGBoost: puerto 5000]
+    PHP --> Flowise[Flowise: puerto 3000]
+    Flowise --> Gemini[Gemini: respuestas y búsqueda pública]
+    PHP --> Clima[Open-Meteo / INAMHI / NOAA / SoilGrids]
+    PHP --> PDF[Recuperación documental: cuando se solicita]
+    PDF --> Vector[Chroma: puerto 8000]
+    PDF --> Embeddings[Ollama: puerto 11434]
 ```
-┌─────────────────────────────────────────────────────────────────────┐
-│                        Apache + PHP-FPM                             │
-│  ┌──────────────────────────────────────────────────────────────┐   │
-│  │  public/index.php  (front controller, ~45 líneas)            │   │
-│  │    → CORS → Sesión → Router → Middleware → Container        │   │
-│  └──────────────────────────────────────────────────────────────┘   │
-│                              │                                      │
-│  ┌───────────────────────────┼───────────────────────────────────┐  │
-│  │                    src/Kernel/                                 │  │
-│  │  AutoloaderPsr4 · Router · Container · Peticion · Respuesta  │  │
-│  │  Cors · AutenticacionMiddleware · ManejadorErrores            │  │
-│  │  Errores/: ZeaSysException + Validacion/NoAutorizado/         │  │
-│  │    AccesoDenegado/RecursoNoEncontrado/ServicioExterno         │  │
-│  └───────────────────────────────────────────────────────────────┘  │
-│                              │                                      │
-│  ┌───────────────────────────┼───────────────────────────────────┐  │
-│  │              src/Dominios/  (6 dominios lógicos)               │  │
-│  │                                                               │  │
-│  │  Autenticacion/    Lotes/    Terreno/    Simulaciones/        │  │
-│  │  Analitica/        Chat/                                      │  │
-│  │                                                               │  │
-│  │  Cada dominio:  Dominio/  Infraestructura/  Aplicacion/  Http/│  │
-│  │  (interfaces)    (impl PDO/cURL)  (servicios)     (ctrls)    │  │
-│  └───────────────────────────────────────────────────────────────┘  │
-│                              │                                      │
-│  ┌───────────────────────────┼───────────────────────────────────┐  │
-│  │  src/Config/: aplicacion.php · constantes_negocio.php ·        │  │
-│  │    google.php · rutas.php · contenedor.php                     │  │
-│  └───────────────────────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────────────────┘
-         │                                    │
-    ┌────┴────┐                          ┌────┴────┐
-    │  MySQL  │                          │  Flask  │
-    │ (XAMPP) │                          │  :5000  │
-    └─────────┘                          │ motor ML│
-                                         └────┬────┘
-                                              │
-                                         ┌────┴────┐
-                                         │ Flowise │
-                                         │  :3000  │
-                                         └─────────┘
-```
+
+La API PHP conecta directamente con Flowise; el chat no pasa por el motor XGBoost. Los cinco PDF son apoyo documental. Las dudas generales utilizan Gemini sin exigir coincidencias en los archivos. La búsqueda web depende de la disponibilidad y cuota del proveedor.
+
+La guía funcional y los pasos de ejecución se mantienen en [GUIA_DEL_SISTEMA.md](GUIA_DEL_SISTEMA.md). Revisión de conexiones: 15 de noviembre de 2026.
+
 
 ## 2. Regla de dependencia
 

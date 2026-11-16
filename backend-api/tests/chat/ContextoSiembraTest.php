@@ -1,6 +1,18 @@
 <?php
 declare(strict_types=1);
 
+test('El asistente conserva el año del antecedente y no usa el calendario legado como alerta actual',function():void{
+    $provider=new \ZeaSys\Dominios\Chat\Infraestructura\GeminiFlowise();
+    $guia=(new \ZeaSys\Dominios\Analitica\Aplicacion\GuiaCalendarioAgricola())->paraParcela(['provincia'=>'Manabí','variedad_maiz'=>'INIAP H-551']);
+    $context=['panel_actual'=>'scenarios','contexto_agricola'=>['siembra'=>['guia_agricola'=>$guia,'kpis'=>['rendimiento_esperado'=>null],'sin_simulaciones'=>true]]];
+    $data=json_decode((new ReflectionMethod($provider,'compactarContextoParaConsulta'))->invoke($provider,$context,'Qué enfermedades se han reportado'),true,512,JSON_THROW_ON_ERROR);
+    assert_equals('Invierno 2022',$data['guia_siembra']['antecedentes']['periodo']);
+    assert_equals('Quemazón (síntoma reportado)',$data['guia_siembra']['antecedentes']['problemas'][0]);
+    assert_equals('practica_observada_2022',$data['guia_siembra']['epoca']['tipo']);
+    assert_true(str_contains($data['guia_siembra']['alertas_actuales'],'no confirman'),'El límite sobre brotes activos debe conservarse en el contexto compacto.');
+    assert_equals(null,$data['siembra']['kpis']['rendimiento_esperado']);
+});
+
 test('Chat de Siembra conserva el resumen del servidor, sus percentiles y el calendario aunque exista contexto agrícola', function (): void {
     $provider = new \ZeaSys\Dominios\Chat\Infraestructura\GeminiFlowise();
     $summary = ['sin_simulaciones'=>false,'año'=>2024,'kpis'=>['rendimiento_esperado'=>3], 'percentiles'=>['p10'=>2,'p50'=>3,'p90'=>4], 'resumen_descriptivo'=>['muestra'=>2,'coeficiente_variacion_pct'=>33.33], 'viabilidad_siembra'=>[['rango'=>'1–29 FEB','estado'=>'Siembra: Manabí','fuente'=>'Catálogo agronómico local']], 'ranking'=>[['simulacion_id'=>12,'valor'=>4]]];

@@ -21,6 +21,20 @@ const captureHeight = Number(process.env.ZEASYS_CAPTURE_HEIGHT || 1650);
       const page = await context.newPage();
       await page.goto(origin + '/');
       await page.locator('.navbar').waitFor();
+      // Captura del modal de bienvenida (se muestra en la primera entrada fresca).
+      // Espera a que el dashboard de inicio pinte algo antes de capturar con el modal encima.
+      await page.waitForFunction(() => {
+        const c = document.querySelector('#workspace-content');
+        return c && c.children.length > 0 && (c.textContent?.trim().length ?? 0) > 60;
+      }, null, { timeout: 60000 }).catch(() => {});
+      const cerrarConsejo = page.locator('.consejo-modal-primary, .consejo-modal-close');
+      const modalVisible = await cerrarConsejo.first().isVisible().catch(() => false);
+      if (modalVisible) {
+        await page.screenshot({ path: path.join(output, `consejo-${theme}.png`), animations: 'disabled' });
+        console.log('captura consejo', theme);
+        await cerrarConsejo.first().click();
+        await page.waitForTimeout(600);
+      }
       for (const name of views) {
         if (await page.locator('#workspace-sidebar').evaluate(node => node.inert)) await page.getByRole('button', { name: 'Expandir barra lateral' }).click();
         await page.getByRole('button', { name, exact: true }).click();

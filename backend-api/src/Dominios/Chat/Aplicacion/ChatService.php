@@ -201,7 +201,7 @@ final class ChatService
             // No existe una probabilidad calibrada para cada respuesta generada.
             'confianza' => null,
             'intencion' => 'asistente',
-            'fuente_datos' => [
+            'fuente_datos' => $this->flujoIa->informacionRespuesta() + [
                 'proveedor' => 'Flowise (proveedor configurado en el chatflow)',
                 'respuesta_directa_del_flujo' => true,
                 'referencias_consultadas' => array_map(static fn (array $ref): array => array_intersect_key($ref, array_flip(['archivo','pagina_pdf','año_fuente','extracto_cotejado_visualmente'])), $this->flujoIa->referenciasConsultadas()),

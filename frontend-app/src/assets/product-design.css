@@ -63,7 +63,7 @@ body.light-theme .zeasys-workspace .sidebar .platform-logo-img { filter: none !i
 .workspace-theme-switch:hover { background: var(--zs-raised); }
 .zeasys-workspace .lote-selector-trigger { border-radius: 14px; background: var(--zs-surface); box-shadow: none; }
 .zeasys-workspace .content-body { scrollbar-width: thin; scrollbar-color: var(--zs-border-strong) transparent; }
-.zeasys-workspace :is(.glass-panel, .dss-unified-card) { background: var(--zs-surface); border: 1px solid var(--zs-border); border-radius: var(--zi-radius-md); box-shadow: var(--zs-shadow-raised); backdrop-filter: none; }
+.zeasys-workspace :is(.glass-panel) { background: var(--zs-surface); border: 1px solid var(--zs-border); border-radius: var(--zi-radius-md); box-shadow: var(--zs-shadow-raised); backdrop-filter: none; }
 .zeasys-workspace :is(h1, h2, h3) { text-wrap: balance; }
 .zeasys-workspace .dashboard-section-heading { margin-top: 24px; margin-bottom: 14px; }
 .zeasys-workspace :is(.form-input, .form-select) { min-height: 46px; border-radius: 11px; background: var(--zs-inset-surface); color: var(--zs-text); border: 1px solid var(--zs-border); box-shadow: none; }
@@ -132,10 +132,10 @@ body.light-theme .zeasys-workspace .sidebar .platform-logo-img { filter: none !i
 }
 .zeasys-workspace .theme-selector-btn:hover { border-color: var(--zs-accent); }
 .zeasys-workspace .theme-selector-btn svg { color: var(--zs-accent); flex: none; }
-.zeasys-workspace :is(.glass-panel, .chart-panel-interactive, .dss-unified-card):hover { transform: none; }
+.zeasys-workspace :is(.glass-panel, .chart-panel-interactive):hover { transform: none; }
 
 /* Compatibility with legacy light-theme rules that add fractional border widths. */
-body.light-theme .zeasys-workspace :is(.glass-panel, .chart-panel-interactive, .dss-unified-card, .empty-state-container, .metric-helper-card) {
+body.light-theme .zeasys-workspace :is(.glass-panel, .chart-panel-interactive, .empty-state-container, .metric-helper-card) {
   border-width: 1px !important;
   border-color: var(--zs-border) !important;
 }
