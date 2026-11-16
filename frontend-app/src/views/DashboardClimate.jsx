@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ArrowRight, CalendarDays, Cloud, CloudLightning, CloudRain, CloudSun, Droplets, ExternalLink, Leaf, MapPin, MessageCircle, RefreshCw, Sprout, Sun, Thermometer, Wind } from 'lucide-react';
+import { ArrowRight, CalendarDays, Cloud, CloudLightning, CloudRain, CloudSun, Droplets, ExternalLink, Leaf, MapPin, MessageCircle, RefreshCw, Sprout, Sun, Thermometer, Waves, Wind } from 'lucide-react';
 import { dssService } from '../services/api';
 import EChart from '../components/EChart';
 import useTema from '../hooks/useTema';
@@ -89,6 +89,18 @@ export default function DashboardClimate({ cultivoElegidoId, cultivoActivo, onNa
   const annual = data.lluvia_anual_referencia;
   const enso = data.kpis?.enso;
   const index = climateNumber(enso?.valor_indice ?? enso?.roni ?? enso?.oni, -10, 10);
+  const ensoEstado = !enso || index === null ? null
+    : enso.estado === 'anomalia_calida' || index >= .5 ? 'Anomalía cálida'
+    : enso.estado === 'anomalia_fria' || index <= -.5 ? 'Anomalía fría'
+    : 'Sin anomalía marcada';
+  const ensoNota = (() => {
+    if (!enso || index === null) return 'No se pudo consultar el índice del Pacífico ahora; el pronóstico de tu parcela sigue disponible.';
+    const vigencia = enso.vigente === false ? 'Referencia no reciente: revisa su fecha antes de usarla. ' : '';
+    if (!plan.start) return `${vigencia}Registra tu fecha de siembra en Siembra para relacionar este fenómeno con tu cultivo.`;
+    if (plan.start > current.today) return `${vigencia}Siembras el ${dateLabel(plan.start)}: la fase de este fenómeno puede haber cambiado para entonces; vuelve a consultar cerca de esa fecha.`;
+    if (plan.end && plan.end < current.today) return `${vigencia}Tu cultivo completó su ciclo (iniciado el ${dateLabel(plan.start)}); usa esta referencia para comparar con lo que observaste en campo.`;
+    return `${vigencia}Tu cultivo está en campo desde el ${dateLabel(plan.start)}: esta es la condición del Pacífico que rodea a tu siembra; el pronóstico de 7 días sigue siendo la guía de tu parcela.`;
+  })();
   const title = rain ? 'Lluvia acumulada' : 'Temperatura media';
   const unit = rain ? 'mm' : '°C';
   const option = {
@@ -112,7 +124,16 @@ export default function DashboardClimate({ cultivoElegidoId, cultivoActivo, onNa
       <div className="climate-now-details">
         <button className="climate-reading" onClick={() => ask('¿Qué significa la humedad relativa del aire que muestra mi parcela? Diferénciala de la humedad del suelo.')}><Droplets size={22} aria-hidden="true" /><span>Humedad del aire<strong>{num(climateNumber(actual?.humedad_relativa_pct, 0, 100), 0)}<small> %</small></strong></span></button>
         <button className="climate-reading" onClick={() => ask('¿Qué significa el viento indicado en Clima y cultivo y qué debo revisar antes de trabajar en mi parcela?')}><Wind size={22} aria-hidden="true" /><span>Viento<strong>{num(climateNumber(actual?.viento_kmh, 0))}<small> km/h</small></strong></span></button>
-      </div><p className="climate-source">Fuente: Open-Meteo · estimaciones meteorológicas por ubicación; no son lecturas de una estación instalada en tu parcela.</p>
+      </div>
+      <button className="climate-reading climate-reading--enso" onClick={() => ask('Explícame el fenómeno de El Niño y La Niña que muestra Clima y cultivo. ¿Cómo se relaciona esta referencia del Pacífico con la fecha de siembra de mi parcela —actual o futura— y qué conviene revisar en el pronóstico de mi ubicación?')}>
+        <Waves size={22} aria-hidden="true" />
+        <span>El Niño y La Niña
+          <strong>{ensoEstado ?? 'Sin dato'}<small>{index !== null ? `${enso.indice || 'RONI'}: ${num(index, 2)} °C · ${enso.etiqueta_trimestre || enso.periodo}` : 'Índice del Pacífico no disponible'}</small></strong>
+          <span className="climate-reading-note">{ensoNota}</span>
+          <span className="climate-reading-source">Fenómeno del Pacífico ecuatorial que suele influir en el clima de Ecuador · NOAA CPC · no pronostica la lluvia de tu parcela</span>
+        </span>
+      </button>
+      <p className="climate-source">Fuente: Open-Meteo · estimaciones meteorológicas por ubicación; no son lecturas de una estación instalada en tu parcela.</p>
     </section>
 
     <section className="climate-panel" aria-labelledby="climate-week-title">

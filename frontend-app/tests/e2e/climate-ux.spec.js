@@ -25,6 +25,9 @@ for (const width of [375, 768, 1440]) for (const theme of ['light', 'dark']) tes
   await expect(page.locator('.climate-day')).toHaveCount(7);
   await expect(page.locator('.climate-week-summary')).toContainText('21 mm previstos');
   await expect(page.locator('.climate-crop-grid')).toContainText('Vegetativo V2–V8');
+  await expect(page.locator('.climate-reading--enso')).toContainText('El Niño y La Niña');
+  await expect(page.locator('.climate-reading--enso')).toContainText('Anomalía cálida');
+  await expect(page.locator('.climate-reading--enso')).toContainText('Tu cultivo está en campo desde el');
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   expect(await page.locator('.climate-page').evaluate(node => node.scrollWidth <= node.clientWidth)).toBe(true);
   const rectangles = await page.locator('.climate-day').evaluateAll(nodes => nodes.map(node => ({ x: node.getBoundingClientRect().x, right: node.getBoundingClientRect().right, height: node.getBoundingClientRect().height })));

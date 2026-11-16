@@ -46,6 +46,8 @@ El historial alterna lluvia y temperatura, con períodos de 30 días o doce mese
 
 La referencia de NOAA utiliza **RONI**, el índice empleado para el seguimiento oficial desde febrero de 2026. Se muestra el trimestre y su alcance regional; la aplicación no declara un episodio oficial ni convierte el índice en un riesgo para la parcela. Si falla una actualización de clima, se conserva la consulta anterior con sus fechas y se ofrece reintentar.
 
+La tarjeta **El Niño y La Niña** presenta esa referencia del Pacífico, que suele influir en el clima de Ecuador, y la relaciona con la fecha de siembra declarada: si el cultivo está en campo, muestra la condición del Pacífico que rodea a esa siembra; si la siembra es futura, advierte que la fase puede haber cambiado para esa fecha y sugiere volver a consultar cerca de la siembra; si no hay fecha registrada, invita a completarla en Siembra; si el ciclo terminó, sirve para comparar con lo observado. La nota aclara siempre que el pronóstico de 7 días sigue siendo la guía de la parcela y que la referencia no pronostica la lluvia local.
+
 | Clase | Ejemplos | Interpretación correcta |
 |---|---|---|
 | Declarados por el productor | Fecha real de siembra, riego, observación, peso cosechado | Se conservan con su contexto y fecha; el sistema no los verifica de forma independiente. |

@@ -31,6 +31,11 @@
 .climate-reading > span { min-width: 0; font-size: .9rem; }
 .climate-reading strong { display: block; margin-top: 5px; font-size: 1.55rem; line-height: 1.4; font-variant-numeric: tabular-nums; }
 .climate-reading small { font-size: .85rem; font-weight: 500; color: var(--zs-muted); }
+.climate-reading--enso { grid-column: 1 / -1; }
+.climate-reading--enso > svg { color: var(--zs-warning); margin-top: 2px; }
+.climate-reading--enso strong small { display: block; margin-top: 2px; font-size: .85rem; }
+.climate-reading-note { display: block; margin-top: 6px; font-size: .8rem; line-height: 1.45; color: var(--zs-muted); }
+.climate-reading-source { display: block; margin-top: 4px; font-size: .75rem; line-height: 1.4; color: var(--zs-muted); }
 .climate-source { color: var(--zs-muted); font-size: .85rem; line-height: 1.6; }
 .climate-forecast-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; }
 .climate-day { display: flex; flex-direction: column; align-items: center; gap: 10px; min-width: 0; padding: 16px 10px; color: var(--zs-text); background: var(--climate-inset); border: 1px solid var(--climate-line); border-radius: 12px; text-align: center; }
