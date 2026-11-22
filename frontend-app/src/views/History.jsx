@@ -187,6 +187,11 @@ export default function History({ recargarDatos }) {
       )}
 
       {/* Listings table */}
+      {simulaciones.length > 1 && <details className="field-evidence"><summary>Comparar rendimientos de esta página</summary>
+        {simulaciones.filter(s => toFiniteNumber(s.rendimiento_estimado) !== null).map(s => <div key={s.id}>
+          <strong>{s.nombre || 'Ejecución'} · {s.nombre_parcela} · {formatDate(s.fecha)}</strong>
+          <div><meter aria-label="Rendimiento simulado en toneladas por hectárea" min={0} max={Math.max(12,...simulaciones.map(x=>toFiniteNumber(x.rendimiento_estimado) ?? 0))} value={s.rendimiento_estimado} /> {formatDecimal(s.rendimiento_estimado)} t/ha</div>
+        </div>)}</details>}
       {data && <div className="glass-panel" style={{ width: '100%', boxSizing: 'border-box' }}>
         <div className="glass-card-header" style={{ padding: '0.85rem 1.25rem' }}>
           <h2 style={{ fontSize: '1rem', fontWeight: 700, margin: 0 }}>Simulaciones registradas</h2>
@@ -199,16 +204,16 @@ export default function History({ recargarDatos }) {
               <p className="empty-state-subtitle">Ejecuta una simulación en los modelos DSS para guardar el registro agronómico y compararlo en esta sección.</p>
             </div>
           ) : (
-            <div className="table-responsive-container" style={{ width: '100%', overflowX: 'auto', maxHeight: 'calc(100vh - 220px)', overflowY: 'auto' }}>
-              <table className="custom-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <div className="table-responsive-container" role="region" aria-label="Historial de simulaciones, tabla desplazable" tabIndex={0} style={{ width: '100%', overflowX: 'auto', maxHeight: 'calc(100vh - 220px)', overflowY: 'auto' }}>
+              <table aria-label="Simulaciones guardadas" className="custom-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead style={{ position: 'sticky', top: 0, zIndex: 10, background: 'var(--surface-elevated)' }}>
                   <tr style={{ background: 'var(--surface-elevated)', borderBottom: '1.5px solid var(--border-subtle)' }}>
-                    <th style={{ padding: '0.75rem 1rem', textAlign: 'left', fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Simulación / Lote</th>
-                    <th style={{ padding: '0.75rem 1rem', textAlign: 'center', fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Modelo</th>
-                    <th style={{ padding: '0.75rem 1rem', textAlign: 'left', fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Variables agronómicas</th>
-                    <th style={{ padding: '0.75rem 1rem', textAlign: 'left', fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Rendimiento</th>
-                    <th style={{ padding: '0.75rem 1rem', textAlign: 'center', fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Fecha</th>
-                    <th style={{ padding: '0.75rem 1rem', textAlign: 'center', fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Acción</th>
+                    <th scope="col" style={{ padding: '0.75rem 1rem', textAlign: 'left', fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Simulación / Lote</th>
+                    <th scope="col" style={{ padding: '0.75rem 1rem', textAlign: 'center', fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Modelo</th>
+                    <th scope="col" style={{ padding: '0.75rem 1rem', textAlign: 'left', fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Variables agronómicas</th>
+                    <th scope="col" style={{ padding: '0.75rem 1rem', textAlign: 'left', fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Rendimiento</th>
+                    <th scope="col" style={{ padding: '0.75rem 1rem', textAlign: 'center', fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Fecha</th>
+                    <th scope="col" style={{ padding: '0.75rem 1rem', textAlign: 'center', fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Acción</th>
                   </tr>
                 </thead>
                 <tbody>

@@ -198,7 +198,7 @@
         },
         "horas_luz_dia": {
             "type": "numeric",
-            "description": "Variable predictora de tipo numeric (horas_luz_dia)",
+            "description": "Horas por día consignadas en el CSV. La fuente y la definición física están sin acreditar. El simulador usa una mediana histórica. No interpretar como fotoperiodo ni radiación medida.",
             "examples": [
                 7.4,
                 7.5,

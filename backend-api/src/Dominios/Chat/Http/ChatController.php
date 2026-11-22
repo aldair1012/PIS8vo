@@ -5,17 +5,32 @@ declare(strict_types=1);
 namespace ZeaSys\Dominios\Chat\Http;
 
 use ZeaSys\Dominios\Chat\Aplicacion\ChatService;
+use ZeaSys\Dominios\Chat\Infraestructura\ConsentimientoAsistente;
 use ZeaSys\Kernel\Errores\NoAutorizadoException;
 use ZeaSys\Kernel\Errores\ValidacionException;
+use ZeaSys\Kernel\Errores\ZeaSysException;
 use ZeaSys\Kernel\Peticion;
 use ZeaSys\Kernel\RespuestaJson;
 use ZeaSys\Kernel\SesionSinBloqueo;
 
 final class ChatController
 {
-    private const VISTAS_VALIDAS = ['yield', 'scenarios', 'climate', 'finance', 'map', 'simular', 'history'];
+    private const VISTAS_VALIDAS = ['yield', 'scenarios', 'climate', 'finance', 'map', 'simular', 'history', 'asistente'];
 
-    public function __construct(private ChatService $servicio) {}
+    public function __construct(private ChatService $servicio, private ConsentimientoAsistente $consentimiento) {}
+
+    public function consentimiento(Peticion $peticion): void
+    {
+        $usuario = $this->usuarioId();
+        if ($peticion->metodo() === 'GET') {
+            RespuestaJson::enviar($this->consentimiento->estado($usuario));
+            return;
+        }
+        $datos = $peticion->cuerpo();
+        $estado = $this->consentimiento->decidir($usuario, $datos['autorizado'] ?? null, $datos['version'] ?? null);
+        if (!$estado['autorizado']) $this->servicio->limpiarMemoria();
+        RespuestaJson::enviar($estado);
+    }
 
     public function preguntar(Peticion $peticion): void
     {
@@ -65,14 +80,40 @@ final class ChatController
             throw new ValidacionException('El borrador de simulación es demasiado grande.');
         }
 
-        $usuarioId = (int) ($_SESSION['usuario_id'] ?? 0);
-
-        $respuesta = SesionSinBloqueo::ejecutar(
-            fn () => $this->servicio->preguntar($pregunta, $vista, $usuarioId, $cultivoId, $año, $dashboard, $simulacion),
-            'chat',
-        );
-
-        RespuestaJson::enviar($respuesta);
+        $usuarioId = $this->usuarioId();
+        if (!$this->consentimiento->estado($usuarioId)['autorizado']) {
+            RespuestaJson::enviar(['error' => 'Para enviar una consulta al proveedor de IA, autoriza este uso de tus datos.',
+                'version' => ConsentimientoAsistente::VERSION], 428);
+            return;
+        }
+        $simple = ($cuerpo['modo_simple'] ?? false) === true;
+        $stream = str_contains($_SERVER['HTTP_ACCEPT'] ?? '', 'text/event-stream');
+        $iniciado = false;
+        $evento = static function (string $tipo, array $datos) use (&$iniciado): void {
+            if (!$iniciado) {
+                header('Content-Type: text/event-stream; charset=utf-8');
+                header('Cache-Control: private, no-store, no-transform');
+                header('X-Accel-Buffering: no');
+                if (function_exists('apache_setenv')) apache_setenv('no-gzip', '1');
+                while (ob_get_level() > 0 && ob_end_flush()) {}
+                $iniciado = true;
+            }
+            echo 'event: ', $tipo, "\ndata: ", json_encode($datos, JSON_INVALID_UTF8_SUBSTITUTE | JSON_THROW_ON_ERROR), "\n\n";
+            flush();
+        };
+        try {
+            $emitir = $stream ? static fn (string $texto) => $evento('delta', ['texto' => $texto]) : null;
+            $respuesta = SesionSinBloqueo::ejecutar(
+                fn () => $this->servicio->preguntar($pregunta, $vista, $usuarioId, $cultivoId, $año, $dashboard, $simulacion, $emitir, $simple),
+                'chat',
+            );
+            if ($stream) $evento('final', $respuesta);
+            else RespuestaJson::enviar($respuesta);
+        } catch (\Throwable $error) {
+            if (!$iniciado) throw $error;
+            $codigo = $error instanceof ZeaSysException ? $error->codigoHttp() : 500;
+            $evento('error', ['codigo' => $codigo, 'error' => 'La respuesta se interrumpió.']);
+        }
     }
 
     public function limpiar(Peticion $peticion): void

@@ -11,5 +11,6 @@ COPY ml-engine/config/ ./config/
 COPY ml-engine/data/ ./data/
 COPY ml-engine/models/ ./models/
 COPY backend-api/data/*.json /app/backend-api/data/
+COPY backend-api/data/referencias/*.json /app/backend-api/data/referencias/
 EXPOSE 5000
 CMD ["python", "app.py"]

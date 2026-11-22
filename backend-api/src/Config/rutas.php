@@ -3,6 +3,7 @@
 // F01: controladores legacy (id = nombre de clase global). F02–F05 los reemplazan dominio a dominio.
 
 return [
+    'api/salud' => ['controlador' => \ZeaSys\Kernel\SaludController::class, 'accion' => 'consultar', 'metodos' => ['GET'], 'publica' => true],
     // --- Autenticación (F02: dominio ZeaSys\Dominios\Autenticacion) ---
     'api/auth/iniciar-sesion'               => ['controlador' => \ZeaSys\Dominios\Autenticacion\Http\AuthController::class, 'accion' => 'iniciarSesion', 'metodos' => ['POST'], 'publica' => true, 'sesion' => true],
     'api/auth/registrarse'                  => ['controlador' => \ZeaSys\Dominios\Autenticacion\Http\AuthController::class, 'accion' => 'registrarse', 'metodos' => ['POST'], 'publica' => true, 'sesion' => true],
@@ -16,6 +17,9 @@ return [
     'api/auth/eliminar-cuenta'              => ['controlador' => \ZeaSys\Dominios\Autenticacion\Http\AuthController::class, 'accion' => 'eliminarCuenta', 'metodos' => ['POST'], 'sesion' => true],
 
     // --- Cultivos / Parcelas (F03: dominio ZeaSys\Dominios\Lotes) ---
+    'api/acompanamiento' => ['controlador' => \ZeaSys\Dominios\Lotes\Http\AcompanamientoController::class, 'accion' => 'panel', 'metodos' => ['GET']],
+    'api/acompanamiento/accesos' => ['controlador' => \ZeaSys\Dominios\Lotes\Http\AcompanamientoController::class, 'acciones' => ['POST' => 'conceder', 'DELETE' => 'revocar']],
+    'api/acompanamiento/exportar' => ['controlador' => \ZeaSys\Dominios\Lotes\Http\AcompanamientoController::class, 'accion' => 'exportar', 'metodos' => ['GET']],
     'api/parcelas'                          => ['controlador' => \ZeaSys\Dominios\Lotes\Http\CultivoController::class, 'acciones' => ['GET' => 'listar', 'POST' => 'crear', 'PUT' => 'actualizar', 'DELETE' => 'eliminar']],
     'api/parcelas/mapa'                     => ['controlador' => \ZeaSys\Dominios\Lotes\Http\CultivoController::class, 'accion' => 'mapa', 'metodos' => ['GET']],
     'api/parcelas/valores-ubicacion'        => ['controlador' => \ZeaSys\Dominios\Lotes\Http\CultivoController::class, 'accion' => 'obtenerValoresUbicacion', 'metodos' => ['GET']],
@@ -29,13 +33,20 @@ return [
     'api/simulaciones/explicar'             => ['controlador' => \ZeaSys\Dominios\Simulaciones\Http\SimulacionController::class, 'accion' => 'explicar', 'metodos' => ['POST']],
 
     // --- Chat: chatbot con memoria de sesión ---
+    'api/chat/consentimiento' => ['controlador' => \ZeaSys\Dominios\Chat\Http\ChatController::class, 'accion' => 'consentimiento', 'metodos' => ['GET','POST'], 'sesion' => true],
     'api/chat/preguntar'                    => ['controlador' => \ZeaSys\Dominios\Chat\Http\ChatController::class, 'accion' => 'preguntar', 'metodos' => ['POST'], 'sesion' => true],
     'api/chat/limpiar'                      => ['controlador' => \ZeaSys\Dominios\Chat\Http\ChatController::class, 'accion' => 'limpiar', 'metodos' => ['POST'], 'sesion' => true],
     'api/chat/favorito'                     => ['controlador' => \ZeaSys\Dominios\Chat\Http\ChatController::class, 'accion' => 'guardarFavorito', 'metodos' => ['POST'], 'sesion' => true],
     'api/chat/favorito/eliminar'            => ['controlador' => \ZeaSys\Dominios\Chat\Http\ChatController::class, 'accion' => 'eliminarFavorito', 'metodos' => ['POST'], 'sesion' => true],
 
     // --- DSS Dashboards (F05: dominio ZeaSys\Dominios\Analitica) ---
+    'api/rendimiento/campanas' => ['controlador' => \ZeaSys\Dominios\Analitica\Http\CampanasController::class, 'accion' => 'historial', 'metodos' => ['GET']],
+    'api/rendimiento/campanas/cosecha' => ['controlador' => \ZeaSys\Dominios\Analitica\Http\CampanasController::class, 'accion' => 'cosechar', 'metodos' => ['POST']],
+    'api/rendimiento/campanas/observacion' => ['controlador' => \ZeaSys\Dominios\Analitica\Http\CampanasController::class, 'accion' => 'observar', 'metodos' => ['POST']],
+    'api/rendimiento/campanas/adjunto' => ['controlador' => \ZeaSys\Dominios\Analitica\Http\CampanasController::class, 'accion' => 'descargar', 'metodos' => ['GET']],
     'api/escenarios'                        => ['controlador' => \ZeaSys\Dominios\Analitica\Http\ScenarioController::class, 'accion' => 'index', 'metodos' => ['GET']],
+    'api/clima/avisos' => ['controlador' => \ZeaSys\Dominios\Analitica\Http\AlertasController::class, 'accion' => 'preferencia', 'metodos' => ['GET','POST','DELETE']],
+    'api/whatsapp/webhook' => ['controlador' => \ZeaSys\Dominios\Analitica\Http\AlertasController::class, 'accion' => 'webhook', 'metodos' => ['GET','POST'], 'publica' => true],
     'api/clima'                             => ['controlador' => \ZeaSys\Dominios\Analitica\Http\ClimateController::class, 'accion' => 'index', 'metodos' => ['GET']],
     'api/rendimiento'                       => ['controlador' => \ZeaSys\Dominios\Analitica\Http\YieldController::class, 'accion' => 'index', 'metodos' => ['GET']],
     'api/rendimiento/mediciones/consulta'   => ['controlador' => \ZeaSys\Dominios\Analitica\Http\YieldController::class, 'accion' => 'obtenerMediciones', 'metodos' => ['GET']],

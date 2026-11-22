@@ -1,0 +1,13 @@
+.campanas-panel { margin-block: 1rem; overflow-wrap: anywhere; }
+.campanas-panel h3 { margin-block: 1.25rem .4rem; }
+.campanas-panel p { margin-block: .6rem; }
+.campanas-registro { border-block-start: 1px solid currentColor; margin-block-start: .85rem; }
+.campanas-registro summary { cursor: pointer; padding-block: .8rem; font-weight: 600; }
+.campanas-registro fieldset { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr)); gap: .8rem 1rem; margin: 0; padding: 0 0 .5rem; border: 0; align-items: end; }
+.campanas-registro label { display: grid; gap: .3rem; min-width: 0; font-size: .9rem; }
+.campanas-registro :is(input, textarea, select) { box-sizing: border-box; max-width: 100%; min-height: 44px; padding: .45rem; border-radius: .4rem; font: inherit; }
+.campanas-registro .campanas-check { display: flex; align-items: center; }
+.campanas-check input { min-width: 1.1rem; }
+.campanas-banda { display: grid; grid-template-columns: minmax(9rem, auto) 1fr; align-items: center; gap: 1rem; margin-block: .45rem; }
+.campanas-banda > div { position: relative; height: .65rem; background: color-mix(in srgb, currentColor 12%, transparent); border-radius: .35rem; }
+.campanas-banda i { position: absolute; min-width: 2px; height: 100%; border-radius: inherit; background: currentColor; }

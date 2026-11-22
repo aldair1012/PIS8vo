@@ -1,5 +1,7 @@
+import { editarPeriodo, errorPeriodo, periodoCultivo } from '../utils/fieldInputs';
 import { useState, useEffect, useRef } from 'react';
 import { parcelasService } from '../services/api';
+import PanelTecnico from '../components/PanelTecnico';
 import { leerAltitud, leerPhSuelo, urlPhSuelo } from '../utils/datosParcela';
 import '../utils/mapRuntime';
 import { nombrarControlesMapa, observarTamanoMapa } from '../utils/mapAccessibility';
@@ -19,25 +21,9 @@ import {
   Map
 } from 'lucide-react';
 
-// Funciones auxiliares para validar inputs numéricos
-const limpiarTextoNumerico = (valor, permiteNegativo = false) => {
-  if (!valor || typeof valor !== 'string') return valor;
-  let limpio = valor.replace(/[/*+eE]/g, '');
-  if (permiteNegativo) {
-    return limpio.replace(/[^0-9.,-]/g, '');
-  }
-  return limpio.replace(/[-]/g, '').replace(/[^0-9.,]/g, '');
-};
-
-const evitarOperadores = (e, permiteNegativo = false) => {
-  const teclas = ['/', '*', '+', 'e', 'E'];
-  if (!permiteNegativo) {
-    teclas.push('-');
-  }
-  if (teclas.includes(e.key)) {
-    e.preventDefault();
-  }
-};
+// El navegador valida la cadena completa antes de convertir coma o punto decimal.
+const decimalPattern = '([0-9]+([.,][0-9]+)?|[.,][0-9]+)';
+const coordinatePattern = `-?${decimalPattern}`;
 
 export default function Cultivos({ onCultivoChanged, onboardingStep, onNextOnboardingStep, onAbrirRegistroCampo }) {
   const [cultivos, setCultivos] = useState([]);
@@ -45,6 +31,7 @@ export default function Cultivos({ onCultivoChanged, onboardingStep, onNextOnboa
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
   const [copiedId, setCopiedId] = useState(null);
+  const [panelTecnico, setPanelTecnico] = useState(false);
 
   const [nombre, setNombre] = useState('');
   const [variedad, setVariedad] = useState('');
@@ -54,11 +41,18 @@ export default function Cultivos({ onCultivoChanged, onboardingStep, onNextOnboa
   const [area, setArea] = useState('');
   const [latitud, setLatitud] = useState('');
   const [longitud, setLongitud] = useState('');
-  const [fechaSiembra, setFechaSiembra] = useState('');
+  const [periodo, setPeriodo] = useState(() => periodoCultivo());
+  const fechaSiembra = periodo.fecha;
+  const cambiarPeriodo = (campo, valor) => setPeriodo(previous => editarPeriodo(previous, campo, valor));
   const [altitud, setAltitud] = useState('');
   const [ph, setPh] = useState('');
   const [estadoPh, setEstadoPh] = useState('');
   const [estadoAltitud, setEstadoAltitud] = useState('');
+  const [saving, setSaving] = useState(false);
+  const savingRef = useRef(false);
+  const [searchStatus, setSearchStatus] = useState('');
+  const activeSearch = useRef(null);
+  useEffect(() => () => activeSearch.current?.abort(), []);
   const consultaPh = useRef(0);
   const consultaAltitud = useRef(0);
   const consultaUbicacion = useRef(0);
@@ -227,12 +221,18 @@ export default function Cultivos({ onCultivoChanged, onboardingStep, onNextOnboa
   }, []);
 
   const handleMapSearch = async () => {
-    if (!searchQuery || !searchQuery.trim() || !mapRef.current) return;
+    if (!searchQuery.trim() || !mapRef.current) return;
+    activeSearch.current?.abort();
+    const controller = new AbortController();
+    activeSearch.current = controller;
+    setSearchStatus('Buscando ubicación…');
     try {
-      const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}`);
+      const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&countrycodes=ec&limit=1&q=${encodeURIComponent(searchQuery.trim())}`, { signal: controller.signal });
+      if (!res.ok) throw new Error();
       const data = await res.json();
       if (data && data.length > 0) {
         const first = data[0];
+        setSearchStatus(`Ubicación encontrada: ${first.display_name}`);
         const lat = parseFloat(first.lat);
         const lon = parseFloat(first.lon);
 
@@ -252,9 +252,11 @@ export default function Cultivos({ onCultivoChanged, onboardingStep, onNextOnboa
         setUbicacion(first.display_name);
         fetchAltitude(lat, lon);
         fetchSoilPh(lat, lon);
+      } else {
+        setSearchStatus('No encontramos ese lugar. Prueba con el cantón o marca el punto en el mapa.');
       }
     } catch (err) {
-      console.error('Error searching map location:', err);
+      if (err.name !== 'AbortError') setSearchStatus('No pudimos consultar el mapa. Puedes escribir las coordenadas de tu parcela.');
     }
   };
 
@@ -356,12 +358,13 @@ export default function Cultivos({ onCultivoChanged, onboardingStep, onNextOnboa
   const parseNum = (val) => {
     if (val === null || val === undefined || val === '') return null;
     const clean = String(val).replace(',', '.');
-    const num = parseFloat(clean);
-    return isNaN(num) ? null : num;
+    const num = Number(clean);
+    return Number.isFinite(num) ? num : null;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (savingRef.current) return;
     setError(null);
     setSuccess(null);
 
@@ -370,6 +373,8 @@ export default function Cultivos({ onCultivoChanged, onboardingStep, onNextOnboa
       return;
     }
 
+    const problemaPeriodo = errorPeriodo(periodo);
+    if (problemaPeriodo) { setError(problemaPeriodo); return; }
     if (!fechaSiembra || !fechaSiembra.trim()) {
       setError('Por favor, selecciona la fecha estimada de siembra.');
       return;
@@ -408,15 +413,21 @@ export default function Cultivos({ onCultivoChanged, onboardingStep, onNextOnboa
       latitud: latVal,
       longitud: lngVal,
       fecha_siembra: fechaSiembra || null,
+      ciclo_dias: periodo.dias ? Number(periodo.dias) : null,
+      tipo_fecha_siembra: 'prevista',
       altitud: parseNum(altitud),
       ph: parseNum(ph),
       geojson: geojson || null
     };
 
+    savingRef.current = true;
+    setSaving(true);
     try {
       await parcelasService.crear(payload);
       setSuccess('Lote registrado exitosamente.');
       
+      setSearchStatus('');
+      setSearchQuery('');
       setNombre('');
       setVariedad('');
       setVariedadPersonalizada('');
@@ -427,7 +438,7 @@ export default function Cultivos({ onCultivoChanged, onboardingStep, onNextOnboa
       setArea('');
       setLatitud('');
       setLongitud('');
-      setFechaSiembra('');
+      setPeriodo(periodoCultivo());
       consultaAltitud.current += 1;
       consultaPh.current += 1;
       setAltitud('');
@@ -452,12 +463,16 @@ export default function Cultivos({ onCultivoChanged, onboardingStep, onNextOnboa
       }
     } catch (err) {
       setError(err.response?.data?.error || 'Error al guardar el cultivo.');
+    } finally {
+      savingRef.current = false;
+      setSaving(false);
     }
   };
 
   const handleCopyCoords = async (lat, lng) => {
-    if (!lat || !lng) return;
-    const text = `${Number(lat).toFixed(7)}, ${Number(lng).toFixed(7)}`;
+    const latitude = parseNum(lat), longitude = parseNum(lng);
+    if (latitude === null || longitude === null) return;
+    const text = `${latitude.toFixed(7)}, ${longitude.toFixed(7)}`;
     try {
       await navigator.clipboard.writeText(text);
       setCopiedId('coordinates');
@@ -473,24 +488,26 @@ export default function Cultivos({ onCultivoChanged, onboardingStep, onNextOnboa
         <div>
           <h1 style={{ fontSize: '1.35rem', fontWeight: 800, margin: 0 }}>Gestionar Lotes y Parcelas</h1>
           <p className='dashboard-title-desc' style={{ margin: '0.15rem 0 0 0', fontSize: '0.8125rem' }}>
-            Registra tus lotes de producción mediante linderos satelitales o posicionamiento manual.
+            Marca la parcela en el mapa o escribe sus coordenadas. Puedes dibujar el contorno para calcular el área.
           </p>
           <span role="status" style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>
-            {loading ? 'Actualizando parcelas...' : `${cultivos.length} parcelas registradas`}
+            {loading ? 'Actualizando parcelas...' : (cultivos.length === 1 ? '1 parcela registrada' : `${cultivos.length} parcelas registradas`)}
           </span>
         </div>
+        <button type="button" className="btn btn-secondary" onClick={() => setPanelTecnico(true)}>Acompañamiento técnico</button>
         {onAbrirRegistroCampo && <button type="button" className="btn btn-secondary" onClick={onAbrirRegistroCampo} disabled={!cultivos.length}>Registro de campo</button>}
       </div>
+      {panelTecnico && <PanelTecnico parcelas={cultivos} onClose={() => setPanelTecnico(false)} />}
 
       {success && (
-        <div className='bg-success-alpha text-success' style={{ padding: '0.6rem 0.9rem', borderRadius: '8px', fontSize: '0.9375rem', marginBottom: '0.75rem', border: '1px solid rgba(22, 163, 74, 0.25)', display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
+        <div role='status' className='bg-success-alpha text-success' style={{ padding: '0.6rem 0.9rem', borderRadius: '8px', fontSize: '0.9375rem', marginBottom: '0.75rem', border: '1px solid rgba(22, 163, 74, 0.25)', display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
           <Info size={15} />
           <span>{success}</span>
         </div>
       )}
 
       {error && (
-        <div className='bg-danger-alpha text-danger' style={{ padding: '0.6rem 0.9rem', borderRadius: '8px', fontSize: '0.9375rem', marginBottom: '0.75rem', border: '1px solid rgba(239, 68, 68, 0.25)', display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
+        <div role='alert' className='bg-danger-alpha text-danger' style={{ padding: '0.6rem 0.9rem', borderRadius: '8px', fontSize: '0.9375rem', marginBottom: '0.75rem', border: '1px solid rgba(239, 68, 68, 0.25)', display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
           <Info size={15} />
           <span>{error}</span>
         </div>
@@ -530,13 +547,13 @@ export default function Cultivos({ onCultivoChanged, onboardingStep, onNextOnboa
           
           <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem', flexShrink: 0 }}>
-              <label className='form-label' style={{ marginBottom: 0, fontSize: '0.8125rem', display: 'flex', alignItems: 'center', gap: '0.35rem', fontWeight: 700 }}>
-                <Map size={13} color='#3b82f6' /> Trazado Satelital y Selección de Terreno
-              </label>
+              <h3 className='form-label' style={{ margin: 0, fontSize: '0.8125rem', display: 'flex', alignItems: 'center', gap: '0.35rem', fontWeight: 700 }}>
+                <Map size={16} aria-hidden='true' /> Ubicación de la parcela
+              </h3>
               <button
                 type="button"
                 onClick={() => handleCopyCoords(latitud, longitud)}
-                disabled={!latitud || !longitud}
+                disabled={parseNum(latitud) === null || parseNum(longitud) === null}
                 aria-label={copiedId === 'coordinates' ? 'Coordenadas copiadas' : 'Copiar coordenadas'}
                 title={copiedId === 'coordinates' ? 'Coordenadas copiadas' : 'Copiar coordenadas'}
                 style={{ border: 0, background: 'transparent', color: 'var(--text-muted)', cursor: latitud && longitud ? 'pointer' : 'not-allowed', padding: '0.25rem' }}
@@ -545,13 +562,13 @@ export default function Cultivos({ onCultivoChanged, onboardingStep, onNextOnboa
               </button>
             </div>
 
-            <div className='cultivos-map-shell' style={{ position: 'relative', flex: 'var(--cultivos-map-flex, 1)', minHeight: 'var(--cultivos-map-height, 0)', borderRadius: '10px', overflow: 'hidden', border: '1px solid var(--border-subtle)' }}>
               <div className="cultivos-map-toolbar cultivos-map-search">
                 <input
                   type='text'
-                  placeholder='Buscar ubicación...'
+                  aria-label='Buscar una ubicación en Ecuador'
+                  placeholder='Cantón o localidad'
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={(e) => { activeSearch.current?.abort(); setSearchStatus(''); setSearchQuery(e.target.value); }}
                   onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleMapSearch(); } }}
                   className='form-input cultivos-map-search-input'
                 />
@@ -559,15 +576,15 @@ export default function Cultivos({ onCultivoChanged, onboardingStep, onNextOnboa
                   Buscar
                 </button>
               </div>
-
+            <div className='cultivos-map-shell' style={{ position: 'relative', flex: 'var(--cultivos-map-flex, 1)', minHeight: 'var(--cultivos-map-height, 0)', borderRadius: '10px', overflow: 'hidden', border: '1px solid var(--border-subtle)' }}>
               <div ref={mapContainerRef} style={{ width: '100%', height: '100%' }}></div>
             </div>
+            <p className="parcela-map-status" role="status">{searchStatus}</p>
           </div>
 
           <div className="cultivos-form-fields" style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', overflowY: 'var(--cultivos-fields-overflow, auto)', paddingRight: '0.25rem' }}>
-            <div style={{ fontSize: '0.8125rem', fontWeight: 800, color: 'var(--text-subtle)', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.25rem' }}>
-              Información del Lote
-            </div>
+            <h3 className="parcela-section-title">Datos del lote</h3>
+            <p className="parcela-form-note">Los campos con * son obligatorios. Puedes escribir los decimales con coma o punto.</p>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem' }}>
               <div className='form-group' style={{ marginBottom: 0 }}>
                 <label htmlFor="parcela-nombre" className='form-label' style={{ fontSize: '0.8125rem', marginBottom: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}><Sprout size={11} /> Nombre del Lote *</label>
@@ -600,8 +617,8 @@ export default function Cultivos({ onCultivoChanged, onboardingStep, onNextOnboa
                   className='form-input' 
                   placeholder='Ej: 5.25' 
                   value={area} 
-                  onChange={e => setArea(limpiarTextoNumerico(e.target.value))} 
-                  onKeyDown={evitarOperadores}
+                  onChange={e => setArea(e.target.value)}
+                  pattern={decimalPattern} title="Escribe un número sin separadores de miles, por ejemplo 5,25."
                   required 
                   style={{ padding: '0.45rem 0.65rem', fontSize: '0.9375rem' }} 
                 />
@@ -613,9 +630,7 @@ export default function Cultivos({ onCultivoChanged, onboardingStep, onNextOnboa
               <input id="parcela-semilla" type='text' className='form-input' placeholder='Ej: nombre local o marca del híbrido' value={variedadPersonalizada} onChange={e => setVariedadPersonalizada(e.target.value)} required maxLength={120} style={{ padding: '0.45rem 0.65rem', fontSize: '0.9375rem' }} />
             </div>}
 
-            <div style={{ fontSize: '0.8125rem', fontWeight: 800, color: 'var(--text-subtle)', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.25rem', marginTop: '0.15rem' }}>
-              Geolocalización y Edafología
-            </div>
+            <h3 className="parcela-section-title">Ubicación y suelo</h3>
 
             <div className="cultivos-location-fields" style={{ display: 'grid', gridTemplateColumns: 'var(--cultivos-location-columns, repeat(3, minmax(0, 1fr)))', gap: '0.5rem' }}>
               <div className='form-group' style={{ marginBottom: 0 }}>
@@ -626,8 +641,8 @@ export default function Cultivos({ onCultivoChanged, onboardingStep, onNextOnboa
                   className='form-input' 
                   placeholder='-2.189' 
                   value={latitud} 
-                  onChange={e => { invalidarDatosUbicacion(); setLatitud(limpiarTextoNumerico(e.target.value, true)); }} 
-                  onKeyDown={e => evitarOperadores(e, true)}
+                  onChange={e => { invalidarDatosUbicacion(); setLatitud(e.target.value); }}
+                  pattern={coordinatePattern} title="Escribe una coordenada decimal, por ejemplo -1,25."
                   required 
                   style={{ padding: '0.4rem 0.5rem', fontSize: '0.8125rem' }} 
                 />
@@ -640,25 +655,25 @@ export default function Cultivos({ onCultivoChanged, onboardingStep, onNextOnboa
                   className='form-input' 
                   placeholder='-79.889' 
                   value={longitud} 
-                  onChange={e => { invalidarDatosUbicacion(); setLongitud(limpiarTextoNumerico(e.target.value, true)); }} 
-                  onKeyDown={e => evitarOperadores(e, true)}
+                  onChange={e => { invalidarDatosUbicacion(); setLongitud(e.target.value); }}
+                  pattern={coordinatePattern} title="Escribe una coordenada decimal, por ejemplo -1,25."
                   required 
                   style={{ padding: '0.4rem 0.5rem', fontSize: '0.8125rem' }} 
                 />
               </div>
               <div className='form-group' style={{ marginBottom: 0 }}>
                 <label htmlFor="parcela-ph" className='form-label' style={{ fontSize: '0.8125rem', marginBottom: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.2rem' }}><Droplet size={10} /> pH Suelo</label>
-                <input id="parcela-ph" 
+                <input id="parcela-ph" aria-describedby={estadoPh ? 'parcela-ph-estado' : undefined}
                   type='text' 
                   inputMode='decimal' 
                   className='form-input' 
                   placeholder='6.5' 
                   value={ph} 
-                  onChange={e => { consultaPh.current += 1; setEstadoPh('Valor ingresado manualmente.'); setPh(limpiarTextoNumerico(e.target.value)); }} 
-                  onKeyDown={evitarOperadores}
+                  onChange={e => { consultaPh.current += 1; setEstadoPh('Valor ingresado manualmente.'); setPh(e.target.value); }}
+                  pattern={decimalPattern} title="Escribe un número sin separadores de miles, por ejemplo 5,25."
                   style={{ padding: '0.4rem 0.5rem', fontSize: '0.8125rem' }} 
                 />
-                {estadoPh && <small role="status" style={{ color: 'var(--zs-muted)', fontSize: '0.8125rem', lineHeight: 1.35 }}>{estadoPh}</small>}
+                {estadoPh && <small id="parcela-ph-estado" role="status" style={{ color: 'var(--zs-muted)', fontSize: '0.8125rem', lineHeight: 1.35 }}>{estadoPh}</small>}
               </div>
             </div>
 
@@ -678,37 +693,42 @@ export default function Cultivos({ onCultivoChanged, onboardingStep, onNextOnboa
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem' }}>
               <div className='form-group' style={{ marginBottom: 0 }}>
                 <label htmlFor="parcela-ubicacion" className='form-label' style={{ fontSize: '0.8125rem', marginBottom: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}><MapPin size={11} /> Ubicación / Provincia</label>
-                <input id="parcela-ubicacion" type='text' className='form-input' placeholder='Guayas, Ecuador' value={ubicacion} onChange={e => { consultaUbicacion.current += 1; setEstadoUbicacion('Ubicación ingresada manualmente.'); setUbicacion(e.target.value); }} style={{ padding: '0.45rem 0.65rem', fontSize: '0.9375rem' }} />
-                {estadoUbicacion && <small role="status" style={{ color: 'var(--zs-muted)', fontSize: '0.8125rem', lineHeight: 1.35 }}>{estadoUbicacion}</small>}
+                <input id="parcela-ubicacion" aria-describedby={estadoUbicacion ? 'parcela-ubicacion-estado' : undefined} type='text' className='form-input' placeholder='Guayas, Ecuador' value={ubicacion} onChange={e => { consultaUbicacion.current += 1; setEstadoUbicacion('Ubicación ingresada manualmente.'); setUbicacion(e.target.value); }} style={{ padding: '0.45rem 0.65rem', fontSize: '0.9375rem' }} />
+                {estadoUbicacion && <small id="parcela-ubicacion-estado" role="status" style={{ color: 'var(--zs-muted)', fontSize: '0.8125rem', lineHeight: 1.35 }}>{estadoUbicacion}</small>}
               </div>
               <div className='form-group' style={{ marginBottom: 0 }}>
                 <label htmlFor="parcela-altitud" className='form-label' style={{ fontSize: '0.8125rem', marginBottom: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}><Mountain size={11} /> Altitud (msnm)</label>
-                <input id="parcela-altitud" 
+                <input id="parcela-altitud" aria-describedby={estadoAltitud ? 'parcela-altitud-estado' : undefined}
                   type='text' 
                   inputMode='decimal' 
                   className='form-input' 
                   placeholder='45' 
                   value={altitud} 
-                  onChange={e => { consultaAltitud.current += 1; setEstadoAltitud('Valor ingresado manualmente.'); setAltitud(limpiarTextoNumerico(e.target.value)); }} 
-                  onKeyDown={evitarOperadores}
+                  onChange={e => { consultaAltitud.current += 1; setEstadoAltitud('Valor ingresado manualmente.'); setAltitud(e.target.value); }}
+                  pattern={decimalPattern} title="Escribe un número sin separadores de miles, por ejemplo 5,25."
                   style={{ padding: '0.45rem 0.65rem', fontSize: '0.9375rem' }} 
                 />
-                {estadoAltitud && <small role="status" style={{ color: 'var(--zs-muted)', fontSize: '0.8125rem', lineHeight: 1.35 }}>{estadoAltitud}</small>}
+                {estadoAltitud && <small id="parcela-altitud-estado" role="status" style={{ color: 'var(--zs-muted)', fontSize: '0.8125rem', lineHeight: 1.35 }}>{estadoAltitud}</small>}
               </div>
             </div>
 
-            <div style={{ fontSize: '0.8125rem', fontWeight: 800, color: 'var(--text-subtle)', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.25rem', marginTop: '0.15rem' }}>
-              Planificación Agrónoma
-            </div>
+            <h3 className="parcela-section-title">Plan de siembra</h3>
 
             <div className='form-group' style={{ marginBottom: '0.2rem' }}>
-              <label htmlFor="parcela-fecha" className='form-label' style={{ fontSize: '0.8125rem', marginBottom: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}><Calendar size={11} /> Fecha de Siembra *</label>
-              <input id="parcela-fecha" type='date' className='form-input' value={fechaSiembra} onChange={e => setFechaSiembra(e.target.value)} required style={{ padding: '0.45rem 0.65rem', fontSize: '0.9375rem' }} />
+              <label htmlFor="parcela-fecha" className='form-label' style={{ fontSize: '0.8125rem', marginBottom: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}><Calendar size={11} /> Fecha prevista de siembra *</label>
+              <input id="parcela-fecha" type='date' className='form-input' value={fechaSiembra} onChange={e => cambiarPeriodo('fecha',e.target.value)} required style={{ padding: '0.45rem 0.65rem', fontSize: '0.9375rem' }} />
             </div>
 
-            <div style={{ marginTop: 'auto', paddingTop: '0.4rem' }}>
-              <button type='submit' className='btn btn-primary' style={{ width: '100%', padding: '0.65rem', fontSize: '0.88rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.4rem', justifyContent: 'center', borderRadius: '10px' }}>
-                <Plus size={18} /> Registrar Parcela
+            <div className="cultivos-periodo">
+              <label htmlFor="parcela-cosecha">Fecha prevista de cosecha</label>
+              <input id="parcela-cosecha" type="date" className="form-input" value={periodo.cosecha} min={fechaSiembra || undefined} aria-describedby="parcela-periodo-ayuda" onChange={e => cambiarPeriodo('cosecha', e.target.value)} />
+              <label htmlFor="parcela-dias">Duración del cultivo en días</label>
+              <input id="parcela-dias" className="form-input" type="number" min="1" max="730" step="1" value={periodo.dias} aria-describedby="parcela-periodo-ayuda" onChange={e => cambiarPeriodo('dias', e.target.value)} />
+              <p id="parcela-periodo-ayuda" className="parcela-form-note">Con dos datos se calcula el tercero. La siembra cuenta como día 1. La fecha y la duración guardadas se usarán al simular.</p>
+            </div>
+            <div className="parcela-save-row">
+              <button type='submit' disabled={saving} className='btn btn-primary' style={{ width: '100%', padding: '0.65rem', fontSize: '0.88rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.4rem', justifyContent: 'center', borderRadius: '10px' }}>
+                <Plus size={18} /> {saving ? 'Guardando parcela…' : 'Registrar Parcela'}
               </button>
             </div>
           </div>

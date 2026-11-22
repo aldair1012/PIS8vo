@@ -20,12 +20,6 @@ export function getDashboardChartColors(isLight = false) {
   };
 }
 
-export function getDashboardChartAnimation() {
-  return typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    ? false
-    : { duration: 520, easing: 'easeOutCubic' };
-}
-
 /** Tooltip ECharts coherente con el tema: fondo elevado, sombra y radio amplio. */
 export function getChartTooltip(colors, overrides = {}) {
   return {

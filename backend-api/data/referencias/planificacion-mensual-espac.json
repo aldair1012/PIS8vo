@@ -1,0 +1,246 @@
+{
+  "edicion": 2025,
+  "fuente": "https://www.ecuadorencifras.gob.ec/documentos/web-inec/Estadisticas_agropecuarias/espac/2025/2_DD_DATOS_ABIERTOS_ESPAC_2025.zip",
+  "sha256": "47863f1a255ae3e7e695df0c1fe0a329e55c35b2acd1d2d866d4657b6bfa1ea5",
+  "base_por_tipo": {
+    "duro_seco": 4.772727272727275,
+    "suave_seco": 1.272727272727272
+  },
+  "total": 2787,
+  "ajuste": 1592,
+  "calibracion": 418,
+  "prueba": 482,
+  "prueba_total": 624,
+  "mae": 1.3948909498816644,
+  "rmse": 1.8011516919058734,
+  "bandas": [
+    {
+      "nivel": 0.5,
+      "margen": 1.025046382189255,
+      "aciertos_prueba": 217
+    },
+    {
+      "nivel": 0.9,
+      "margen": 3.181818181818178,
+      "aciertos_prueba": 452
+    }
+  ],
+  "celdas": [
+    {
+      "provincia": "AZUAY",
+      "tipo_maiz": "duro_seco",
+      "mes": 10,
+      "mediana": 1.136363636363635,
+      "parcelas": 7,
+      "segmentos": 6
+    },
+    {
+      "provincia": "AZUAY",
+      "tipo_maiz": "suave_seco",
+      "mes": 10,
+      "mediana": 2.27272727272727,
+      "parcelas": 21,
+      "segmentos": 14
+    },
+    {
+      "provincia": "AZUAY",
+      "tipo_maiz": "suave_seco",
+      "mes": 11,
+      "mediana": 0.7792207792207785,
+      "parcelas": 24,
+      "segmentos": 11
+    },
+    {
+      "provincia": "BOLÍVAR",
+      "tipo_maiz": "suave_seco",
+      "mes": 1,
+      "mediana": 1.0307153164295988,
+      "parcelas": 99,
+      "segmentos": 33
+    },
+    {
+      "provincia": "BOLÍVAR",
+      "tipo_maiz": "suave_seco",
+      "mes": 2,
+      "mediana": 1.8181818181818166,
+      "parcelas": 23,
+      "segmentos": 11
+    },
+    {
+      "provincia": "BOLÍVAR",
+      "tipo_maiz": "suave_seco",
+      "mes": 11,
+      "mediana": 1.818181818181818,
+      "parcelas": 29,
+      "segmentos": 11
+    },
+    {
+      "provincia": "BOLÍVAR",
+      "tipo_maiz": "suave_seco",
+      "mes": 12,
+      "mediana": 1.1363636363636362,
+      "parcelas": 35,
+      "segmentos": 12
+    },
+    {
+      "provincia": "CHIMBORAZO",
+      "tipo_maiz": "suave_seco",
+      "mes": 11,
+      "mediana": 0.524475524475523,
+      "parcelas": 15,
+      "segmentos": 5
+    },
+    {
+      "provincia": "COTOPAXI",
+      "tipo_maiz": "suave_seco",
+      "mes": 11,
+      "mediana": 2.2727272727272654,
+      "parcelas": 21,
+      "segmentos": 7
+    },
+    {
+      "provincia": "EL ORO",
+      "tipo_maiz": "duro_seco",
+      "mes": 1,
+      "mediana": 4.545454545454547,
+      "parcelas": 12,
+      "segmentos": 7
+    },
+    {
+      "provincia": "GUAYAS",
+      "tipo_maiz": "duro_seco",
+      "mes": 1,
+      "mediana": 5.45454545454545,
+      "parcelas": 79,
+      "segmentos": 26
+    },
+    {
+      "provincia": "IMBABURA",
+      "tipo_maiz": "suave_seco",
+      "mes": 9,
+      "mediana": 0.77922077922078,
+      "parcelas": 12,
+      "segmentos": 5
+    },
+    {
+      "provincia": "LOJA",
+      "tipo_maiz": "duro_seco",
+      "mes": 1,
+      "mediana": 3.636363636363636,
+      "parcelas": 165,
+      "segmentos": 46
+    },
+    {
+      "provincia": "LOJA",
+      "tipo_maiz": "duro_seco",
+      "mes": 2,
+      "mediana": 4.545454545454533,
+      "parcelas": 43,
+      "segmentos": 14
+    },
+    {
+      "provincia": "LOJA",
+      "tipo_maiz": "duro_seco",
+      "mes": 12,
+      "mediana": 0.9090909090909093,
+      "parcelas": 16,
+      "segmentos": 8
+    },
+    {
+      "provincia": "LOS RÍOS",
+      "tipo_maiz": "duro_seco",
+      "mes": 1,
+      "mediana": 5.153576582148015,
+      "parcelas": 204,
+      "segmentos": 50
+    },
+    {
+      "provincia": "LOS RÍOS",
+      "tipo_maiz": "duro_seco",
+      "mes": 2,
+      "mediana": 5.45454545454544,
+      "parcelas": 17,
+      "segmentos": 7
+    },
+    {
+      "provincia": "LOS RÍOS",
+      "tipo_maiz": "duro_seco",
+      "mes": 5,
+      "mediana": 4.545454545454545,
+      "parcelas": 24,
+      "segmentos": 13
+    },
+    {
+      "provincia": "LOS RÍOS",
+      "tipo_maiz": "duro_seco",
+      "mes": 6,
+      "mediana": 5.066141289051517,
+      "parcelas": 34,
+      "segmentos": 21
+    },
+    {
+      "provincia": "LOS RÍOS",
+      "tipo_maiz": "duro_seco",
+      "mes": 7,
+      "mediana": 3.75,
+      "parcelas": 33,
+      "segmentos": 18
+    },
+    {
+      "provincia": "LOS RÍOS",
+      "tipo_maiz": "duro_seco",
+      "mes": 8,
+      "mediana": 2.4242424242424265,
+      "parcelas": 10,
+      "segmentos": 6
+    },
+    {
+      "provincia": "LOS RÍOS",
+      "tipo_maiz": "duro_seco",
+      "mes": 12,
+      "mediana": 6.36363636363635,
+      "parcelas": 23,
+      "segmentos": 12
+    },
+    {
+      "provincia": "MANABÍ",
+      "tipo_maiz": "duro_seco",
+      "mes": 1,
+      "mediana": 5.166481803489638,
+      "parcelas": 239,
+      "segmentos": 65
+    },
+    {
+      "provincia": "MANABÍ",
+      "tipo_maiz": "duro_seco",
+      "mes": 2,
+      "mediana": 4.77272727272727,
+      "parcelas": 63,
+      "segmentos": 29
+    },
+    {
+      "provincia": "MANABÍ",
+      "tipo_maiz": "duro_seco",
+      "mes": 6,
+      "mediana": 3.8961038961038974,
+      "parcelas": 9,
+      "segmentos": 8
+    },
+    {
+      "provincia": "MANABÍ",
+      "tipo_maiz": "duro_seco",
+      "mes": 12,
+      "mediana": 2.680652680652682,
+      "parcelas": 7,
+      "segmentos": 5
+    },
+    {
+      "provincia": "PICHINCHA",
+      "tipo_maiz": "suave_seco",
+      "mes": 10,
+      "mediana": 0.9090909090909066,
+      "parcelas": 16,
+      "segmentos": 10
+    }
+  ]
+}

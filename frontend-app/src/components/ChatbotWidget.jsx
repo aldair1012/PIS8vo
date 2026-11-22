@@ -1,15 +1,17 @@
 import ChatMessageContent from './ChatMessageContent';
 import '../assets/chatbot-system.css';
 import FuentesChat from './FuentesChat';
+import { AvisoAsistente } from './PrivacidadAsistente';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Bot, Check, ChevronRight, Copy, Database, Info, Loader2, MessageCircle,
-  RotateCcw, Send, Sparkles, Star, ThumbsUp, Trash2, User, X, Sprout, Activity, CloudSun, Coins, CalendarDays, Map, Layers, History,
+  RotateCcw, Send, Square, Sparkles, Star, ThumbsUp, Trash2, User, X, Sprout, Activity, CloudSun, Coins, CalendarDays, Map, Layers, History,
 } from 'lucide-react';
 import { chatService } from '../services/api';
 import { normalizarTextoChat } from '../utils/chatText';
 
 const VISTAS = {
+  asistente: { nombre: 'Asistente', icono: MessageCircle },
   yield: { nombre: 'Rendimiento', icono: Activity },
   scenarios: { nombre: 'Siembra', icono: CalendarDays },
   climate: { nombre: 'Clima', icono: CloudSun },
@@ -110,8 +112,18 @@ const ChatbotWidget = ({
   contextoDashboard,
   cultivoActivo,
   simulacion,
+  onRegistrarObservacion,
+  onSimularFecha,
+  abrirAlMontar = false,
 }) => {
-  const [abierto, setAbierto] = useState(false);
+  const [abierto, setAbierto] = useState(abrirAlMontar);
+  const [parcial, setParcial] = useState('');
+  const [consentir, setConsentir] = useState(null);
+  const [guardandoDecision, setGuardandoDecision] = useState(false);
+  const [errorDecision, setErrorDecision] = useState('');
+  const [simple, setSimple] = useState(() => {
+    try { return sessionStorage.getItem('zeasys_chat_modo_simple') === '1'; } catch { return false; }
+  });
   // La conversación se comparte entre los paneles del dashboard (una sola
   // memoria por parcela y año) y se mantiene aparte para el borrador de Nueva
   // Simulación. Así el usuario no pierde el hilo al cambiar de pestaña.
@@ -160,6 +172,7 @@ const ChatbotWidget = ({
     }
     return -1;
   }, [mensajes]);
+  const cuota = mensajes.findLast(mensaje => mensaje.investigacion?.cuota)?.investigacion.cuota;
 
   useEffect(() => {
     try { window.sessionStorage.setItem(storageKey, JSON.stringify(mensajes.slice(-40))); } catch { /* noop */ }
@@ -187,8 +200,8 @@ const ChatbotWidget = ({
   };
 
   useEffect(() => {
-    if (abierto && alFondoRef.current) messagesEndRef.current?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'nearest' });
-  }, [abierto, mensajes, escribiendo]);
+    if (abierto && alFondoRef.current) messagesEndRef.current?.scrollIntoView({ behavior: parcial || window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'nearest' });
+  }, [abierto, mensajes, escribiendo, parcial]);
 
   useEffect(() => {
     if (abierto) inputRef.current?.focus();
@@ -205,9 +218,11 @@ const ChatbotWidget = ({
       if (event.key === 'Escape') setAbierto(false);
     };
     window.addEventListener('zeasys:open-chat', abrir);
+    window.addEventListener('zeasys:abrir-chat', abrir);
     window.addEventListener('keydown', cerrarConEscape);
     return () => {
       window.removeEventListener('zeasys:open-chat', abrir);
+      window.removeEventListener('zeasys:abrir-chat', abrir);
       window.removeEventListener('keydown', cerrarConEscape);
     };
   }, []);
@@ -242,6 +257,7 @@ const ChatbotWidget = ({
     const elementoInput = inputRef.current;
     if (elementoInput) elementoInput.style.height = 'auto';
     setEscribiendo(true);
+    setParcial('');
     setEstadoServicio('consultando');
     try {
       const data = await chatService.preguntar(
@@ -252,6 +268,10 @@ const ChatbotWidget = ({
         dashboard,
         vistaActual === 'simular' ? simulacion : null,
         controller.signal,
+        fragmento => {
+          if (!controller.signal.aborted && numero === peticionRef.current.numero) setParcial(prev => prev + fragmento);
+        },
+        simple,
       );
       if (controller.signal.aborted || numero !== peticionRef.current.numero) return;
       const texto = normalizarTextoChat(data?.texto ?? data?.respuesta ?? data?.answer);
@@ -278,12 +298,19 @@ const ChatbotWidget = ({
     } catch (error) {
       if (controller.signal.aborted || numero !== peticionRef.current.numero) return;
       const codigo = error?.response?.status;
+      if (codigo === 428) {
+        setConsentir({ pregunta: preguntaTexto, version: error.response.data?.version });
+        setErrorDecision('');
+        setEstadoServicio('listo');
+        return;
+      }
       const sesionExpirada = codigo === 401;
       setMensajes((prev) => [...prev, {
         id: crearId(),
         rol: 'asistente',
         texto: sesionExpirada
           ? 'Tu sesión expiró. Vuelve a iniciar sesión para continuar usando el asistente.'
+          : codigo === 429 ? error.message
           : codigo === 502
             ? 'Se interrumpió la respuesta. Tu pregunta sigue guardada; pulsa Reintentar.'
             : error.incomplete ? 'La respuesta llegó incompleta. Tu pregunta sigue guardada; pulsa Reintentar.' : 'No pudimos completar la consulta por un problema de conexión. Tu pregunta sigue guardada; pulsa Reintentar.',
@@ -292,7 +319,10 @@ const ChatbotWidget = ({
       }]);
       setEstadoServicio(sesionExpirada ? 'sesion' : 'error');
     } finally {
-      if (numero === peticionRef.current.numero) setEscribiendo(false);
+      if (numero === peticionRef.current.numero) {
+        setEscribiendo(false);
+        setParcial('');
+      }
     }
   };
 
@@ -356,6 +386,8 @@ const ChatbotWidget = ({
     peticionRef.current.numero += 1;
     peticionRef.current.controller?.abort();
     setEscribiendo(false);
+    setParcial('');
+    setConsentir(null);
     setMensajes([]);
     setFeedback({});
     setEstadoServicio('listo');
@@ -369,6 +401,7 @@ const ChatbotWidget = ({
   const estadoTexto = {
     listo: 'Pregúntame sobre tu cultivo',
     consultando: 'Analizando tu pregunta…',
+    detenido: 'Respuesta detenida',
     conectado: 'Respuesta lista',
     error: 'Consulta interrumpida',
     sesion: 'Sesión expirada',
@@ -411,7 +444,13 @@ const ChatbotWidget = ({
             <div><span className="zeasys-chat-context-label">{etiquetaParcela}</span><strong>{nombreParcela}</strong></div>
           </div>
           <button type="button" className="zeasys-chat-source-toggle" aria-expanded={mostrarFuente} aria-controls="chat-context-details" onClick={() => setMostrarFuente((estado) => !estado)}><Database size={13} /> {etiquetaFuente} <Info size={13} /></button>
+          <label className="zeasys-chat-source-toggle"><input type="checkbox" checked={simple} onChange={event => {
+            const activo = event.target.checked;
+            setSimple(activo);
+            try { sessionStorage.setItem('zeasys_chat_modo_simple', activo ? '1' : '0'); } catch { /* Preferencia opcional. */ }
+          }} /> Modo simple · respuestas breves</label>
           {mostrarFuente && <div id="chat-context-details" className="zeasys-chat-source-detail"><strong>Información para esta consulta</strong><span>{detalleFuente}</span></div>}
+          {mostrarFuente && cuota?.fecha_utc === new Date().toISOString().slice(0, 10) && <p>Consultas utilizadas hoy (UTC): {cuota.consultas_hoy} de {cuota.limite_diario}.</p>}
           {favorito.guardado && !errorFavorito && <div className="zeasys-chat-favorite-note"><Star size={12} fill="currentColor" aria-hidden="true" /> Conversación guardada en tu cuenta</div>}
           {errorFavorito && <div className="zeasys-chat-favorite-note is-error">No se pudo guardar la conversación. Inténtalo de nuevo.</div>}
         </div>
@@ -419,17 +458,36 @@ const ChatbotWidget = ({
         <div ref={contenedorMensajesRef} onScroll={manejarScrollMensajes} className="zeasys-chat-messages" role="log" aria-live="polite" aria-label="Conversación con el asistente">
           {mensajes.length === 0 && <div className="zeasys-chat-welcome"><div className="zeasys-chat-welcome-icon"><Sparkles size={21} /></div><h3>Entiende tu cultivo, paso a paso</h3><p>{esSimulacion ? 'Puedo analizar los valores de esta simulación antes de ejecutarla: clima de entrada, pH, textura, área, fertilizante y la referencia de precio.' : dashboard ? 'Te ayudo a entender los datos de tu parcela, preparar una decisión o resolver una duda sobre el cultivo. Puedo consultar información pública cuando haga falta.' : 'Pregúntame qué significa un dato, cómo preparar la siembra o qué revisar en el cultivo. No necesitas usar términos técnicos.'}</p><div className="zeasys-chat-chips">{(SUGERENCIAS[vistaActual] || ['¿Cómo está el clima hoy y cómo afecta mi parcela?', '¿Qué información tienes de mi parcela?', '¿Qué datos faltan para tomar una decisión?']).map((sugerencia) => <button type="button" key={sugerencia} onClick={() => enviarPregunta(sugerencia)} disabled={escribiendo}>{sugerencia}<ChevronRight size={14} aria-hidden="true" /></button>)}</div></div>}
 
-          {mensajes.map((mensaje, index) => <div className={`zeasys-chat-message ${mensaje.rol === 'usuario' ? 'from-user' : 'from-assistant'}`} key={mensaje.id ?? `${mensaje.rol}-${index}`}><div className="zeasys-chat-message-avatar">{mensaje.rol === 'usuario' ? <User size={14} /> : <Bot size={14} />}</div><div className="zeasys-chat-message-content"><div className="zeasys-chat-message-role">{mensaje.rol === 'usuario' ? 'Tú' : 'ZeaSys · Asistente'}{mensaje.investigacion?.busqueda_realizada&&<span className="zeasys-chat-research-badge">Información web consultada</span>}{mensaje.investigacion?.busqueda_no_disponible&&!mensaje.investigacion?.busqueda_realizada&&<span className="zeasys-chat-research-badge">Orientación sin comprobación web</span>}</div><div className="zeasys-chat-bubble"><ChatMessageContent text={mensaje.texto}/></div><FuentesChat referencias={mensaje.referencias} fuentesWeb={mensaje.investigacion?.fuentes_web} sugerenciasBusqueda={mensaje.investigacion?.sugerencias_busqueda_html} />{mensaje.rol === 'asistente' && !mensaje.error && !escribiendo && <button type="button" className={`zeasys-chat-useful ${feedback[claveMensaje(mensaje, index)] ? 'is-marked' : ''}`} aria-pressed={Boolean(feedback[claveMensaje(mensaje, index)])} onClick={() => marcarUtil(mensaje, index)}>{feedback[claveMensaje(mensaje, index)] ? <Check size={13} aria-hidden="true" /> : <ThumbsUp size={13} aria-hidden="true" />}<span>{feedback[claveMensaje(mensaje, index)] ? 'Útil' : 'Marcar útil'}</span></button>}{mensaje.error && <button type="button" className="zeasys-chat-retry" onClick={() => enviarPregunta(mensaje.pregunta, true)}><RotateCcw size={13} /> Reintentar</button>}{index === ultimoAsistente && !mensaje.error && <div className="zeasys-chat-followups">{sugerenciasSiguientes.slice(0, 2).map((sugerencia) => <button key={sugerencia} type="button" onClick={() => enviarPregunta(sugerencia)} disabled={escribiendo}>{sugerencia}<ChevronRight size={12} aria-hidden="true" /></button>)}<button type="button" onClick={() => enviarPregunta('¿Cuál es la fuente y la fecha de los datos que usaste?')} disabled={escribiendo}>Ver fuente<ChevronRight size={12} aria-hidden="true" /></button></div>}</div></div>)}
+          {mensajes.map((mensaje, index) => <div className={`zeasys-chat-message ${mensaje.rol === 'usuario' ? 'from-user' : 'from-assistant'}`} key={mensaje.id ?? `${mensaje.rol}-${index}`}><div className="zeasys-chat-message-avatar">{mensaje.rol === 'usuario' ? <User size={14} /> : <Bot size={14} />}</div><div className="zeasys-chat-message-content"><div className="zeasys-chat-message-role">{mensaje.rol === 'usuario' ? 'Tú' : 'ZeaSys · Asistente'}{mensaje.investigacion?.busqueda_realizada&&<span className="zeasys-chat-research-badge">Información web consultada</span>}{mensaje.investigacion?.busqueda_no_disponible&&!mensaje.investigacion?.busqueda_realizada&&<span className="zeasys-chat-research-badge">Orientación sin comprobación web</span>}</div><div className="zeasys-chat-bubble"><ChatMessageContent text={mensaje.texto}/></div><FuentesChat referencias={mensaje.referencias} fuentesWeb={mensaje.investigacion?.fuentes_web} sugerenciasBusqueda={mensaje.investigacion?.sugerencias_busqueda_html} />{mensaje.rol === 'asistente' && !mensaje.error && !escribiendo && <button type="button" className={`zeasys-chat-useful ${feedback[claveMensaje(mensaje, index)] ? 'is-marked' : ''}`} aria-pressed={Boolean(feedback[claveMensaje(mensaje, index)])} onClick={() => marcarUtil(mensaje, index)}>{feedback[claveMensaje(mensaje, index)] ? <Check size={13} aria-hidden="true" /> : <ThumbsUp size={13} aria-hidden="true" />}<span>{feedback[claveMensaje(mensaje, index)] ? 'Útil' : 'Marcar útil'}</span></button>}{mensaje.error && <button type="button" className="zeasys-chat-retry" onClick={() => enviarPregunta(mensaje.pregunta, true)}><RotateCcw size={13} /> Reintentar</button>}{index === ultimoAsistente && !mensaje.error && !escribiendo && <div className="zeasys-chat-followups">{sugerenciasSiguientes.slice(0, 2).map((sugerencia) => <button key={sugerencia} type="button" onClick={() => enviarPregunta(sugerencia)} disabled={escribiendo}>{sugerencia}<ChevronRight size={12} aria-hidden="true" /></button>)}<button type="button" onClick={() => enviarPregunta('¿Cuál es la fuente y la fecha de los datos que usaste?')} disabled={escribiendo}>Ver fuente<ChevronRight size={12} aria-hidden="true" /></button>{cultivoElegidoId && onRegistrarObservacion && <button type="button" onClick={() => { setAbierto(false); onRegistrarObservacion(cultivoElegidoId); }}>Registrar observación</button>}{cultivoElegidoId && onSimularFecha && <button type="button" onClick={() => { setAbierto(false); onSimularFecha(cultivoElegidoId); }}>Simular otra fecha</button>}</div>}</div></div>)}
 
-          {escribiendo && <div className="zeasys-chat-message from-assistant"><div className="zeasys-chat-message-avatar"><Bot size={14} /></div><div className="zeasys-chat-message-content"><div className="zeasys-chat-message-role">ZeaSys · Asistente</div><div className="zeasys-chat-bubble zeasys-chat-typing" role="status" aria-live="polite"><span className="zeasys-chat-typing-dot" aria-hidden="true" /><span className="zeasys-chat-typing-dot" aria-hidden="true" /><span className="zeasys-chat-typing-dot" aria-hidden="true" /><span className="zeasys-chat-typing-text">Preparando una respuesta para ti…</span></div></div></div>}
+          {escribiendo && parcial && <div className="zeasys-chat-message from-assistant" aria-live="off"><div className="zeasys-chat-message-avatar"><Bot size={14} /></div><div className="zeasys-chat-message-content"><div className="zeasys-chat-message-role">ZeaSys · Asistente</div><div className="zeasys-chat-bubble"><ChatMessageContent text={parcial} /></div></div></div>}
+          {escribiendo && !parcial && <div className="zeasys-chat-message from-assistant"><div className="zeasys-chat-message-avatar"><Bot size={14} /></div><div className="zeasys-chat-message-content"><div className="zeasys-chat-message-role">ZeaSys · Asistente</div><div className="zeasys-chat-bubble zeasys-chat-typing" role="status" aria-live="polite"><span className="zeasys-chat-typing-dot" aria-hidden="true" /><span className="zeasys-chat-typing-dot" aria-hidden="true" /><span className="zeasys-chat-typing-dot" aria-hidden="true" /><span className="zeasys-chat-typing-text">Preparando una respuesta para ti…</span></div></div></div>}
           <div ref={messagesEndRef} />
         </div>
 
-        <form className="zeasys-chat-composer" onSubmit={(evento) => { evento.preventDefault(); enviarPregunta(input); }}>
+        {consentir ? <section className="zeasys-chat-context" aria-label="Autorización del asistente">
+          <strong>¿Autorizas el envío al asistente de IA?</strong><AvisoAsistente />
+          {errorDecision && <p role="alert">{errorDecision}</p>}
+          <div className="zeasys-chat-chips"><button type="button" disabled={guardandoDecision} onClick={async () => {
+            setGuardandoDecision(true);
+            try {
+              await chatService.decidirConsentimiento(true, consentir.version);
+              setConsentir(null);
+              await enviarPregunta(consentir.pregunta, true);
+            } catch { setErrorDecision('No se pudo guardar tu decisión. Inténtalo otra vez.'); }
+            finally { setGuardandoDecision(false); }
+          }}>Autorizar y enviar</button>
+          <button type="button" disabled={guardandoDecision} onClick={() => { setConsentir(null); setAbierto(false); }}>Ahora no</button></div>
+        </section> : <form className="zeasys-chat-composer" onSubmit={(evento) => { evento.preventDefault(); enviarPregunta(input); }}>
           <textarea ref={inputRef} aria-label="Escribe tu pregunta al asistente" value={input} maxLength={2000} onChange={(evento) => { setInput(evento.target.value); autoDimensionar(evento.target); }} onKeyDown={(evento) => { if (evento.key === 'Enter' && !evento.shiftKey && !evento.nativeEvent.isComposing) { evento.preventDefault(); enviarPregunta(input); } }} placeholder="Pregunta sobre tu cultivo o un dato que quieras entender…" rows={2} />
-          <button type="submit" className="zeasys-chat-send" disabled={escribiendo || !input.trim()} aria-label="Enviar pregunta">{escribiendo ? <Loader2 size={17} /> : <Send size={17} />}</button>
+          {escribiendo ? <button type="button" className="zeasys-chat-send" aria-label="Detener respuesta" onClick={() => {
+            const ultima = mensajes.findLast(mensaje => mensaje.rol === 'usuario');
+            peticionRef.current.controller?.abort();
+            setEstadoServicio('detenido');
+            if (ultima) setMensajes(prev => [...prev, { id: crearId(), rol: 'asistente', texto: 'Respuesta detenida.', error: true, pregunta: ultima.texto }]);
+          }}><Square size={17} /></button> : <button type="submit" className="zeasys-chat-send" disabled={!input.trim()} aria-label="Enviar pregunta"><Send size={17} /></button>}
           <div className="zeasys-chat-composer-hint">Enter para enviar · Shift + Enter para una nueva línea</div>
-        </form>
+        </form>}
       </div>
     </>
   );

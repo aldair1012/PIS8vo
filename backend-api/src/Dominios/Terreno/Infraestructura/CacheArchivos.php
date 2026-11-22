@@ -38,9 +38,16 @@ final class CacheArchivos implements CacheInterface
     {
         $this->asegurarDirectorio();
 
-        // Paridad: en el legacy (modo coercitivo) json_encode(false) se escribía como ''.
+        $ruta = $this->rutaArchivo($clave);
         $json = json_encode($valor);
-        @file_put_contents($this->rutaArchivo($clave), $json === false ? '' : $json);
+        if ($json === false) return;
+        $temporal = @tempnam($this->directorio, 'zea_');
+        if ($temporal === false) return;
+        try {
+            if (@file_put_contents($temporal, $json) === strlen($json)) @rename($temporal, $ruta);
+        } finally {
+            if (is_file($temporal)) @unlink($temporal);
+        }
     }
 
     /**
@@ -64,23 +71,13 @@ final class CacheArchivos implements CacheInterface
             return;
         }
 
-        $files = array_merge(
-            glob($cacheDir . '/precision_data_*.json') ?: [],
-            glob($cacheDir . '/clima_actual_*.json') ?: [],
-        );
-        if ($files === []) {
-            return;
-        }
-
-        $now = time();
-        $expiredTime = 24 * 3600; // 24 horas
-
-        foreach ($files as $file) {
-            if (is_file($file)) {
-                $fileAge = $now - filemtime($file);
-                if ($fileAge > $expiredTime) {
-                    @unlink($file);
-                }
+        $retenciones = ['precision_data_*' => 1, 'clima_actual_*' => 1, 'archive_*' => 30,
+            'soilgrids_*' => 365, 'pronostico_v2_*' => 2, 'dem_glo90_*' => 365, 'gdd_v1_*' => 30];
+        $ahora = time();
+        foreach ($retenciones as $patron => $dias) {
+            foreach (glob($cacheDir . '/' . $patron . '.json') ?: [] as $archivo) {
+                $modificado = @filemtime($archivo);
+                if ($modificado !== false && $ahora - $modificado > $dias * 86400) @unlink($archivo);
             }
         }
     }

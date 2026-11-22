@@ -1,0 +1,1 @@
+import{M as e,Q as t,S as n,i as r,in as i,it as a,nn as o,t as s,xn as c}from"./modelo-3d-core-r2-BZahLg3s.js";import{r as l}from"./modelo-3d-r2-DHWb_O3I.js";export{s as ACESFilmicToneMapping,r as Box3,n as DirectionalLight,e as HemisphereLight,t as MeshPhysicalMaterial,a as PerspectiveCamera,o as SRGBColorSpace,i as Scene,c as Vector3,l as WebGLRenderer};

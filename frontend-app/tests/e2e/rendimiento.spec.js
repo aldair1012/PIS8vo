@@ -13,6 +13,7 @@ async function prepare(page, { data=payload(), handler, width=1440, expectError=
   await page.route('**/api/**',r=>r.fulfill({json:{}}));
   await page.route('**/api/auth/yo',r=>r.fulfill({json:{autenticado:true,usuario:{id:987,nombre:'Prueba'}}}));
   await page.route('**/api/parcelas',r=>r.fulfill({json:[plot,secondPlot]}));
+  await page.route('**/api/rendimiento/campanas?*', r => r.fulfill({ json: { cosechas: [], observaciones: [], metricas: [] } }));
   await page.route('**/api/rendimiento?*', async r=>{
     const id=new URL(r.request().url()).searchParams.get('parcela_id');
     if(id==='2')return r.fulfill({json:{sin_datos:true,cultivo_activo:secondPlot,simulaciones_rendimiento:[]}});
@@ -32,6 +33,52 @@ test('Rendimiento permite recuperar un fallo de conexión sin salir de la pesta�
   await page.goto('/');await waitForWorkspace(page);await expect(page.getByRole('alert')).toContainText('No se pudieron cargar');
   const retry=page.getByRole('button',{name:'Reintentar rendimiento'});await expect(retry).toBeVisible({timeout:1500});
   available=true;await retry.click();await expect(page.getByRole('heading',{name:'Parcela A',exact:true})).toBeVisible();
+});
+
+test('memoria de campañas envía el pesaje y muestra el tamaño de la muestra', async ({page}) => {
+  const data = payload();
+  data.simulaciones_rendimiento[0].parcela_ejecucion = { fecha_siembra: '2026-06-01' };
+  await prepare(page, { data, width: 390 });
+  const panel = page.locator('.campanas-panel');
+  await expect(panel).toContainText('0 pares comparables');
+  await panel.getByText('Registrar cosecha de la campaña', { exact: true }).click();
+  await panel.getByLabel('Fecha de cosecha', { exact: true }).fill('2026-11-15');
+  await panel.getByLabel('Grano total pesado').fill('0');
+  await panel.getByLabel('Superficie cosechada').fill('0.5');
+  await panel.getByLabel('Humedad a la que se expresa').fill('14');
+  await panel.getByLabel('Fuente del pesaje').fill('Comprobante de prueba');
+  await panel.getByLabel('Confirmo la misma superficie').check();
+  let enviado;
+  await page.route('**/api/rendimiento/campanas/cosecha', r => {
+    enviado = r.request().postDataJSON();
+    return r.fulfill({ json: { exito: true } });
+  });
+  await panel.getByRole('button', { name: 'Guardar cosecha' }).click();
+  await expect(panel).toContainText('Cosecha guardada.');
+  expect(enviado).toMatchObject({ parcela_id: '1', simulacion_id: '101', produccion_seca_kg: '0', base_comparable: true });
+});
+
+test('panel técnico abre en Mis parcelas y permite conceder y revocar lectura', async ({page}) => {
+  await prepare(page);
+  let accesos = [];
+  await page.route('**/api/acompanamiento', r => r.fulfill({ json: { accesos, triaje: [] } }));
+  await page.route('**/api/acompanamiento/accesos', r => {
+    const datos = r.request().postDataJSON();
+    accesos = r.request().method() === 'POST' ? [{ ...datos, tecnico_id: 99, nombre_parcela: 'Parcela A' }] : [];
+    return r.fulfill({ json: { exito: true } });
+  });
+  await page.getByRole('button', { name: 'Mis parcelas', exact: true }).click();
+  await page.getByRole('button', { name: 'Acompañamiento técnico' }).click();
+  const panel = page.getByRole('dialog', { name: 'Acompañamiento técnico' });
+  await panel.getByLabel('Parcela a compartir').selectOption('1');
+  await panel.getByLabel('Correo de la cuenta técnica').fill('tecnico@example.test');
+  await panel.getByRole('button', { name: 'Conceder acceso de lectura' }).click();
+  await expect(panel.getByRole('list', { name: 'Permisos concedidos' })).toContainText('tecnico@example.test');
+  await panel.getByRole('button', { name: 'Revocar acceso' }).click();
+  await expect(panel).toContainText('Acceso revocado.');
+  await expect(panel.getByRole('list', { name: 'Permisos concedidos' })).toHaveCount(0);
+  await panel.getByRole('button', { name: 'Cerrar' }).click();
+  await expect(panel).toHaveCount(0);
 });
 
 test('Ver todos los factores conserva espacio para cada barra SHAP',async({page})=>{
@@ -114,4 +161,37 @@ test('el año de referencia cambia SIPA y el contexto del chat, conservando los 
   let sent;await page.route('**/api/chat/preguntar',r=>{sent=r.request().postDataJSON();return r.fulfill({json:{texto:'Referencia de prueba'}});});
   await page.getByRole('button',{name:'Abrir asistente ZeaSys'}).click();await page.getByRole('textbox',{name:'Escribe tu pregunta al asistente'}).fill('¿Qué año comparas?');await page.getByRole('button',{name:'Enviar pregunta'}).click();await expect(page.getByText('Referencia de prueba',{exact:true})).toBeVisible();
   expect(sent.dashboard.referencia_sipa.año_visible).toBe(2024);expect(sent.dashboard.simulacion_seleccionada.id).toBe(101);
+});
+
+test('una cosecha descargada sin señal se revisa antes de guardarla', async ({ page, context }) => {
+  await prepare(page);
+  await expect(page.getByRole('link', {name: /Descargar ficha para contrastar la simulación #101/})).toHaveAttribute('download', 'zeasys-simulacion-101-cosecha.csv');
+  await page.getByRole('button', { name: 'Ver o actualizar mediciones' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Registro de campo' });
+  const registration = await page.evaluate(async () => (await navigator.serviceWorker.ready).scope);
+  const offline = await context.newPage();
+  await offline.goto(registration + 'offline.html');
+  await context.setOffline(true);
+  await offline.goto(registration);
+  await expect(offline.getByRole('heading', { name: 'Registro de cosecha sin conexión' })).toBeVisible();
+  await offline.getByLabel('Nombre de la parcela en ZeaSys').fill('Parcela A');
+  await offline.getByLabel('Fecha de cosecha o muestreo').fill('2024-06-01');
+  await offline.getByLabel('Grano seco de la muestra').fill('4');
+  await offline.getByLabel('Biomasa aérea seca total').fill('9');
+  const downloading = offline.waitForEvent('download');
+  await offline.getByRole('button', { name: 'Descargar registro' }).click();
+  const download = await downloading;
+  await context.setOffline(false);
+  await dialog.getByLabel('Importar archivo de cosecha').setInputFiles(await download.path());
+  await expect(dialog.getByRole('status')).toContainText('Revisa los valores');
+  await expect(dialog.getByLabel('Grano seco (kg)', { exact: true })).toHaveValue('4');
+  await expect(dialog.getByLabel('Profundidad evaluada (cm)')).toHaveValue('100');
+  let sent;
+  await page.route('**/api/rendimiento/mediciones', r => {
+    sent = r.request().postDataJSON();
+    return r.fulfill({ json: { exito: true, mediciones: registro(100) } });
+  });
+  await dialog.getByRole('button', { name: 'Guardar mediciones' }).click();
+  await expect(dialog.getByRole('status')).toContainText('Mediciones guardadas');
+  expect(JSON.stringify(sent)).toContain('2024-06-01');
 });

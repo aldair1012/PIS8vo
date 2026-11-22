@@ -5,6 +5,8 @@ import {
   BarChart3,
   CheckCircle2,
   ClipboardCheck,
+  Eye,
+  EyeOff,
   CloudSun,
   Leaf,
   Lock,
@@ -94,6 +96,25 @@ function AgriculturalPattern({ variant }) {
   );
 }
 
+function PasswordField({ id, label, creating = false, confirmation = false, value, onChange, describedBy }) {
+  const [visible, setVisible] = useState(false);
+  const ToggleIcon = visible ? EyeOff : Eye;
+  return (
+    <div className="auth-password-field">
+      <label htmlFor={id}><span><Lock size={14} aria-hidden="true" /> {label}</span></label>
+      <div className="auth-password-control">
+        <input id={id} name={id} type={visible ? 'text' : 'password'} autoComplete={creating ? 'new-password' : 'current-password'}
+          spellCheck={false} autoCapitalize="none" aria-describedby={describedBy}
+          placeholder={confirmation ? 'Repítela' : 'Tu contraseña'} value={value} onChange={event => onChange(event.target.value)} required />
+        <button type="button" aria-label={confirmation ? 'Mostrar confirmación' : 'Mostrar contraseña'}
+          aria-pressed={visible} aria-controls={id} onClick={() => setVisible(previous => !previous)}>
+          <ToggleIcon size={18} aria-hidden="true" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function AccessCard({
   registering,
   error,
@@ -125,47 +146,50 @@ function AccessCard({
     <div ref={containerRef} id="zeasys-login-card" className={`zeasys-login-card${registering ? ' zeasys-login-card--register' : ''}${className ? ` ${className}` : ''}`} aria-hidden={ariaHidden} inert={ariaHidden}>
       {onClose && <button type="button" className="zeasys-auth-close" onClick={onClose} aria-label="Volver a la vista de parcela"><X size={18} /></button>}
       <div className={`zeasys-auth-mode-card${modeAnimating ? ' is-switching' : ''}`}>
-        <div className="zeasys-login-card-head">
-          <div className="zeasys-login-mark"><PlatformLogo variant="mark" size={44} /></div>
+        <header className="zeasys-login-card-head auth-card-heading">
+          <PlatformLogo variant="wordmark" size={28} />
           <div>
-            <span className="zeasys-login-overline">{registering ? 'Registro seguro' : 'Acceso seguro'}</span>
-            <h2 id="access-title">{registering ? 'Crear cuenta' : 'Bienvenido a ZeaSys'}</h2>
-            <p>{registering ? 'Guarda tus parcelas y consulta sus datos.' : 'Continúa al centro de decisiones de tu parcela.'}</p>
+            <h2 id="access-title">{registering ? 'Crear cuenta' : 'Iniciar sesión'}</h2>
+            <p>{registering ? 'Crea tu perfil para registrar tu primera parcela.' : 'Accede a tus parcelas y al seguimiento de tu campaña.'}</p>
           </div>
-        </div>
+        </header>
         {error && <div className="zeasys-login-error" role="alert">{error}</div>}
+        {registering ? (
+          <form onSubmit={handleRegisterSubmit} className="zeasys-login-form zeasys-register-form">
+            <label><span><User size={14} /> Nombre completo</span><input id="auth-name" name="name" maxLength={100} type="text" autoComplete="name" placeholder="Nombre y apellido" value={nombre} onChange={(event) => setNombre(event.target.value)} required /></label>
+            <label><span><Mail size={14} /> Correo electrónico</span><input id="auth-email" name="username" type="email" maxLength={150} spellCheck={false} autoCapitalize="none" autoComplete="username" placeholder="tu-correo@ejemplo.com" value={correo} onChange={(event) => setCorreo(event.target.value)} required /></label>
+            <p className="auth-password-hint" id="registration-password-hint">Usa al menos 8 caracteres con mayúscula, minúscula, número y símbolo.</p>
+            <div className="zeasys-register-password-grid">
+              <PasswordField key={String(ariaHidden)} id="new-password" label="Contraseña" creating describedBy="registration-password-hint" value={contrasena} onChange={setContrasena} />
+              <PasswordField key={`confirm-${ariaHidden}`} id="password-confirmation" label="Confirmar" creating confirmation value={confirmar} onChange={setConfirmar} />
+            </div>
+            <button type="submit" className="zeasys-submit-btn" disabled={loading}>{loading ? 'Creando cuenta...' : <>Crear cuenta <ArrowRight size={17} /></>}</button>
+          </form>
+        ) : (
+          <form onSubmit={handleSubmit} className="zeasys-login-form">
+            <label><span><Mail size={14} /> Correo electrónico</span><input id="auth-email" name="username" type="email" maxLength={150} spellCheck={false} autoCapitalize="none" autoComplete="username" placeholder="tu-correo@ejemplo.com" value={correo} onChange={(event) => setCorreo(event.target.value)} required /></label>
+            <PasswordField key={String(ariaHidden)} id="current-password" label="Contraseña" value={contrasena} onChange={setContrasena} />
+            <div className="zeasys-login-options"><label className="zeasys-check-label"><input type="checkbox" checked={remember} onChange={(event) => setRemember(event.target.checked)} /> Recordar sesión</label><a href="mailto:zeasys123@gmail.com?subject=Ayuda%20para%20recuperar%20el%20acceso">¿Olvidaste tu contraseña?</a></div>
+            <button type="submit" className="zeasys-submit-btn" disabled={loading}>{loading ? 'Ingresando...' : <>Iniciar sesión <ArrowRight size={17} /></>}</button>
+          </form>
+        )}
+        <div className="zeasys-login-divider"><span /> <em>o continúa con</em> <span /></div>
         <div className={`zeasys-google-signin${googleLoading ? ' is-loading' : ''}`} aria-busy={googleLoading}>
           {googleStatus === 'ready' ? (
             <div ref={googleButtonRef} className="zeasys-google-button-host" />
           ) : (
             <div className="zeasys-google-status" role={googleStatus === 'error' ? 'alert' : 'status'}>
               {googleStatus === 'error'
-                ? 'No se pudo cargar Google. Revisa la conexión o la configuración del sitio.'
+                ? 'Google no está disponible. Puedes continuar con correo.'
                 : 'Preparando acceso con Google…'}
             </div>
           )}
           {googleLoading && <span className="zeasys-google-progress" role="status">Conectando…</span>}
         </div>
-        <div className="zeasys-login-divider"><span /> <em>o con correo</em> <span /></div>
-        {registering ? (
-          <form onSubmit={handleRegisterSubmit} className="zeasys-login-form zeasys-register-form">
-            <label><span><User size={14} /> Nombre completo</span><input type="text" placeholder="Juan Pérez" value={nombre} onChange={(event) => setNombre(event.target.value)} required /></label>
-            <label><span><Mail size={14} /> Correo electrónico</span><input type="email" placeholder="tu-correo@ejemplo.com" value={correo} onChange={(event) => setCorreo(event.target.value)} required /></label>
-            <div className="zeasys-register-password-grid">
-              <label><span><Lock size={14} /> Contraseña</span><input type="password" placeholder="••••••••" value={contrasena} onChange={(event) => setContrasena(event.target.value)} required /></label>
-              <label><span><Lock size={14} /> Confirmar</span><input type="password" placeholder="Repetir" value={confirmar} onChange={(event) => setConfirmar(event.target.value)} required /></label>
-            </div>
-            <button type="submit" className="zeasys-submit-btn" disabled={loading}>{loading ? 'Creando cuenta...' : <>Crear cuenta <ArrowRight size={17} /></>}</button>
-          </form>
-        ) : (
-          <form onSubmit={handleSubmit} className="zeasys-login-form">
-            <label><span><Mail size={14} /> Correo electrónico</span><input type="email" placeholder="tu-correo@ejemplo.com" value={correo} onChange={(event) => setCorreo(event.target.value)} required /></label>
-            <label><span><Lock size={14} /> Contraseña</span><input type="password" placeholder="••••••••••••" value={contrasena} onChange={(event) => setContrasena(event.target.value)} required /></label>
-            <div className="zeasys-login-options"><label className="zeasys-check-label"><input type="checkbox" checked={remember} onChange={(event) => setRemember(event.target.checked)} /> Recordar sesión</label><button type="button" onClick={() => alert('Para restablecer su contraseña, contacte al administrador de ZeaSys.')}>¿Olvidaste tu contraseña?</button></div>
-            <button type="submit" className="zeasys-submit-btn" disabled={loading}>{loading ? 'Ingresando...' : <>Iniciar sesión <ArrowRight size={17} /></>}</button>
-          </form>
-        )}
         <p className="zeasys-register-prompt">{registering ? '¿Ya tienes una cuenta?' : '¿No tienes una cuenta?'} <button type="button" onClick={registering ? switchToLogin : switchToRegister}>{registering ? 'Inicia sesión' : 'Crear cuenta'}</button></p>
+        <details className="auth-privacy"><summary>Privacidad y uso de tus datos</summary>
+          <p>Tu nombre y correo identifican tu cuenta. La ubicación de la parcela permite consultar clima y suelo. Puedes autorizar el asistente por separado. <a href="./privacidad.html" target="_blank" rel="noreferrer">Leer la política de datos</a></p>
+        </details>
       </div>
     </div>
   );
@@ -398,7 +422,7 @@ export default function Login({ onLoginSuccess, switchToRegister, switchToLogin,
           theme: 'filled_black',
           size: 'large',
           text: registering ? 'signup_with' : 'continue_with',
-          shape: 'pill',
+          shape: 'rectangular',
           width: String(width),
           locale: 'es',
         });
@@ -698,7 +722,7 @@ export default function Login({ onLoginSuccess, switchToRegister, switchToLogin,
               <p>Visualiza la procedencia de tus datos, separa valores reales de estimaciones y entiende qué factor está limitando el rendimiento.</p>
               <ul><li><CheckCircle2 size={17} /> Valores con fuente y estado de disponibilidad</li><li><CheckCircle2 size={17} /> Escenarios comparables antes de cambiar una práctica</li><li><CheckCircle2 size={17} /> Explicaciones con el contexto de tu parcela</li></ul>
             </div>
-            <figure className="zeasys-corn-model" aria-label="Modelo tridimensional de una mazorca de maíz">
+            <figure className="zeasys-corn-model" aria-label="Cultivo de maíz">
               <CornCobModel />
               <figcaption><span>Objeto de estudio</span><strong>Maíz · Zea mays</strong></figcaption>
             </figure>
@@ -717,7 +741,7 @@ export default function Login({ onLoginSuccess, switchToRegister, switchToLogin,
           </div>
           <div className="zeasys-footer-column"><h3>Plataforma</h3><a href="#inicio">Inicio</a><a href="#capacidades">Capacidades</a><a href="#datos">Datos y modelos</a></div>
           <div className="zeasys-footer-column"><h3>Producto</h3><a href="#inicio">Vista de parcela</a><a href="#capacidades">Decisiones explicadas</a><button type="button" onClick={irAlAcceso}>Ingresar a ZeaSys</button></div>
-          <div className="zeasys-footer-column"><h3>Soporte</h3><a href="mailto:zeasys123@gmail.com?subject=Ayuda%20con%20ZeaSys">Centro de ayuda</a><a href="mailto:zeasys123@gmail.com?subject=Consulta%20sobre%20ZeaSys">Contacto</a><span>Privacidad y uso responsable de datos</span></div>
+          <div className="zeasys-footer-column"><h3>Soporte</h3><a href="mailto:zeasys123@gmail.com?subject=Ayuda%20con%20ZeaSys">Centro de ayuda</a><a href="mailto:zeasys123@gmail.com?subject=Consulta%20sobre%20ZeaSys">Contacto</a><a href="./privacidad.html">Política de datos personales</a></div>
         </div>
         <div className="zeasys-footer-bottom"><span>© {new Date().getFullYear()} ZeaSys. Todos los derechos reservados.</span><span>Datos claros · Decisiones agrícolas responsables</span></div>
       </footer>

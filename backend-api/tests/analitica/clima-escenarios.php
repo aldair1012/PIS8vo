@@ -129,7 +129,7 @@ $pruebas['no genera series mensuales ni estratos sintéticos y fenología no obs
     comprobar($datos['timeline_anomalia']['lluvia_historica'] === array_fill(0, 12, null), 'No simular climatología.');
     comprobar($datos['timeline_anomalia']['lluvia_anomala'] === array_fill(0, 12, null), 'No simular anomalías.');
     comprobar($datos['agua_estratos']['valores'] === array_fill(0, 4, null), 'No inventar reparto por profundidad.');
-    comprobar($datos['timeline_fenologico'][1]['mes'] === 'Feb', 'No saltar febrero en siembra fin de mes.');
+    comprobar($datos['timeline_fenologico'][1]['mes'] === 'No disponible', 'Sin serie térmica no asignar un mes fijo a la etapa.');
     foreach ($datos['timeline_fenologico'] as $etapa) comprobar($etapa['estado'] === 'no_evaluado', 'No declarar riesgo observado por etapa.');
 };
 $pruebas['fecha inválida o coordenadas ausentes no causa500 ni inventa fechas'] = static function (): void {

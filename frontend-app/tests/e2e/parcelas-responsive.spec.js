@@ -11,6 +11,13 @@ for(const width of [390,820,1440])test(`formulario de parcela legible y alcanzab
   await page.getByRole('button',{name:'Mis parcelas',exact:true}).click();
   await expect(page.getByRole('heading',{name:'Registrar Nueva Parcela'})).toBeVisible();
   const fields=await page.locator('.cultivos-form-fields').boundingBox();expect(fields.width).toBeGreaterThan(280);
+  const draw = page.locator('.leaflet-pm-toolbar .leaflet-buttons-control-button').first();
+  await expect(draw).toBeVisible();
+  const target = await draw.boundingBox();
+  const icon = await draw.locator('.control-icon').boundingBox();
+  expect(target.width).toBeGreaterThanOrEqual(44);
+  expect(target.height).toBeGreaterThanOrEqual(44);
+  expect(Math.abs((icon.x + icon.width / 2) - (target.x + target.width / 2))).toBeLessThan(1);
   const save=page.getByRole('button',{name:'Registrar Parcela',exact:true});await save.scrollIntoViewIfNeeded();await expect(save).toBeInViewport();
   await expect(page.getByLabel('Tipo de Maíz *',{exact:true})).toBeEnabled();
   expect(await page.locator('.cultivos-create-form').evaluate(n=>n.scrollWidth<=n.clientWidth+1)).toBe(true);

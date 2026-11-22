@@ -26,7 +26,7 @@ export default async function primeServer() {
     // Descartar el modal de bienvenida si aparece para clicar la navegación.
     const consejo = page.locator('.consejo-modal-primary, .consejo-modal-close');
     if (await consejo.first().isVisible().catch(() => false)) await consejo.first().click();
-    const destinos = ['Mis parcelas', 'Simular cosecha', 'Rendimiento', 'Siembra', 'Clima y cultivo', 'Finanzas', 'Mapa de parcelas'];
+    const destinos = ['Mis parcelas', 'Mapa de parcelas', 'Simular cosecha', 'Rendimiento', 'Siembra', 'Clima y cultivo', 'Finanzas'];
     for (const name of destinos) {
       try {
         await page.getByRole('button', { name, exact: true }).click({ timeout: 8000 });

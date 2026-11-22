@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { climateDate, forecastDays, forecastSummary, historyDays, historyMonths, referenceWaterBalance, soilWaterPercent, validateClimateResponse } from './climateEvidence.js';
+import { climateDate, cropWaterWeek, forecastDays, forecastSummary, historyDays, historyMonths, referenceWaterBalance, soilWaterPercent, validateClimateResponse } from './climateEvidence.js';
 const week = Array.from({ length: 7 }, (_, i) => ({ fecha: `2026-11-${15 + i}`, precipitacion_mm: 0, temp_min_c: 20, temp_max_c: 30, prob_precipitacion_pct: 70 }));
 test('fechas imposibles, filas duplicadas y pronósticos anteriores no pasan', () => {
   assert.equal(climateDate('2026-02-30'), null);
@@ -42,4 +42,13 @@ test('una respuesta de otra parcela o con estructura rota se rechaza', () => {
   assert.throws(() => validateClimateResponse({ cultivo_activo: { id: 2 } }, 1));
   assert.throws(() => validateClimateResponse({ pronostico_7d: {} }, 1));
   assert.deepEqual(validateClimateResponse({ cultivo_activo: { id: 1 }, pronostico_7d: [] }, 1).pronostico_7d, []);
+});
+
+test('FAO-56 semanal conserva el Kc de fase y exige siete días con lluvia y ET₀', () => {
+  const days = week.map(day => ({...day, et0_mm: 4, precipitacion_mm: 3}));
+  assert.equal(cropWaterWeek(days, week[0].fecha, 'mid').demand[0], 33.6);
+  assert.equal(cropWaterWeek(days, week[0].fecha, 'developing').demand[0], 8.4);
+  assert.equal(cropWaterWeek(days, week[0].fecha, ''), null);
+  assert.equal(cropWaterWeek(days.slice(1), week[0].fecha, 'mid'), null);
+  assert.equal(cropWaterWeek([{...days[0], et0_mm: null}, ...days.slice(1)], week[0].fecha, 'initial'), null);
 });

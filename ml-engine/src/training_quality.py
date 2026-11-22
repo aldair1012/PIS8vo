@@ -10,6 +10,11 @@ FEATURES = list(json.loads((ROOT / 'config/feature_info.json').read_text(encodin
 CATEGORICAL = ['zona', 'provincia', 'variedad', 'tipo_grano', 'riego_tipo', 'tipo_suelo', 'plagas_presentes', 'control_plaga']
 
 
+def grupos_reales(provincia):
+    """Conserva las subzonas como predictores y reserva la provincia entera al validar."""
+    return provincia.replace({'Loja Sierra': 'Loja'})
+
+
 def evaluar(frame):
     required = [*FEATURES, 'rendimiento_t_ha', 'categoria_cosecha']
     missing = sorted(set(required) - set(frame.columns))

@@ -45,6 +45,8 @@ final class ChatService
         ?int $año = null,
         ?array $dashboard = null,
         ?array $simulacion = null,
+        ?callable $emitir = null,
+        bool $simple = false,
     ): array {
         $pregunta = trim($pregunta);
         if ($pregunta === '') {
@@ -114,6 +116,9 @@ final class ChatService
                 if ($e instanceof AccesoDenegadoException) {
                     throw $e;
                 }
+                if ($cultivoId !== null && $cultivoSeleccionado === null) {
+                    throw new AccesoDenegadoException('No se pudo verificar el acceso a la parcela seleccionada.');
+                }
                 // El modelo puede responder con el dashboard aunque una consulta
                 // secundaria de historial esté temporalmente indisponible.
             }
@@ -182,6 +187,8 @@ final class ChatService
             $año,
             $identificadorConversacion,
             $ambito,
+            $emitir,
+            $simple,
         );
 
         $this->memoria->registrar('usuario', $pregunta);

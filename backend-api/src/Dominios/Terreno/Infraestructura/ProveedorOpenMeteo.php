@@ -8,9 +8,17 @@ use ZeaSys\Dominios\Terreno\Dominio\ProveedorClimaInterface;
 use ZeaSys\Dominios\Terreno\Dominio\CacheInterface;
 use ZeaSys\Kernel\Errores\ServicioExternoException;
 
-final class ProveedorOpenMeteo implements ProveedorClimaInterface
+use ZeaSys\Dominios\Terreno\Dominio\ProveedorTemperaturaCampanaInterface;
+use ZeaSys\Dominios\Terreno\Aplicacion\ConsultaConRespaldo;
+use ZeaSys\Dominios\Terreno\Aplicacion\GradosDiaMaiz;
+
+final class ProveedorOpenMeteo implements ProveedorClimaInterface, ProveedorTemperaturaCampanaInterface
 {
-    public function __construct(private ?CacheInterface $cache = null) {}
+    public function __construct(
+        private ?CacheInterface $cache = null,
+        private TransferenciasHttp $http = new TransferenciasHttp(),
+        private string $urlArchivo = 'https://archive-api.open-meteo.com/v1/archive',
+    ) {}
     public function obtenerClima(float $latitud, float $longitud, ?float $altitud): array
     {
         // Treinta días completos del archivo reciente, con siete días de margen
@@ -18,7 +26,7 @@ final class ProveedorOpenMeteo implements ProveedorClimaInterface
         $fin = new \DateTimeImmutable('-7 days', new \DateTimeZone('America/Guayaquil'));
         $fechaFin = $fin->format('Y-m-d');
         $fechaInicio = $fin->modify('-29 days')->format('Y-m-d');
-        $urlClima = "https://archive-api.open-meteo.com/v1/archive"
+        $urlClima = $this->urlArchivo
             . "?latitude={$latitud}&longitude={$longitud}"
             . "&start_date={$fechaInicio}&end_date={$fechaFin}"
             . "&daily=temperature_2m_mean,temperature_2m_min,temperature_2m_max"
@@ -33,8 +41,7 @@ final class ProveedorOpenMeteo implements ProveedorClimaInterface
             CURLOPT_CONNECTTIMEOUT => 4,
             CURLOPT_USERAGENT      => 'AgroPredict/2.0'
         ]);
-        $respuestaClima = curl_exec($ch);
-        curl_close($ch);
+        $respuestaClima = $this->http->descargar([$ch])[0];
 
         if (!$respuestaClima) {
             throw new ServicioExternoException('Open-Meteo Archive API sin respuesta.');
@@ -90,8 +97,8 @@ final class ProveedorOpenMeteo implements ProveedorClimaInterface
 
         // ET₀ de referencia FAO-56; acumulado y promedio de 30 días, solo si la serie está completa.
         $et0 = $this->serie($datosDiarios, 'et0_fao_evapotranspiration');
-        $et0Validos = array_values(array_filter($et0, static fn($v) => $v !== null && is_numeric($v)));
-        $et0Completo = count($et0Validos) === count($et0) ? array_sum($et0Validos) : null;
+        $et0Validos = array_values(array_filter($et0, static fn($v) => is_numeric($v) && $v >= 0));
+        $et0Completo = count($et0Validos) === 30 && count($et0) === 30 ? array_sum($et0Validos) : null;
         if ($et0Completo !== null) {
             $actualizaciones['et0_30d'] = round($et0Completo, 1);
         }
@@ -143,7 +150,7 @@ final class ProveedorOpenMeteo implements ProveedorClimaInterface
         $cacheKey = sprintf('clima_12m_v2_%.4f_%.4f_%s', $latitud, $longitud, $fin->format('Ym'));
         $cached = $this->cache?->obtener($cacheKey, 86400);
         if (is_array($cached)) return $cached;
-        $url = "https://archive-api.open-meteo.com/v1/archive"
+        $url = $this->urlArchivo
             . "?latitude={$latitud}&longitude={$longitud}"
             . "&start_date={$fechaInicio}&end_date={$fechaFin}"
             . "&daily=precipitation_sum,temperature_2m_mean"
@@ -218,6 +225,28 @@ final class ProveedorOpenMeteo implements ProveedorClimaInterface
             'fuente' => 'Open-Meteo Archive · ERA5',
             'nota' => 'Historia reciente modelada por ERA5 para esta ubicación, no mediciones del lote. La lluvia mensual requiere todos los días; una media de temperatura puede tener cobertura parcial, indicada en dias_temperatura.',
         ];
+    }
+
+    public function gradosDia(float $lat, float $lon, string $inicio, string $fin): ?array
+    {
+        $clave = sprintf('gdd_v1_%.4f_%.4f_%s_%s', $lat, $lon, $inicio, $fin);
+        $consultar = function () use ($lat, $lon, $inicio, $fin): array {
+            $url = $this->urlArchivo . '?' . http_build_query([
+                'latitude' => $lat, 'longitude' => $lon, 'start_date' => $inicio, 'end_date' => $fin,
+                'daily' => 'temperature_2m_min,temperature_2m_max', 'models' => 'era5_land', 'timezone' => 'auto',
+            ]);
+            $ch = curl_init($url);
+            curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER => true, CURLOPT_FAILONERROR => true, CURLOPT_TIMEOUT => 5, CURLOPT_CONNECTTIMEOUT => 2]);
+            $json = json_decode((string) curl_exec($ch), true);
+            curl_close($ch);
+            if (!is_array($json['daily']['time'] ?? null)) return [];
+            $producto = GradosDiaMaiz::calcular($json['daily'], $inicio, $fin);
+            return $producto['dias_validos'] ? $producto : [];
+        };
+        $registro = $this->cache ? (new ConsultaConRespaldo($this->cache))->obtener($clave, 86400, 30 * 86400, $consultar)
+            : ['datos' => $consultar(), 'consultado_utc' => gmdate('c'), 'estado' => 'actualizado'];
+        return !$registro['datos'] ? null : $registro['datos'] + ['fuente' => 'Open-Meteo Archive · ERA5-Land',
+            'resolucion' => '0,1° (aprox. 11 km)', 'consultado_utc' => $registro['consultado_utc'], 'estado' => $registro['estado']];
     }
 
     private function serie(array $datosDiarios, string $clave): array

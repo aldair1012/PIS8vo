@@ -21,7 +21,7 @@ El modelo recibe 36 variables. Que una variable aparezca en un panel no implica 
 
 `maiz_ecuador_training_data.csv` contiene 2.366 filas y 38 columnas: 36 entradas y dos columnas de resultado. Las métricas guardadas informan validación agrupada por provincia y 2.266 filas utilizadas tras retirar 100 duplicados. La procedencia verificable de esas observaciones está pendiente de confirmación del usuario; no se concluye que sean sintéticas ni que sean cosechas verificadas.
 
-Actualización: el usuario no recuerda el origen. La búsqueda de procedencia y el perfil numérico están documentados en `procedencia-dataset-20261107.md`; se encontraron inconsistencias que requieren el diccionario y las fuentes originales antes de acreditar sus etiquetas.
+Actualización: el usuario no recuerda el origen. No existe un informe de procedencia independiente; los límites están registrados en [el manual de modelos](modelos_simulacion.md) y en [las fuentes para evaluar cosechas](fuentes-evaluacion-cosechas.md). Se encontraron inconsistencias que requieren el diccionario y las fuentes originales antes de acreditar sus etiquetas.
 
 El R² del archivo de métricas describe esa evaluación. No es una probabilidad de acertar la cosecha de una parcela. El formulario ya identifica la métrica y permite desplegar los valores y fuentes realmente enviados al modelo.
 
@@ -33,7 +33,7 @@ El R² del archivo de métricas describe esa evaluación. No es una probabilidad
 
 ## Avance y siguientes integraciones
 
-Fechas, duración, agua aplicada y nueve variables adicionales/relacionadas ya tienen contrato compartido, validación, procedencia y persistencia. El detalle exacto de once campos está en [conexiones y experimento de XGBoost](conexion-simulacion-20261108.md). La precisión agrícola externa sigue pendiente de cosechas verificadas.
+Fechas, duración, agua aplicada y nueve variables adicionales/relacionadas ya tienen contrato compartido, validación, procedencia y persistencia. El detalle exacto de once campos está en [conexiones y experimento de XGBoost](historial/conexion-simulacion-20261108.md). La precisión agrícola externa sigue pendiente de cosechas verificadas.
 
 La secuencia inicial se conserva como referencia; los puntos 2 y 3 ya tienen una primera implementación comprobada:
 

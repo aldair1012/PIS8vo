@@ -1,23 +1,27 @@
-# Revisión académica de ZeaSys — 9 de noviembre de 2026
+# Revisión académica de ZeaSys — actualización del 15 de noviembre de 2026
 
 Es una aplicación web. El ZIP contiene código fuente, compilación servida por Apache,
 modelos y datos públicos. No contiene la base personal, cuentas, claves API ni avatares.
-El Word de referencias está en `documentacion/ZeaSys-referencias-datos-20261109.docx`.
+El Word de referencias está en `documentacion/evaluaciones/ZeaSys-referencias-datos-20261109.docx`.
 La última revisión de Rendimiento se detalla en
-`documentacion/revision-rendimiento-20261109.md`.
-La revisión de Siembra está en `documentacion/revision-siembra-20261109.md`.
-La conexión final de sus módulos está en `documentacion/revision-siembra-modulos-20261109.md`.
-La estructura común con Rendimiento se detalla en `documentacion/revision-siembra-estructura-20261109.md`.
+`documentacion/historial/revision-rendimiento-20261109.md`.
+La revisión de Siembra está en `documentacion/historial/revision-siembra-20261109.md`.
+La conexión final de sus módulos está en `documentacion/historial/revision-siembra-modulos-20261109.md`.
+La estructura común con Rendimiento se detalla en `documentacion/historial/revision-siembra-estructura-20261109.md`.
 
 ## Para revisar el código
 
 La revisión de planificación y lluvia anual del 10 de noviembre se documenta en
-`documentacion/revision-siembra-lluvia-20261110.md`. Incluye los cambios de Siembra,
+`documentacion/historial/revision-siembra-lluvia-20261110.md`. Incluye los cambios de Siembra,
 las fuentes INAMHI/ERA5, la distinción entre lluvia anual y del ciclo y las pruebas.
 El Word de referencias también incorpora esa actualización.
 
 La organización de Siembra para productores se revisó después con UI UX Pro Max.
-Consulta `documentacion/revision-siembra-ux-pro-max-20261110.md` para los criterios,
+Consulta `documentacion/historial/revision-calendario-selector-20261115.md` para el calendario institucional, sus fuentes y la corrección del selector. La entrega actual se genera como `ZeaSys-revision-docentes-20261115-clima-chat.zip` con `python scripts/crear_paquete_revision.py`.
+
+La descripción central, pantallas, conexiones, puertos y límites está en `documentacion/GUIA_DEL_SISTEMA.md`. La revisión reciente del modelo, las cosechas y la aplicación está en `documentacion/revision-modelo-y-aplicacion-20261120.md`. El ZIP no incluye credenciales de Gemini/Google ni el historial de Flowise; esas funciones requieren la configuración propia del revisor y conexión a internet.
+
+Consulta `documentacion/historial/revision-siembra-ux-pro-max-20261110.md` para los criterios,
 los fallos corregidos y las verificaciones de interfaz y guardado real.
 
 Descomprime el ZIP y abre la carpeta ZeaSys con un editor. No necesitas iniciar

@@ -11,6 +11,11 @@ return static function (): Container {
 
     require_once __DIR__ . '/google.php';
 
+    $contenedor->registrar(\ZeaSys\Dominios\Terreno\Infraestructura\TransferenciasHttp::class, static fn () => new \ZeaSys\Dominios\Terreno\Infraestructura\TransferenciasHttp());
+    $contenedor->registrar(
+        \ZeaSys\Dominios\Analitica\Http\AlertasController::class,
+        static fn () => new \ZeaSys\Dominios\Analitica\Http\AlertasController(getConnection())
+    );
     $contenedor->registrar(
         \ZeaSys\Dominios\Autenticacion\Dominio\UsuarioRepositoryInterface::class,
         static fn (): \ZeaSys\Dominios\Autenticacion\Infraestructura\UsuarioRepositoryMysql =>
@@ -63,12 +68,12 @@ return static function (): Container {
     $contenedor->registrar(
         \ZeaSys\Dominios\Terreno\Dominio\ProveedorClimaInterface::class,
         static fn (Container $c): \ZeaSys\Dominios\Terreno\Infraestructura\ProveedorOpenMeteo =>
-            new \ZeaSys\Dominios\Terreno\Infraestructura\ProveedorOpenMeteo($c->get(\ZeaSys\Dominios\Terreno\Dominio\CacheInterface::class))
+            new \ZeaSys\Dominios\Terreno\Infraestructura\ProveedorOpenMeteo($c->get(\ZeaSys\Dominios\Terreno\Dominio\CacheInterface::class), $c->get(\ZeaSys\Dominios\Terreno\Infraestructura\TransferenciasHttp::class))
     );
     $contenedor->registrar(
         \ZeaSys\Dominios\Terreno\Dominio\ProveedorSueloInterface::class,
-        static fn (): \ZeaSys\Dominios\Terreno\Infraestructura\ProveedorSoilGrids =>
-            new \ZeaSys\Dominios\Terreno\Infraestructura\ProveedorSoilGrids()
+        static fn (Container $c): \ZeaSys\Dominios\Terreno\Infraestructura\ProveedorSoilGrids =>
+            new \ZeaSys\Dominios\Terreno\Infraestructura\ProveedorSoilGrids($c->get(\ZeaSys\Dominios\Terreno\Infraestructura\TransferenciasHttp::class))
     );
     $contenedor->registrar(
         \ZeaSys\Dominios\Terreno\Infraestructura\ProveedorNoaaOni::class,
@@ -94,6 +99,8 @@ return static function (): Container {
                 $c->get(\ZeaSys\Dominios\Terreno\Dominio\ProveedorSueloInterface::class),
                 $c->get(\ZeaSys\Dominios\Terreno\Dominio\AltitudPorCultivoInterface::class),
                 $c->get(\ZeaSys\Dominios\Terreno\Dominio\ProveedorLluviaAnualInterface::class),
+                new \ZeaSys\Dominios\Terreno\Infraestructura\AltitudDem($c->get(\ZeaSys\Dominios\Terreno\Dominio\CacheInterface::class)),
+                $c->get(\ZeaSys\Dominios\Terreno\Infraestructura\TransferenciasHttp::class),
             )
     );
     $contenedor->registrar(
@@ -187,6 +194,7 @@ return static function (): Container {
                 $c->get(\ZeaSys\Dominios\Terreno\Dominio\CacheInterface::class),
                 $c->get(\ZeaSys\Dominios\Lotes\Dominio\CultivoRepositoryInterface::class),
                 $c->get(\ZeaSys\Dominios\Terreno\Dominio\ProveedorLluviaAnualInterface::class),
+                new \ZeaSys\Dominios\Terreno\Infraestructura\AltitudDem($c->get(\ZeaSys\Dominios\Terreno\Dominio\CacheInterface::class)),
             )
     );
     $contenedor->registrar(
@@ -254,6 +262,20 @@ return static function (): Container {
                 $c->get(\ZeaSys\Dominios\Lotes\Dominio\CultivoRepositoryInterface::class),
                 $c->get(\ZeaSys\Dominios\Simulaciones\Dominio\SimulacionRepositoryInterface::class),
             )
+    );
+    $contenedor->registrar(
+        \ZeaSys\Dominios\Lotes\Http\AcompanamientoController::class,
+        static function (): \ZeaSys\Dominios\Lotes\Http\AcompanamientoController {
+            $repo = new \ZeaSys\Dominios\Lotes\Infraestructura\AcompanamientoRepository(getConnection());
+            return new \ZeaSys\Dominios\Lotes\Http\AcompanamientoController($repo, new \ZeaSys\Dominios\Lotes\Aplicacion\ServicioAcompanamiento($repo));
+        }
+    );
+    $contenedor->registrar(
+        \ZeaSys\Dominios\Analitica\Http\CampanasController::class,
+        static function (): \ZeaSys\Dominios\Analitica\Http\CampanasController {
+            $repo = new \ZeaSys\Dominios\Analitica\Infraestructura\CampanasRepository(getConnection());
+            return new \ZeaSys\Dominios\Analitica\Http\CampanasController(new \ZeaSys\Dominios\Analitica\Aplicacion\ServicioCampanas($repo), $repo);
+        }
     );
     $contenedor->registrar(
         \ZeaSys\Dominios\Analitica\Http\YieldController::class,
@@ -349,10 +371,12 @@ return static function (): Container {
         \ZeaSys\Dominios\Chat\Http\ChatController::class,
         static fn (Container $c): \ZeaSys\Dominios\Chat\Http\ChatController =>
             new \ZeaSys\Dominios\Chat\Http\ChatController(
-                $c->get(\ZeaSys\Dominios\Chat\Aplicacion\ChatService::class)
+                $c->get(\ZeaSys\Dominios\Chat\Aplicacion\ChatService::class),
+                new \ZeaSys\Dominios\Chat\Infraestructura\ConsentimientoAsistente(getConnection()),
             )
     );
 
+    $contenedor->registrar(\ZeaSys\Kernel\SaludController::class, static fn () => new \ZeaSys\Kernel\SaludController());
     $legacy = [];
     foreach ($legacy as $clase) {
         $contenedor->registrar($clase, static fn (): object => new $clase());

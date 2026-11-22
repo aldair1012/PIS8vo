@@ -2,11 +2,11 @@
 
 El formulario de **Mis lotes** pide primero el tipo de maíz y después filtra las variedades compatibles. El catálogo muestra materiales documentados para Ecuador y ofrece **Otra variedad local o comercial (especificar)** para guardar el nombre exacto de la semilla.
 
-Actualización del 8 de noviembre de 2026: el catálogo compartido incluye 14 fichas (13 materiales con etiqueta utilizable y canguil para consulta) y una consulta de adaptación en Simular cosecha. Ver [alcance, fuentes, lógica y límites de la integración](catalogo-variedades-20261107.md). Las etiquetas presentes en XGBoost y los requisitos documentales se distinguen explícitamente.
+Actualización del 8 de noviembre de 2026: el catálogo compartido incluye 14 fichas (13 materiales con etiqueta utilizable y canguil para consulta) y una consulta de adaptación en Simular cosecha. Las etiquetas presentes en XGBoost y los requisitos documentales se distinguen explícitamente.
 
 Los tres valores almacenados para `tipo_maiz` se conservan para seguir siendo compatibles con la codificación del predictor: `Duro Amarillo`, `Duro Amarillo / Blanco` y `Suave Harinoso`. Por ese límite, la lista está organizada en esos grupos y no crea categorías que el modelo actual no reconoce.
 
-La selección reducida y los 24 retiros activos se detallan en [decisiones de selección](seleccion-variedades-20261107.md). El grupo de canguil y maíz blanco duro contiene INIAP 198 como ficha de consulta; el cálculo específico está bloqueado por una inconsistencia del entrenamiento. Los grupos de choclo distinguen destinos blanco y amarillo en las fichas.
+La selección reducida y los 24 retiros activos se resumen en las fuentes de revisión siguientes. El grupo de canguil y maíz blanco duro contiene INIAP 198 como ficha de consulta; el cálculo específico está bloqueado por una inconsistencia del entrenamiento. Los grupos de choclo distinguen destinos blanco y amarillo en las fichas.
 
 ## Fuentes de revisión, incluyendo materiales retirados
 

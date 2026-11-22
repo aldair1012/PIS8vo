@@ -34,7 +34,9 @@ Invoke-ZeaCheck 'Frontend / pruebas' $frontendDir $npmPath @('test')
 Invoke-ZeaCheck 'Frontend / tipos del piloto' $frontendDir $npmPath @('run', 'typecheck:pilot')
 Invoke-ZeaCheck 'Herramientas / respaldo y búsqueda documental' $projectDir $pythonPath @('-m', 'unittest', 'discover', '-s', 'tools', '-p', 'test_*.py', '-v')
 Invoke-ZeaCheck 'Chat / ruta documental y respaldo simulados' $projectDir $pythonPath @('backend-api/tests/chat/recuperacion_integracion.py')
+Invoke-ZeaCheck 'Chat / flujo, consentimiento y cuota simulados' $projectDir $pythonPath @('backend-api/tests/chat/stream_integracion.py')
 Invoke-ZeaCheck 'Chat / concurrencia y cierre de sesión' $projectDir $pythonPath @('backend-api/tests/chat/sesion_concurrente.py')
+Invoke-ZeaCheck 'Terreno / transferencias paralelas' $projectDir $pythonPath @('backend-api/tests/terreno/proveedores_paralelos.py')
 if ($Navegador) {
     Invoke-ZeaCheck 'Frontend / navegador' $frontendDir $npmPath @('run', 'test:e2e')
 }
@@ -47,6 +49,7 @@ foreach ($suite in @('clima-escenarios', 'finanzas', 'mediciones')) {
 Invoke-ZeaCheck 'PHP / origen de escrituras' $projectDir $PhpPath @('backend-api/tests/kernel/origen.php')
 Invoke-ZeaCheck 'PHP / planificación de parcela' $projectDir $PhpPath @('backend-api/tests/validacion/planificacion.php')
 Invoke-ZeaCheck 'PHP / lluvia anual histórica' $projectDir $PhpPath @('backend-api/tests/terreno/lluvia-anual.php')
+Invoke-ZeaCheck 'PHP / avisos de lluvia y respaldo de consultas' $projectDir $PhpPath @('backend-api/tests/terreno/avisos.php')
 Invoke-ZeaCheck 'Python / motor y proveedores' (Join-Path $projectDir 'ml-engine') $pythonPath @('-m', 'unittest', 'discover', '-s', 'tests', '-v')
 if (-not $OmitirBuild) {
     Invoke-ZeaCheck 'Frontend / build y copia a XAMPP' $frontendDir $npmPath @('run', 'build')

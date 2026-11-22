@@ -85,13 +85,13 @@ def main():
             origin = f"http://127.0.0.1:{api_port}"
             env.update({"ZEASYS_DB_NAME": identity["db"], "ZEASYS_IA_SERVER_URL": f"http://127.0.0.1:{ml_port}",
                         "ZEASYS_CACHE_DIR": str(Path(log_dir) / "cache"),
-                        "ZEASYS_FLOWISE_URL": "http://127.0.0.1:1", "NO_PROXY": "127.0.0.1,localhost",
+                        "ZEASYS_FLOWISE_URL": "http://127.0.0.1:1", "ZEASYS_CHAT_PROVEEDOR": "flowise", "NO_PROXY": "127.0.0.1,localhost",
                         "HTTPS_PROXY": "http://127.0.0.1:1", "http_proxy": "http://127.0.0.1:1"})
             with open(Path(log_dir) / "ml.log", "w", encoding="utf-8") as ml_log, open(Path(log_dir) / "php.log", "w", encoding="utf-8") as php_log:
                 ml = subprocess.Popen([sys.executable, str(HERE / "motor.py"), str(ml_port)], cwd=ROOT / "ml-engine", env=env, stdout=ml_log, stderr=subprocess.STDOUT, creationflags=creationflags)
                 processes.append(ml)
                 wait_server(f"http://127.0.0.1:{ml_port}/health", ml)
-                api = subprocess.Popen([PHP, "-S", f"127.0.0.1:{api_port}", "-t", str(ROOT)], cwd=ROOT, env=env, stdout=php_log, stderr=subprocess.STDOUT, creationflags=creationflags)
+                api = subprocess.Popen([PHP, "-d", f"sys_temp_dir={log_dir}", "-S", f"127.0.0.1:{api_port}", "-t", str(ROOT)], cwd=ROOT, env=env, stdout=php_log, stderr=subprocess.STDOUT, creationflags=creationflags)
                 processes.append(api)
                 wait_server(origin + "/backend-api/public/index.php/api/auth/yo", api)
                 a, b, visitor = Client(origin), Client(origin), Client(origin)
@@ -209,6 +209,11 @@ def main():
                 visitor.call("GET", f"rendimiento/mediciones/consulta?parcela_id={crop_id}", expected=401)
                 a.call("GET", "rendimiento/mediciones/consulta", expected=400)
                 checked("mediciones parciales conservan datos y protegen la parcela")
+                from campanas import probar_campanas, probar_acompanamiento
+                probar_campanas(a, b, visitor, crop_id, page1["simulaciones"])
+                checked("cosechas emparejadas, métricas, observación, adjunto privado y duplicados")
+                probar_acompanamiento(a, b, visitor, crop_id)
+                checked("acompañamiento de sólo lectura, triaje, CSV privado y revocación por el titular")
                 for endpoint in ("rendimiento", "financiero", "escenarios", "clima"):
                     body = a.call("GET", f"{endpoint}?parcela_id={crop_id}&a%C3%B1o=2024")
                     assert body, endpoint
@@ -238,6 +243,10 @@ def main():
                 b.call("POST", "simulaciones/explicar", {"nombre": "Rendimiento", "cultivo_id": crop_id}, expected=403)
                 checked("explicación HTTP y acceso restringido por parcela")
                 selected_chat = {"pregunta": "Explica la simulación seleccionada", "vista": "yield", "cultivo_id": crop_id}
+                aviso = a.call("POST", "chat/preguntar", selected_chat, expected=428)
+                assert a.call("POST", "chat/consentimiento", {"autorizado": True, "version": aviso["version"]})["autorizado"]
+                assert not b.call("GET", "chat/consentimiento")["autorizado"]
+                checked("consentimiento del asistente explícito, versionado y aislado por cuenta")
                 a.call("POST", "chat/preguntar", {**selected_chat, "dashboard": {"simulacion_seleccionada": {"id": 999999999}}}, expected=403)
                 a.call("POST", "chat/preguntar", {**selected_chat, "dashboard": {"simulacion_seleccionada": {"id": "inválida"}}}, expected=400)
                 a.call("POST", "chat/preguntar", {**selected_chat, "dashboard": {"simulacion_seleccionada": {"id": simulation_id, "rendimiento_estimado": 999}}}, expected=502)

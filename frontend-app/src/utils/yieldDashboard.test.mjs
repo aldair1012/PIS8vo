@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { escapeChartText, validarRespuestaRendimiento, provinceFromLocation, regionalHistory, simulationHistory, yieldAnalysis } from './yieldDashboard.js';
+import { harvestValidationCsv, escapeChartText, validarRespuestaRendimiento, provinceFromLocation, regionalHistory, simulationHistory, yieldAnalysis } from './yieldDashboard.js';
 
 test('rechaza respuestas inválidas o de otra parcela antes de renderizar',()=>{
   for(const value of [null,[],{}, {cultivo_activo:{id:2},simulaciones_rendimiento:[]}, {cultivo_activo:{id:1},simulaciones_rendimiento:{}}, {cultivo_activo:{id:1},simulaciones_rendimiento:[null]}]) assert.throws(()=>validarRespuestaRendimiento(value,1));
@@ -70,4 +70,11 @@ test('la curva conserva la selección antigua además de las ejecuciones recient
   assert.equal(result[0].id, 1);
   assert.equal(result.at(-1).id, 20);
   assert.equal(simulationHistory(rows, rows[19]).length, 12);
+});
+
+test('la ficha de contraste conserva la predicción, deja la cosecha vacía y exige versión', () => {
+  const run = {id: 91, fecha: '2026-02-03 09:10:00', version_modelo: 'abc123', rendimiento_t_ha: 0};
+  assert.equal(harvestValidationCsv(1, {...run, version_modelo: null}), null);
+  const [, row] = harvestValidationCsv(1, run).split('\r\n');
+  assert.equal(row, '"1","91","","2026-02-03","abc123","0","","","","","","",""');
 });

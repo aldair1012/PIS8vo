@@ -1,17 +1,18 @@
 import AnnualRainReference from '../components/AnnualRainReference';
 import PantallaCarga from '../components/PantallaCarga';
 import { numeroFertilizacion, validarProductoFertilizante } from '../utils/fertilizerInput';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useEffectEvent, useMemo, useRef, useState } from 'react';
 import { MapPin, Pencil, Check, ArrowRight, RefreshCw, Info, Sprout } from 'lucide-react';
 import { simulacionService, parcelasService } from '../services/api';
 import { parseScenarioNumber, normalizarDecimalEntrada } from '../utils/simulationInput';
-import { prepararCamposCultivo, finCultivo, camposCultivo as definicionesCampo } from '../utils/fieldInputs';
+import { prepararCamposCultivo, finCultivo, editarPeriodo, errorPeriodo, periodoCultivo, camposCultivo as definicionesCampo } from '../utils/fieldInputs';
 import { provinceFromLocation } from '../utils/yieldDashboard';
 import { buscarFichaMaiz } from '../data/variedadesMaizEcuador';
 import tiposSuelo from '../../../backend-api/data/referencias/tipos-suelo.json' with { type: 'json' };
 import EvaluacionVariedades from '../components/EvaluacionVariedades';
 import ParametrosCampo from '../components/ParametrosCampo';
 import ResultadoSimulacion from '../components/ResultadoSimulacion';
+import ReferenciaMensualEspac from '../components/ReferenciaMensualEspac';
 import '../assets/simulacion.css';
 
 const areaEtiqueta = (value) => {
@@ -37,12 +38,25 @@ const num = v => numeroFertilizacion(v) ?? 0;
 const pct = v => Math.min(Math.max(num(v), 0), 100);
 const fmt1 = n => n == null ? 'Sin precio' : (Math.round(n * 10) / 10).toLocaleString('es-EC');
 
-export default function Simular({ cultivos, onSimulationCompleted, onNavigate, onboardingStep, onNextOnboardingStep, onSimulationContextChange }) {
+function datosParcela(crop) {
+  return { ...vacios, area: esNumero(crop?.area) ? String(crop.area) : '', ph: esNumero(crop?.ph) ? String(crop.ph) : '' };
+}
+
+function riegoParcela(crop) {
+  const riego = crop?.riego_tipo;
+  if (!Object.hasOwn(definicionesCampo.riego_tipo.opciones, riego) || riego === 'natural_exceso') return {};
+  return riego === 'temporal_lluvia' ? { riego_tipo: riego, lamina_riego_mm: '0' } : { riego_tipo: riego };
+}
+
+export default function Simular({ cultivos, parcelaInicialId, solicitudFecha, consumirSolicitudFecha, onSimulationCompleted, onNavigate, onboardingStep, onNextOnboardingStep, onSimulationContextChange }) {
   const planAplicado = useRef(false);
-  const [cultivoId, setCultivoId] = useState('');
-  const [datos, setDatos] = useState(vacios);
-  const [campos, setCampos] = useState({});
-  const [fecha, setFecha] = useState('');
+  const inicial = cultivos.find(c => String(c.id) === String(parcelaInicialId)) ?? (cultivos.length === 1 ? cultivos[0] : null);
+  const [cultivoId, setCultivoId] = useState(() => String(inicial?.id ?? ''));
+  const [datos, setDatos] = useState(() => datosParcela(inicial));
+  const [manejo, setCampos] = useState(() => riegoParcela(inicial));
+  const [periodo, setPeriodo] = useState(() => periodoCultivo(inicial?.fecha_siembra, inicial?.ciclo_dias));
+  const fecha = periodo.fecha;
+  const campos = useMemo(() => periodo.dias ? { ...manejo, ciclo_dias: periodo.dias } : manejo, [manejo, periodo.dias]);
   const [historico, setHistorico] = useState(false);
   const [referencias, setReferencias] = useState(null);
   const [automaticos, setAutomaticos] = useState({});
@@ -50,6 +64,7 @@ export default function Simular({ cultivos, onSimulationCompleted, onNavigate, o
   const [cargandoDatos, setCargandoDatos] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [invalidField, setInvalidField] = useState('');
   const [aviso, setAviso] = useState('');
   const [recarga, setRecarga] = useState(0);
   const [result, setResult] = useState(null);
@@ -87,14 +102,36 @@ export default function Simular({ cultivos, onSimulationCompleted, onNavigate, o
     return { nombre: p?.nombre, formula: p?.formula, dosis, unidad: r.unidad || 'bolsa', porcentaje: { N: pct(r.N ?? p?.N), P: pct(r.P ?? p?.P), K: pct(r.K ?? p?.K), Mg: pct(r.Mg ?? p?.Mg), S: pct(r.S ?? p?.S) }, aporte: { N: kg * pct(r.N ?? p?.N) / 100, P: kg * pct(r.P ?? p?.P) / 100, K: kg * pct(r.K ?? p?.K) / 100, Mg: kg * pct(r.Mg ?? p?.Mg) / 100, S: kg * pct(r.S ?? p?.S) / 100 }, costo: String(r.precio ?? '').trim() === '' ? null : r.unidad === 'kg' ? (dosis / 50) * num(r.precio) : dosis * num(r.precio) };
   });
 
-  const invalidar = () => { setResult(null); setAreaResultado(null); setError(null); };
+  const invalidar = () => { setResult(null); setAreaResultado(null); setError(null); setInvalidField(''); };
+  const showFieldError = (form, name, message) => {
+    const control = form.elements.namedItem(name);
+    if (control?.readOnly || control?.disabled) setEditarDatos(true);
+    setInvalidField(name);
+    setError(message);
+    requestAnimationFrame(() => control?.focus());
+  };
+  const fieldState = (name, hintId) => ({
+    name,
+    'aria-invalid': invalidField === name,
+    'aria-describedby': [hintId, invalidField === name && 'simulation-field-error'].filter(Boolean).join(' ') || undefined,
+  });
+  const fieldError = name => invalidField === name && error && (
+    <p id="simulation-field-error" className="workspace-field-error" role="alert">{error}</p>
+  );
   const cambiarDato = (key, value) => {
     modificados.current[key] = true;
     setDatos(prev => ({ ...prev, [key]: value }));
     invalidar();
   };
+  const cambiarPeriodo = (campo, valor) => {
+    setPeriodo(previous => editarPeriodo(previous, campo, valor));
+    setHistorico(false);
+    invalidar();
+  };
   const cambiarCampos = values => {
-    setCampos(values); invalidar();
+    const { ciclo_dias, ...resto } = values;
+    if (String(ciclo_dias ?? '') !== periodo.dias) cambiarPeriodo('dias', String(ciclo_dias ?? ''));
+    setCampos(resto); invalidar();
     if (!finCultivo(fecha, parseScenarioNumber(values.ciclo_dias))) setHistorico(false);
   };
   const toggleFert = id => {
@@ -120,12 +157,34 @@ export default function Simular({ cultivos, onSimulationCompleted, onNavigate, o
     invalidar();
   };
   const seleccionar = id => {
+    if (String(id) === String(cultivoId)) return;
     const crop = cultivos.find(c => Number(c.id) === Number(id));
     modificados.current = {};
     setCultivoId(id); setEditarDatos(false); setReferencias(null); setAviso(''); setAutomaticos({});
-    setDatos({ ...vacios, area: esNumero(crop?.area) ? String(crop.area) : '', ph: esNumero(crop?.ph) ? String(crop.ph) : '' });
-    setCampos({ ...(esNumero(crop?.ciclo_dias)?{ciclo_dias:Number(crop.ciclo_dias)}:{}), ...(Object.hasOwn(definicionesCampo.riego_tipo.opciones,crop?.riego_tipo)?{riego_tipo:crop.riego_tipo}:{}) }); setFecha(crop?.fecha_siembra ?? ''); setHistorico(false); setVista('preparar'); invalidar();
+    setDatos(datosParcela(crop));
+    setCampos(riegoParcela(crop));
+    setPeriodo(periodoCultivo(crop?.fecha_siembra, crop?.ciclo_dias));
+    setCargandoDatos(Boolean(crop));
+    planAplicado.current = false;
+    setSeleccionados([]); setInputsFert({}); setFormOtroAbierto(false); setAplicacionesN(2);
+    setFormOtro({ nombre: '', N: '0', P: '0', K: '0', Mg: '0', S: '0', precio: '' });
+    setHistorico(false); setVista('preparar'); invalidar();
   };
+
+  const prepararFecha = useEffectEvent(id => {
+    if (id && String(id) !== String(cultivoId)) seleccionar(String(id));
+    else setVista('preparar');
+  });
+  useEffect(() => {
+    if (!solicitudFecha) return;
+    prepararFecha(solicitudFecha.cultivoId);
+    const turno = requestAnimationFrame(() => {
+      const input = document.getElementById('campo-fecha');
+      if (input) { input.closest('details').open = true; input.focus(); }
+      consumirSolicitudFecha(null);
+    });
+    return () => cancelAnimationFrame(turno);
+  }, [solicitudFecha, consumirSolicitudFecha]);
 
   useEffect(() => {
     let vigente = true;
@@ -185,8 +244,8 @@ export default function Simular({ cultivos, onSimulationCompleted, onNavigate, o
   }, [parcela, datos, campos, fecha, cargandoDatos, onSimulationContextChange]);
 
   const simular = async event => {
-    event.preventDefault(); setError(null);
-    if (!parcela) { setError('Selecciona una parcela para preparar la simulación.'); return; }
+    event.preventDefault(); setError(null); setInvalidField('');
+    if (!parcela) { showFieldError(event.currentTarget, 'parcela', 'Selecciona una parcela para preparar la simulación.'); return; }
     if (sinModelo) { setError('Esta variedad tiene ficha de consulta; su cálculo específico todavía requiere un modelo compatible.'); return; }
     if (modoFert === 'producto') for (const id of seleccionados) {
       const message = validarProductoFertilizante(inputsFert[id] || {});
@@ -200,15 +259,17 @@ export default function Simular({ cultivos, onSimulationCompleted, onNavigate, o
     ]) {
       const value = parseScenarioNumber(datos[key]);
       if (value === null || value < min || value > max) {
-        setError(`${label}: introduce un número entre ${min} y ${max}. No uses separadores de miles: escribe 3500 o, si es un decimal, 3.5.`);
+        showFieldError(event.currentTarget, key, `${label}: introduce un número entre ${min} y ${max}. No uses separadores de miles: escribe 3500 o, si es un decimal, 3.5.`);
         return;
       }
       numbers[key] = value;
     }
-    if (!datos.suelo) { setError('Selecciona la textura del suelo; no hay una estimación disponible para este punto.'); return; }
-    if (!campos.riego_tipo) { setError('Indica si el cultivo recibirá solo lluvia o qué sistema de riego utilizarás.'); return; }
+    if (!datos.suelo) { showFieldError(event.currentTarget, 'suelo', 'Selecciona la textura del suelo; no hay una estimación disponible para este punto.'); return; }
+    if (!campos.riego_tipo) { showFieldError(event.currentTarget, 'riego', 'Indica si el cultivo recibirá solo lluvia o qué sistema de riego utilizarás.'); return; }
     let manejo;
     try {
+      const problema = errorPeriodo(periodo);
+      if (problema) throw new Error(problema);
       manejo = prepararCamposCultivo(campos, numbers.temp);
       if (fecha && !finCultivo(fecha, 1)) throw new Error('Revisa la fecha de siembra.');
     } catch (validationError) { setError(validationError.message); return; }
@@ -234,10 +295,11 @@ export default function Simular({ cultivos, onSimulationCompleted, onNavigate, o
   const campoNumero = (key, id, label, hint) => {
     const bloqueado = Boolean(automaticos[key] && !editarDatos);
     return <div className="form-group"><label className="form-label" htmlFor={id}>{label} <span aria-hidden="true">*</span></label>
-      <input id={id} type="text" inputMode="decimal" className="form-input" required value={datos[key]} readOnly={bloqueado}
+      <input id={id} {...fieldState(key, hint ? `${id}-hint` : undefined)} type="text" inputMode="decimal" className="form-input" required value={datos[key]} readOnly={bloqueado}
         placeholder={placeholdersNum[key]}
         onChange={event => cambiarDato(key, event.target.value)} onBlur={event => { const value = normalizarDecimalEntrada(event.target.value); if (value !== datos[key]) cambiarDato(key, value); }} />
-      {hint && <p className="form-hint">{hint}</p>}
+      {hint && <p id={`${id}-hint`} className="form-hint">{hint}</p>}
+      {fieldError(key)}
       {automaticos[key] && <span className="simulation-origin">{modificados.current[key] ? 'Ajustado por ti' : 'Dato precargado'}{bloqueado ? ' · Modificar datos para editar' : ''}</span>}
     </div>;
   };
@@ -254,13 +316,17 @@ export default function Simular({ cultivos, onSimulationCompleted, onNavigate, o
     <div className="simulation-tabs" role="tablist" aria-label="Pasos de la simulación" onKeyDown={event => {
       if (['ArrowRight', 'ArrowLeft', 'Home', 'End'].includes(event.key)) { event.preventDefault(); seleccionarTab(event.key === 'Home' || !result ? 'preparar' : event.key === 'End' ? 'resultado' : vista === 'preparar' ? 'resultado' : 'preparar'); }
     }}><button ref={node => { tabs.current[0] = node; }} id="tab-preparar" role="tab" aria-selected={vista === 'preparar'} aria-controls="panel-preparar" tabIndex={vista === 'preparar' ? 0 : -1} onClick={() => setVista('preparar')}><span>1</span> Preparar escenario</button><button ref={node => { tabs.current[1] = node; }} id="tab-resultado" role="tab" aria-selected={vista === 'resultado'} aria-controls="panel-resultado" tabIndex={vista === 'resultado' ? 0 : -1} disabled={!result} onClick={() => setVista('resultado')}><span>2</span> Resultado</button></div>
-    {error && <div className="simulation-error" role="alert"><Info size={19} /><p>{error}</p></div>}
+    {error && !invalidField && <div className="simulation-error" role="alert"><Info size={19} /><p>{error}</p></div>}
     <section id="panel-preparar" role="tabpanel" aria-labelledby="tab-preparar" hidden={vista !== 'preparar'}>
       {onboardingStep === 2 && <p className="simulation-notice">Tu parcela ya está registrada. Completa este escenario para crear tu primera simulación.</p>}
       <div className="simulation-prepare-grid"><form className="simulation-form" noValidate onSubmit={simular}>
         <fieldset disabled={loading}><section className="simulation-section"><header className="simulation-section-heading"><div><span className="simulation-section-number">01</span><h2>Elige tu parcela</h2></div></header>
-          <div className="form-group"><label className="form-label" htmlFor="simular-parcela">Parcela de referencia <span aria-hidden="true">*</span></label><select id="simular-parcela" className="form-select" value={cultivoId} onChange={event => seleccionar(event.target.value)}><option value="">Selecciona una parcela</option>{cultivos.map(crop => <option key={crop.id} value={crop.id}>{crop.nombre_parcela} ({areaEtiqueta(crop.area)})</option>)}</select></div>
+          <div className="form-group"><label className="form-label" htmlFor="simular-parcela">Parcela de referencia <span aria-hidden="true">*</span></label><select id="simular-parcela" required {...fieldState('parcela')} className="form-select" value={cultivoId} onChange={event => seleccionar(event.target.value)}><option value="">Selecciona una parcela</option>{cultivos.map(crop => <option key={crop.id} value={crop.id}>{crop.nombre_parcela} ({areaEtiqueta(crop.area)})</option>)}</select>{fieldError('parcela')}</div>
           {parcela && <div className="simulation-location"><MapPin size={19} /><div><strong>{provincia ?? (cargandoDatos ? 'Identificando provincia…' : 'Provincia sin confirmar')}</strong><p>{parcela.ubicacion || 'Coordenadas registradas en la parcela'}</p><span>{parcela.variedad_maiz}</span></div></div>}
+          {parcela && <details className="simulation-optional"><summary>Planificar con cosechas públicas del INEC</summary>
+            <label>Fecha prevista de siembra <input className="form-input" type="date" value={fecha} min="1950-01-01" max="2100-12-31" onChange={e => cambiarPeriodo('fecha', e.target.value)} /></label>
+            <ReferenciaMensualEspac key={cultivoId} provincia={provincia} fechas={[fecha]} />
+          </details>}
         </section>
         <section className="simulation-section"><header className="simulation-section-heading"><div><span className="simulation-section-number">02</span><h2>Revisa los datos del escenario</h2></div><button type="button" className="simulation-edit" onClick={() => setEditarDatos(value => !value)} disabled={!cultivoId}>{editarDatos ? <Check size={16} /> : <Pencil size={16} />}{editarDatos ? 'Listo, usar estos datos' : 'Modificar datos'}</button></header>
           <p>Precargamos las referencias disponibles de ubicación. Puedes modificarlas para este cálculo; no cambiarán el registro de tu parcela.</p>
@@ -269,7 +335,7 @@ export default function Simular({ cultivos, onSimulationCompleted, onNavigate, o
           {aviso && <p role="status" className="simulation-notice">{aviso}</p>}
           <div className="simulation-fields-grid">
             {campoNumero('area', 'simular-area', 'Área a simular (ha)')}
-            <div className="form-group"><label className="form-label" htmlFor="simular-suelo">Textura del suelo <span aria-hidden="true">*</span></label><select id="simular-suelo" className="form-select" value={datos.suelo} disabled={Boolean(automaticos.suelo && !editarDatos)} onChange={event => cambiarDato('suelo', event.target.value)}><option value="">Selecciona una textura</option>{Object.entries(tiposSuelo).map(([code, rule]) => <option key={code} value={code}>{rule.label}</option>)}</select><p className="form-hint">{referencias?.referencia_suelo ? `Mapa: ${referencias.referencia_suelo.clase_estimada ?? 'textura estimada'}. Se propone el grupo compatible con el modelo; puedes corregirlo.` : 'Si no hay datos de mapa, selecciona el tipo que conoces. No asignamos una textura por defecto sin respaldo.'}</p></div>
+            <div className="form-group"><label className="form-label" htmlFor="simular-suelo">Textura del suelo <span aria-hidden="true">*</span></label><select id="simular-suelo" required {...fieldState('suelo', 'simular-suelo-hint')} className="form-select" value={datos.suelo} disabled={Boolean(automaticos.suelo && !editarDatos)} onChange={event => cambiarDato('suelo', event.target.value)}><option value="">Selecciona una textura</option>{Object.entries(tiposSuelo).map(([code, rule]) => <option key={code} value={code}>{rule.label}</option>)}</select>{fieldError('suelo')}<p id="simular-suelo-hint" className="form-hint">{referencias?.referencia_suelo ? `Mapa: ${referencias.referencia_suelo.clase_estimada ?? 'textura estimada'}. Se propone el grupo compatible con el modelo; puedes corregirlo.` : 'Si no hay datos de mapa, selecciona el tipo que conoces. No asignamos una textura por defecto sin respaldo.'}</p></div>
             {campoNumero('temp', 'simular-temperatura', 'Temperatura media (°C)', 'Usa una media representativa del ciclo; la referencia reciente puede ser distinta.')}
             {campoNumero('hum', 'simular-humedad', 'Humedad relativa (%)')}
             {campoNumero('prec', 'lluvia-ciclo', 'Lluvia acumulada del ciclo (mm)', 'Acumulado o escenario de lluvia para todo el cultivo. No uses el total anual.')}
@@ -343,8 +409,8 @@ export default function Simular({ cultivos, onSimulationCompleted, onNavigate, o
           </div>
           <p className="simulation-small">Puedes usar coma decimal: se convierte en punto al salir del campo. Escribe los miles sin separadores, por ejemplo 3500.</p>
         </section>
-        <section className="simulation-section"><header className="simulation-section-heading"><div><span className="simulation-section-number">03</span><h2>Define el agua del cultivo</h2></div></header><div className="simulation-fields-grid"><div className="form-group"><label className="form-label" htmlFor="campo-riego_tipo">Sistema de agua o riego <span aria-hidden="true">*</span></label><select id="campo-riego_tipo" className="form-select" value={campos.riego_tipo ?? ''} onChange={event => cambiarRiego(event.target.value)}><option value="">Selecciona cómo recibirá agua</option>{Object.entries(definicionesCampo.riego_tipo.opciones).filter(([key]) => key !== 'natural_exceso').map(([code, label]) => <option key={code} value={code}>{label}</option>)}</select></div><div className="form-group"><label className="form-label" htmlFor="campo-lamina_riego_mm">Agua de riego de todo el ciclo (mm) <small>Opcional</small></label><input id="campo-lamina_riego_mm" className="form-input" type="text" inputMode="decimal" readOnly={campos.riego_tipo === 'temporal_lluvia'} placeholder="Ej.: 120" value={campos.lamina_riego_mm ?? ''} onChange={event => cambiarCampos({ ...campos, lamina_riego_mm: event.target.value })} onBlur={event => cambiarCampos({ ...campos, lamina_riego_mm: normalizarDecimalEntrada(event.target.value) })} /><p className="form-hint">{campos.riego_tipo === 'temporal_lluvia' ? 'Solo lluvia: el agua aportada por riego es 0 mm.' : 'No incluye lluvia. 1 mm equivale a 10 m³ de agua por hectárea.'}</p></div></div></section>
-        <ParametrosCampo fecha={fecha} onFechaChange={value => { setFecha(value); setHistorico(false); invalidar(); }} valores={campos} onChange={cambiarCampos} ficha={ficha} historico={historico} onHistoricoChange={value => { setHistorico(value); invalidar(); }} />
+        <section className="simulation-section"><header className="simulation-section-heading"><div><span className="simulation-section-number">03</span><h2>Define el agua del cultivo</h2></div></header><div className="simulation-fields-grid"><div className="form-group"><label className="form-label" htmlFor="campo-riego_tipo">Sistema de agua o riego <span aria-hidden="true">*</span></label><select id="campo-riego_tipo" required {...fieldState('riego')} className="form-select" value={campos.riego_tipo ?? ''} onChange={event => cambiarRiego(event.target.value)}><option value="">Selecciona cómo recibirá agua</option>{Object.entries(definicionesCampo.riego_tipo.opciones).filter(([key]) => key !== 'natural_exceso').map(([code, label]) => <option key={code} value={code}>{label}</option>)}</select>{fieldError('riego')}</div><div className="form-group"><label className="form-label" htmlFor="campo-lamina_riego_mm">Agua de riego de todo el ciclo (mm) <small>Opcional</small></label><input id="campo-lamina_riego_mm" className="form-input" type="text" inputMode="decimal" readOnly={campos.riego_tipo === 'temporal_lluvia'} placeholder="Ej.: 120" value={campos.lamina_riego_mm ?? ''} onChange={event => cambiarCampos({ ...campos, lamina_riego_mm: event.target.value })} onBlur={event => cambiarCampos({ ...campos, lamina_riego_mm: normalizarDecimalEntrada(event.target.value) })} /><p className="form-hint">{campos.riego_tipo === 'temporal_lluvia' ? 'Solo lluvia: el agua aportada por riego es 0 mm.' : 'No incluye lluvia. 1 mm equivale a 10 m³ de agua por hectárea.'}</p></div></div></section>
+        <ParametrosCampo fecha={fecha} onFechaChange={value => cambiarPeriodo('fecha', value)} cosecha={periodo.cosecha} onCosechaChange={value => cambiarPeriodo('cosecha', value)} valores={campos} onChange={cambiarCampos} ficha={ficha} historico={historico} onHistoricoChange={value => { setHistorico(value); invalidar(); }} />
         {sinModelo && <p className="simulation-notice">Esta variedad tiene ficha de consulta. Su cálculo específico de rendimiento todavía necesita un modelo compatible; puedes revisar los requisitos en la ayuda de variedades.</p>}
         <footer className="simulation-submit"><p>El cálculo combina tus datos con referencias para las variables que falten. La estimación no garantiza la cosecha.</p><button type="submit" className="btn btn-primary" disabled={loading || cargandoDatos || !cultivoId || sinModelo}>{loading ? 'Calculando tu escenario…' : 'Ejecutar Simulación'}<ArrowRight size={18} /></button></footer>
         </fieldset>

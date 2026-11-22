@@ -15,7 +15,7 @@ Se aplicó la skill `rag-architect`. Se conservan los cinco PDF originales y las
 
 ## Evaluación
 
-24 preguntas con páginas y hechos de referencia cotejados; 18 de desarrollo y seis de validación. Resultados reproducibles en [evaluacion-rag-20261108.json](evaluacion-rag-20261108.json).
+24 preguntas con páginas y hechos de referencia cotejados; 18 de desarrollo y seis de validación. Resultados reproducibles en [evaluacion-rag-20261108.json](evaluaciones/evaluacion-rag-20261108.json).
 
 | Medida sobre esta muestra | Anterior | Nuevo |
 | --- | ---: | ---: |

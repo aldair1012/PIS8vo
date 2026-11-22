@@ -1,11 +1,12 @@
 import AnnualRainReference from '../components/AnnualRainReference';
+import CampanasParcela from '../components/CampanasParcela';
 import PantallaCarga from '../components/PantallaCarga';
 import { comparisonAnnualRain } from '../utils/annualRain';
 import { useEffect, useMemo, useState } from 'react';
 import { Activity, ArrowUpRight, BarChart3, CalendarDays, MapPin, Play, Plus, Sprout, Wheat } from 'lucide-react';
 import { dssService } from '../services/api';
 import { getDashboardChartColors, getChartTooltip } from '../utils/chartConfig';
-import { escapeChartText, validarRespuestaRendimiento, isYieldNumber, provinceFromLocation, regionalHistory, simulationHistory, yieldAnalysis } from '../utils/yieldDashboard';
+import { harvestValidationCsv, escapeChartText, validarRespuestaRendimiento, isYieldNumber, provinceFromLocation, regionalHistory, simulationHistory, yieldAnalysis } from '../utils/yieldDashboard';
 import sipa from '../data/sipa-maiz-duro-2020-2025.json';
 import ecuadorProvincias from '../data/ecuador-provincias.json';
 import EChart from '../components/EChart';
@@ -184,8 +185,12 @@ export default function DashboardRendimiento({ cultivoElegidoId, onNavigate, onD
     .map(([key, value]) => ({ key, label: scenarioNames[key] ?? key, ...value }))
     .filter((row) => isYieldNumber(row.rendimiento_t_ha));
   const allContributions = analysis.contributions.filter((row) => row.value !== 0);
-  const contributionRows = showAllFactors ? [...allContributions] : allContributions.slice(0, 6);
-  if (!showAllFactors && allContributions.length > 6) contributionRows.push({ name: 'Otros factores', value: allContributions.slice(6).reduce((sum, row) => sum + row.value, 0) });
+  const principal = allContributions.filter((row, i) => i < 6 || ['riego_tipo', 'altitud_msnm'].includes(row.key));
+  const contributionRows = showAllFactors ? [...allContributions] : [...principal];
+  if (!showAllFactors && principal.length < allContributions.length) {
+    const agrupados = allContributions.filter(row => !principal.includes(row));
+    contributionRows.push({ name: 'Otros factores', value: agrupados.reduce((sum, row) => sum + row.value, 0) });
+  }
   if (simulation) scenarioRows.unshift({ key: 'base', label: 'Tu simulación', rendimiento_t_ha: simulation.rendimiento_t_ha, produccion_total_t: simulation.produccion_total_t });
   const selectedScenario = scenarioRows.find((row) => row.key === scenarioKey) ?? scenarioRows[0];
   const scenarioAxisUnit = scenarioUnit === 'yield' ? 't/ha' : 't';
@@ -230,6 +235,7 @@ export default function DashboardRendimiento({ cultivoElegidoId, onNavigate, onD
   }));
   const classColors = classScores.map(([name]) => /muy baja/i.test(name) ? colors.sky : /baja/i.test(name) ? colors.risk : /alta/i.test(name) ? colors.leaf : colors.maize);
   const yieldUnit = 't/ha significa toneladas por cada hectárea. Es distinto de las toneladas totales de tu parcela.';
+  const harvestCsv = harvestValidationCsv(lot.id, simulation);
   const simulationLimit = simulation ? `Corresponde a la simulación #${simulation.id}, calculada el ${shortDate(simulation.fecha)}. Es una estimación del sistema, no una cosecha medida ni una garantía.` : 'No hay una simulación disponible.';
   const scenarioChartContext = { labels: scenarioRows.map(row=>row.label), datasets: [{ label: scenarioUnit==='yield'?'Rendimiento (t/ha)':'Producción (t)', data: scenarioRows.map(row=>scenarioUnit==='yield'?row.rendimiento_t_ha:row.produccion_total_t ?? (isYieldNumber(areaValue)?row.rendimiento_t_ha*areaValue:null)) }] };
   const comparisonChartContext = simulation && comparison ? { labels:[`#${simulation.id}`,`#${comparison.id}`], datasets:[
@@ -273,9 +279,11 @@ export default function DashboardRendimiento({ cultivoElegidoId, onNavigate, onD
       {Object.keys(data?.mediciones_campo?.indicadores ?? {}).length > 0 && <div className="ydp-record-summary">{[["indice_cosecha", "Índice de cosecha"], ["agua_medida", "Capacidad de agua"], ["etapa_observada", "Etapa"], ["incidencia_plaga", "Plantas afectadas"]].filter(([name]) => data.mediciones_campo.indicadores[name]).map(([name, label]) => { const item = data.mediciones_campo.indicadores[name]; return <span key={name}>{label}: <strong>{typeof item.valor === 'number' ? number(item.valor) : item.valor}{item.unidad ? ` ${item.unidad}` : ''}</strong></span>; })}</div>}
       <div className="ydp-record-actions">
         <button type="button" onClick={() => (onAbrirRegistroCampo ? onAbrirRegistroCampo() : onNavigate?.('cultivos', 'registro'))}>{Object.keys(data?.mediciones_campo?.indicadores ?? {}).length ? 'Ver o actualizar mediciones' : 'Agregar mediciones'} <ArrowUpRight size={16} aria-hidden="true" /></button>
+        {harvestCsv && <a download={`zeasys-simulacion-${simulation.id}-cosecha.csv`} href={`data:text/csv;charset=utf-8,${encodeURIComponent('\uFEFF' + harvestCsv)}`}>Descargar ficha para contrastar la simulación #{simulation.id} con la cosecha</a>}
         <button type="button" className="ydp-ref-summary" onClick={() => setRefAbierto(v => !v)} aria-controls="ydp-ref-details" aria-expanded={refAbierto}>Consultar referencias de la zona <Plus size={16} aria-hidden="true" /></button>
       </div>
     </section>
+    <CampanasParcela key={lot.id} parcela={lot} simulaciones={simulations} simulacion={simulation} />
     <section className="ydp-reference-details" id="ydp-ref-details" hidden={!refAbierto}><ReferenciasMaiz provincia={province} /><Panel title="Referencias de contexto" subtitle="Información de fuentes externas para interpretar la parcela" icon={Activity}>
       <p className="ydp-chart-note">Son referencias o estimaciones de contexto, no mediciones de tu parcela ni resultados de tu simulación.</p>
       {!(references.potencial_zonal || references.alcanzable_zonal || references.maximo_ensayo_variedad || references.lluvia_historica_inamhi || data?.kpis?.radiacion_par_estimado != null) && <p className="ydp-chart-note">No hay referencias disponibles para esta parcela en este momento. Si aún no tienes una simulación, ejecuta una para consultar las fuentes disponibles.</p>}

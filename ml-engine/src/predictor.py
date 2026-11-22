@@ -9,6 +9,7 @@ import pandas as pd
 import joblib
 import shap
 
+from src.intervalos import intervalo_rendimiento as calcular_intervalo
 from src.feature_builder import COLS_ORDER, CATEGORICAL_COLS
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -33,44 +34,6 @@ xgb_explainer = shap.TreeExplainer(xgb_model)
 
 # Lista de modelos disponibles (para el endpoint /health)
 MODELOS_DISPONIBLES = ["xgboost"]
-
-
-def _intervalo_rendimiento(prediccion, metricas):
-    """Calcula un rango aproximado de predicción a partir de validación.
-
-    El rango no es una garantía estadística ni reemplaza una medición en campo;
-    comunica el error esperado del modelo para evitar presentar un único número
-    como si fuera exacto. Las métricas nuevas proceden de GroupKFold por
-    provincia, pero se mantiene un fallback para modelos antiguos.
-    """
-    try:
-        rmse = max(0.0, float(metricas.get("rmse", 0.0)))
-        mae = max(0.0, float(metricas.get("mae", 0.0)))
-    except (TypeError, ValueError):
-        rmse, mae = 0.0, 0.0
-
-    try:
-        objetivo = model_metrics.get("rango_objetivo", {})
-        minimo = float(objetivo.get("min", 0.5))
-        maximo = float(objetivo.get("max", 12.0))
-    except (TypeError, ValueError):
-        minimo, maximo = 0.5, 12.0
-
-    # 1.96 * RMSE es una aproximación conservadora; se etiqueta como tal en la
-    # respuesta para no confundirla con un intervalo de confianza calibrado.
-    margen = max(mae, 1.96 * rmse)
-    # La predicción puede quedar fuera del rango histórico por el límite de
-    # seguridad del predictor; en ese caso el intervalo nunca debe invertir
-    # sus extremos ni excluir el valor que realmente se devolvió.
-    limite_inferior = max(min(minimo, float(prediccion)), float(prediccion) - margen)
-    limite_superior = min(max(maximo, float(prediccion)), float(prediccion) + margen)
-    return {
-        "min": round(limite_inferior, 2),
-        "max": round(limite_superior, 2),
-        "margen_aproximado": round(margen, 2),
-        "error_medio_validacion": round(mae, 2),
-        "nivel": "orientativo_no_calibrado",
-    }
 
 
 def _probabilidad_cosecha(clf_model, df_encoded):
@@ -109,6 +72,21 @@ def _probabilidad_cosecha(clf_model, df_encoded):
     if not encontro_clase_comercial:
         return None, distribucion
     return round(max(0.0, min(100.0, probabilidad_comercial * 100.0)), 1), distribucion
+
+
+def sensibilidad_escenario(modelo, fila, central):
+    """Reevalúa un insumo por vez, manteniendo el resto de la fila congelado."""
+    ensayos = []
+    resultados = []
+    for variable, unidad in [("precipitacion_mm", "mm"), ("nitrogeno_kg_ha", "kg/ha")]:
+        base = float(fila.iloc[0][variable])
+        niveles = [base * factor for factor in (0.8, 1.2)]
+        resultados.append({"variable": variable, "unidad": unidad, "valores": niveles})
+        ensayos.extend(fila.assign(**{variable: nivel}) for nivel in niveles)
+    predicciones = np.clip(modelo.predict(pd.concat(ensayos, ignore_index=True)), 0.5, 12)
+    for i, resultado in enumerate(resultados):
+        resultado["cambios_t_ha"] = [round(float(valor) - central, 4) for valor in predicciones[2*i:2*i+2]]
+    return sorted(resultados, key=lambda r: max(map(abs, r["cambios_t_ha"])), reverse=True)
 
 
 def predict(df_features, modelo_nombre="xgboost", area=1.0):
@@ -162,7 +140,7 @@ def predict(df_features, modelo_nombre="xgboost", area=1.0):
     # identifica explícitamente como calidad global del modelo (R²), no como
     # probabilidad de que esta parcela alcance el rendimiento predicho.
     confianza = round(max(0.0, min(100.0, r2 * 100)), 1)
-    intervalo_rendimiento = _intervalo_rendimiento(prediccion_reg, metricas_actuales)
+    intervalo_rendimiento = calcular_intervalo(prediccion_reg, metricas_actuales, model_metrics.get("rango_objetivo", {}))
 
     # Escenarios climáticos alternativos (qué pasa si llueve más, menos, o hay sequía)
     df_lluvioso = df_encoded.copy()
@@ -208,6 +186,7 @@ def predict(df_features, modelo_nombre="xgboost", area=1.0):
         "success": True,
         "modelo": modelo_nombre,
         "version_modelo": MODEL_VERSION,
+        "sensibilidad": sensibilidad_escenario(reg_model, df_encoded, prediccion_reg),
         "rendimiento_estimado": round(prediccion_reg, 4),
         "produccion_total": produccion_total,
         "categoria_cosecha": prediccion_clf,

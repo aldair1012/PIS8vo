@@ -1,6 +1,6 @@
 /* ZeaSys internal workspace. Landing tokens are intentionally not imported here.
    Layer 1: primitives; layer 2: theme semantics; layer 3: component aliases. */
-html:has(.zeasys-workspace) { font-size: 16px; }
+html:has(.zeasys-workspace) { font-size: 100%; }
 
 .zeasys-workspace {
   /* Primitives shared visually with the public landing palette. */
@@ -557,7 +557,11 @@ body.light-theme .zeasys-workspace .zeasys-chat-chips button { background: var(-
 .zeasys-workspace :is(button, select, textarea, input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"])) { min-height: 44px; }
 .zeasys-workspace button { min-width: 44px; }
 .zeasys-workspace .leaflet-bar a { width: 44px; height: 44px; line-height: 44px; }
-.zeasys-workspace .leaflet-pm-toolbar .control-icon { width: 44px; height: 44px; background-position: center; }
+/* Geoman pinta el icono dentro del enlace. El área táctil pertenece al enlace. */
+.zeasys-workspace .leaflet-container .leaflet-pm-toolbar .button-container > a.leaflet-buttons-control-button {
+  display: grid; place-items: center; box-sizing: border-box; width: 44px; height: 44px; padding: 0;
+}
+.zeasys-workspace .leaflet-pm-toolbar .control-icon { width: 22px; height: 22px; background-position: center; }
 .zeasys-workspace :is(.table-responsive-container):focus-visible { outline: 3px solid var(--zs-focus); outline-offset: 3px; }
 
 .zeasys-workspace .ydp-dashboard button[aria-pressed="true"] { color: var(--zs-accent-contrast); background: var(--zs-accent); }

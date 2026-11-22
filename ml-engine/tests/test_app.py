@@ -18,6 +18,22 @@ class MlApiTest(unittest.TestCase):
     def setUpClass(cls):
         cls.client = ml_app.app.test_client()
 
+    def test_casos_fijos_del_regresor_y_sensibilidad(self):
+        for t, h, lluvia, nitrogeno, ph, area, esperado in [
+            (26, 78, 1200, 120, 6.2, 2, 4.2190),
+            (16, 65, 650, 70, 6.5, 1, 3.9423),
+        ]:
+            with self.subTest(temperatura=t):
+                payload = dict(temperatura=t, humedad=h, precipitacion=lluvia, fertilizante=nitrogeno,
+                               phSuelo=ph, area=area, tipoSuelo="franco")
+                salida = self.client.post("/predict", json=payload).get_json()
+                self.assertEqual("9e865aee66f4175a", salida["version_modelo"])
+                self.assertAlmostEqual(esperado, salida["rendimiento_estimado"], places=3)
+                for fila in salida["sensibilidad"]:
+                    campo = {"precipitacion_mm": "precipitacion", "nitrogeno_kg_ha": "fertilizante"}[fila["variable"]]
+                    cambio = self.client.post("/predict", json={**payload, campo: fila["valores"][0]}).get_json()
+                    self.assertAlmostEqual(cambio["rendimiento_estimado"] - esperado, fila["cambios_t_ha"][0], places=3)
+
     def test_health_endpoints(self):
         for path in ("/", "/health", "/metrics", "/stats"):
             with self.subTest(path=path):

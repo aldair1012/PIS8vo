@@ -9,7 +9,7 @@ services:
       MARIADB_ROOT_PASSWORD: ${ZEASYS_DEMO_ROOT_PASSWORD:?Ejecuta primero docker/preparar-configuracion.ps1}
     volumes:
       - zeasys_demo_db:/var/lib/mysql
-      - ./schema-demo.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - ../database/schema-demo.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
     healthcheck:
       test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
       interval: 10s
@@ -39,6 +39,16 @@ services:
       ZEASYS_DB_PASS: ${ZEASYS_DEMO_DB_PASSWORD:?Ejecuta primero docker/preparar-configuracion.ps1}
       ZEASYS_IA_SERVER_URL: http://motor:5000
       ZEASYS_FLOWISE_URL: http://flowise:3000
+      ZEASYS_GEMINI_API_KEY: ${ZEASYS_GEMINI_API_KEY:-}
+      ZEASYS_CHAT_PROVEEDOR: ${ZEASYS_CHAT_PROVEEDOR:-auto}
+      ZEASYS_WA_VERSION: ${ZEASYS_WA_VERSION:-}
+      ZEASYS_WA_NUMERO: ${ZEASYS_WA_NUMERO:-}
+      ZEASYS_WA_PHONE_ID: ${ZEASYS_WA_PHONE_ID:-}
+      ZEASYS_WA_TOKEN: ${ZEASYS_WA_TOKEN:-}
+      ZEASYS_WA_APP_SECRET: ${ZEASYS_WA_APP_SECRET:-}
+      ZEASYS_WA_VERIFY_TOKEN: ${ZEASYS_WA_VERIFY_TOKEN:-}
+      ZEASYS_WA_PLANTILLA: ${ZEASYS_WA_PLANTILLA:-}
+      ZEASYS_WA_IDIOMA: ${ZEASYS_WA_IDIOMA:-es}
       ZEASYS_CHROMA_URL: http://chroma:8000
       ZEASYS_OLLAMA_URL: http://ollama:11434
     depends_on:

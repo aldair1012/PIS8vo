@@ -47,6 +47,12 @@ check($summary['meses'][0]['precipitacion_mm'] === null && $summary['meses'][0][
 $daily['time'][] = '2026-10-01'; $daily['precipitation_sum'][] = 9000;
 $summary = callPrivate($archive, 'resumirMeses', $daily, '2026-10-01', '2026-10-31');
 check($summary['meses'][0]['dias'] === 31 && $summary['meses'][0]['precipitacion_mm'] === null, 'fechas duplicadas no inflan días ni lluvia');
+$diarias = ['time' => $dates, 'temperature_2m_min' => array_fill(0, 31, 10), 'temperature_2m_max' => array_fill(0, 31, 40)];
+$gdd = \ZeaSys\Dominios\Terreno\Aplicacion\GradosDiaMaiz::calcular($diarias, '2026-10-01', '2026-10-31');
+check($gdd['gdd'] === 310.0 && $gdd['hitos'][0]['fecha'] === '2026-10-12', 'GDD con techo y umbral Fahrenheit convertido a Celsius');
+$diarias['temperature_2m_min'][0] = null;
+$gdd = \ZeaSys\Dominios\Terreno\Aplicacion\GradosDiaMaiz::calcular($diarias, '2026-10-01', '2026-10-31');
+check($gdd['gdd'] === null && $gdd['gdd_parcial'] === 300.0 && $gdd['hitos'] === [], 'un hueco impide fechar hitos posteriores');
 $context = (new \ReflectionClass(ContextoAgricolaService::class))->newInstanceWithoutConstructor();
 $forecast = array_map(static fn (int $day): array => ['fecha' => "2026-11-$day", 'precipitacion_mm' => 0, 'prob_precipitacion_pct' => 80, 'temp_max_c' => 30], range(15, 21));
 $compacted = callPrivate($context, 'compactarClima', ['pronostico_7d' => $forecast]);

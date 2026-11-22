@@ -1,10 +1,13 @@
 import { lazy, Suspense, useCallback, useState, useEffect, useRef } from 'react';
 import Sidebar from './templates/Common/Sidebar';
+import { provinceFromLocation } from './utils/yieldDashboard';
 import Navbar from './templates/Common/Navbar';
 import Login from './views/Login';
 import { AlertTriangle } from 'lucide-react';
 import { authService, parcelasService, simulacionService } from './services/api';
 import PantallaCarga from './components/PantallaCarga';
+import StartupRecovery from './components/StartupRecovery';
+import { guardarPreferencia, leerPreferencia } from './utils/preferenciasLocales';
 
 const DashboardScenario = lazy(() => import('./views/DashboardScenario'));
 const DashboardClimate = lazy(() => import('./views/DashboardClimate'));
@@ -19,6 +22,13 @@ const Configuracion = lazy(() => import('./views/Configuracion'));
 const ChatbotWidget = lazy(() => import('./components/ChatbotWidget'));
 const ConsejoModal = lazy(() => import('./components/ConsejoModal'));
 
+const viewTitles = {
+  yield: 'Rendimiento proyectado', scenarios: 'Siembra', climate: 'Clima y cultivo',
+  finance: 'Viabilidad financiera', map: 'Mapa de parcelas', simular: 'Nueva simulación',
+  history: 'Historial de simulaciones', configuracion: 'Configuración', cultivos: 'Mis parcelas',
+  asistente: 'Asistente de la parcela', campo: 'Cuaderno de campo',
+};
+
 export default function App() {
   const [user, setUser] = useState(null);
   const [authChecked, setAuthChecked] = useState(false);
@@ -31,6 +41,7 @@ export default function App() {
   // Estados del diseño (Layout)
   const [vistaActual, setVistaActual] = useState('yield');
   const [registroCampoId, setRegistroCampoId] = useState(null);
+  const [solicitudFecha, setSolicitudFecha] = useState(null);
   const [revisionMediciones, setRevisionMediciones] = useState(0);
   const [cultivos, setCultivos] = useState([]);
   const [cultivosError, setCultivosError] = useState(false);
@@ -43,7 +54,7 @@ export default function App() {
   const [iaEncendida, setIaEncendida] = useState(false);
   const [recargarDatos, setRecargarDatos] = useState(0);
   const [menuCerrado, setMenuCerrado] = useState(typeof window !== 'undefined' && window.innerWidth <= 1080);
-  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
+  const [theme, setTheme] = useState(() => leerPreferencia('theme') === 'light' ? 'light' : 'dark');
   const [isMobileView, setIsMobileView] = useState(() => typeof window !== 'undefined' && window.innerWidth <= 768);
 
   const cultivoActivo = cultivos.find(c => c.id === cultivoElegidoId);
@@ -69,9 +80,7 @@ export default function App() {
   const chatOculto = vistaActual === 'cultivos' || vistaActual === 'configuracion';
   // Inicialización perezosa desde localStorage; evita setState en efecto.
   // El modal solo se renderiza cuando hay usuario autenticado.
-  const [consejoPendiente, setConsejoPendiente] = useState(() => {
-    try { return localStorage.getItem('zeasys-consejo-mostrado') !== '1'; } catch { return true; }
-  });
+  const [consejoPendiente, setConsejoPendiente] = useState(() => leerPreferencia('zeasys-consejo-mostrado') !== '1');
 
   // Aplicar tema
   useEffect(() => {
@@ -80,7 +89,7 @@ export default function App() {
     } else {
       document.body.classList.remove('light-theme');
     }
-    localStorage.setItem('theme', theme);
+    guardarPreferencia('theme', theme);
   }, [theme, user]);
 
   useEffect(() => {
@@ -136,7 +145,7 @@ export default function App() {
       if (!Array.isArray(data)) throw new Error('La respuesta de parcelas no es válida.');
       setCultivosError(false);
       setCultivos(data);
-      const isDone = user?.id ? localStorage.getItem(`onboarding_done_${user.id}`) === 'true' : false;
+      const isDone = user?.id ? leerPreferencia(`onboarding_done_${user.id}`) === 'true' : false;
 
       if (data.length === 0 && !isDone) {
         setVistaActual('cultivos');
@@ -247,7 +256,7 @@ export default function App() {
 
   const handleCompleteOnboarding = () => {
     if (user?.id) {
-      localStorage.setItem(`onboarding_done_${user.id}`, 'true');
+      guardarPreferencia(`onboarding_done_${user.id}`, 'true');
     }
     setOnboardingStep(0);
     setVistaActual('yield');
@@ -265,19 +274,21 @@ export default function App() {
     cargarCultivos();
   };
 
+  const activeTitle = viewTitles[vistaActual] || 'Centro de cultivo';
+  useEffect(() => {
+    document.title = user ? `${activeTitle} · ZeaSys` : isRegistering ? 'Crear cuenta · ZeaSys' : 'ZeaSys - IA y Precisión Agrícola';
+  }, [user, activeTitle, isRegistering]);
+
   if (!authChecked) {
-    return <div className="flex-center" style={{ height: '100vh', background: 'var(--background)', color: 'var(--text-muted)' }}>Validando sesión de ZeaSys...</div>;
+    return <div role="status" className="flex-center" style={{ height: '100vh', background: 'var(--background)', color: 'var(--text-muted)' }}>Validando sesión de ZeaSys...</div>;
   }
 
   if (authError) {
     return (
-      <main className="flex-center" style={{ minHeight: '100vh', flexDirection: 'column', gap: '1rem', padding: '2rem', textAlign: 'center', background: 'var(--background)', color: 'var(--text)' }}>
-        <div role="alert">
-          <h1>No se pudo conectar con ZeaSys</h1>
-          <p>Comprueba que el servidor esté encendido y vuelve a intentarlo.</p>
-        </div>
-        <button type="button" onClick={() => { setAuthChecked(false); setAuthAttempt(valor => valor + 1); }}>Reintentar conexión</button>
-      </main>
+      <StartupRecovery title="No se pudo conectar con ZeaSys" action="Reintentar conexión" light={theme === 'light'}
+        onRetry={() => { setAuthChecked(false); setAuthAttempt(valor => valor + 1); }}>
+        Comprueba tu conexión y vuelve a intentarlo.
+      </StartupRecovery>
     );
   }
 
@@ -294,22 +305,6 @@ export default function App() {
     );
   }
 
-  // Determinar título de pestaña, Dashboard
-  const getActiveTitle = () => {
-    switch (vistaActual) {
-      case 'yield': return 'Rendimiento proyectado';
-      case 'scenarios': return 'Siembra';
-      case 'climate': return 'Clima y cultivo';
-      case 'finance': return 'Viabilidad financiera';
-      case 'map': return 'Mapa de parcelas';
-      case 'simular': return 'Nueva simulación';
-      case 'history': return 'Historial de simulaciones';
-      case 'configuracion': return 'Configuración';
-      default: return 'ZeaSys';
-    }
-  };
-
-
   return (
     <div className="app-container zeasys-workspace">
       <a className="workspace-skip-link" href="#workspace-content">Ir al contenido</a>
@@ -321,7 +316,11 @@ export default function App() {
       {/* Sidebar Navigation */}
       <Sidebar
         vistaActual={vistaActual}
-        setVistaActual={setVistaActual}
+        setVistaActual={destino => {
+          if (destino === 'campo') { setRegistroCampoId(cultivoElegidoId ?? cultivos[0]?.id ?? ''); return; }
+          if (destino === 'asistente' && !chatOculto) { window.dispatchEvent(new Event('zeasys:abrir-chat')); return; }
+          setVistaActual(destino);
+        }}
         cerrarSesion={cerrarSesion}
         menuColapsado={menuCerrado}
         setMenuColapsado={setMenuCerrado}
@@ -341,7 +340,7 @@ export default function App() {
         <Navbar
           theme={theme}
           onToggleTheme={() => setTheme((current) => current === 'dark' ? 'light' : 'dark')}
-          title={getActiveTitle()}
+          title={activeTitle}
           cultivos={cultivos}
           cultivoElegidoId={cultivoElegidoId}
           setCultivoElegidoId={setCultivoElegidoId}
@@ -404,6 +403,11 @@ export default function App() {
             </div>
           )}
 
+          {['map','cultivos','yield','history'].includes(vistaActual) && <nav className="workspace-subnav" aria-label="Vistas de la sección">
+            {(['map','cultivos'].includes(vistaActual) ? [['cultivos','Registro de parcelas'],['map','Mapa de parcelas']] : [['yield','Análisis de la parcela'],['history','Simulaciones guardadas']]).map(([id,nombre]) =>
+              <button type="button" className="workspace-view-option" key={id} aria-current={vistaActual===id ? 'page' : undefined} onClick={()=>setVistaActual(id)}>{nombre}</button>)}
+          </nav>}
+          {vistaActual === 'asistente' && <section className="field-evidence"><h1>Asistente de la parcela</h1><p>Elige tu parcela en el selector superior para consultar su campaña.</p><button type="button" className="btn btn-secondary" onClick={()=>window.dispatchEvent(new Event('zeasys:abrir-chat'))}>Abrir conversación</button></section>}
           {vistaActual === 'scenarios' && (
             <DashboardScenario
               key={cultivoElegidoId}
@@ -447,6 +451,7 @@ export default function App() {
           )}
           {vistaActual === 'finance' && (
             <DashboardFinance
+              provinciaParcela={provinceFromLocation(cultivoActivo?.ubicacion)}
               cultivoElegidoId={cultivoElegidoId}
               añoSeleccionado={añoSeleccionado}
               onNavigate={setVistaActual}
@@ -462,6 +467,9 @@ export default function App() {
           )}
           {vistaActual === 'simular' && (
             <Simular
+              parcelaInicialId={cultivoElegidoId}
+              solicitudFecha={solicitudFecha}
+              consumirSolicitudFecha={setSolicitudFecha}
               cultivos={cultivos}
               onSimulationCompleted={handleSimulationCompleted}
               onNavigate={setVistaActual}
@@ -518,6 +526,7 @@ export default function App() {
       {user && !chatOculto && !cultivosError && (
         <Suspense fallback={null}>
         <ChatbotWidget
+          abrirAlMontar={vistaActual === 'asistente'}
           key={`chat-${ambitoChat}-${cultivoChatId || 'sin-parcela'}-${añoSeleccionado || 'sin-año'}`}
           vistaActual={vistaActual}
           usuarioId={user.id}
@@ -526,6 +535,11 @@ export default function App() {
           contextoDashboard={contextoDashboard}
           cultivoActivo={cultivoChatActivo}
           simulacion={simulacionChat}
+          onRegistrarObservacion={setRegistroCampoId}
+          onSimularFecha={cultivoId => {
+            setSolicitudFecha(prev => ({ cultivoId, numero: (prev?.numero ?? 0) + 1 }));
+            setVistaActual('simular');
+          }}
         />
         </Suspense>
       )}

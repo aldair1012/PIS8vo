@@ -41,13 +41,13 @@ for (const theme of ['light', 'dark']) {
       if (!await navigation.isVisible()) await page.getByRole('button', { name: 'Expandir barra lateral' }).click();
       await navigation.click();
       await page.locator('#simular-parcela').selectOption('1');
-      await page.locator('.simulation-optional > summary').click();
+      await page.locator('summary').filter({hasText:'Completar datos del cultivo'}).click();
       await page.getByLabel('Fecha de siembra del escenario').fill('2024-02-28');
       await page.getByLabel('Duración prevista del cultivo (días)').fill('120');
       await page.getByLabel('Agua de riego de todo el ciclo (mm)').fill('0');
       await expect(page.getByText('2024-06-26', { exact: true })).toBeVisible();
       expect(await page.locator('form.simulation-form').evaluate(element => element.scrollWidth <= element.clientWidth + 1)).toBeTruthy();
-      await page.locator('.simulation-optional > summary').scrollIntoViewIfNeeded();
+      await page.locator('summary').filter({hasText:'Completar datos del cultivo'}).scrollIntoViewIfNeeded();
       await page.screenshot({ path: testInfo.outputPath(`campos-${theme}-${width}.png`) });
       const panel = page.locator('.variedades-panel').filter({ hasText: '¿Tu variedad corresponde a esta zona?' });
       await panel.locator(':scope > summary').click();

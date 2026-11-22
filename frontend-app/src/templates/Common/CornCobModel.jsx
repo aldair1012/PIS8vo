@@ -35,6 +35,14 @@ function addNaturalGrainVariation(material) {
 }
 
 export default function CornCobModel() {
+  const connection = navigator.connection;
+  const staticPhoto = window.matchMedia('(max-width: 767px), (pointer: coarse)').matches
+    || connection?.saveData || ['slow-2g', '2g', '3g'].includes(connection?.effectiveType);
+  if (staticPhoto) return <div className="zeasys-corn-model-stage"><img className="zeasys-corn-model-fallback" src={fallbackPhoto} alt="Cultivo de maíz" loading="lazy" decoding="async" /></div>;
+  return <InteractiveCornModel />;
+}
+
+function InteractiveCornModel() {
   const mountRef = useRef(null);
   const [status, setStatus] = useState('loading');
 

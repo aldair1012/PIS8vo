@@ -54,3 +54,12 @@
 .zeasys-workspace .ag-calendar-sources li strong { display:block; }
 @media (min-width:900px) { .zeasys-workspace .ag-calendar-months { grid-template-columns:repeat(6,minmax(0,1fr)); }.zeasys-workspace .ag-calendar-context { grid-template-columns:repeat(2,minmax(0,1fr)); } }
 @media (max-width:540px) { .zeasys-workspace .ag-calendar { padding:18px 14px; }.zeasys-workspace .ag-calendar-header { gap:10px; }.zeasys-workspace .ag-calendar-months { grid-template-columns:repeat(2,minmax(0,1fr)); }.zeasys-workspace .ag-calendar-context > section,.zeasys-workspace .ag-calendar-month-detail { padding:16px; } }
+
+.zeasys-workspace .ag-calendar-context label { display:grid; gap:.5rem; }
+.zeasys-workspace .ag-calendar-context input[type=date] { font:inherit; min-height:44px; max-width:100%; }
+
+.ag-calendar .ag-forecast-strip { display:grid; grid-template-columns:repeat(auto-fit,minmax(70px,1fr)); gap:.4rem; }
+.ag-calendar .ag-forecast-strip button { min-height:48px; padding:.4rem; display:grid; gap:.2rem; background:var(--zs-surface); color:inherit; border:1px solid currentColor; border-radius:.4rem; cursor:pointer; }
+.ag-calendar .ag-forecast-strip .has-rain { border-top:4px solid #497db3; }
+.ag-calendar .ag-forecast-strip .dry-day { border-top:4px solid #b97b31; }
+.ag-calendar .ag-forecast-strip [aria-pressed=true] { outline:2px solid currentColor; outline-offset:1px; }

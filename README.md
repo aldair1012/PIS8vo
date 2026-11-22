@@ -15,9 +15,9 @@ La descripción central de qué es, para qué sirve, qué incluye y cómo se eje
 - `scripts/`: lanzadores locales de Apache/MySQL, ML, Chroma, Ollama y Flowise.
 - `tools/`: migraciones reproducibles de Flowise y utilidades del corpus RAG.
 - `rag-sources/`: fuentes documentales; los PDF no se versionan (ver `SOURCES.md`).
-- `documentacion/`: instalación, arquitectura, modelos, proveedores de datos, ADRs y configuración del chatbot Gemini/Flowise.
+- `documentacion/`: instalación, arquitectura, modelos, proveedores de datos, ADRs y configuración del chatbot Gemini/Flowise. Las revisiones fechadas se conservan en `documentacion/historial/` y los resultados reproducibles en `documentacion/evaluaciones/`.
 
-Los artefactos de `assets/`, `models/` e `index.html` en la raíz son intencionales: XAMPP los sirve directamente. No deben editarse a mano; se regeneran desde `frontend-app` con `npm run build`.
+Los artefactos de `assets/`, `models/`, `icons/`, `index.html`, `sw.js`, `manifest.webmanifest`, `offline.html`, `privacidad.html` y `favicon.svg` en la raíz son intencionales: XAMPP los sirve directamente. No deben editarse a mano; se regeneran desde `frontend-app` con `npm run build` o se copian desde `frontend-app/public/`.
 
 ### Carpetas que se repiten a propósito
 
@@ -25,6 +25,7 @@ No son copias accidentales:
 
 - `assets/` (raíz) es el despliegue que sirve XAMPP; `frontend-app/src/assets/` es la fuente.
 - `models/` (raíz) es la copia desplegada del modelo 3D; `frontend-app/public/models/` es la fuente.
+- `sw.js`, `manifest.webmanifest`, `offline.html`, `privacidad.html`, `icons/` y `favicon.svg` en la raíz son las copias desplegadas; `frontend-app/public/` es la fuente.
 - `ml-engine/models/` contiene los artefactos `.joblib` del motor de IA; no tiene relación con el modelo 3D.
 - `Dominio/`, `Aplicacion/`, `Infraestructura/` y `Http/` se repiten dentro de cada dominio del backend porque son sus capas arquitectónicas.
 - `scripts/` (raíz) son lanzadores locales; `ml-engine/scripts/` contiene scripts de entrenamiento.
@@ -35,27 +36,38 @@ Sí son descartables y están ignorados por Git: `frontend-app/dist/`, `node_mod
 ## Puesta en marcha rápida
 
 1. En una instalación nueva, crea `agropredict_db` e importa `database/schema-demo.sql` en MySQL. No sobrescribas una base existente. La guía vigente para la entrega académica está en [REVISION_DOCENTES.md](documentacion/REVISION_DOCENTES.md); la base de revisión se configura al instalar, sin sustituir una existente. Para compartir el proyecto, no distribuyas `database/agropredict_db.sql`, pues puede contener datos personales.
-2. Si actualizas una base existente, aplica las migraciones pendientes:
+2. Si actualizas una base existente, aplica las migraciones pendientes en orden. Son aditivas y no reemplazan la base:
    ```cmd
    mysql -u root agropredict_db < database\migraciones\20261018_solo_xgboost.sql
    mysql -u root agropredict_db < database\migraciones\20261019_chat_favoritos.sql
    mysql -u root agropredict_db < database\migraciones\20261024_mediciones_rendimiento.sql
+   mysql -u root agropredict_db < database\migraciones\20261108_renombrar_tablas.sql
+   mysql -u root agropredict_db < database\migraciones\20261108_texturas_suelo.sql
+   mysql -u root agropredict_db < database\migraciones\20261110_planificacion_parcela.sql
+   mysql -u root agropredict_db < database\migraciones\20261120_acompanamiento.sql
+   mysql -u root agropredict_db < database\migraciones\20261120_alertas_lluvia.sql
+   mysql -u root agropredict_db < database\migraciones\20261120_campanas_parcela.sql
+   mysql -u root agropredict_db < database\migraciones\20261120_consentimiento_asistente.sql
+   mysql -u root agropredict_db < database\migraciones\20261121_indice_simulaciones_parcela.sql
    ```
 3. Ejecuta `scripts\iniciar_sistemas.bat` como lanzador único. Comprueba los puertos y
    enciende Apache, MySQL, ML, Chroma, Ollama y Flowise sin duplicar procesos.
 4. Si sólo necesitas un componente, ejecuta su lanzador dentro de `scripts/`.
 5. Para regenerar el frontend, en `frontend-app` ejecuta `npm install` y después
-   `npm run build`.
+   `npm run build`. Para configurar Google en una instalación nueva, copia `frontend-app/.env.example` a `frontend-app/.env` antes de compilar.
 6. Abre `http://localhost/ZeaSys/`.
 
 La guía completa está en [`documentacion/GUIA_INSTALACION.md`](documentacion/GUIA_INSTALACION.md). La referencia de APIs y calidad de datos está en [`documentacion/proveedores-datos.md`](documentacion/proveedores-datos.md). El chatbot se configura según [`documentacion/flowise-hibrido.md`](documentacion/flowise-hibrido.md).
 
 ## Mejoras recientes
 
-- Estado y tareas pendientes: [`documentacion/revision-integral-20261109.md`](documentacion/revision-integral-20261109.md).
+- Estado y tareas pendientes: [`documentacion/historial/revision-integral-20261109.md`](documentacion/historial/revision-integral-20261109.md).
 - Fuentes y evaluación de cosechas verificadas: [`documentacion/fuentes-evaluacion-cosechas.md`](documentacion/fuentes-evaluacion-cosechas.md).
 - Copias locales y limitaciones de recuperación: [`documentacion/respaldo-local.md`](documentacion/respaldo-local.md).
 - Auditoría preliminar de los cinco PDF: [`documentacion/chatbot-pdf-20261108.md`](documentacion/chatbot-pdf-20261108.md).
+- Ensayo histórico con imputación parcial: [`documentacion/evaluacion-realismo-inferencia-20261115.md`](documentacion/evaluacion-realismo-inferencia-20261115.md).
+- [Revisión del modelo, las cosechas y la aplicación](documentacion/revision-modelo-y-aplicacion-20261120.md).
+- [Resultados con cosechas públicas, recorridos de campo y operación local](documentacion/entrega-campo-20261121.md).
 
 ## Verificación local
 
@@ -65,6 +77,6 @@ Con las dependencias de Node y Python ya instaladas, ejecuta desde la raíz:
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\verificar_sistema.ps1
 ```
 
-Ejecuta lint, pruebas del frontend, cinco suites PHP sin base de datos, pruebas Python con proveedores simulados y el build del frontend. Se detiene ante el primer fallo. El build sincroniza los recursos servidos por XAMPP; usa `-OmitirBuild` para comprobar solo código y pruebas. Si PHP está instalado en otra ubicación, indica `-PhpPath 'D:\ruta\php.exe'`.
+Ejecuta lint, pruebas del frontend, suites PHP sin base de datos, pruebas Python con proveedores simulados y el build del frontend. Se detiene ante el primer fallo. El build sincroniza los recursos servidos por XAMPP; usa `-OmitirBuild` para comprobar solo código y pruebas. Si PHP está instalado en otra ubicación, indica `-PhpPath 'D:\ruta\php.exe'`.
 
-Este comando no ejecuta la suite de contrato, que crea usuarios y registros en la base configurada. Las pruebas de navegador también se verifican por separado. El diagnóstico inicial, los cambios y las limitaciones están en [`documentacion/revision-integral-20261109.md`](documentacion/revision-integral-20261109.md).
+Este comando no ejecuta la suite de contrato, que crea usuarios y registros en la base configurada. Las pruebas de navegador también se verifican por separado. El diagnóstico inicial, los cambios y las limitaciones están en [`documentacion/historial/revision-integral-20261109.md`](documentacion/historial/revision-integral-20261109.md).

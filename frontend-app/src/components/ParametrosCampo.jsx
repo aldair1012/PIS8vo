@@ -1,7 +1,7 @@
 import { camposCultivo, finCultivo } from '../utils/fieldInputs';
 import { parseScenarioNumber, normalizarDecimalEntrada } from '../utils/simulationInput';
 
-export default function ParametrosCampo({ fecha, onFechaChange, valores, onChange, ficha, historico, onHistoricoChange }) {
+export default function ParametrosCampo({ fecha, onFechaChange, cosecha, onCosechaChange, valores, onChange, ficha, historico, onHistoricoChange }) {
   const fin = finCultivo(fecha, parseScenarioNumber(valores.ciclo_dias));
   const duracionPublicada = ficha?.cosecha_orientativa_dias.grano_seco;
   return <details className="simulation-optional">
@@ -12,6 +12,11 @@ export default function ParametrosCampo({ fecha, onFechaChange, valores, onChang
       <label className="form-label" htmlFor="campo-fecha">Fecha de siembra del escenario</label>
       <input id="campo-fecha" className="form-input" type="date" min="1950-01-01" max="2100-12-31" value={fecha} onChange={event => onFechaChange(event.target.value)} />
       <p className="form-hint">Se propone la fecha guardada en la parcela. Puedes cambiarla para planificar otra siembra.</p>
+    </div>
+    <div className="form-group">
+      <label className="form-label" htmlFor="campo-cosecha">Fecha prevista de cosecha del escenario</label>
+      <input id="campo-cosecha" className="form-input" type="date" min={fecha || undefined} value={cosecha} aria-describedby="campo-cosecha-ayuda" onChange={e => onCosechaChange(e.target.value)} />
+      <p className="form-hint" id="campo-cosecha-ayuda">Con dos fechas calculamos los días. Si ajustas la duración, cambia la cosecha prevista de este escenario.</p>
     </div>
     <div className="simulacion-grid-2">
       {Object.entries(camposCultivo).filter(([key]) => !['riego_tipo','lamina_riego_mm','magnesio_kg_ha','azufre_kg_ha','aplicaciones_nitrogeno'].includes(key)).map(([key, rule]) => <div className="form-group" key={key}>

@@ -87,6 +87,7 @@ test('el historial distingue un fallo de conexión de una lista vacía', async (
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/');await waitForWorkspace(page);
   await expect(page.getByText('Cargando tus parcelas…')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Rendimiento', exact: true }).click();
   await page.getByRole('button', { name: 'Simulaciones guardadas' }).click();
   await expect(page.getByRole('alert')).toContainText('Error al cargar el historial');
   await expect(page.getByText('No hay simulaciones en el historial')).toHaveCount(0);
@@ -107,6 +108,7 @@ test('el historial distingue mediciones ausentes de cero', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/');await waitForWorkspace(page);
   await expect(page.getByText('Cargando tus parcelas…')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Rendimiento', exact: true }).click();
   await page.getByRole('button', { name: 'Simulaciones guardadas' }).click();
   const missing = page.getByRole('row').filter({ hasText: 'Sin mediciones' });
   await expect(missing).toContainText('Área no disponible');

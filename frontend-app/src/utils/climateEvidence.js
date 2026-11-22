@@ -8,24 +8,25 @@ export const climateDate = value => typeof value === 'string' && /^\d{4}-\d{2}-\
 const dayStamp = date => Date.parse(`${date}T12:00:00Z`);
 
 // Missing values stay missing. Duplicate dates never inflate an accumulation.
-export function forecastDays(rows, start) {
+export function forecastDays(rows, start, horizon = 7) {
   const first = climateDate(start);
   const dates = new Map();
   for (const row of Array.isArray(rows) ? rows : []) {
     const date = climateDate(row?.fecha);
-    if (!date || (first && date < first) || dates.has(date)) continue;
+    if (!date || (first && (date < first || dayStamp(date) >= dayStamp(first) + horizon * 86400000)) || dates.has(date)) continue;
     const min = climateNumber(row.temp_min_c, -90, 65);
     const max = climateNumber(row.temp_max_c, -90, 65);
     dates.set(date, { fecha: date,
       temp_min_c: min !== null && max !== null && min > max ? null : min,
       temp_max_c: min !== null && max !== null && min > max ? null : max,
       precipitacion_mm: climateNumber(row.precipitacion_mm, 0),
+      et0_mm: climateNumber(row.et0_mm, 0),
       prob_precipitacion_pct: climateNumber(row.prob_precipitacion_pct, 0, 100),
       codigo_tiempo: climateNumber(row.codigo_tiempo, 0, 99),
       descripcion: typeof row.descripcion === 'string' ? row.descripcion : '',
     });
   }
-  return [...dates.values()].sort((a, b) => a.fecha.localeCompare(b.fecha)).slice(0, 7);
+  return [...dates.values()].sort((a, b) => a.fecha.localeCompare(b.fecha)).slice(0, horizon);
 }
 
 export function forecastSummary(days, start) {
@@ -90,4 +91,20 @@ export function validateClimateResponse(data, plotId) {
     if (data[key] != null && !Array.isArray(data[key])) throw new Error('La información del clima llegó incompleta. Vuelve a consultar.');
   }
   return data;
+}
+
+export const cropPhases = {
+  initial: { label: 'Inicial · poco suelo cubierto', kc: [0.3, 0.3] },
+  developing: { label: 'Desarrollo · aumenta la cobertura', kc: [0.3, 1.2] },
+  mid: { label: 'Plena cobertura · floración', kc: [1.2, 1.2] },
+  late: { label: 'Final · secado del grano en campo', kc: [0.35, 1.2] },
+};
+
+export function cropWaterWeek(days, today, phase) {
+  const factors = cropPhases[phase]?.kc;
+  if (!factors || !forecastSummary(days, today).complete || days.some(day => climateNumber(day.et0_mm, 0) === null)) return null;
+  const rain = days.reduce((sum, day) => sum + day.precipitacion_mm, 0);
+  const et0 = days.reduce((sum, day) => sum + day.et0_mm, 0);
+  const demand = factors.map(kc => kc * et0);
+  return { rain, et0, demand, balance: [rain - demand[1], rain - demand[0]] };
 }

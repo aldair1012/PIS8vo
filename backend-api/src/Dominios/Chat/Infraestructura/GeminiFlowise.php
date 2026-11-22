@@ -1,12 +1,11 @@
 <?php
-// GeminiFlowise.php — cliente del chatflow de Flowise que genera las respuestas.
-// El nombre de la clase se conserva por compatibilidad; el proveedor real
-// (Gemini con búsqueda pública) se configura dentro del chatflow.
+// Enruta el contexto autorizado al proveedor directo o al chatflow legado.
 declare(strict_types=1);
 
 namespace ZeaSys\Dominios\Chat\Infraestructura;
 
 use ZeaSys\Kernel\Errores\ServicioExternoException;
+use ZeaSys\Kernel\Errores\ZeaSysException;
 
 final class GeminiFlowise
 {
@@ -32,12 +31,9 @@ final class GeminiFlowise
         ?int $año,
         ?string $conversationId = null,
         ?string $ambito = null,
+        ?callable $emitir = null,
+        bool $simple = false,
     ): string {
-        $baseUrl = rtrim((string) FLOWISE_URL, '/');
-        $chatflowId = trim((string) FLOWISE_CHATFLOW_ID);
-        if ($baseUrl === '' || $chatflowId === '') {
-            throw new ServicioExternoException('El flujo de IA no está configurado en Flowise.');
-        }
         if (!function_exists('curl_init')) {
             throw new ServicioExternoException('PHP no tiene habilitado cURL para contactar el flujo de IA.');
         }
@@ -53,11 +49,24 @@ final class GeminiFlowise
             $conversationId ?? 'sesion-predeterminada',
         ]);
         $this->informacionRespuesta = [];
+        $directo = GeminiDirecto::configurado();
         $this->referenciasConsulta = preg_match('/\b(pdf|documento|manual|gu[ií]a|seg[uú]n\s+(iniap|mag|inec)|espac)\b/iu', $pregunta)
-            ? $this->recuperarDocumentos($pregunta, $scope) : [];
+            ? $this->recuperarDocumentos($pregunta, $scope, $directo === null) : [];
         $contexto['referencias_documentales'] = $this->referenciasConsulta;
         $contextoConsulta = $this->compactarContextoParaConsulta($contexto, $pregunta);
         $prompt = $this->construirPrompt($pregunta, $contextoConsulta);
+        if ($directo !== null) {
+            $resultado = $directo->responder($pregunta, $prompt, $contexto['historial_conversacion'] ?? [], $usuarioId, $simple, $emitir);
+            $this->informacionRespuesta = $this->normalizarInvestigacion($resultado['metadatos']) + [
+                'cache' => $resultado['cache'], 'cuota' => $resultado['cuota'] ?? null, 'respuesta_directa_del_flujo' => false,
+            ];
+            return $resultado['texto'];
+        }
+        $baseUrl = rtrim((string) FLOWISE_URL, '/');
+        $chatflowId = trim((string) FLOWISE_CHATFLOW_ID);
+        if ($baseUrl === '' || $chatflowId === '') throw new ServicioExternoException('El chatflow no está configurado.');
+        $cuota = CuotaChat::reservar($usuarioId);
+        if ($simple) $prompt .= "\nModo simple: usa palabras cotidianas, hasta tres frases y una acción concreta.";
         $payload = json_encode([
             'question' => $prompt,
             'overrideConfig' => [
@@ -96,12 +105,11 @@ final class GeminiFlowise
             $respuesta = curl_exec($curl);
             $errorCurl = curl_error($curl);
             $estado = (int) curl_getinfo($curl, CURLINFO_HTTP_CODE);
-            // Un 500/429 puntual suele ser un hipo del proveedor; se reintenta antes
-            // de mostrar "no disponible" al usuario.
+            // Reintentar fallos de servidor transitorios dentro del plazo total.
             if (is_string($respuesta) && $estado >= 200 && $estado < 300) {
                 break;
             }
-            if ($estado >= 500 || $estado === 429) {
+            if ($estado >= 500) {
                 if ($intento < $maxIntentos) {
                     usleep((int) (700000 * $intento));
                     continue;
@@ -110,6 +118,7 @@ final class GeminiFlowise
             break;
         }
         curl_close($curl);
+        if ($estado === 429) throw new ZeaSysException('El proveedor alcanzó su cuota de consultas. Inténtalo más tarde.', 429);
 
         if (!is_string($respuesta) || $estado < 200 || $estado >= 300) {
             $detalle = $estado > 0 ? "HTTP {$estado}" : 'sin respuesta';
@@ -129,7 +138,7 @@ final class GeminiFlowise
             throw new ServicioExternoException('El proveedor de IA devolvió una respuesta vacía o incompleta.');
         }
 
-        $this->informacionRespuesta = $this->normalizarInvestigacion($decodificada['zeasys'] ?? null);
+        $this->informacionRespuesta = $this->normalizarInvestigacion($decodificada['zeasys'] ?? null) + ['cuota' => $cuota];
 
         return $texto;
     }
@@ -172,9 +181,9 @@ final class GeminiFlowise
     }
 
     /** Recupera solo referencias públicas; un fallo documental no interrumpe el chat. */
-    private function recuperarDocumentos(string $pregunta, string $scope): array
+    private function recuperarDocumentos(string $pregunta, string $scope, bool $permitirFlowise = true): array
     {
-        if (!defined('FLOWISE_DOCUMENTAL_ID') || FLOWISE_DOCUMENTAL_ID === '' || !function_exists('curl_init')) return [];
+        if (!function_exists('curl_init')) return [];
         $consulta = trim(preg_replace('/\s+/u', ' ', $pregunta) ?? '');
         if (mb_strlen($consulta, 'UTF-8') < 12 || preg_match('/^(hola|gracias|buenos d[ií]as|buenas tardes)[!¡.\s]*$/iu', $consulta)) return [];
         // El modelo de embeddings local tiene una ventana pequeña; solo se envía la pregunta.
@@ -184,6 +193,7 @@ final class GeminiFlowise
             $directos = ($this->recuperador ?? new RecuperadorChroma())->recuperar($consulta);
             if ($directos !== null) return $this->normalizarDocumentos($directos, $consulta);
         }
+        if (!$permitirFlowise || !defined('FLOWISE_DOCUMENTAL_ID') || FLOWISE_DOCUMENTAL_ID === '') return [];
         $json = json_encode(['question' => $consulta, 'overrideConfig' => ['sessionId' => hash('sha256', 'documentos:' . $scope)]], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         if (!is_string($json)) return [];
         $headers = ['Content-Type: application/json'];
@@ -216,6 +226,8 @@ final class GeminiFlowise
             $pagina = filter_var($doc['metadata']['page'] ?? null, FILTER_VALIDATE_INT);
             $texto = $doc['pageContent'] ?? null;
             if (!is_string($archivo) || $archivo === $excluido || !isset($permitidos[$archivo]) || $pagina === false || $pagina < 1 || $pagina > $permitidos[$archivo] || !is_string($texto) || trim($texto) === '') continue;
+            // Un extracto documental puede describir prácticas agrícolas, nunca redefinir roles o solicitar secretos.
+            if (preg_match('/(?:<\|(?:im_start|im_end|system)\|>|\[(?:INST|SYSTEM)\]|(?:ignora|ignore|forget|olvida)\s+(?:all |todas? (?:las )?|las |previous |prior )*(?:instrucciones|instructions|reglas)|(?:revela|reveal)\s+(?:el |the )?(?:system prompt|prompt del sistema|api key))/iu', $texto)) continue;
             $salida[] = ['archivo' => $archivo, 'pagina_pdf' => $pagina, 'pagina' => $pagina, 'texto' => mb_substr(trim($texto), 0, 1000, 'UTF-8'), 'extraccion_ocr' => ($doc['metadata']['ocr'] ?? false) === true, 'extracto_cotejado_visualmente'=>($doc['metadata']['verified_excerpt'] ?? false) === true, 'año_fuente'=>$doc['metadata']['year'] ?? null];
             if (count($salida) === 3) break;
         }

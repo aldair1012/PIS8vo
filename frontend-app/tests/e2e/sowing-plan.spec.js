@@ -61,8 +61,9 @@ test('sin fechas se puede planificar, sin inferir que la siembra ocurrió',async
 for(const width of [390,944,1440])test(`la planificación y el análisis avanzado se adaptan a ${width}px`,async({page})=>{
   await prepare(page,{width});await page.getByRole('button',{name:/Consultar simulaciones guardadas/}).click();await page.locator('.sowing-advanced > summary').click();
   await expect(page.getByRole('region',{name:'Indicadores avanzados de siembra'})).toBeVisible();
-  await page.getByRole('button',{name:/Consultar meses habituales/}).click();
-  await expect(page.locator('.sowing-source-caption')).toContainText('sin referencia');
+  const calendar = page.locator('.ag-calendar');
+  await calendar.getByRole('button', { name: /Agosto/i }).click();
+  await expect(calendar.locator('#ag-calendar-month-detail')).toContainText('Sin una ventana publicada');
   await expect(page.locator('.sowing-dashboard')).not.toContainText('Riesgo agronómico: No evaluado');
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
 });

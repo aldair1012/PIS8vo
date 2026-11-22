@@ -88,7 +88,8 @@ export default function EvaluacionVariedades({ cultivoId, ph, disabled = false }
       {vigente?.error && <p role="alert">{vigente.error}</p>}
       {resultado && <div aria-live="polite">
         {resultado.actual?.nombre !== resultado.variedad_registrada && <p>Nombre guardado en la parcela: <strong>{resultado.variedad_registrada || 'Sin nombre registrado'}</strong>.</p>}
-        {resultado.contexto.altitud_registrada_m === null && <p>Falta la altitud registrada de la parcela. Puedes completarla en Mis parcelas para comparar los intervalos de las fichas.</p>}
+        {resultado.contexto.altitud_dem?.valor != null && <p>Altitud estimada para la comparación: {resultado.contexto.altitud_dem.valor} m s. n. m. · {resultado.contexto.altitud_dem.fuente} · malla de 90 m.</p>}
+        {resultado.contexto.altitud_registrada_m === null && resultado.contexto.altitud_dem?.valor == null && <p>Falta la altitud registrada de la parcela. Puedes completarla en Mis parcelas para comparar los intervalos de las fichas.</p>}
         {resultado.actual ? <FichaVariedad ficha={resultado.actual} /> : <p>No hay una ficha específica para este nombre. Puedes conservar tu variedad local; todavía falta documentar sus condiciones de adaptación.</p>}
         <h3 className="variedades-subtitulo">Otras variedades con coincidencias documentadas</h3>
         <p>Del mismo grupo de maíz registrado. El orden refleja coincidencias con las referencias consultadas, sin comparar rendimientos.</p>

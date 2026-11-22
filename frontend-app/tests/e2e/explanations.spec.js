@@ -143,8 +143,10 @@ test('los percentiles ausentes se explican como ausencia, sin inventar ceros', a
 test('las tarjetas financieras conservan la explicación directa sin un botón adicional', async ({ page }) => {
   const sent = [];
   await prepare(page, { view: 'Rendimiento', handler: route => { sent.push(route.request().postDataJSON()); return route.fulfill({ json: { que_significa: 'Ingreso menos los costos configurados.' } }); } });
-  await page.route('**/api/financiero?*', route => route.fulfill({ json: { kpis: { margen_neto: 100, area_parcela: 2, nombre_parcela: plot.nombre_parcela }, costo_total: 100, waterfall_costos: [{ label: 'Ingreso Bruto', amount: 200 }] } }));
+  await page.route('**/api/financiero?*', route => route.fulfill({ json: { kpis: { margen_neto: 100, area_parcela: 2, nombre_parcela: plot.nombre_parcela }, costo_total: 100, roi_estrategias: [{ nombre: 'Base', roi: -5, rendimiento: 3, margen: -10, costo: 200 }], waterfall_costos: [{ label: 'Ingreso Bruto', amount: 200 }, { label: 'Semillas', amount: -100 }] } }));
   await page.getByRole('button', { name: 'Finanzas', exact: true }).click();
+  await expect(page.getByRole('img', { name: /Semillas.*100/ }).locator('canvas')).toBeAttached();
+  await expect(page.getByRole('img', { name: /Base.*-5/ }).locator('canvas')).toBeAttached();
   const trigger = page.getByRole('button', { name: 'Ver explicación de Margen neto estimado', exact: true });
   await expect(trigger).toBeVisible();
   await expect(page.locator('.kpi-explain-action')).toHaveCount(0);

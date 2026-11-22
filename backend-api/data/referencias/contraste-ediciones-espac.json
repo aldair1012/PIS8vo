@@ -1,0 +1,39 @@
+{
+  "fuente_2024": "https://www.ecuadorencifras.gob.ec/documentos/web-inec/Estadisticas_agropecuarias/espac/2024/2_DD_DATOS_ABIERTOS_ESPAC_2024.zip",
+  "sha256_zip_2024": "a158f5d6cc50c3651ca925e4459f2c6148366a7872232f1e0c2147523a4a8ad2",
+  "sha256_csv_2025": "47863f1a255ae3e7e695df0c1fe0a329e55c35b2acd1d2d866d4657b6bfa1ea5",
+  "referencia_publicada_2025_en_encuesta_2024": {
+    "elegibles": 3073,
+    "evaluados": 2129,
+    "mae_t_ha": 1.4611533649660733,
+    "mae_base_por_tipo_t_ha": 1.431491448482628,
+    "rmse_t_ha": 1.8142478566838742,
+    "bandas": [
+      {
+        "nivel": 0.5,
+        "incluidas": 881
+      },
+      {
+        "nivel": 0.9,
+        "incluidas": 1959
+      }
+    ]
+  },
+  "metodo_ajustado_2024_en_siembras_2025": {
+    "elegibles": 2152,
+    "evaluados": 1823,
+    "mae_t_ha": 1.680914059275126,
+    "mae_base_por_tipo_t_ha": 1.6348804160722858,
+    "rmse_t_ha": 2.07831972832476,
+    "bandas": [
+      {
+        "nivel": 0.5,
+        "incluidas": 627
+      },
+      {
+        "nivel": 0.9,
+        "incluidas": 1586
+      }
+    ]
+  }
+}

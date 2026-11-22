@@ -1,0 +1,1 @@
+export{t as OBJLoader}from"./modelo-3d-r2-DHWb_O3I.js";

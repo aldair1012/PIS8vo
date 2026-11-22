@@ -29,6 +29,7 @@ final class SimulacionService
         private CacheInterface $cache,
         private CultivoRepositoryInterface $cultivos,
         private ?\ZeaSys\Dominios\Terreno\Dominio\ProveedorLluviaAnualInterface $lluviaAnual = null,
+        private ?\ZeaSys\Dominios\Terreno\Infraestructura\AltitudDem $dem = null,
     ) {
     }
 
@@ -74,7 +75,6 @@ final class SimulacionService
         $datos['variedad_maiz'] = $c['variedad_maiz'] ?? 'Híbrido convencional';
         $datos['tipo_maiz'] = $c['tipo_maiz'] ?? 'Duro Amarillo';
         $datos['ubicacion'] = $c['ubicacion'] ?? '';
-        $datos['altitud'] = $c['altitud'] ?? 45.0;
         $datos['latitud'] = $c['latitud'] ?? null;
         $datos['longitud'] = $c['longitud'] ?? null;
         $provincia = ProvinciaParcela::resolver($c);
@@ -87,6 +87,13 @@ final class SimulacionService
         if (($data['usar_suelo_ubicacion'] ?? false) === true && $datos['latitud'] !== null && $datos['longitud'] !== null) {
             try { $referencia = $this->cache->obtener(ServicioDatosTerreno::claveCache((float)$datos['latitud'],(float)$datos['longitud'])); }
             catch (\Throwable) { $referencia = null; }
+            if (!$referencia) {
+                $clave = 'soilgrids_' . ServicioDatosTerreno::claveCache((float)$datos['latitud'], (float)$datos['longitud']);
+                $registro = $this->cache->obtener($clave, 365 * 86400);
+                $suelo = $registro['datos'] ?? [];
+                $referencia = ['suelo' => $suelo, 'suelo_campos_api' => array_keys($suelo)];
+                if ($suelo !== []) $datos['aviso_suelo_ubicacion'] = 'SoilGrids · última consulta ' . ($registro['consultado_utc'] ?? 'sin fecha') . '.';
+            }
             $muestras = [];
             foreach (['clay'=>'textura_arcilla_pct','sand'=>'textura_arena_pct','silt'=>'textura_limo_pct','materia_organica'=>'materia_organica_pct'] as $key=>$feature) {
                 if (in_array($key,$referencia['suelo_campos_api'] ?? [],true) && is_numeric($referencia['suelo'][$key] ?? null)) $muestras[$feature]=(float)$referencia['suelo'][$key];
@@ -158,6 +165,8 @@ final class SimulacionService
         if (!$iaStatus['running']) {
             throw new ZeaSysException('El motor de simulación está inactivo: ' . $iaStatus['mensaje'], 503);
         }
+        $c['altitud_dem'] = $this->relieve($c);
+        $datos['altitud'] = $c['altitud'] ?? $c['altitud_dem']['valor'] ?? 45.0;
         $entradasMotor = $datos;
         if ($provincia['provincia'] !== null) $entradasMotor['ubicacion'] = $provincia['provincia'].', Ecuador';
         // Homologar únicamente alias documentados de la misma variedad.
@@ -178,6 +187,9 @@ final class SimulacionService
         }
         $resultado['trazabilidad']['origen_fecha_siembra'] = $datos['origen_fecha_siembra'] ?? 'Sin fecha registrada';
         if (isset($datos['aviso_suelo_ubicacion'])) $resultado['trazabilidad']['advertencias'][]=$datos['aviso_suelo_ubicacion'];
+        $resultado['trazabilidad']['altitud_dem'] = $c['altitud_dem'];
+        $resultado['trazabilidad']['fuentes']['altitud_msnm'] = isset($c['altitud']) ? 'Registro de la parcela'
+            : (isset($c['altitud_dem']['valor']) ? $c['altitud_dem']['fuente'] . ' · 90 m' : 'Valor predeterminado del motor (45 m), sin altitud verificada');
         $resultado['trazabilidad']['provincia_identificada'] = $provincia;
         if ($provincia['provincia'] !== null && ($resultado['entradas_modelo']['provincia'] ?? null) === $provincia['provincia']) {
             $resultado['trazabilidad']['fuentes']['provincia'] = $provincia['fuente'];
@@ -190,6 +202,10 @@ final class SimulacionService
         $resultado['lluvia_anual_referencia'] = $this->lluviaAnual?->obtenerParaParcela($c);
         $resultado['evaluacion_variedades'] = $catalogo->evaluar($c, ['ph_suelo' => $datos['ph_suelo']]);
         $utilizada = $resultado['entradas_modelo']['variedad'] ?? null;
+        foreach (['catalogo-maiz-ecuador', 'entradas-campo', 'tipos-suelo'] as $referencia) {
+            $ruta = __DIR__ . '/../../../../data/referencias/' . $referencia . '.json';
+            $resultado['trazabilidad']['referencias_sha256'][$referencia] = hash_file('sha256', $ruta);
+        }
         $resultado['trazabilidad']['variedad_simulada'] = [
             'registrada' => $datos['variedad_maiz'], 'enviada_al_motor' => $entradasMotor['variedad_maiz'],
             'utilizada_por_modelo' => $utilizada,
@@ -235,7 +251,14 @@ final class SimulacionService
             }
             $parametros['ph_suelo'] = (float) $data['ph_suelo'];
         }
+        $cultivo['altitud_dem'] = $this->relieve($cultivo);
         return ['exito' => true, 'evaluacion' => (new CatalogoMaiz())->evaluar($cultivo, $parametros)];
+    }
+
+    private function relieve(array $cultivo): ?array
+    {
+        if (isset($cultivo['altitud']) || !is_numeric($cultivo['latitud'] ?? null) || !is_numeric($cultivo['longitud'] ?? null)) return null;
+        return $this->dem?->obtener((float) $cultivo['latitud'], (float) $cultivo['longitud']);
     }
 
     /** historial() 166–181 (limpiarCacheExpirada() → CacheInterface::limpiarExpirados()). */

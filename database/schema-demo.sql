@@ -82,6 +82,7 @@ ALTER TABLE `simulaciones`
   ADD PRIMARY KEY (`id`),
   ADD KEY `parcela_id` (`parcela_id`),
   ADD KEY `idx_usuario_fecha` (`usuario_id`,`fecha`),
+  ADD KEY `idx_simulacion_usuario_parcela_fecha` (`usuario_id`,`parcela_id`,`fecha`),
   ADD KEY `idx_modelo` (`modelo_usado`);
 
 ALTER TABLE `usuarios`
@@ -127,3 +128,83 @@ CREATE TABLE IF NOT EXISTS mediciones_rendimiento (
     CONSTRAINT fk_mediciones_rendimiento_cultivo FOREIGN KEY (parcela_id) REFERENCES parcelas(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+
+-- Una cosecha consolidada por siembra. La predicción archivada conserva su
+-- procedencia aunque el usuario borre después la simulación de su historial.
+CREATE TABLE IF NOT EXISTS cosechas_campana (
+    parcela_id INT NOT NULL,
+    fecha_siembra DATE NOT NULL,
+    fecha_cosecha DATE NOT NULL,
+    produccion_seca_kg DECIMAL(16,4) NOT NULL,
+    area_cosechada_ha DECIMAL(14,6) NOT NULL,
+    humedad_grano_pct DECIMAL(5,2) NOT NULL,
+    fuente VARCHAR(255) NOT NULL,
+    prediccion_json LONGTEXT NULL CHECK (prediccion_json IS NULL OR JSON_VALID(prediccion_json)),
+    base_comparable TINYINT(1) NOT NULL,
+    registrado_en TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (parcela_id, fecha_siembra),
+    UNIQUE KEY uq_cosecha_fecha (parcela_id, fecha_cosecha),
+    FOREIGN KEY (parcela_id) REFERENCES parcelas(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS observaciones_campana (
+    id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    parcela_id INT NOT NULL,
+    fecha_siembra DATE NOT NULL,
+    fecha DATE NOT NULL,
+    fuente VARCHAR(255) NOT NULL,
+    ndvi DECIMAL(6,5) NULL,
+    nota VARCHAR(500) NULL,
+    adjunto_tipo VARCHAR(30) NULL,
+    adjunto MEDIUMBLOB NULL,
+    huella CHAR(64) NOT NULL,
+    registrado_en TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_observacion (parcela_id, fecha_siembra, fecha, huella),
+    FOREIGN KEY (parcela_id) REFERENCES parcelas(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+CREATE TABLE IF NOT EXISTS consentimiento_asistente (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    usuario_id INT NOT NULL,
+    version_aviso VARCHAR(32) NOT NULL,
+    autorizado TINYINT(1) NOT NULL,
+    registrado_en TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_consentimiento_usuario (usuario_id, id),
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+CREATE TABLE IF NOT EXISTS alertas_lluvia (
+    parcela_id INT PRIMARY KEY,
+    usuario_id INT NOT NULL,
+    umbral_mm DECIMAL(5,1) NOT NULL,
+    codigo_hash CHAR(64) NULL UNIQUE,
+    codigo_vence DATETIME NULL,
+    telefono VARCHAR(15) NULL,
+    consentido_utc DATETIME NULL,
+    aviso_version VARCHAR(20) NOT NULL,
+    INDEX ix_alertas_telefono (telefono),
+    FOREIGN KEY (parcela_id) REFERENCES parcelas(id) ON DELETE CASCADE,
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS envios_alertas_lluvia (
+    parcela_id INT NOT NULL,
+    semana DATE NOT NULL,
+    estado VARCHAR(20) NOT NULL,
+    intentos INT NOT NULL DEFAULT 0,
+    actualizado_utc DATETIME NOT NULL,
+    PRIMARY KEY (parcela_id, semana),
+    FOREIGN KEY (parcela_id) REFERENCES parcelas(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS accesos_tecnicos (
+    parcela_id INT NOT NULL,
+    tecnico_id INT NOT NULL,
+    creado_en TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (parcela_id, tecnico_id),
+    INDEX idx_tecnico_parcelas (tecnico_id, parcela_id),
+    FOREIGN KEY (parcela_id) REFERENCES parcelas(id) ON DELETE CASCADE,
+    FOREIGN KEY (tecnico_id) REFERENCES usuarios(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

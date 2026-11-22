@@ -27,7 +27,7 @@ test('explica sin documentos ni búsqueda disponible y no atribuye una consulta 
 });
 test('una respuesta vacía se puede reintentar sin duplicar la pregunta',async({page})=>{
  await prepare(page,{respond:{texto:''}});await page.getByRole('textbox',{name:'Escribe tu pregunta al asistente'}).fill('Explica el pH');await page.getByRole('button',{name:'Enviar pregunta'}).click();await expect(page.getByText('La respuesta llegó incompleta. Tu pregunta sigue guardada; pulsa Reintentar.',{exact:true})).toBeVisible();
- await page.route('**/api/chat/preguntar',r=>r.fulfill({json:answer}));await page.getByRole('button',{name:'Reintentar',exact:true}).click();await expect(page.locator('.from-user')).toHaveCount(1);await expect(page.locator('.from-assistant .zeasys-chat-answer')).toContainText('El pH');
+ await page.route('**/api/chat/preguntar',r=>r.fulfill({json:answer}));await page.getByRole('dialog',{name:'Asistente de ZeaSys'}).getByRole('button',{name:'Reintentar',exact:true}).click();await expect(page.locator('.from-user')).toHaveCount(1);await expect(page.locator('.from-assistant .zeasys-chat-answer')).toContainText('El pH');
 });
 test('el chat cerrado no roba el foco y abierto contiene el recorrido de teclado',async({page})=>{
  await prepare(page);const close=page.getByRole('button',{name:'Cerrar asistente ZeaSys',exact:true});await close.click();await expect(page.getByRole('button',{name:'Abrir asistente ZeaSys'})).toBeFocused();await expect(page.locator('#zeasys-chat-panel')).toHaveAttribute('inert','');

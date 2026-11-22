@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
+import { gunzipSync } from 'node:zlib';
 import { fileURLToPath } from 'node:url';
 
 // Resolve paths independently of the shell's working directory.
@@ -43,6 +44,12 @@ try {
   fs.mkdirSync(assetsDir, { recursive: true });
   const currentAssets = fs.readdirSync(path.join(sourceDir, 'assets'))
     .filter(name => fs.lstatSync(path.join(sourceDir, 'assets', name)).isFile());
+  for (const nombre of currentAssets.filter(name => /\.(js|css)\.gz$/.test(name))) {
+    const comprimido = path.join(sourceDir, 'assets', nombre);
+    if (!gunzipSync(fs.readFileSync(comprimido)).equals(fs.readFileSync(comprimido.slice(0, -3)))) {
+      throw new Error('La versión comprimida difiere del recurso de producción: ' + nombre);
+    }
+  }
   // On the first run, recognize only known Vite names. Keep unrelated files.
   const previousAssets = fs.existsSync(manifestPath)
     ? JSON.parse(fs.readFileSync(manifestPath, 'utf8'))

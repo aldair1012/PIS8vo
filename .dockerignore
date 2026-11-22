@@ -1,7 +1,14 @@
 # El contexto de construcción solo incluye código y datos públicos necesarios.
 **
+!.htaccess
+!assets/
+!assets/.htaccess
+!backend-api/public/uploads/
+!backend-api/public/uploads/.htaccess
 !docker/
 !docker/**
+!scripts/
+!scripts/avisos_lluvia.php
 !frontend-app/
 !frontend-app/index.html
 !frontend-app/package.json

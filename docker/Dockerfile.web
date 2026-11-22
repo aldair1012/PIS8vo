@@ -5,6 +5,7 @@ RUN npm ci
 COPY frontend-app/index.html frontend-app/vite.config.js ./
 COPY frontend-app/src ./src
 COPY frontend-app/public ./public
+COPY backend-api/data/referencias/ /backend-api/data/referencias/
 RUN npx vite build
 
 FROM php:8.2-apache
@@ -12,8 +13,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends libonig-dev lib
     && docker-php-ext-install pdo_mysql mbstring curl \
     && rm -rf /var/lib/apt/lists/*
 WORKDIR /var/www/html/ZeaSys
+RUN a2enmod rewrite headers && printf '<Directory "/var/www/html/ZeaSys">\nAllowOverride All\n</Directory>\n' > /etc/apache2/conf-available/zeasys.conf && a2enconf zeasys
 COPY --from=frontend /build/dist/ ./
+COPY .htaccess ./
+COPY assets/.htaccess ./assets/
+COPY backend-api/public/uploads/.htaccess ./backend-api/public/uploads/
 COPY backend-api/src/ ./backend-api/src/
+COPY scripts/avisos_lluvia.php ./scripts/avisos_lluvia.php
 COPY backend-api/public/index.php ./backend-api/public/index.php
 COPY backend-api/data/*.json ./backend-api/data/
 COPY backend-api/data/referencias/*.json ./backend-api/data/referencias/

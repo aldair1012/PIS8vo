@@ -103,3 +103,41 @@ for (const width of [390, 768, 1440]) {
     expect(errors).toEqual([]);
   });
 }
+
+for (const [width, slow] of [[390, false], [1440, true]]) {
+  test(`la portada usa la foto estática con ancho ${width} y ahorro de datos ${slow}`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
+    if (slow) await page.addInitScript(() => Object.defineProperty(navigator, 'connection', { value: { saveData: true } }));
+    await page.route('**/api/auth/yo', route => route.fulfill({ json: { autenticado: false } }));
+    const modelRequests = [];
+    page.on('request', request => {
+      if (/\/models\/maiz\/|\/modelo-3d-|\/cornThree-/.test(request.url())) modelRequests.push(request.url());
+    });
+    await page.goto('/');
+    const photo = page.getByRole('img', { name: 'Cultivo de maíz', exact: true });
+    await photo.scrollIntoViewIfNeeded();
+    await expect.poll(() => photo.evaluate(img => img.complete && img.naturalWidth > 0)).toBe(true);
+    expect(modelRequests).toEqual([]);
+  });
+}
+
+test('acceso con almacenamiento restringido y control de contraseña por teclado', async ({ page }) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(window, 'localStorage', { get() { throw new DOMException('Storage disabled', 'SecurityError'); } });
+  });
+  await page.route('**/api/auth/yo', route => route.fulfill({ json: { autenticado: false } }));
+  await page.goto('/');
+  await page.locator('.zeasys-hero-actions').getByRole('button', { name: 'Ingresar' }).click();
+  const card = page.locator('#zeasys-login-card');
+  const password = card.getByLabel('Contraseña', { exact: true });
+  await password.fill('Muestra-2026!');
+  const toggle = card.getByRole('button', { name: 'Mostrar contraseña', exact: true });
+  await toggle.focus();
+  await page.keyboard.press('Space');
+  await expect(password).toHaveAttribute('type', 'text');
+  await expect(toggle).toHaveAttribute('aria-pressed', 'true');
+  await page.keyboard.press('Enter');
+  await expect(password).toHaveAttribute('type', 'password');
+  await card.getByRole('button', { name: 'Crear cuenta', exact: true }).click();
+  await expect(card.getByLabel('Contraseña', { exact: true })).toHaveAccessibleDescription(/8 caracteres/);
+});

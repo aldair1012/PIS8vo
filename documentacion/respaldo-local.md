@@ -19,7 +19,7 @@ python tools/respaldo_local.py preparar-restauracion "D:\respaldos-privados\zeas
 
 Se verifica antes y después de copiar. No ejecuta SQL ni reemplaza bases, carpetas o cuentas existentes. Conserva la copia original: abrir servicios restaurados puede cambiar sus archivos y las huellas posteriores.
 
-El ensayo `python tools/probar_recuperacion.py` inicia MariaDB temporal, importa con permisos limitados, comprueba archivos y SQLite ficticios y consulta una colección Chroma real recuperada, también ficticia. Requiere los binarios MariaDB de XAMPP y el Python con Chroma; se puede indicar con `--chroma-python`. Véanse [el resultado y sus límites](recuperacion-verificada-20261108.md).
+El ensayo `python tools/probar_recuperacion.py` inicia MariaDB temporal, importa con permisos limitados, comprueba archivos y SQLite ficticios y consulta una colección Chroma real recuperada, también ficticia. Requiere los binarios MariaDB de XAMPP y el Python con Chroma; se puede indicar con `--chroma-python`. Véanse [el resultado y sus límites](historial/recuperacion-verificada-20261108.md).
 
 La recuperación personal exige importar el SQL en una base nueva, configurar la aplicación para esa base, recuperar las carpetas de Flowise y Chroma con los servicios detenidos y comprobar conexiones y credenciales antes de sustituir la instalación activa. Esta sustitución no se automatiza. SQLite de Flowise por sí solo no basta: sus claves originales son necesarias para descifrar credenciales guardadas.
 

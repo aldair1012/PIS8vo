@@ -1,0 +1,138 @@
+{
+  "fecha": "2026-11-16T01:44:18+00:00",
+  "sha256_dataset": "bf7f99c886dbc43c8c2347f00cbdf247ff1eecff8834e061cee6e86b92a252f7",
+  "calidad": {
+    "filas_originales": 2366,
+    "filas_invalidas": 296,
+    "duplicados_adicionales": 100,
+    "filas_elegibles_experimento": 1970,
+    "problemas": {
+      "numeros_ausentes_o_no_finitos": 0,
+      "categorias_ausentes": 0,
+      "temperaturas_inconsistentes": 201,
+      "textura_inconsistente": 58,
+      "magnitudes_imposibles": 0,
+      "canguil_clasificado_como_suave": 49
+    },
+    "nota": "Excluir filas en un experimento no acredita la procedencia ni convierte las demás observaciones en cosechas verificadas."
+  },
+  "publicacion": false,
+  "versiones": {
+    "python": "3.12.3",
+    "xgboost": "3.4.1",
+    "sklearn": "1.9.1"
+  },
+  "parametros": {
+    "n_estimators": 450,
+    "max_depth": 3,
+    "learning_rate": 0.03,
+    "subsample": 0.8,
+    "colsample_bytree": 0.8,
+    "reg_alpha": 0.5,
+    "reg_lambda": 5.0,
+    "min_child_weight": 5,
+    "random_state": 42,
+    "tree_method": "hist",
+    "n_jobs": 2,
+    "objective": "reg:squarederror"
+  },
+  "validacion": "GroupKFold(4) por provincia real (Loja y Loja Sierra juntas); medianas por zona tomadas solo del entrenamiento.",
+  "limitaciones": [
+    "El motor real imputa por provincia y variedad cuando existen; aquí la provincia de prueba está reservada, por lo que se usa la zona.",
+    "Procedencia del CSV sin acreditar: no mide exactitud agrícola."
+  ],
+  "resultados": {
+    "sin_filas_invalidas_ni_duplicados": {
+      "filas": 1970,
+      "grupos": 21,
+      "metricas": {
+        "mediana_global": {
+          "mae": 1.3970964467005078,
+          "rmse": 1.8059612932987799,
+          "r2": -0.07767134824383715
+        },
+        "media_por_zona": {
+          "mae": 0.9390600740971352,
+          "rmse": 1.2081585292104002,
+          "r2": 0.5176999476363326
+        },
+        "A_completo_etapas_reales": {
+          "mae": 0.8277333316161548,
+          "rmse": 1.0632768032943172,
+          "r2": 0.6264384753647997
+        },
+        "B_completo_etapas_y_luz_imputadas": {
+          "mae": 0.9285489308906689,
+          "rmse": 1.2048262611204212,
+          "r2": 0.5203567789385277
+        },
+        "C_planificacion_luz_imputada": {
+          "mae": 0.9132673821062001,
+          "rmse": 1.179029235694149,
+          "r2": 0.540676559725672
+        },
+        "D_planificacion_sin_luz": {
+          "mae": 0.9237389915993977,
+          "rmse": 1.189418613272336,
+          "r2": 0.5325459555813763
+        }
+      },
+      "intervalo_C": {
+        "nivel_nominal": 0.8,
+        "cobertura_observada": 0.8401015228426396,
+        "ancho_medio_t_ha": 3.1577556538267184
+      },
+      "regla_actual_sobre_B": {
+        "margen_t_ha": 2.0840225344568615,
+        "ancho_t_ha": 4.168045068913723,
+        "cobertura_observada": 0.9223350253807107
+      }
+    },
+    "solo_sin_duplicados_como_el_modelo_publicado": {
+      "filas": 2266,
+      "grupos": 21,
+      "metricas": {
+        "mediana_global": {
+          "mae": 1.3629435127978817,
+          "rmse": 1.7514064012019674,
+          "r2": -0.053669940576558384
+        },
+        "media_por_zona": {
+          "mae": 0.958105217566196,
+          "rmse": 1.2327792989357815,
+          "r2": 0.47796287259982073
+        },
+        "A_completo_etapas_reales": {
+          "mae": 0.8156091461493078,
+          "rmse": 1.0413220716402418,
+          "r2": 0.627521789122147
+        },
+        "B_completo_etapas_y_luz_imputadas": {
+          "mae": 0.9302281814934612,
+          "rmse": 1.2173339795749005,
+          "r2": 0.49096198747708997
+        },
+        "C_planificacion_luz_imputada": {
+          "mae": 0.9068354962067802,
+          "rmse": 1.1742086108608303,
+          "r2": 0.5263895820426854
+        },
+        "D_planificacion_sin_luz": {
+          "mae": 0.907274943784813,
+          "rmse": 1.1722585694168635,
+          "r2": 0.5279613522438555
+        }
+      },
+      "intervalo_C": {
+        "nivel_nominal": 0.8,
+        "cobertura_observada": 0.8195057369814651,
+        "ancho_medio_t_ha": 2.9431102825747266
+      },
+      "regla_actual_sobre_B": {
+        "margen_t_ha": 2.040991260414874,
+        "ancho_t_ha": 4.081982520829748,
+        "cobertura_observada": 0.910856134157105
+      }
+    }
+  }
+}

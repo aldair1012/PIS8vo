@@ -33,6 +33,15 @@ async function abrir(page, theme, width, deferredLocation = null) {
   await page.locator('#simular-parcela').selectOption('91');
 }
 
+test('planificación por grano muestra el contraste entre ediciones antes de simular', async ({page}) => {
+  await abrir(page,'light',390);
+  await page.getByText('Planificar con cosechas públicas del INEC',{exact:true}).click();
+  await page.getByLabel('Producto de la encuesta').selectOption('suave_seco');
+  await expect(page.getByText(/Referencia inicial por tipo de grano/)).toBeVisible();
+  await page.getByText('Cómo se calculó y con qué error',{exact:true}).click();
+  await expect(page.getByText(/Método ajustado con 2024 y aplicado a siembras de 2025/).first()).toBeVisible();
+});
+
 for (const theme of ['light', 'dark']) for (const width of [390, 820, 1440]) {
   test(`preparación, edición y resultado en ${theme} a ${width}px`, async ({ page }, testInfo) => {
     const errors = []; page.on('pageerror', error => errors.push(error.message));
@@ -49,7 +58,7 @@ for (const theme of ['light', 'dark']) for (const width of [390, 820, 1440]) {
     await page.locator('#lluvia-ciclo').fill('700'); await page.locator('#simular-nitrogeno').fill('150');
     await page.locator('#campo-riego_tipo').selectOption('goteo');
     await page.locator('#campo-lamina_riego_mm').fill('150');
-    await page.locator('.simulation-optional > summary').click();
+    await page.locator('summary').filter({hasText:'Completar datos del cultivo'}).click();
     await page.getByLabel('Duración prevista del cultivo (días)').fill('120');
     await expect(page.getByText('2024-06-26', { exact: true })).toBeVisible();
     await page.locator('.simulation-workbench').scrollIntoViewIfNeeded();
@@ -94,5 +103,12 @@ test('no interpreta una coma ambigua de miles como 3.5 mm', async ({ page }) => 
   await expect(page.locator('#campo-lamina_riego_mm')).toHaveValue('0');
   await page.getByRole('button', { name: 'Ejecutar Simulación', exact: true }).click();
   await expect(page.getByRole('alert')).toContainText('No uses separadores de miles');
-  await expect(page.locator('#lluvia-ciclo')).toHaveValue('3,500');
+  const rain = page.locator('#lluvia-ciclo');
+  await expect(rain).toHaveValue('3,500');
+  await expect(rain).toBeFocused();
+  await expect(rain).toHaveAttribute('aria-invalid', 'true');
+  await expect(rain).toHaveAccessibleDescription(/No uses separadores de miles/);
+  await rain.fill('650');
+  await expect(rain).toHaveAttribute('aria-invalid', 'false');
+  await expect(page.getByRole('alert')).toHaveCount(0);
 });

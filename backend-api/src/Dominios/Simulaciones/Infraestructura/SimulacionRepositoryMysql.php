@@ -33,6 +33,7 @@ final class SimulacionRepositoryMysql implements SimulacionRepositoryInterface
             $escenarios['plan_fertilizacion'] = $datos['plan_fertilizacion'];
         }
         $kpisModelo = [
+            'sensibilidad' => $resultado['sensibilidad'] ?? null,
             'explicacion_modelo' => $resultado['explicacion_modelo'] ?? null,
             'entradas_modelo' => $resultado['entradas_modelo'] ?? [],
             'lluvia_anual_referencia' => $resultado['lluvia_anual_referencia'] ?? null,
@@ -47,7 +48,7 @@ final class SimulacionRepositoryMysql implements SimulacionRepositoryInterface
             'intervalo_rendimiento' => $resultado['intervalo_rendimiento'] ?? null,
             'confianza_tipo' => $resultado['confianza_tipo'] ?? null,
         ];
-        if ($kpisModelo['lluvia_anual_referencia'] !== null || $kpisModelo['probabilidad_cosecha'] !== null || !empty($kpisModelo['probabilidades_cosecha']) || $kpisModelo['intervalo_rendimiento'] !== null || $kpisModelo['evaluacion_variedades'] !== null) {
+        if ($kpisModelo['version_modelo'] !== null || $kpisModelo['lluvia_anual_referencia'] !== null || $kpisModelo['probabilidad_cosecha'] !== null || !empty($kpisModelo['probabilidades_cosecha']) || $kpisModelo['intervalo_rendimiento'] !== null || $kpisModelo['evaluacion_variedades'] !== null) {
             $escenarios['_zeasys_modelo'] = $kpisModelo;
         }
 

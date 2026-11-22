@@ -22,7 +22,8 @@ import xgboost as xgb
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
-from src.training_quality import evaluar, FEATURES, CATEGORICAL
+from src.training_quality import evaluar, FEATURES, CATEGORICAL, grupos_reales
+from src.model_evidence import AVAILABILITY
 
 BASE = dict(n_estimators=600, max_depth=4, learning_rate=.03, subsample=.8,
             colsample_bytree=.8, reg_alpha=.1, reg_lambda=1., random_state=42,
@@ -76,11 +77,11 @@ def main():
     def guardar(): log.write_text(json.dumps(record, ensure_ascii=False, indent=2)+'\n', encoding='utf-8')
     guardar()
     started = time.monotonic()
-    y, groups = frame.rendimiento_t_ha, frame.provincia
+    y, groups = frame.rendimiento_t_ha, grupos_reales(frame.provincia)
     if groups.nunique() < 4: raise ValueError('Se necesitan al menos cuatro provincias.')
     # NDVI de etapas futuras y presión/control de plagas no están disponibles
     # al planificar la siembra. Su exclusión se evalúa como un contrato aparte.
-    future = {'ndvi_v6_vegetativo', 'ndvi_vt_floracion', 'ndvi_r3_llenado_grano', 'plagas_presentes', 'presion_plaga_score', 'control_plaga'}
+    future = {c for c in FEATURES if AVAILABILITY[c]['disponibilidad'] == 'etapa_posterior'}
     try:
         for name, columns in [('contrato_actual_36', FEATURES), ('planificacion_sin_etapas_futuras', [c for c in FEATURES if c not in future])]:
             X = frame[columns]

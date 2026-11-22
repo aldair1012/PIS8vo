@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ZeaSys: sin conexión</title>
+  <style>
+    :root { color-scheme: light dark; --bg:#f4f7f3; --fg:#14231a; --muted:#3a4a41; --accent:#1f5c38; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#071b21; --fg:#e8ede8; --muted:#9db09f; --accent:#8fbb9a; } }
+    html, body { min-height: 100%; margin: 0; }
+    body { display: grid; place-items: center; background: var(--bg); color: var(--fg); font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; padding: 24px; box-sizing: border-box; }
+    main { max-width: 28rem; text-align: center; }
+    img { width: 72px; height: 72px; border-radius: 18px; }
+    h1 { font-size: 1.4rem; margin: 1rem 0 .5rem; }
+    p { color: var(--muted); line-height: 1.55; margin: 0 0 1.25rem; }
+    button { min-height: 44px; padding: 0 1.25rem; border: 0; border-radius: 12px; background: var(--accent); color: var(--bg); font-size: 1rem; font-weight: 600; cursor: pointer; }
+    form { display:grid; gap:.75rem; text-align:left; margin:1.5rem 0; }
+    label { display:grid; gap:.25rem; } input { font:inherit; min-height:44px; padding:0 .5rem; }
+    input:focus-visible, button:focus-visible { outline: 3px solid var(--fg); outline-offset: 3px; }
+  </style>
+</head>
+<body>
+  <main>
+    <img src="./icons/icon-192.png" alt="" width="72" height="72" />
+    <h1>Registro de cosecha sin conexión</h1>
+    <p>Guarda un archivo en tu dispositivo. Cuando tengas señal, abre Registro de campo, elige esta parcela e importa el archivo para revisar y guardar la medición.</p>
+    <form id="cosecha">
+      <label>Nombre de la parcela en ZeaSys<input name="parcela" required maxlength="150"></label>
+      <label>Fecha de cosecha o muestreo<input name="fecha_cosecha" type="date" required></label>
+      <label>Grano seco de la muestra (kg)<input type="number" min="0" max="1000000000" step="any" name="grano_seco_kg" required></label>
+      <label>Biomasa aérea seca total de la misma muestra, incluido el grano (kg)<input type="number" min="0.000001" max="1000000000" step="any" name="biomasa_seca_kg" required></label>
+      <button type="submit">Descargar registro</button>
+      <output id="estado" aria-live="polite"></output>
+    </form>
+    <a href="./">Volver a ZeaSys</a>
+  </main>
+  <script>
+    const form = document.querySelector('form');
+    form.fecha_cosecha.max = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Guayaquil',
+      year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+    form.addEventListener('submit', event => {
+      event.preventDefault();
+      const datos = Object.fromEntries(new FormData(form));
+      const estado = document.getElementById('estado');
+      if (!datos.parcela.trim() || Number(datos.grano_seco_kg) > Number(datos.biomasa_seca_kg)) {
+        estado.textContent = 'Revisa el nombre de la parcela y que la biomasa incluya todo el grano.';
+        return;
+      }
+      const archivo = { formato: 'zeasys-cosecha-v1', ...datos };
+      const enlace = document.createElement('a');
+      const url = URL.createObjectURL(new Blob([JSON.stringify(archivo)], { type: 'application/json' }));
+      enlace.href = url;
+      enlace.download = 'zeasys-cosecha-' + datos.fecha_cosecha + '.json';
+      enlace.click();
+      setTimeout(() => URL.revokeObjectURL(url), 30000);
+      estado.textContent = 'Archivo preparado. Consérvalo hasta guardar la medición en tu cuenta.';
+    });
+  </script>
+</body>
+</html>

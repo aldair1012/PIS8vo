@@ -1,0 +1,12 @@
+.tecnico-dialog { width: min(42rem, calc(100% - 2rem)); max-height: 85dvh; overflow: auto; box-sizing: border-box; padding: 1.25rem; border: 1px solid var(--border-subtle); border-radius: 1rem; color: var(--text-primary); background: var(--bg-card, Canvas); }
+.tecnico-dialog::backdrop { background: rgb(0 0 0 / .55); }
+.tecnico-dialog header { display: flex; align-items: center; justify-content: space-between; gap: .75rem; }
+.tecnico-dialog h2, .tecnico-dialog h3 { margin: 0; }
+.tecnico-dialog section { border-top: 1px solid var(--border-subtle); margin-top: 1rem; padding-top: 1rem; }
+.tecnico-dialog form, .tecnico-dialog label { display: grid; gap: .45rem; }
+.tecnico-dialog form { gap: .7rem; }
+.tecnico-dialog :is(select, input, button, a.btn) { min-height: 44px; }
+.tecnico-dialog :is(select, input) { padding: .45rem; border-radius: .4rem; min-width: 0; max-width: 100%; font: inherit; }
+.tecnico-dialog ul { padding-inline-start: 1.3rem; }
+.tecnico-dialog li { margin-bottom: .7rem; overflow-wrap: anywhere; }
+.tecnico-dialog li p { margin: .2rem 0; }

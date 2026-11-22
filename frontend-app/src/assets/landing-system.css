@@ -1176,3 +1176,56 @@ html.landing-snap { scroll-snap-type: y mandatory; scroll-padding-top: 0; }
 .zeasys-home #contacto {
   scroll-margin-top: 0;
 }
+
+/* Tarjetas de acceso dentro de la fotografía del hero. */
+.zeasys-home .zeasys-hero-auth-back.zeasys-login-card {
+  --auth-ink: var(--zs-paper-50);
+  --auth-muted: var(--zs-paper-200);
+  --auth-accent: var(--zs-lime-300);
+  --auth-edge: color-mix(in srgb, var(--auth-accent) 24%, transparent);
+  padding: clamp(1.25rem, 3vw, 2.25rem) !important;
+  background: linear-gradient(145deg, var(--zs-forest-800), var(--zs-forest-900) 62%) !important;
+}
+.zeasys-home .zeasys-hero-auth-back .auth-card-heading {
+  display: grid; justify-items: start; gap: 1.05rem; text-align: left;
+  padding-bottom: 1rem; margin: 0 0 1rem; border-bottom: 1px solid var(--auth-edge);
+}
+.zeasys-home .auth-card-heading .platform-logo { color: var(--auth-ink); }
+.zeasys-home .zeasys-hero-auth-back .auth-card-heading h2 { margin: 0; font-size: clamp(1.55rem, 2.6vw, 2.1rem); line-height: 1.12; letter-spacing: -.035em; }
+.zeasys-home .zeasys-hero-auth-back .auth-card-heading p { margin: .38rem 0 0; font-size: .9rem; line-height: 1.45; color: var(--auth-muted); }
+.zeasys-home .zeasys-hero-auth-back .zeasys-login-form { gap: .85rem; }
+.zeasys-home .zeasys-hero-auth-back .zeasys-submit-btn {
+  min-height: 48px; border-radius: var(--zs-radius-sm); background: var(--auth-accent); color: var(--zs-forest-950);
+}
+.zeasys-home .zeasys-hero-auth-back .zeasys-login-options a { color: var(--auth-accent); display:inline-flex; align-items:center; min-height:44px; text-underline-offset:3px; }
+.zeasys-home .zeasys-hero-auth-back .zeasys-check-label { min-height:44px; }
+.zeasys-home .zeasys-hero-auth-back .zeasys-check-label input { min-height:0; accent-color:var(--auth-accent); }
+.zeasys-home .zeasys-hero-auth-back .zeasys-google-signin { background:transparent; border:0; padding:0; min-height:44px; }
+.zeasys-home .zeasys-hero-auth-back .zeasys-google-button-host iframe { clip-path:none; }
+.zeasys-home .zeasys-hero-auth-back .zeasys-register-prompt { margin:.65rem 0 0; }
+.zeasys-home .auth-privacy { font-size:.8rem; line-height:1.5; text-align:left; border-top:1px solid var(--auth-edge); margin-top:.6rem; color:var(--auth-muted); }
+.zeasys-home .auth-privacy summary { min-height:44px; padding-block:.75rem; cursor:pointer; }
+.zeasys-home .auth-privacy p { margin:0 0 .4rem; }
+.zeasys-home .auth-privacy a { color:var(--auth-accent); text-underline-offset:.2em; }
+.zeasys-home.startup-recovery { min-height:100svh; display:grid; place-items:center; padding-inline:1rem; }
+.startup-recovery section { max-width:28rem; padding:clamp(1.4rem,4vw,2.25rem); border:1px solid var(--zs-border-strong); border-radius:var(--zs-radius-lg); background:var(--zs-surface); box-shadow:var(--zs-shadow-lg); }
+.startup-recovery h1 { margin:1rem 0 .5rem; font-size:1.6rem; line-height:1.2; }
+.startup-recovery p { color:var(--zs-text-muted); line-height:1.55; margin:0 0 1rem; }
+.startup-recovery button,.startup-recovery a { display:inline-flex; align-items:center; min-height:44px; padding:.65rem 1rem; }
+.startup-recovery button { color:var(--zs-action-text); background:var(--zs-action); border:0; border-radius:var(--zs-radius-sm); font-weight:650; cursor:pointer; }
+.startup-recovery a { color:var(--zs-text); text-underline-offset:.2em; }
+@media(max-width:480px) {
+  .zeasys-home .zeasys-hero-auth-back .zeasys-register-password-grid { grid-template-columns:minmax(0,1fr); }
+}
+
+.zeasys-home .auth-password-field { min-width: 0; }
+.zeasys-home .auth-password-control { position: relative; }
+.zeasys-home .zeasys-hero-auth-back .auth-password-control input { padding-inline-end: 3rem; }
+.zeasys-home .auth-password-control button {
+  position: absolute; inset-inline-end: 1px; top: 50%; transform: translateY(-50%);
+  min-width: 44px; min-height: 44px; display: grid; place-items: center;
+  border: 0; background: transparent; color: var(--auth-muted); cursor: pointer; border-radius: var(--zs-radius-sm);
+}
+.zeasys-home .auth-password-control button:is(:hover, [aria-pressed="true"]) { color: var(--auth-accent); }
+.zeasys-home .auth-password-control button:focus-visible { outline: 2px solid var(--auth-accent); outline-offset: -3px; }
+.zeasys-home .auth-password-hint { margin: 0; font-size: .82rem; line-height: 1.45; text-align: start; color: var(--auth-muted); }

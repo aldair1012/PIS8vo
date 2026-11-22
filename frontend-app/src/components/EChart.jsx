@@ -1,11 +1,11 @@
 import { useEffect, useRef } from 'react';
 import * as echarts from 'echarts/core';
-import { BarChart, LineChart } from 'echarts/charts';
+import { BarChart, LineChart, PieChart } from 'echarts/charts';
 import { AriaComponent, GridComponent, LegendComponent, TitleComponent, TooltipComponent } from 'echarts/components';
 import localeES from 'echarts/lib/i18n/langES';
 import { CanvasRenderer } from 'echarts/renderers';
 
-echarts.use([AriaComponent, BarChart, LineChart, GridComponent, LegendComponent, TitleComponent, TooltipComponent, CanvasRenderer]);
+echarts.use([AriaComponent, BarChart, LineChart, PieChart, GridComponent, LegendComponent, TitleComponent, TooltipComponent, CanvasRenderer]);
 echarts.registerLocale('ES', localeES);
 
 export default function EChart({ option, className, style, onClick, ariaLabel }) {
@@ -35,16 +35,24 @@ export default function EChart({ option, className, style, onClick, ariaLabel })
 
   useEffect(() => {
     if (!chartRef.current) return;
-    const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-    chartRef.current.setOption({ ...option, aria: { enabled: true, ...option?.aria }, ...(reduced ? { animation: false } : {}) }, { notMerge: true, lazyUpdate: false });
-    chartRef.current.resize();
-  }, [option]);
-
-  useEffect(() => {
-    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
-      chartRef.current?.setOption({ animation: false });
+    const media = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const aria = { enabled: true, ...option?.aria };
+    if (ariaLabel) {
+      // Mantén el resumen de series y valores que ECharts añade después del título.
+      const introduction = ariaLabel.replace(/[.\s]+$/, '') + '. ';
+      aria.label = { ...aria.label, general: { ...aria.label?.general, withTitle: introduction, withoutTitle: introduction } };
     }
-  }, []);
+    const applyOption = () => {
+      chartRef.current?.setOption({
+        ...option,
+        aria,
+        ...(media.matches ? { animation: false } : {}),
+      }, { notMerge: true });
+    };
+    applyOption();
+    media.addEventListener('change', applyOption);
+    return () => media.removeEventListener('change', applyOption);
+  }, [option, ariaLabel]);
 
   return <div ref={nodeRef} className={className} role="img" aria-label={ariaLabel} style={{ width: '100%', height: '100%', ...style }} />;
 }

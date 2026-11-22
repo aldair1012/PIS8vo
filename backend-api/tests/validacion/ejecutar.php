@@ -96,6 +96,7 @@ $cache = new class implements CacheInterface {
 };
 $clima = new class implements ProveedorClimaInterface {
     public function obtenerClima(float $latitud, float $longitud, ?float $altitud): array { throw new RuntimeException('No debe usar red.'); }
+    public function obtenerResumenMensual12Meses(float $latitud, float $longitud): ?array { throw new RuntimeException('No debe usar red.'); }
 };
 $suelo = new class implements ProveedorSueloInterface {
     public function obtenerSuelo(float $latitud, float $longitud): array { throw new RuntimeException('No debe usar red.'); }

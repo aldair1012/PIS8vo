@@ -174,14 +174,16 @@ class ServicioAnaliticaClimate
 
         $emergenciaMes = $crecimientoMes = $floracionMes = $llenadoMes = 'No disponible';
         $fechaSiembra = $this->fechaValida($cultivoSeleccionado['fecha_siembra'] ?? null);
-        if ($fechaSiembra !== null) {
-            $mesSiembra = new \DateTimeImmutable($fechaSiembra);
-            $mesSiembra = $mesSiembra->modify('first day of this month');
-            $mesesEtapas = [];
-            for ($i = 0; $i < 4; $i++) {
-                $mesesEtapas[] = $etiquetasMeses[(int) $mesSiembra->modify("+{$i} months")->format('m') - 1];
+        $termico = null;
+        if ($fechaSiembra && $tieneCoordenadas && ($cultivoSeleccionado['tipo_fecha_siembra'] ?? '') === 'real_declarada'
+            && $this->climaArchive instanceof \ZeaSys\Dominios\Terreno\Dominio\ProveedorTemperaturaCampanaInterface) {
+            $inicio = new \DateTimeImmutable($fechaSiembra, new \DateTimeZone('America/Guayaquil'));
+            $fin = new \DateTimeImmutable('today -7 days', $inicio->getTimezone());
+            $duracion = (int) ($cultivoSeleccionado['ciclo_dias'] ?? 0);
+            if ($duracion >= 1 && $duracion <= 730) $fin = min($fin, $inicio->modify('+' . ($duracion - 1) . ' days'));
+            if ($fin >= $inicio && $inicio->diff($fin)->days < 730) {
+                $termico = $this->climaArchive->gradosDia((float) $cultivoSeleccionado['latitud'], (float) $cultivoSeleccionado['longitud'], $fechaSiembra, $fin->format('Y-m-d'));
             }
-            [$emergenciaMes, $crecimientoMes, $floracionMes, $llenadoMes] = $mesesEtapas;
         }
 
         $datosAgronomia = $this->catalogo->cargar();
@@ -189,7 +191,7 @@ class ServicioAnaliticaClimate
         $esSierra = false;
         $zonaEcuador = 'Costa – Litoral (Invierno)';
         if ($cultivoSeleccionado) {
-            $altitud = floatval($cultivoSeleccionado['altitud'] ?? 45.0);
+            $altitud = $this->numero($cultivoSeleccionado['altitud'] ?? $informacionApi['altitud_dem']['valor'] ?? null);
             $ubicacion = strtolower($cultivoSeleccionado['ubicacion'] ?? '');
             if ($altitud > 1000) {
                 $esSierra = true;
@@ -281,13 +283,16 @@ class ServicioAnaliticaClimate
         foreach ($lineaTiempoFenologica as &$etapa) {
             $etapa['tipo'] = 'referencia_fenologica_no_observada';
             $etapa['estado'] = 'no_evaluado';
-            $etapa['fuente'] = 'Catálogo agronómico local; meses orientativos desde la siembra registrada';
+            $etapa['fuente'] = 'Catálogo agronómico local. Fechas de referencia térmica en grados_dia.';
         }
         unset($etapa);
 
         return [
             'cultivo_activo' => array_intersect_key($cultivoSeleccionado, array_flip(['id', 'nombre_parcela', 'ubicacion', 'provincia', 'area', 'fecha_siembra', 'tipo_fecha_siembra', 'ciclo_dias', 'riego_tipo'])),
             'consultado_en' => date('c'),
+            'altitud_dem' => $informacionApi['altitud_dem'] ?? null,
+            'frescura' => $informacionApi['frescura'] ?? [],
+            'grados_dia' => $termico,
             'procedencia' => [
                 'clima' => ['tipo' => 'modelo_reanalisis', 'fuente' => $fuenteApi, 'campos_api' => $camposClima ?? [],
                     'nota' => 'Promedios y acumulados del proveedor; no son mediciones del lote. Campos ausentes permanecen null.'],

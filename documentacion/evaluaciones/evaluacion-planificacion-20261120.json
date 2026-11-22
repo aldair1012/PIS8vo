@@ -1,0 +1,335 @@
+{
+  "fecha": "2026-11-20T19:46:30+00:00",
+  "sha256_dataset": "dd3a29e6748f2d948a4236fe32dd8b5f2a45776f1bda64d9657870ad719e4fde",
+  "calidad": {
+    "filas_originales": 2366,
+    "filas_invalidas": 296,
+    "duplicados_adicionales": 100,
+    "filas_elegibles_experimento": 1970,
+    "problemas": {
+      "numeros_ausentes_o_no_finitos": 0,
+      "categorias_ausentes": 0,
+      "temperaturas_inconsistentes": 201,
+      "textura_inconsistente": 58,
+      "magnitudes_imposibles": 0,
+      "canguil_clasificado_como_suave": 49
+    },
+    "nota": "Excluir filas en un experimento no acredita la procedencia ni convierte las demás observaciones en cosechas verificadas."
+  },
+  "publicacion": false,
+  "sha256_metricas_publicadas": "ca391dd4c4fe9f3ccb2477d660b3e7c0c089e57295632322fa1f3e96a559197a",
+  "versiones": {
+    "python": "3.11.9",
+    "xgboost": "3.2.0",
+    "sklearn": "1.8.0"
+  },
+  "parametros": {
+    "n_estimators": 450,
+    "max_depth": 3,
+    "learning_rate": 0.03,
+    "subsample": 0.8,
+    "colsample_bytree": 0.8,
+    "reg_alpha": 0.5,
+    "reg_lambda": 5.0,
+    "min_child_weight": 5,
+    "random_state": 42,
+    "tree_method": "hist",
+    "n_jobs": 2,
+    "objective": "reg:squarederror"
+  },
+  "validacion": "GroupKFold(4) por provincia real (Loja y Loja Sierra juntas); medianas por zona tomadas solo del entrenamiento.",
+  "limitaciones": [
+    "B y C sustituyen solo etapas futuras y/o luz por zona. E y F usan la referencia de variedad del motor y suponen una zona y un clima de escenario conocidos.",
+    "Procedencia del CSV sin acreditar: no mide exactitud agrícola."
+  ],
+  "resultados": {
+    "sin_filas_invalidas_ni_duplicados": {
+      "filas": 1970,
+      "grupos": 21,
+      "metricas": {
+        "mediana_global": {
+          "mae": 1.3970964467005078,
+          "rmse": 1.8059612932987799,
+          "r2": -0.07767134824383715
+        },
+        "media_por_zona": {
+          "mae": 0.9390600740971352,
+          "rmse": 1.2081585292104002,
+          "r2": 0.5176999476363326
+        },
+        "A_completo_etapas_reales": {
+          "mae": 0.8281257740713013,
+          "rmse": 1.0626315696960726,
+          "r2": 0.6268917182304168
+        },
+        "B_completo_etapas_y_luz_imputadas": {
+          "mae": 0.9285637687983247,
+          "rmse": 1.2026496384658836,
+          "r2": 0.5220882472747916
+        },
+        "C_planificacion_luz_imputada": {
+          "mae": 0.9153670197961294,
+          "rmse": 1.179895726312701,
+          "r2": 0.5400011808827345
+        },
+        "D_planificacion_sin_luz": {
+          "mae": 0.9192246588934497,
+          "rmse": 1.1877775630930945,
+          "r2": 0.533834965753512
+        },
+        "E_formulario_basico_36": {
+          "mae": 0.9466163683458027,
+          "rmse": 1.2227223072236406,
+          "r2": 0.5060020671179353
+        },
+        "F_formulario_basico_30": {
+          "mae": 0.9267091285540973,
+          "rmse": 1.2051220046791655,
+          "r2": 0.5201212780907618
+        }
+      },
+      "por_pliegue": [
+        {
+          "provincias": [
+            "Imbabura",
+            "Loja",
+            "Sucumbíos",
+            "Tungurahua"
+          ],
+          "n": 469,
+          "mae": {
+            "mediana_global": 1.1455863539445628,
+            "media_por_zona": 0.8725491924657721,
+            "A_completo_etapas_reales": 0.7461359402670789,
+            "B_completo_etapas_y_luz_imputadas": 0.8529560351625943,
+            "C_planificacion_luz_imputada": 0.8567644616332389,
+            "D_planificacion_sin_luz": 0.8552839630448233,
+            "E_formulario_basico_36": 0.8762304020487168,
+            "F_formulario_basico_30": 0.8700896278678226
+          }
+        },
+        {
+          "provincias": [
+            "El Oro",
+            "Esmeraldas",
+            "Morona Santiago",
+            "Napo",
+            "Orellana",
+            "Pichincha"
+          ],
+          "n": 516,
+          "mae": {
+            "mediana_global": 1.2100000000000002,
+            "media_por_zona": 0.8951306625714825,
+            "A_completo_etapas_reales": 0.8281261564872062,
+            "B_completo_etapas_y_luz_imputadas": 0.9379124886582989,
+            "C_planificacion_luz_imputada": 0.8854364396065704,
+            "D_planificacion_sin_luz": 0.8927367675212002,
+            "E_formulario_basico_36": 0.9432960800514665,
+            "F_formulario_basico_30": 0.8732795703595924
+          }
+        },
+        {
+          "provincias": [
+            "Azuay",
+            "Carchi",
+            "Cañar",
+            "Cotopaxi",
+            "Manabí"
+          ],
+          "n": 468,
+          "mae": {
+            "mediana_global": 1.3846153846153846,
+            "media_por_zona": 0.8637028224167704,
+            "A_completo_etapas_reales": 0.7135411046814716,
+            "B_completo_etapas_y_luz_imputadas": 0.8081417359042371,
+            "C_planificacion_luz_imputada": 0.7933342366646498,
+            "D_planificacion_sin_luz": 0.7903328283525939,
+            "E_formulario_basico_36": 0.8461187602312138,
+            "F_formulario_basico_30": 0.821612325641844
+          }
+        },
+        {
+          "provincias": [
+            "Bolívar",
+            "Chimborazo",
+            "Guayas",
+            "Los Ríos",
+            "Pastaza",
+            "Santa Elena"
+          ],
+          "n": 517,
+          "mae": {
+            "mediana_global": 1.8232882011605418,
+            "media_por_zona": 1.111455380903241,
+            "A_completo_etapas_reales": 1.0062276309417342,
+            "B_completo_etapas_y_luz_imputadas": 1.096829917776746,
+            "C_planificacion_luz_imputada": 1.1088682222366333,
+            "D_planificacion_sin_luz": 1.1203413223251844,
+            "E_formulario_basico_36": 1.1047540231830144,
+            "F_formulario_basico_30": 1.1265340833184336
+          }
+        }
+      ],
+      "regla_del_motor_sobre_E": {
+        "casos_dentro": 1789,
+        "cobertura_observada": 0.9081218274111675,
+        "ancho_medio_t_ha": 4.07953807106599
+      },
+      "banda_empirica_C": {
+        "nivel_nominal": 0.8,
+        "cobertura_observada": 0.8441624365482233,
+        "ancho_medio_t_ha": 3.2149758862335664
+      },
+      "regla_sin_recorte_con_metricas_A_sobre_B": {
+        "margen_t_ha": 2.0827578766043024,
+        "ancho_t_ha": 4.165515753208605,
+        "cobertura_observada": 0.9258883248730965
+      }
+    },
+    "solo_sin_duplicados_como_el_modelo_publicado": {
+      "filas": 2266,
+      "grupos": 21,
+      "metricas": {
+        "mediana_global": {
+          "mae": 1.3629435127978817,
+          "rmse": 1.7514064012019674,
+          "r2": -0.053669940576558384
+        },
+        "media_por_zona": {
+          "mae": 0.958105217566196,
+          "rmse": 1.2327792989357815,
+          "r2": 0.47796287259982073
+        },
+        "A_completo_etapas_reales": {
+          "mae": 0.8170014646699338,
+          "rmse": 1.0432086898287196,
+          "r2": 0.6261708895919216
+        },
+        "B_completo_etapas_y_luz_imputadas": {
+          "mae": 0.9298157477778664,
+          "rmse": 1.215001480697364,
+          "r2": 0.492910825031308
+        },
+        "C_planificacion_luz_imputada": {
+          "mae": 0.9057184641464348,
+          "rmse": 1.1726276138202045,
+          "r2": 0.5276640959105842
+        },
+        "D_planificacion_sin_luz": {
+          "mae": 0.9021631666315623,
+          "rmse": 1.1690066347574237,
+          "r2": 0.5305766620770782
+        },
+        "E_formulario_basico_36": {
+          "mae": 0.9425813903623415,
+          "rmse": 1.225528600327442,
+          "r2": 0.4840856272233738
+        },
+        "F_formulario_basico_30": {
+          "mae": 0.9313595957663453,
+          "rmse": 1.208401117362749,
+          "r2": 0.4984052739157069
+        }
+      },
+      "por_pliegue": [
+        {
+          "provincias": [
+            "Bolívar",
+            "Carchi",
+            "Chimborazo",
+            "Loja",
+            "Napo"
+          ],
+          "n": 580,
+          "mae": {
+            "mediana_global": 1.1227413793103447,
+            "media_por_zona": 0.847156733258804,
+            "A_completo_etapas_reales": 0.7082863244681522,
+            "B_completo_etapas_y_luz_imputadas": 0.8265762803225681,
+            "C_planificacion_luz_imputada": 0.806054813442559,
+            "D_planificacion_sin_luz": 0.8028280461163357,
+            "E_formulario_basico_36": 0.8261132731930962,
+            "F_formulario_basico_30": 0.8224032185324307
+          }
+        },
+        {
+          "provincias": [
+            "Azuay",
+            "Cañar",
+            "Esmeraldas",
+            "Los Ríos",
+            "Orellana"
+          ],
+          "n": 544,
+          "mae": {
+            "mediana_global": 1.5400183823529412,
+            "media_por_zona": 0.9531381213627174,
+            "A_completo_etapas_reales": 0.7962697380518212,
+            "B_completo_etapas_y_luz_imputadas": 0.9253586457932697,
+            "C_planificacion_luz_imputada": 0.9012675545846714,
+            "D_planificacion_sin_luz": 0.8928007674567839,
+            "E_formulario_basico_36": 0.9202427779138088,
+            "F_formulario_basico_30": 0.9087087012389128
+          }
+        },
+        {
+          "provincias": [
+            "Imbabura",
+            "Manabí",
+            "Pastaza",
+            "Pichincha",
+            "Santa Elena",
+            "Sucumbíos"
+          ],
+          "n": 596,
+          "mae": {
+            "mediana_global": 1.444261744966443,
+            "media_por_zona": 1.0755771113220778,
+            "A_completo_etapas_reales": 0.9371634082826191,
+            "B_completo_etapas_y_luz_imputadas": 1.0051974068312037,
+            "C_planificacion_luz_imputada": 1.011788748422725,
+            "D_planificacion_sin_luz": 1.007891196244515,
+            "E_formulario_basico_36": 1.0412643266924275,
+            "F_formulario_basico_30": 1.04489829210627
+          }
+        },
+        {
+          "provincias": [
+            "Cotopaxi",
+            "El Oro",
+            "Guayas",
+            "Morona Santiago",
+            "Tungurahua"
+          ],
+          "n": 546,
+          "mae": {
+            "mediana_global": 1.352912087912088,
+            "media_por_zona": 0.9526820903765886,
+            "A_completo_etapas_reales": 0.8219764137617398,
+            "B_completo_etapas_y_luz_imputadas": 0.9616400807593768,
+            "C_planificacion_luz_imputada": 0.9002392018409002,
+            "D_planificacion_sin_luz": 0.9016020116875897,
+            "E_formulario_basico_36": 0.9808390516763205,
+            "F_formulario_basico_30": 0.9457327137150606
+          }
+        }
+      ],
+      "regla_del_motor_sobre_E": {
+        "casos_dentro": 2043,
+        "cobertura_observada": 0.9015887025595763,
+        "ancho_medio_t_ha": 4.075834068843777
+      },
+      "banda_empirica_C": {
+        "nivel_nominal": 0.8,
+        "cobertura_observada": 0.8186231244483672,
+        "ancho_medio_t_ha": 2.9474786904209607
+      },
+      "regla_sin_recorte_con_metricas_A_sobre_B": {
+        "margen_t_ha": 2.0446890320642903,
+        "ancho_t_ha": 4.089378064128581,
+        "cobertura_observada": 0.913503971756399
+      }
+    }
+  }
+}

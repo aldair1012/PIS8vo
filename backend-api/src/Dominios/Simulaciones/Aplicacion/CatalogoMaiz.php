@@ -42,7 +42,7 @@ final class CatalogoMaiz
         $altitud = $this->numero($parcela['altitud'] ?? null);
         $ph = $this->numero($parametros['ph_suelo'] ?? $parcela['ph'] ?? null);
         $provincia = \ZeaSys\Dominios\Terreno\Aplicacion\ProvinciaParcela::resolver($parcela)['provincia'] ?? $this->provincia((string) ($parcela['ubicacion'] ?? ''));
-        $contexto = ['altitud_registrada_m' => $altitud, 'ph_ingresado' => $ph, 'provincia_reconocida' => $provincia, 'region_reconocida' => $this->region($provincia)];
+        $contexto = ['altitud_registrada_m' => $altitud, 'altitud_dem' => $parcela['altitud_dem'] ?? null, 'ph_ingresado' => $ph, 'provincia_reconocida' => $provincia, 'region_reconocida' => $this->region($provincia)];
         $evaluacionActual = $actual ? $this->comparar($actual, $contexto, $objetivo) : null;
         $alternativas = [];
         foreach ($this->catalogo['variedades'] as $ficha) {
@@ -70,7 +70,7 @@ final class CatalogoMaiz
             'criterio_catalogo' => $this->catalogo['seleccion']['criterio'],
             'nota' => 'Coincidencias parciales con referencias publicadas; no es un ranking de rendimiento ni una garantía de adaptación. Las alternativas son para planificar otra siembra. La variedad registrada se conserva.',
             'limites' => [
-                'Solo se comparan altitud registrada, referencias territoriales y, cuando existe, una guía general de pH para maíz de altura.',
+                'Solo se comparan altitud registrada o estimada por DEM, referencias territoriales y, cuando existe, una guía general de pH para maíz de altura.',
                 'Temperatura actual, lluvia del ciclo y humedad no se convierten en requisitos climáticos propios de una variedad.',
                 'La simulación de rendimiento actual sigue siendo de grano; esta consulta puede mostrar otros usos sin convertir las toneladas de grano en choclo o forraje.',
             ],
@@ -84,7 +84,7 @@ final class CatalogoMaiz
         $outside = false;
         $range = $ficha['altitud_documentada_m'];
         if ($range !== null) {
-            $value = $contexto['altitud_registrada_m'];
+            $value = $contexto['altitud_registrada_m'] ?? $contexto['altitud_dem']['valor'] ?? null;
             $inside = $value !== null && $value >= $range['min'] && $value <= $range['max'];
             $outside = $value !== null && !$inside;
             if ($inside) $matches++;

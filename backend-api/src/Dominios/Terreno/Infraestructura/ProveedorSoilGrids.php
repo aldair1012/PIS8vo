@@ -8,9 +8,14 @@ use ZeaSys\Kernel\Errores\ServicioExternoException;
 /** SoilGrids 2.0 por WMS: punto de malla, no análisis de laboratorio. */
 final class ProveedorSoilGrids implements ProveedorSueloInterface
 {
+    public function __construct(
+        private TransferenciasHttp $http = new TransferenciasHttp(),
+        private string $urlMapas = 'https://maps.isric.org/mapserv',
+    ) {}
+
     public function obtenerSuelo(float $latitud, float $longitud): array
     {
-        $multi=curl_multi_init(); $handles=[];
+        $handles = [];
         foreach (['clay','sand','silt','phh2o','soc'] as $property) {
             $query=http_build_query([
                 'map'=>"/map/{$property}.map", 'SERVICE'=>'WMS', 'VERSION'=>'1.1.1', 'REQUEST'=>'GetFeatureInfo',
@@ -18,23 +23,15 @@ final class ProveedorSoilGrids implements ProveedorSueloInterface
                 'SRS'=>'EPSG:4326', 'BBOX'=>implode(',',[$longitud-.001,$latitud-.001,$longitud+.001,$latitud+.001]),
                 'WIDTH'=>3,'HEIGHT'=>3,'X'=>1,'Y'=>1,'STYLES'=>'','FORMAT'=>'image/png','INFO_FORMAT'=>'application/geo+json',
             ],'', '&',PHP_QUERY_RFC3986);
-            $ch=curl_init('https://maps.isric.org/mapserv?'.$query);
+            $ch=curl_init($this->urlMapas.'?'.$query);
             curl_setopt_array($ch,[CURLOPT_RETURNTRANSFER=>true,CURLOPT_TIMEOUT=>5,CURLOPT_CONNECTTIMEOUT=>2,CURLOPT_USERAGENT=>'ZeaSys/2.4 (agricultural reference map)']);
-            curl_multi_add_handle($multi,$ch); $handles[$property]=$ch;
+            $handles[$property] = $ch;
         }
-        do {
-            $status=curl_multi_exec($multi,$running);
-            if ($running && $status===CURLM_OK && curl_multi_select($multi,.2)===-1) usleep(10000);
-        } while ($running && $status===CURLM_OK);
-        $muestras=[];
-        foreach ($handles as $property=>$ch) {
-            if (curl_getinfo($ch,CURLINFO_HTTP_CODE)===200) {
-                $json=json_decode((string)curl_multi_getcontent($ch),true);
-                $muestras[$property]=$json['features'][0]['properties']['pixel_value'] ?? null;
-            }
-            curl_multi_remove_handle($multi,$ch); curl_close($ch);
+        $muestras = [];
+        foreach ($this->http->descargar($handles) as $property => $respuesta) {
+            $json = json_decode((string)$respuesta, true);
+            $muestras[$property] = $json['features'][0]['properties']['pixel_value'] ?? null;
         }
-        curl_multi_close($multi);
         $result=self::interpretarMuestras($muestras);
         if ($result===[]) throw new ServicioExternoException('El mapa de suelo no devolvió datos para estas coordenadas.');
         return $result;

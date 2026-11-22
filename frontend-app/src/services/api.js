@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { avatarUrl } from '../utils/avatarUrl';
+import { leerRespuestaChat } from './streamChat';
 
 const getApiBaseUrl = () => {
   if (import.meta.env.VITE_API_BASE_URL) {
@@ -33,6 +34,13 @@ API.interceptors.response.use((response) => {
   }
   return Promise.reject(error);
 });
+
+export const acompanamientoService = {
+  panel: async () => (await API.get('/api/acompanamiento')).data,
+  conceder: (parcela_id, correo) => API.post('/api/acompanamiento/accesos', { parcela_id, correo }),
+  revocar: (parcela_id, tecnico_id) => API.delete('/api/acompanamiento/accesos', { data: { parcela_id, tecnico_id } }),
+  csv: () => API.getUri({ url: '/api/acompanamiento/exportar' }),
+};
 
 export const authService = {
   iniciarSesion: async (correo, contrasena, recordar = false) => {
@@ -143,16 +151,27 @@ export const simulacionService = {
 };
 
 export const chatService = {
-  preguntar: async (pregunta, vista = null, cultivoId = null, año = null, dashboard = null, simulacion = null, signal = undefined) => {
-    const response = await API.post('/api/chat/preguntar', {
-      pregunta,
-      vista,
-      cultivo_id: cultivoId,
-      año,
-      dashboard,
-      simulacion,
-    }, { timeout: 90000, signal });
-    return response.data;
+  consentimiento: async () => (await API.get('/api/chat/consentimiento')).data,
+  decidirConsentimiento: async (autorizado, version) => (await API.post('/api/chat/consentimiento', { autorizado, version })).data,
+  preguntar: async (pregunta, vista = null, cultivoId = null, año = null, dashboard = null, simulacion = null, signal, onDelta, simple = false) => {
+    const body = { pregunta, vista, cultivo_id: cultivoId, año, dashboard, simulacion, modo_simple: simple };
+    if (!onDelta) return (await API.post('/api/chat/preguntar', body, { timeout: 90000, signal })).data;
+    const controller = new AbortController();
+    const cancelar = () => controller.abort();
+    const timeout = setTimeout(cancelar, 90000);
+    if (signal?.aborted) cancelar();
+    signal?.addEventListener('abort', cancelar, { once: true });
+    try {
+      const response = await fetch(`${API.defaults.baseURL}/api/chat/preguntar`, {
+        method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json', Accept: 'text/event-stream' },
+        body: JSON.stringify(body), signal: controller.signal,
+      });
+      if (response.status === 401) window.dispatchEvent(new Event('zeasys:sesion-expirada'));
+      return await leerRespuestaChat(response, onDelta);
+    } finally {
+      clearTimeout(timeout);
+      signal?.removeEventListener('abort', cancelar);
+    }
   },
   limpiar: async () => {
     const response = await API.post('/api/chat/limpiar');
@@ -177,12 +196,15 @@ export const dssService = {
     const response = await API.get(`/api/escenarios${qStr}`);
     return response.data;
   },
-  getClimaData: async (parcelaId = null, año = null) => {
+  avisoLluvia: async (id, method = 'get', data) => (await API.request({
+    url: '/api/clima/avisos', method, params: { parcela_id: id }, data,
+  })).data,
+  getClimaData: async (parcelaId = null, año = null, options = {}) => {
     const query = new URLSearchParams();
     if (parcelaId !== null && parcelaId !== '') query.set('parcela_id', parcelaId);
     if (año !== null && año !== '') query.set('año', año);
     const qStr = query.size > 0 ? `?${query.toString()}` : '';
-    const response = await API.get(`/api/clima${qStr}`);
+    const response = await API.get(`/api/clima${qStr}`, options);
     return response.data;
   },
   getRendimientoData: async (parcelaId = null, año = null) => {
@@ -197,6 +219,10 @@ export const dssService = {
     const response = await API.get('/api/rendimiento/mediciones/consulta', { params: { parcela_id: parcelaId } });
     return response.data.mediciones;
   },
+  getCampanas: async (parcelaId) => (await API.get('/api/rendimiento/campanas', { params: { parcela_id: parcelaId } })).data,
+  registrarCosecha: (datos) => API.post('/api/rendimiento/campanas/cosecha', datos),
+  registrarObservacion: (formData) => API.post('/api/rendimiento/campanas/observacion', formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
+  adjuntoCampana: (id) => API.getUri({ url: '/api/rendimiento/campanas/adjunto', params: { id } }),
   saveRendimientoMediciones: async (parcelaId, datos) => {
     const response = await API.post('/api/rendimiento/mediciones', { ...datos, parcela_id: parcelaId });
     return response.data;

@@ -6,6 +6,10 @@
 - Keep landing-specific tokens and overrides in `frontend-app/src/assets/landing-system.css`.
 - Do not restyle internal dashboards, maps, simulations, configuration views, or `ChatbotWidget` unless the user explicitly expands the scope.
 
+## Modern web guidance
+
+- For web UI work across ZeaSys, consult the GoogleChrome `modern-web-guidance` skill before changing forms, navigation, charts, or responsive behavior. Verify the affected flows in the browser.
+
 ## Frontend defaults
 
 - Preserve the current React + Vite + plain CSS stack. Do not add Tailwind, shadcn/ui, or another component framework without explicit approval.

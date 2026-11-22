@@ -1,6 +1,6 @@
 # Guía Completa y Explicación Técnica de los Modelos de Simulación de IA (ZeaSys)
 
-> Revisión del 7 de noviembre de 2026: la procedencia de `maiz_ecuador_training_data.csv` no está documentada. Las etiquetas no se han acreditado como cosechas reales verificadas. Véase [la auditoría de procedencia](procedencia-dataset-20261107.md) antes de utilizar este manual en la defensa del proyecto.
+> Revisión del 7 de noviembre de 2026: la procedencia de `maiz_ecuador_training_data.csv` no está documentada. Las etiquetas no se han acreditado como cosechas reales verificadas. Consulta [las fuentes para evaluar cosechas](fuentes-evaluacion-cosechas.md) antes de utilizar este manual en la defensa del proyecto.
 
 > **Documento oficial de preparación para la Defensa de Proyecto de Grado y Manual Guía para el Equipo.**  
 > *Redactado en primera persona de manera técnica, didáctica y directa para la exposición ante el jurado.*

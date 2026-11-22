@@ -60,7 +60,7 @@ La referencia anual de lluvia no es la lluvia de toda una campaña. Temperatura 
 
 El catálogo de maíz contiene catorce fichas identificadas. Se diferencian los usos documentados de grano, choclo y canguil. Una ficha de variedad no convierte automáticamente el modelo de grano seco en un modelo validado para otro producto.
 
-El inventario detallado de fuentes y de los lugares del código que las utilizan está en [el documento Word](ZeaSys-referencias-datos-20261109.docx) y en [su inventario JSON](referencias-datos-sistema-20261109.json).
+El inventario detallado de fuentes y de los lugares del código que las utilizan está en [el documento Word](evaluaciones/ZeaSys-referencias-datos-20261109.docx) y en [su inventario JSON](evaluaciones/referencias-datos-sistema-20261109.json).
 
 ## Qué hace el asistente y cómo responde
 
@@ -135,7 +135,8 @@ Los límites de datos externos, sus cuotas y la falta de observaciones reales se
 - [Datos y proveedores](proveedores-datos.md)
 - [Modelos de simulación](modelos_simulacion.md)
 - [Variedades de maíz](variedades-maiz-ecuador.md)
-- [Calendario y selector de parcelas](revision-calendario-selector-20261115.md)
-- [Revisión de Clima y cultivo y del asistente](revision-clima-chatbot-20261115.md)
+- [Calendario y selector de parcelas](historial/revision-calendario-selector-20261115.md)
+- [Revisión del modelo, las cosechas y la aplicación](revision-modelo-y-aplicacion-20261120.md)
+- [Resultados de campo y operación local](entrega-campo-20261121.md)
 - [Revisión del corpus documental](chatbot-pdf-20261108.md)
 - [Instalación y revisión académica](REVISION_DOCENTES.md)

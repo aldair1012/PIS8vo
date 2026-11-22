@@ -15,7 +15,7 @@ def validar(catalogo, retiradas):
     ids, nombres = set(), {}
     for ficha in catalogo['variedades']:
         assert ficha['id'] not in ids, f"Identificador duplicado: {ficha['id']}"
-        assert ficha['id'] not in retiradas, f"Material retirado reintroducido: {ficha['nombre']}"
+        assert ficha['nombre'] not in retiradas and ficha['nombre_en_modelo'] not in retiradas, f"Material retirado reintroducido: {ficha['nombre']}"
         ids.add(ficha['id'])
         for nombre in [ficha['nombre'], *ficha['alias']]:
             ascii_name = unicodedata.normalize('NFKD', nombre).encode('ascii', 'ignore').decode()
@@ -35,8 +35,11 @@ def validar(catalogo, retiradas):
 
 def main():
     catalogo = json.loads((ROOT / 'backend-api/data/referencias/catalogo-maiz-ecuador.json').read_text(encoding='utf-8'))
-    auditoria = json.loads((ROOT / 'documentacion/fuentes-maiz/variedades-retiradas-20261107.json').read_text(encoding='utf-8'))
-    validar(catalogo, {ficha['id'] for ficha in auditoria['retiradas']})
+    activos = {nombre for ficha in catalogo['variedades'] for nombre in (ficha['nombre'], ficha['nombre_en_modelo']) if nombre}
+    with (ROOT / 'ml-engine/data/maiz_ecuador_training_data.csv').open(encoding='utf-8', newline='') as stream:
+        retiradas = {fila['variedad'].strip() for fila in csv.DictReader(stream)
+                     if fila['variedad'].strip() and fila['variedad'].strip() not in activos}
+    validar(catalogo, retiradas)
     output = ROOT / 'documentacion/fuentes-maiz/candidatos/catalogo_variedades_referencia.csv'
     output.parent.mkdir(parents=True, exist_ok=True)
     with output.open('w', encoding='utf-8-sig', newline='') as stream:

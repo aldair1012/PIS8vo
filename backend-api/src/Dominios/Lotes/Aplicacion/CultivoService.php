@@ -237,6 +237,8 @@ final class CultivoService
             'source' => $fuente,
             'provincia' => ProvinciaParcela::resolver($cultivo)['provincia'],
             'fuente_provincia' => ProvinciaParcela::resolver($cultivo)['fuente'],
+            'altitud_dem' => $datosApi['altitud_dem'] ?? null,
+            'frescura' => $datosApi['frescura'] ?? [],
             'referencia_suelo' => isset($datosApi) && isset($suelo['tipo_suelo']) ? [
                 'fuente'=>'ISRIC SoilGrids 250 m · servicio de mapas', 'profundidad'=>'0–5 cm',
                 'clase_estimada'=>$textura['clase_estimada'] ?? null,

@@ -52,6 +52,7 @@ final class CachePrueba implements CacheInterface {
     public function limpiarExpirados(): void {}
 }
 final class ClimaNoConsultar implements ProveedorClimaInterface {
+    public function obtenerResumenMensual12Meses(float $latitud, float $longitud): ?array { throw new RuntimeException('La prueba debe usar la caché, sin red.'); }
     public function obtenerClima(float $latitud, float $longitud, ?float $altitud): array { throw new RuntimeException('La prueba debe usar la caché, sin red.'); }
 }
 final class SueloNoConsultar implements ProveedorSueloInterface {

@@ -17,7 +17,7 @@ final class ProveedorOpenMeteoForecast implements ProveedorClimaActualInterface
             'latitude' => $latitud,
             'longitude' => $longitud,
             'current' => 'temperature_2m,relative_humidity_2m,precipitation,weather_code,wind_speed_10m,apparent_temperature,wind_direction_10m,surface_pressure,soil_moisture_0_to_1cm,soil_moisture_1_to_3cm,soil_moisture_3_to_9cm,soil_moisture_9_to_27cm,soil_moisture_27_to_81cm,soil_moisture_0_to_10cm,soil_temperature_0_to_10cm',
-            'daily' => 'temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,weather_code',
+            'daily' => 'temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,weather_code,et0_fao_evapotranspiration',
             'timezone' => 'auto',
             'forecast_days' => 16,
         ] + ($altitud !== null ? ['elevation' => $altitud] : []));
@@ -58,6 +58,7 @@ final class ProveedorOpenMeteoForecast implements ProveedorClimaActualInterface
                 'temp_max_c' => $this->numero($diario['temperature_2m_max'][$indice] ?? null),
                 'temp_min_c' => $this->numero($diario['temperature_2m_min'][$indice] ?? null),
                 'precipitacion_mm' => $this->numero($diario['precipitation_sum'][$indice] ?? null),
+                'et0_mm' => $this->numero($diario['et0_fao_evapotranspiration'][$indice] ?? null),
                 'prob_precipitacion_pct' => $this->numero($diario['precipitation_probability_max'][$indice] ?? null),
                 'codigo_tiempo' => $codigo,
                 'descripcion' => $this->descripcion($codigo),

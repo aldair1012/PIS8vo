@@ -36,7 +36,7 @@ ML_ENGINE_DIR = os.path.dirname(SCRIPTS_DIR)
 DATA_PATH = os.path.join(ML_ENGINE_DIR, "data", "maiz_ecuador_training_data.csv")
 MODELS_DIR = os.path.join(ML_ENGINE_DIR, "models")
 sys.path.insert(0, ML_ENGINE_DIR)
-from src.training_quality import validar_publicacion
+from src.training_quality import grupos_reales, validar_publicacion
 
 CATEGORICAL_COLS = [
     "zona",
@@ -206,7 +206,7 @@ def train(force=False):
     y_reg = frame[TARGET_REG].astype(float)
     target_encoder = LabelEncoder()
     y_clf = pd.Series(target_encoder.fit_transform(frame[TARGET_CLF].astype(str)))
-    groups = frame[GROUP_COL].astype(str)
+    groups = grupos_reales(frame[GROUP_COL].astype(str))
 
     n_splits = min(5, int(groups.nunique()))
     if n_splits < 2:
@@ -262,6 +262,7 @@ def train(force=False):
             "validacion_agrupada": {
                 "estrategia": "GroupKFold",
                 "grupo": GROUP_COL,
+                "subzonas_agrupadas": {"Loja Sierra": "Loja"},
                 "pliegues": n_splits,
                 "regresion": {"xgboost": xgb_reg_cv},
                 "clasificacion": {"xgboost_clf": xgb_clf_cv},

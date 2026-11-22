@@ -22,6 +22,8 @@ final class ServicioDatosTerreno
         private ProveedorSueloInterface $suelo,
         private AltitudPorCultivoInterface $altitudPorCultivo,
         private ?\ZeaSys\Dominios\Terreno\Dominio\ProveedorLluviaAnualInterface $lluvia = null,
+        private ?\ZeaSys\Dominios\Terreno\Infraestructura\AltitudDem $dem = null,
+        private \ZeaSys\Dominios\Terreno\Infraestructura\TransferenciasHttp $http = new \ZeaSys\Dominios\Terreno\Infraestructura\TransferenciasHttp(),
     ) {
     }
 
@@ -38,14 +40,14 @@ final class ServicioDatosTerreno
      */
     public function obtener(float $latitud, float $longitud, ?float $altitud = null): array
     {
-        $claveLat = round($latitud, 3);
-        $claveLng = round($longitud, 3);
+        $relieve = $this->dem?->obtener($latitud, $longitud);
         // v5 conserva procedencia por campo: un proveedor parcial no convierte
         // los defaults de otras variables en observaciones de la API.
         $clave = self::claveCache($latitud, $longitud);
 
         $datosCache = $this->cache->obtener($clave);
         if ($datosCache !== null) {
+            $datosCache['altitud_dem'] = $relieve;
             $datosCache['source'] .= ' (Caché local de la parcela)';
             return $datosCache;
         }
@@ -54,7 +56,7 @@ final class ServicioDatosTerreno
         // (líneas 47–60 del original: mismo punto del flujo — tras la caché y antes de estimar la región;
         //  la consulta y su try/catch viven en AltitudMysql, sin PDO en Aplicación).
         if ($altitud === null) {
-            $altitud = $this->altitudPorCultivo->altitudPorCoordenadas($latitud, $longitud);
+            $altitud = $relieve['valor'] ?? ($this->dem === null ? $this->altitudPorCultivo->altitudPorCoordenadas($latitud, $longitud) : null);
         }
 
         // Estimar región e indicar temperatura adecuada
@@ -109,9 +111,18 @@ final class ServicioDatosTerreno
             ]
         ];
 
+        $datosClimaYSuelo['altitud_dem'] = $relieve;
+        $respaldo = new ConsultaConRespaldo($this->cache);
+        $registros = $this->http->agrupar([
+            'clima' => fn () => $respaldo->obtener('archive_' . $clave, 86400, 30 * 86400, fn () => $this->clima->obtenerClima($latitud, $longitud, $altitud)),
+            'suelo' => fn () => $respaldo->obtener('soilgrids_' . $clave, 30 * 86400, 365 * 86400, fn () => $this->suelo->obtenerSuelo($latitud, $longitud)),
+        ]);
         // API de Open-Meteo — Promedio histórico de los últimos 30 días
         try {
-            $bloqueClima = $this->clima->obtenerClima($latitud, $longitud, $altitud);
+            $registro = $registros['clima'];
+            $bloqueClima = $registro['datos'];
+            unset($registro['datos']);
+            $datosClimaYSuelo['frescura']['clima'] = $registro + ['fuente' => 'Open-Meteo Archive', 'resolucion' => 'Variable según modelo meteorológico'];
             $datosClimaYSuelo['clima_campos_api'] = array_keys($bloqueClima);
             foreach ($bloqueClima as $claveClima => $valorClima) {
                 $datosClimaYSuelo['clima'][$claveClima] = $valorClima;
@@ -145,7 +156,10 @@ final class ServicioDatosTerreno
 
         // API de SoilGrids
         try {
-            $bloqueSuelo = $this->suelo->obtenerSuelo($latitud, $longitud);
+            $registro = $registros['suelo'];
+            $bloqueSuelo = $registro['datos'];
+            unset($registro['datos']);
+            $datosClimaYSuelo['frescura']['suelo'] = $registro + ['fuente' => 'ISRIC SoilGrids', 'resolucion' => '250 m · 0–5 cm', 'incertidumbre' => 'Media del píxel. La variación dentro de la parcela y el intervalo de predicción local no se han cuantificado aquí.'];
             $datosClimaYSuelo['suelo_campos_api'] = array_keys($bloqueSuelo);
             foreach ($bloqueSuelo as $claveSuelo => $valorSuelo) {
                 $datosClimaYSuelo['suelo'][$claveSuelo] = $valorSuelo;
@@ -173,7 +187,8 @@ final class ServicioDatosTerreno
             'nota' => 'Los campos de referencia son contexto estimado; no son mediciones ni datos recibidos del proveedor.',
         ];
 
-        if ($datosClimaYSuelo['exito']) {
+        if ($datosClimaYSuelo['clima_disponible_api'] && $datosClimaYSuelo['suelo_disponible_api']
+            && !in_array('ultimo_conocido', array_column($datosClimaYSuelo['frescura'], 'estado'), true)) {
             $this->cache->guardar($clave, $datosClimaYSuelo);
         }
 

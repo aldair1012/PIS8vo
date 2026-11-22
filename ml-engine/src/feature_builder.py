@@ -10,6 +10,7 @@ import pandas as pd
 from datetime import datetime, timezone, timedelta
 import urllib.request
 
+from src.baseline_historica import baseline_historica
 from src.data_providers import fetch_open_meteo_historical, fetch_weather_with_fallback
 from src.simulation_contract import validar_campos, calendario, ventana_historica, SCHEMA
 from src.training_quality import evaluar as evaluar_calidad_entrenamiento
@@ -122,37 +123,7 @@ def normalizar_tipo_suelo(value):
 
 def get_historical_baseline(provincia, zona, variedad=None):
     """Saca medianas y modas del dataset histórico para rellenar los features que el usuario no pone."""
-    sub_df = df_reference.copy()
-    if variedad:
-        temp_df = sub_df[sub_df["variedad"].str.lower() == variedad.lower()]
-        if not temp_df.empty:
-            sub_df = temp_df
-
-    temp_df = sub_df[sub_df["provincia"] == provincia]
-    if not temp_df.empty:
-        sub_df = temp_df
-    else:
-        temp_df = sub_df[sub_df["zona"] == zona]
-        if not temp_df.empty:
-            sub_df = temp_df
-
-    if sub_df.empty:
-        sub_df = df_reference
-
-    baseline = {}
-    for col in COLS_ORDER:
-        if col in CATEGORICAL_COLS:
-            modes = sub_df[col].mode()
-            if not modes.empty:
-                baseline[col] = str(modes.iloc[0])
-            else:
-                baseline[col] = str(df_reference[col].mode().iloc[0])
-        else:
-            median_val = sub_df[col].median()
-            if pd.isna(median_val):
-                median_val = df_reference[col].median()
-            baseline[col] = float(median_val)
-    return baseline
+    return baseline_historica(df_reference, provincia, zona, variedad, COLS_ORDER, CATEGORICAL_COLS)
 
 
 def _parse_range(val_str, default_min, default_max):

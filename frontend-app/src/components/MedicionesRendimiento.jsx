@@ -14,6 +14,35 @@ export default function MedicionesRendimiento({ lote, registro, onSaved, default
   const number = (name, label, min, max, placeholder) => <label>{label}<input name={name} type="number" step="any" min={min} max={max} value={values[name]} placeholder={placeholder} onChange={change} /></label>;
   const date = (name, label) => <label>{label}<input name={name} type="date" max={today} value={values[name]} placeholder="dd/mm/aaaa" onChange={change} /></label>;
 
+  const importHarvest = async (event) => {
+    const file = event.target.files[0];
+    event.target.value = '';
+    if (!file) return;
+    try {
+      if (file.size > 8192) throw new Error('Selecciona un registro de cosecha descargado desde ZeaSys.');
+      const draft = JSON.parse(await file.text());
+      const parcelName = value => String(value ?? '').normalize('NFC').trim().toLocaleLowerCase('es');
+      if (draft?.formato !== 'zeasys-cosecha-v1' || !parcelName(draft.parcela)
+        || parcelName(draft.parcela) !== parcelName(lote.nombre_parcela)) {
+        throw new Error('El archivo debe corresponder al nombre de la parcela seleccionada.');
+      }
+      const { grano_seco_kg, biomasa_seca_kg, fecha_cosecha } = draft;
+      const weights = [grano_seco_kg, biomasa_seca_kg];
+      if (!weights.every(v => typeof v === 'string' && v.trim() && Number.isFinite(Number(v)) && Number(v) >= 0 && Number(v) <= 1e9)
+        || Number(biomasa_seca_kg) < 0.000001 || Number(grano_seco_kg) > Number(biomasa_seca_kg)
+        || !/^\d{4}-\d{2}-\d{2}$/.test(fecha_cosecha) || fecha_cosecha > today
+        || (lote.fecha_siembra && fecha_cosecha < String(lote.fecha_siembra).slice(0, 10))
+        || new Date(fecha_cosecha).toISOString().slice(0, 10) !== fecha_cosecha) {
+        throw new Error('Revisa la fecha y los pesos de la cosecha antes de importarla.');
+      }
+      setValues(current => ({ ...current, grano_seco_kg, biomasa_seca_kg, fecha_cosecha }));
+      setStatus({ message: 'Cosecha importada al formulario. Revisa los valores y pulsa Guardar mediciones.' });
+    } catch (error) {
+      setStatus({ error: true, message: error instanceof SyntaxError || error instanceof RangeError
+        ? 'El archivo de cosecha es inválido.' : error.message });
+    }
+  };
+
   const save = async (event) => {
     event.preventDefault();
     setSaving(true);
@@ -41,6 +70,8 @@ export default function MedicionesRendimiento({ lote, registro, onSaved, default
         <fieldset disabled={futureSowing || saving}>
           <legend>Índice de cosecha</legend>
           <p>Grano seco y biomasa aérea seca total de la misma muestra. La biomasa incluye el grano.</p>
+          <a href="./offline.html" target="_blank" rel="noopener">Anotar cosecha sin conexión</a>
+          <label>Importar archivo de cosecha<input type="file" accept=".json,application/json" onChange={importHarvest} /></label>
           {number('grano_seco_kg', 'Grano seco (kg)', 0, 1e9, 'Ej.: 1300')}
           {number('biomasa_seca_kg', 'Biomasa aérea seca total (kg)', 0.000001, 1e9, 'Ej.: 1850')}
           {date('fecha_cosecha', 'Fecha de cosecha / muestreo')}

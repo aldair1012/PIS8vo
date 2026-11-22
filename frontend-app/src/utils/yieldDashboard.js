@@ -6,7 +6,7 @@ export const yieldFactors = {
   materia_organica_pct: 'Materia orgánica', profundidad_suelo_cm: 'Profundidad del suelo',
   textura_arcilla_pct: 'Arcilla del suelo', textura_arena_pct: 'Arena del suelo', textura_limo_pct: 'Limo del suelo',
   altitud_msnm: 'Altitud', temperatura_min_c: 'Temperatura mínima', temperatura_max_c: 'Temperatura máxima',
-  horas_luz_dia: 'Horas de luz', magnesio_kg_ha: 'Magnesio', azufre_kg_ha: 'Azufre',
+  horas_luz_dia: 'Horas de luz (referencia histórica)', magnesio_kg_ha: 'Magnesio', azufre_kg_ha: 'Azufre',
   aplicaciones_nitrogeno: 'Aplicaciones de nitrógeno', semilla_certificada: 'Semilla certificada',
   ndvi_v6_vegetativo: 'Índice de vegetación en crecimiento', ndvi_vt_floracion: 'Índice de vegetación en floración',
   ndvi_floracion: 'Índice de vegetación en floración', ndvi_r3_llenado_grano: 'Índice de vegetación en llenado',
@@ -73,3 +73,20 @@ export function yieldAnalysis(simulation, catalogue = {}) {
 }
 
 export const escapeChartText = value => String(value ?? '').replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]));
+
+export function harvestValidationCsv(plotId, run) {
+  const date = typeof run?.fecha === 'string' ? run.fecha.slice(0, 10) : '';
+  if (!plotId || !run?.version_modelo || !/^\d{4}-\d{2}-\d{2}$/.test(date) || !isYieldNumber(run.rendimiento_t_ha)) return null;
+  const row = {
+    parcela_id: plotId, simulacion_id: run.id, provincia: run.trazabilidad?.provincia_identificada?.provincia ?? '',
+    fecha_prediccion: date, modelo_version: run.version_modelo, prediccion_t_ha: run.rendimiento_t_ha,
+    rango_min_t_ha: run.intervalo_rendimiento?.min ?? '', rango_max_t_ha: run.intervalo_rendimiento?.max ?? '',
+    fecha_cosecha: '', produccion_seca_kg: '', area_cosechada_ha: '', base_humedad: '', fuente_observacion: '',
+  };
+  const cell = value => {
+    const text = String(value);
+    const safe = /^\s*[=+@-]/.test(text) ? `'${text}` : text;
+    return `"${safe.replaceAll('"', '""')}"`;
+  };
+  return [Object.keys(row).join(','), Object.values(row).map(cell).join(',')].join('\r\n') + '\r\n';
+}

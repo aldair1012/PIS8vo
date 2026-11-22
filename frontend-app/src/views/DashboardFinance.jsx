@@ -1,8 +1,8 @@
 import { useCallback, useRef, useState, useEffect } from 'react';
 import { dssService } from '../services/api';
 import PantallaCarga from '../components/PantallaCarga';
-import { Doughnut } from 'react-chartjs-2';
-import { Chart as ChartJS, registerables } from 'chart.js';
+import CostBreakdown from '../templates/Charts/CostBreakdown';
+import PreciosProvincia from '../components/PreciosProvincia';
 import FinancialROI from '../templates/Charts/FinancialROI';
 import InteractiveKPI from '../templates/Common/InteractiveKPI';
 import SimulationInfoCard from '../templates/Common/SimulationInfoCard';
@@ -11,7 +11,6 @@ import useExplicacionIA from '../hooks/usarExplicacionIA';
 import useTema from '../hooks/useTema';
 import { financeNumber as toFiniteNumber, financeInputNumber, financeInputText, financeBudgetPreview, financeSourceLabel } from '../utils/financeBudget';
 
-ChartJS.register(...registerables);
 import { 
   DollarSign, 
   Percent, 
@@ -25,7 +24,7 @@ const formatCurrency = (value) => toFiniteNumber(value) === null
   : `$${Number(value).toLocaleString('es-EC', { maximumFractionDigits: 2 })}`;
 const formatNumber = (value, digits = 2) => toFiniteNumber(value) === null ? 'No disponible' : Number(value).toLocaleString('es-EC', { maximumFractionDigits: digits });
 
-export default function DashboardFinance({ cultivoElegidoId, añoSeleccionado, onNavigate, onDashboardData }) {
+export default function DashboardFinance({ cultivoElegidoId, provinciaParcela, añoSeleccionado, onNavigate, onDashboardData }) {
   const temaClaro = useTema();
   const [snapshot, setSnapshot] = useState(null);
   const selectionKey = JSON.stringify([cultivoElegidoId ?? null, añoSeleccionado ?? null]);
@@ -331,6 +330,7 @@ export default function DashboardFinance({ cultivoElegidoId, añoSeleccionado, o
       {!cultivoElegidoId && <p>Sin parcela seleccionada: puedes calcular por hectárea; los totales de parcela requieren una superficie registrada.</p>}
 
       {/* Form Container: Parámetros de Mercado, Producción y Costos */}
+      <PreciosProvincia key={cultivoElegidoId} provinciaParcela={provinciaParcela} preview={preview} aplicar={valor => { ++inputVersion.current; setActivePreset(null); setPrecioMaizQq(String(valor)); }} />
       <div className="glass-panel" style={{ marginBottom: '1.25rem' }}>
         <div className="glass-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
           <h2 style={{ fontSize: '0.9rem', fontWeight: 700 }}>Parámetros de mercado, producción y costos</h2>
@@ -946,10 +946,10 @@ export default function DashboardFinance({ cultivoElegidoId, añoSeleccionado, o
                     cultivo: "maiz",
                     valor: tirEstimada === null ? null : `${tirEstimada} %`,
                     unidad: "TIR",
-                    estado: tirEstimada === null ? "sin_datos" : "favorable",
-                    descripcion_tecnica: "Tasa de rendimiento financiero anualizada que genera el proyecto agrícola durante los 4 meses del ciclo del cultivo de maíz.",
-                    impacto_base: "Demuestra la rentabilidad financiera del cultivo en comparación con otras alternativas de inversión.",
-                    recomendacion_base: "Una TIR del 42% supera ampliamente la tasa de interés bancaria, validando el atractivo del cultivo."
+                    estado: tirEstimada === null ? "sin_datos" : "estimado",
+                    descripcion_tecnica: "La TIR se estima a partir de los importes y las fechas de los flujos de caja del proyecto.",
+                    impacto_base: "La distribución de los ingresos y gastos en el tiempo influye en esta tasa.",
+                    recomendacion_base: "Revisa los flujos y el período de la estimación antes de comparar tasas."
                   }
                 }
               ]}
@@ -964,8 +964,11 @@ export default function DashboardFinance({ cultivoElegidoId, añoSeleccionado, o
           <div className="chart-grid">
             {/* Sensitivity */}
             <div 
-              className="glass-panel chart-panel-interactive"
-              onClick={() => pedirExplicacionIa({
+              className="glass-panel"
+            >
+              <div className="glass-card-header finance-chart-heading" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', marginBottom: '0.5rem' }}>
+                <h3 style={{ fontSize: '0.95rem', fontWeight: 600, margin: 0 }}>Margen según el precio y el rendimiento</h3>
+                <button type="button" className="finance-chart-action" onClick={() => pedirExplicacionIa({
                 tipo_elemento: "grafico",
                 nombre: "Sensibilidad Precio vs Rendimiento",
                 cultivo: "maiz",
@@ -976,26 +979,23 @@ export default function DashboardFinance({ cultivoElegidoId, añoSeleccionado, o
                 impacto_base: "Permite ver el umbral donde el negocio pasa a pérdidas (valores negativos en rojo) y dónde es rentable (valores positivos).",
                 recomendacion_base: "Verificar en la matriz si con rendimientos realistas de su zona el negocio resiste caídas en el precio de venta.",
                 datos_grafico: sensibilidad
-              })}
-            >
-              <div className="glass-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', marginBottom: '0.5rem' }}>
-                <h3 style={{ fontSize: '0.95rem', fontWeight: 600, margin: 0 }}>Sensibilidad Precio vs Rendimiento (USD)</h3>
+              })}>Explicar la sensibilidad</button>
               </div>
               <div className="glass-card-body" style={{ padding: '0.6rem 0.85rem 1rem 0.85rem' }}>
                 <div className="table-responsive-container" tabIndex={0} role="region" aria-label="Tabla de sensibilidad económica, desplazable">
-                  <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '3px 4px', textAlign: 'center' }}>
+                  <table aria-label="Margen estimado en dólares por hectárea" style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '3px 4px', textAlign: 'center' }}>
                     <thead>
                       <tr>
-                        <th style={{ padding: '0.4rem 0.15rem', color: 'var(--text-subtle)', fontSize: '0.68rem', fontWeight: 700, textAlign: 'left' }}>Rend. ↓ | Precio →</th>
+                        <th scope="col" style={{ padding: '0.4rem 0.15rem', color: 'var(--text-subtle)', fontSize: '0.68rem', fontWeight: 700, textAlign: 'left' }}>Rendimiento</th>
                         {precios_rango.map(p => (
-                          <th key={p} style={{ padding: '0.4rem 0.15rem', color: 'var(--text-primary)', fontSize: '0.76rem', fontWeight: 800, whiteSpace: 'nowrap' }}>${p}/qq</th>
+                          <th scope="col" key={p} style={{ padding: '0.4rem 0.15rem', color: 'var(--text-primary)', fontSize: '0.76rem', fontWeight: 800, whiteSpace: 'nowrap' }}>${formatNumber(p)}/qq</th>
                         ))}
                       </tr>
                     </thead>
                     <tbody>
                       {rendimientos_rango.map(r => (
                         <tr key={r}>
-                          <td style={{ padding: '0.4rem 0.15rem', fontWeight: 700, textAlign: 'left', color: 'var(--text-muted)', fontSize: '0.72rem', whiteSpace: 'nowrap' }}>{r} qq/ha</td>
+                          <th scope="row" style={{ padding: '0.4rem 0.15rem', fontWeight: 700, textAlign: 'left', color: 'var(--text-muted)', fontSize: '0.72rem', whiteSpace: 'nowrap' }}>{formatNumber(r)} qq/ha</th>
                           {precios_rango.map(p => {
                             const item = sensibilidad.find(s => s.precio === p && s.rendimiento === r);
                             const marginVal = toFiniteNumber(item?.margen);
@@ -1031,8 +1031,11 @@ export default function DashboardFinance({ cultivoElegidoId, añoSeleccionado, o
 
             {/* Waterfall costs */}
             <div 
-              className="glass-panel chart-panel-interactive"
-              onClick={() => pedirExplicacionIa({
+              className="glass-panel"
+            >
+              <div className="glass-card-header finance-chart-heading" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', marginBottom: '0.5rem' }}>
+                <h3 style={{ fontSize: '0.95rem', fontWeight: 600, margin: 0 }}>Composición de costos de producción</h3>
+                <button type="button" className="finance-chart-action" onClick={() => pedirExplicacionIa({
                 tipo_elemento: "grafico",
                 nombre: "Composición de Costos de Producción",
                 cultivo: "maiz",
@@ -1043,115 +1046,10 @@ export default function DashboardFinance({ cultivoElegidoId, añoSeleccionado, o
                 impacto_base: "Muestra cuál es la partida de costos con más peso dentro del presupuesto. El margen neto se presenta por separado para no mezclar ingresos con gastos.",
                 recomendacion_base: "Priorizar el control de las partidas de gasto que representan el mayor porcentaje de egresos.",
                 datos_grafico: waterfall_costos
-              })}
-            >
-              <div className="glass-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', marginBottom: '0.5rem' }}>
-                <h3 style={{ fontSize: '0.95rem', fontWeight: 600, margin: 0 }}>Composición de costos de producción</h3>
+              })}>Explicar los costos</button>
               </div>
               <div className="glass-card-body" style={{ padding: '0.85rem 1.25rem 1.25rem 1.25rem', display: 'flex', flexDirection: 'column' }}>
-                {(() => {
-                  const expenseItems = (waterfall_costos || []).filter(item => !item.is_total && Number(item.amount) < 0);
-                  const totalExpenses = expenseItems.reduce((total, item) => total + Math.abs(Number(item.amount) || 0), 0);
-                  const netMargin = toFiniteNumber(waterfall_costos.find(item => item.label === 'Margen Neto')?.amount);
-
-                  const colorPalette = [
-                    '#d8a83f', '#9fc862', '#9ed1ff', '#70a984', '#d7c176', '#699887'
-                  ];
-
-                  const chartData = {
-                    labels: expenseItems.map(item => item.label),
-                    datasets: [{
-                      data: expenseItems.map(item => Math.abs(item.amount)),
-                      backgroundColor: expenseItems.map((_, idx) => colorPalette[idx % colorPalette.length]),
-                      borderColor: temaClaro ? '#f6f9f4' : '#0b2417',
-                      borderWidth: 3,
-                      spacing: 3,
-                      hoverOffset: 14,
-                      hoverBorderWidth: 3,
-                    }]
-                  };
-
-                  const chartOptions = {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    cutout: '72%',
-                    animation: { duration: 650, easing: 'easeOutQuart' },
-                    plugins: {
-                      legend: {
-                        display: false
-                      },
-                      tooltip: {
-                        backgroundColor: temaClaro ? '#FBFCFA' : '#141F17',
-                        borderColor: temaClaro ? 'rgba(31, 92, 56, .22)' : 'rgba(160, 185, 170, .30)',
-                        borderWidth: 1,
-                        padding: 12,
-                        cornerRadius: 10,
-                        boxPadding: 6,
-                        usePointStyle: true,
-                        titleColor: temaClaro ? '#14231A' : '#E8EDE8',
-                        bodyColor: temaClaro ? '#3A4A41' : '#9DB09F',
-                        titleFont: { size: 12, weight: 'bold' },
-                        bodyFont: { size: 12, weight: 'bold' },
-                        callbacks: {
-                          label: (context) => {
-                            const label = context.label || '';
-                            const val = context.raw || 0;
-                            const pct = totalExpenses > 0 ? (val / totalExpenses) * 100 : 0;
-                            return ` $${val.toLocaleString('es-EC')} (${formatNumber(pct, 1)} %) · ${label}`;
-                          }
-                        }
-                      }
-                    }
-                  };
-
-                  if (totalExpenses <= 0) return <div className="chart-empty-state">No hay costos registrados para mostrar su distribución.</div>;
-
-                  return (
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.25rem', alignItems: 'center', minHeight: '240px' }}>
-                      {/* Doughnut Chart Canvas with Center Text Overlay */}
-                      <div style={{ position: 'relative', width: '100%', height: '220px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                        <Doughnut role="img" aria-label="Distribución de los costos del presupuesto calculado; desglose en la leyenda contigua" data={chartData} options={chartOptions} />
-                        <div style={{ position: 'absolute', textAlign: 'center', pointerEvents: 'none' }}>
-                          <span style={{ fontSize: '0.68rem', textTransform: 'uppercase', color: 'var(--text-subtle)', fontWeight: 700, letterSpacing: '0.05em', display: 'block' }}>
-                            Costo total
-                          </span>
-                          <span style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1.15 }}>
-                            ${totalExpenses.toLocaleString('es-EC')}
-                          </span>
-                          <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', display: 'block', marginTop: '2px' }}>
-                            Margen: {formatCurrency(netMargin)}/ha
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Side Breakdown Legend */}
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem', width: '100%' }}>
-                        {expenseItems.map((item, idx) => {
-                          const itemColor = colorPalette[idx % colorPalette.length];
-                          const absVal = Math.abs(item.amount);
-                          const pct = formatNumber((absVal / totalExpenses) * 100, 1);
-
-                          return (
-                            <div key={item.label} style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
-                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.76rem' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-                                  <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: itemColor, display: 'inline-block', boxShadow: `0 0 6px ${itemColor}80` }} />
-                                  {item.label}
-                                </div>
-                                <div style={{ fontWeight: 700, color: 'var(--zs-text)', fontSize: '0.78rem' }}>
-                                  ${absVal.toLocaleString('es-EC')} <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>({pct}%)</span>
-                                </div>
-                              </div>
-                              <div style={{ width: '100%', height: '5px', background: 'var(--border-subtle)', borderRadius: '99px', overflow: 'hidden' }}>
-                                <div style={{ width: `${Math.min(100, (absVal / totalExpenses) * 100)}%`, height: '100%', background: itemColor, borderRadius: '99px', transition: 'width .65s cubic-bezier(.22,.61,.36,1)' }} />
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  );
-                })()}
+                <CostBreakdown items={waterfall_costos} />
               </div>
             </div>
           </div>
@@ -1161,13 +1059,9 @@ export default function DashboardFinance({ cultivoElegidoId, añoSeleccionado, o
             className="glass-panel" 
             style={{ marginBottom: '1.25rem' }}
           >
-            <div className="glass-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', marginBottom: '0.5rem' }}>
+            <div className="glass-card-header finance-chart-heading" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', marginBottom: '0.5rem' }}>
               <h3 style={{ fontSize: '0.95rem', fontWeight: 600, margin: 0 }}>ROI bajo supuestos comparables</h3>
-            </div>
-            <div className="glass-card-body roi-panel-grid">
-              <div 
-                style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', height: '100%', minHeight: '280px' }}
-                onClick={() => pedirExplicacionIa({
+                <button type="button" className="finance-chart-action" onClick={() => pedirExplicacionIa({
                   tipo_elemento: "grafico",
                   nombre: "Gráfico Comparativo de ROI",
                   cultivo: "maiz",
@@ -1178,7 +1072,12 @@ export default function DashboardFinance({ cultivoElegidoId, añoSeleccionado, o
                   impacto_base: "Permite ver la sensibilidad del retorno a esos supuestos; no es evidencia de que una práctica específica produzca ese cambio.",
                   recomendacion_base: "Contrasta los costos, márgenes y rendimiento supuestos con datos reales antes de decidir.",
                   datos_grafico: roi_estrategias
-                })}
+                })}>Explicar el retorno</button>
+            </div>
+            <div className="glass-card-body roi-panel-grid">
+              <div
+                style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: '280px' }}
+
               >
                 <FinancialROI strategies={roi_estrategias.filter((item) => ['roi', 'margen', 'rendimiento', 'costo'].every((field) => toFiniteNumber(item[field]) !== null))} />
               </div>

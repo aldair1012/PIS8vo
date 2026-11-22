@@ -21,4 +21,5 @@ def evidence(sources):
     return {'uso':card['uso'],'procedencia_entrenamiento':card['procedencia_entrenamiento'] if card['ficha_coincide_con_artefactos'] else 'ficha_desactualizada',
             'validacion_cosechas_independientes':card['validacion_cosechas_independientes'] if card['ficha_coincide_con_artefactos'] else False,
             'ficha_coincide_con_artefactos':card['ficha_coincide_con_artefactos'],'variables_posteriores_asumidas':future,
-            'producto_objetivo':card['producto_objetivo'],'modelo_espac2025_publicado':card['modelo_espac2025_publicado']}
+            'dataset_entrenamiento_sha256':card['dataset_sha256'] if card['ficha_coincide_con_artefactos'] else None,
+            'version_ficha':card['version'], 'producto_objetivo':card['producto_objetivo'],'modelo_espac2025_publicado':card['modelo_espac2025_publicado']}

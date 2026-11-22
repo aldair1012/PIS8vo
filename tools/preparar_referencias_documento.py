@@ -131,6 +131,6 @@ def main():
     varieties=[{k:v.get(k) for k in ['nombre','tipo_grano_documentado','usos_documentados','categorias_consumo','fuentes','datos_no_documentados','simulacion_grano_habilitada']} for v in catalog['variedades']]
     result={'fecha_revision':'2026-11-15','titulo':'Fuentes, campos y usos de datos en ZeaSys','fuentes':sources,'pdf_originales':pdfs,'variedades':varieties,
         'advertencia':'Autoría institucional y trazabilidad no equivalen a certificación de la precisión del modelo. El CSV histórico de entrenamiento continúa con procedencia no acreditada; los datos personales y supuestos no son datos certificados.'}
-    out=ROOT/'documentacion/referencias-datos-sistema-20261109.json';out.write_text(json.dumps(result,ensure_ascii=False,indent=2)+'\n',encoding='utf8'); print(f'{len(sources)} fuentes; {len(varieties)} variedades; {len(pdfs)} PDF.')
+    out=ROOT/'documentacion/evaluaciones/referencias-datos-sistema-20261109.json';out.write_text(json.dumps(result,ensure_ascii=False,indent=2)+'\n',encoding='utf8'); print(f'{len(sources)} fuentes; {len(varieties)} variedades; {len(pdfs)} PDF.')
 
 if __name__=='__main__': main()

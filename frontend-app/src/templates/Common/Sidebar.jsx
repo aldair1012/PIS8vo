@@ -1,25 +1,25 @@
 import { useEffect, useState } from 'react';
 import PlatformLogo from './PlatformLogo';
 import {
-  Sprout, CloudRainWind, TrendingUp, DollarSign, Map,
-  PlusCircle, History, LogOut, MapPin,
+  Sprout, CloudRainWind, TrendingUp, DollarSign,
+  PlusCircle, ClipboardList, MessagesSquare, LogOut, MapPin,
 } from 'lucide-react';
 
 const NAV_GROUPS = [
-  { label: 'Mi cultivo', items: [
+  { label: 'Parcelas', items: [
     { id: 'cultivos', name: 'Mis parcelas', icon: MapPin },
-    { id: 'simular', name: 'Simular cosecha', icon: PlusCircle },
   ] },
-  { label: 'Análisis y decisiones', items: [
-    { id: 'yield', name: 'Rendimiento', icon: TrendingUp },
+  { label: 'Planificar', items: [
     { id: 'scenarios', name: 'Siembra', icon: Sprout },
     { id: 'climate', name: 'Clima y cultivo', icon: CloudRainWind },
+  ] },
+  { label: 'Simular', items: [
+    { id: 'simular', name: 'Simular cosecha', icon: PlusCircle },
+    { id: 'yield', name: 'Rendimiento', icon: TrendingUp },
     { id: 'finance', name: 'Finanzas', icon: DollarSign },
   ] },
-  { label: 'Seguimiento', items: [
-    { id: 'map', name: 'Mapa de parcelas', icon: Map },
-    { id: 'history', name: 'Simulaciones guardadas', icon: History },
-  ] },
+  { label: 'Campo', items: [{ id: 'campo', name: 'Abrir cuaderno de campo', icon: ClipboardList }] },
+  { label: 'Asistente', items: [{ id: 'asistente', name: 'Consultar al asistente', icon: MessagesSquare }] },
 ];
 
 export default function Sidebar({ vistaActual, setVistaActual, cerrarSesion, menuColapsado, setMenuColapsado }) {
@@ -76,7 +76,7 @@ export default function Sidebar({ vistaActual, setVistaActual, cerrarSesion, men
             <ul className="sidebar-menu">
               {group.items.map((item) => {
                 const Icon = item.icon;
-                const active = vistaActual === item.id;
+                const active = (vistaActual === 'map' ? 'cultivos' : vistaActual === 'history' ? 'yield' : vistaActual) === item.id;
                 return (
                   <li key={item.id}>
                     <button

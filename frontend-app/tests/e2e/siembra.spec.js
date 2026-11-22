@@ -102,7 +102,9 @@ test('el selector incluye años guardados aunque no coincidan con la fecha de si
 });
 
 test('las fuentes de la guía se pueden consultar sin fabricar una cosecha regional',async({page})=>{
-  await prepare(page);await page.locator('.ag-calendar-sources > summary').click();await expect(page.locator('.ag-calendar-sources')).toContainText('Invierno 2022');await expect(page.locator('.ag-calendar')).not.toContainText('Cosecha de referencia');
+  await prepare(page);
+  const fuentes = page.locator('details').filter({has:page.getByText('Ver fuentes y alcance de esta guía',{exact:true})});
+  await fuentes.locator(':scope > summary').click();await expect(fuentes).toContainText('Invierno 2022');await expect(page.locator('.ag-calendar')).not.toContainText('Cosecha de referencia');
 });
 
 test('sin catálogo se utiliza la fecha registrada de la parcela y se explica que falta un fin de ciclo',async({page})=>{
@@ -139,7 +141,7 @@ test('Siembra utiliza la cabecera, las tarjetas y los paneles comunes de Rendimi
 
 test('el gráfico de percentiles actualiza sus colores al cambiar de tema',async({page})=>{
   await page.emulateMedia({reducedMotion:'reduce'});await prepare(page);
-  const chart=page.getByRole('img',{name:'Percentiles descriptivos P10, mediana y P90 de las simulaciones guardadas'});
+  const chart=page.locator('.sowing-advanced [role="img"] canvas').first();
   await chart.scrollIntoViewIfNeeded();await expect.poll(()=>chart.evaluate(node=>node.toDataURL().length)).toBeGreaterThan(2000);
   const signature=node=>{const value=node.toDataURL();let hash=0;for(let i=0;i<value.length;i++)hash=(Math.imul(hash,31)+value.charCodeAt(i))|0;return hash;};
   const before=await chart.evaluate(signature);await page.getByRole('button',{name:'Activar modo oscuro',exact:true}).click();
@@ -151,4 +153,14 @@ test('la comparación móvil mantiene el rendimiento visible junto a la ejecuci�
   const region=page.locator('.sowing-history-list');await region.scrollIntoViewIfNeeded();
   const frame=await region.boundingBox(), value=await region.locator('.sowing-result-value strong').first().boundingBox();
   expect(value.x).toBeGreaterThanOrEqual(frame.x);expect(value.x+value.width).toBeLessThanOrEqual(frame.x+frame.width);
+});
+
+test('compara el calendario de dos siembras sin modificar el plan', async ({ page }) => {
+  await prepare(page);
+  const comparison = page.locator('details').filter({ has: page.locator('summary', { hasText: 'Comparar dos fechas de siembra' }) });
+  await comparison.locator(':scope > summary').click();
+  await comparison.getByLabel('Fecha de siembra 1').fill('2027-02-28');
+  await comparison.getByLabel('Fecha de siembra 2').fill('2027-03-14');
+  await expect(comparison.locator('section').first()).toContainText('Mes mencionado en la guía');
+  await expect(comparison.locator('section').filter({has:page.getByLabel('Fecha de siembra 2')})).toContainText('Mes sin ventana documentada');
 });

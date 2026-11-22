@@ -17,13 +17,19 @@ for (const [width, theme] of [[390, 'dark'], [390, 'light'], [768, 'dark'], [768
     page.on('pageerror', error => errors.push(error.message));
     await page.goto('/');await waitForWorkspace(page);
     await expect(page.locator('.navbar')).toBeVisible();
-    for (const name of ['Mis parcelas', 'Simular cosecha', 'Rendimiento', 'Siembra', 'Clima y cultivo', 'Finanzas', 'Mapa de parcelas', 'Simulaciones guardadas']) {
+    for (const name of ['Mis parcelas', 'Simular cosecha', 'Rendimiento', 'Siembra', 'Clima y cultivo', 'Finanzas']) {
       if (await page.locator('#workspace-sidebar').evaluate(node => node.inert)) {
         await page.getByRole('button', { name: 'Expandir barra lateral' }).click();
       }
       const item = page.getByRole('button', { name, exact: true });
       await item.click();
       await expect(page.locator('#workspace-sidebar .sidebar-item-btn').filter({ has: page.locator('span', { hasText: name }) })).toHaveAttribute('aria-current', 'page');
+      const subvista = { 'Mis parcelas': 'Mapa de parcelas', 'Rendimiento': 'Simulaciones guardadas' }[name];
+      if (subvista) {
+        const boton = page.getByRole('navigation', { name:'Vistas de la sección' }).getByRole('button', { name:subvista });
+        await boton.click();
+        await expect(boton).toHaveAttribute('aria-current', 'page');
+      }
       // El servidor PHP aislado atiende de una en una las consultas y recursos.
       await expect(page.getByText('Cargando vista…', { exact: true })).toHaveCount(0, { timeout: 30000 });
       await expect(page.locator('.content-body').getByText(/^Cargando/)).toHaveCount(0, { timeout: 30000 });

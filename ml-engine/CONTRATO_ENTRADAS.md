@@ -9,12 +9,12 @@ La aplicación web homologa alias documentados de la misma variedad en
 La respuesta web añade `trazabilidad.variedad_simulada` con el nombre registrado,
 enviado y realmente utilizado, y guarda una evaluación documental separada.
 
-El catálogo activo contiene 14 fichas: 13 materiales priorizados con nombre homologable a una etiqueta utilizable, más INIAP 198 Canguil como ficha de consulta sin cálculo específico habilitado. Quedan 24 opciones retiradas; el detalle y sus motivos están en `documentacion/seleccion-variedades-20261107.md`. Las otras etiquetas entrenadas se conservan en los artefactos por compatibilidad.
+El catálogo activo contiene 14 fichas: 13 materiales priorizados con nombre homologable a una etiqueta utilizable, más INIAP 198 Canguil como ficha de consulta sin cálculo específico habilitado. Quedan 24 opciones retiradas; el detalle y sus motivos están en `documentacion/variedades-maiz-ecuador.md`. Las otras etiquetas entrenadas se conservan en los artefactos por compatibilidad.
 Tener una ficha no agrega muestras ni una categoría entrenada a XGBoost. Los
 materiales sin etiqueta específica conservan el aviso de referencia general.
 Esta homologación se realiza en PHP: los clientes que consultan Flask
 directamente deben mantener el contrato de nombres aceptados por el motor.
-Ver `documentacion/catalogo-variedades-20261107.md` para fuentes y límites.
+Ver `documentacion/variedades-maiz-ecuador.md` para fuentes y límites.
 
 ## Fechas, agua y manejo opcionales
 
@@ -26,7 +26,7 @@ Ver `documentacion/catalogo-variedades-20261107.md` para fuentes y límites.
 
 Las referencias para imputar faltantes excluyen duplicados y contradicciones detectadas; conservan la advertencia de origen no acreditado. `retrain_models.py` exige calidad y procedencia verificada para publicar; los ensayos se ejecutan aislados con `scripts/optimizar_xgboost.py --depuracion-experimental`.
 
-Ver `documentacion/conexion-simulacion-20261108.md` para resultados y límites.
+Ver `documentacion/historial/conexion-simulacion-20261108.md` para resultados y límites.
 
 ## Periodos de precipitación
 

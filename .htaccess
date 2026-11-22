@@ -11,6 +11,7 @@ Options -Indexes
 
 <IfModule mod_rewrite.c>
     RewriteEngine On
+    RewriteRule ^salud/?$ backend-api/public/index.php/api/salud [END]
     RewriteRule (^|/)\. - [F,L]
     # Solo el front controller y los avatares deben ser públicos dentro del backend.
     RewriteRule ^(?:backend-api/(?:src|tests|data|models)|database|docs|documentacion|frontend-app|ml-engine|entrega|scripts|tools|docker|rag-sources)(?:/|$) - [F,L,NC]
@@ -27,5 +28,21 @@ Options -Indexes
         Header set Cache-Control "max-age=0, no-cache, no-store, must-revalidate"
         Header set Pragma "no-cache"
         Header set Expires "Wed, 11 Jan 1984 05:00:00 GMT"
+    </IfModule>
+</FilesMatch>
+
+# Compresión de texto: reduce la descarga en conexiones móviles.
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/css text/plain text/javascript application/javascript application/json application/manifest+json image/svg+xml
+</IfModule>
+
+<IfModule mod_mime.c>
+    AddType application/manifest+json .webmanifest
+</IfModule>
+
+# El service worker y el manifiesto deben revalidarse siempre para que las actualizaciones lleguen.
+<FilesMatch "^(?:sw\.js|manifest\.webmanifest)$">
+    <IfModule mod_headers.c>
+        Header set Cache-Control "no-cache"
     </IfModule>
 </FilesMatch>

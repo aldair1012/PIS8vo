@@ -6,7 +6,6 @@ namespace ZeaSys\Dominios\Terreno\Aplicacion;
 
 use ZeaSys\Dominios\Terreno\Dominio\CacheInterface;
 use ZeaSys\Dominios\Terreno\Dominio\ProveedorClimaActualInterface;
-use ZeaSys\Kernel\Errores\ServicioExternoException;
 
 final class ServicioClimaActual
 {
@@ -23,29 +22,17 @@ final class ServicioClimaActual
      */
     public function obtener(float $latitud, float $longitud, ?float $altitud = null): array
     {
-        $clave = sprintf('clima_actual_v1_%.3f_%.3f', round($latitud, 3), round($longitud, 3));
-        $cacheado = $this->cache->obtener($clave, self::TTL_SEGUNDOS);
-        if (is_array($cacheado) && ($cacheado['disponible'] ?? false)) {
-            $cacheado['desde_cache'] = true;
-            return $cacheado;
-        }
-
-        try {
+        $clave = sprintf('pronostico_v2_%.4f_%.4f_%s', $latitud, $longitud, $altitud ?? 'auto');
+        $registro = (new ConsultaConRespaldo($this->cache))->obtener($clave, self::TTL_SEGUNDOS, 2 * 86400, function () use ($latitud, $longitud, $altitud) {
             $datos = $this->proveedor->obtenerClimaActual($latitud, $longitud, $altitud);
-            $datos['desde_cache'] = false;
-            if (($datos['disponible'] ?? false) === true) {
-                $this->cache->guardar($clave, $datos);
-            }
-            return $datos;
-        } catch (ServicioExternoException $e) {
-            return [
-                'disponible' => false,
-                'fuente' => 'Open-Meteo Forecast',
-                'consultado_en' => date('c'),
-                'actual' => null,
-                'pronostico_7d' => [],
-                'error' => 'No se pudo consultar el clima actual en este momento.',
-            ];
+            return ($datos['disponible'] ?? false) ? $datos : [];
+        });
+        if (!$registro['datos']) {
+            return ['disponible' => false, 'fuente' => 'Open-Meteo Forecast', 'consultado_en' => null,
+                'actual' => null, 'pronostico_7d' => [], 'estado' => 'sin_datos',
+                'error' => 'No se pudo consultar el clima. Vuelve a intentarlo en cinco minutos.'];
         }
+        return $registro['datos'] + ['estado' => $registro['estado'], 'desde_cache' => $registro['estado'] !== 'actualizado',
+            'consultado_utc' => $registro['consultado_utc'], 'resolucion' => 'Variable según modelo de pronóstico'];
     }
 }

@@ -10,7 +10,7 @@ test('ChatController: la vista indicada se valida contra el conjunto canónico',
     $metodo = new ReflectionMethod(ChatController::class, 'esVistaValida');
     $metodo->setAccessible(true);
 
-    foreach (['yield', 'scenarios', 'climate', 'finance', 'map', 'simular', 'history'] as $vista) {
+    foreach (['yield', 'scenarios', 'climate', 'finance', 'map', 'simular', 'history', 'asistente'] as $vista) {
         assert_true($metodo->invoke($controlador, $vista), "La vista {$vista} debe aceptarse.");
     }
 });
