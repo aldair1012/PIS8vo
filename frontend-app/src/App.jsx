@@ -54,7 +54,7 @@ export default function App() {
   const [iaEncendida, setIaEncendida] = useState(false);
   const [recargarDatos, setRecargarDatos] = useState(0);
   const [menuCerrado, setMenuCerrado] = useState(typeof window !== 'undefined' && window.innerWidth <= 1080);
-  const [theme, setTheme] = useState(() => leerPreferencia('theme') === 'light' ? 'light' : 'dark');
+  const [theme, setTheme] = useState(() => leerPreferencia('theme') === 'dark' ? 'dark' : 'light');
   const [isMobileView, setIsMobileView] = useState(() => typeof window !== 'undefined' && window.innerWidth <= 768);
 
   const cultivoActivo = cultivos.find(c => c.id === cultivoElegidoId);
@@ -84,13 +84,9 @@ export default function App() {
 
   // Aplicar tema
   useEffect(() => {
-    if (user) {
-      document.body.classList.toggle('light-theme', theme === 'light');
-    } else {
-      document.body.classList.remove('light-theme');
-    }
+    document.body.classList.toggle('light-theme', theme === 'light');
     guardarPreferencia('theme', theme);
-  }, [theme, user]);
+  }, [theme]);
 
   useEffect(() => {
     const actualizarViewport = () => setIsMobileView(window.innerWidth <= 768);

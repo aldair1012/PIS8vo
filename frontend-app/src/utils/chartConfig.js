@@ -1,22 +1,22 @@
-// Paleta de gráficos del espacio interno, alineada con el informe técnico
-// de ZeaSys: un acento agro-técnico apagado, verdes grisáceos y un latón
-// discreto para el caso destacado. Evita saturación y brillo.
+// Paleta de gráficos del espacio interno ZeaSys V5 — Seis colores base:
+// Petróleo (#345C50/#4D766A) como serie principal, Salvia (#7C9084/#88A092)
+// como secundaria, y Amarillo Maíz (#E9B949) exclusivamente para hitos puntuales.
 
-export const chartPalette = ['#8FBB9A', '#C7A24E', '#9CC6E6', '#6FA98B', '#D08B6F', '#82A68E'];
+export const chartPalette = ['#345C50', '#7C9084', '#4D766A', '#88A092', '#E9B949', '#557B6E'];
 
 export function getDashboardChartColors(isLight = false) {
   return {
-    primary: isLight ? '#1F5C38' : '#C3D7A4',
-    leaf: isLight ? '#1F5C38' : '#8FBB9A',
-    maize: isLight ? '#8A6A1C' : '#C7A24E',
-    sky: isLight ? '#2C6E94' : '#9CC6E6',
-    risk: isLight ? '#9A4530' : '#D08B6F',
-    text: isLight ? '#14231A' : '#E8EDE8',
-    muted: isLight ? '#3A4A41' : '#9DB09F',
-    grid: isLight ? 'rgba(31, 92, 56, .13)' : 'rgba(160, 185, 170, .10)',
-    border: isLight ? 'rgba(31, 92, 56, .26)' : 'rgba(160, 185, 170, .24)',
-    tooltipBg: isLight ? '#FBFCFA' : '#141F17',
-    tooltipBorder: isLight ? 'rgba(31, 92, 56, .22)' : 'rgba(160, 185, 170, .30)',
+    primary: isLight ? '#345C50' : '#4D766A',
+    leaf: isLight ? '#7C9084' : '#88A092',
+    maize: '#E9B949',
+    sky: isLight ? '#7C9084' : '#88A092',
+    risk: isLight ? '#a63b2e' : '#e5a379',
+    text: isLight ? '#222523' : '#F3F1EB',
+    muted: isLight ? 'rgba(34, 37, 35, 0.72)' : 'rgba(243, 241, 235, 0.72)',
+    grid: isLight ? 'rgba(34, 37, 35, 0.08)' : 'rgba(243, 241, 235, 0.08)',
+    border: isLight ? 'rgba(34, 37, 35, 0.14)' : 'rgba(243, 241, 235, 0.15)',
+    tooltipBg: isLight ? '#FAF9F8' : '#252D29',
+    tooltipBorder: isLight ? 'rgba(34, 37, 35, 0.14)' : 'rgba(243, 241, 235, 0.15)',
   };
 }
 
@@ -31,7 +31,7 @@ export function getChartTooltip(colors, overrides = {}) {
     borderRadius: 12,
     padding: [10, 12],
     textStyle: { color: colors.text, fontSize: 12 },
-    extraCssText: 'box-shadow: 0 14px 34px rgba(0, 0, 0, .34); backdrop-filter: blur(4px);',
+    extraCssText: 'box-shadow: 0 14px 34px rgba(0, 0, 0, .28); backdrop-filter: blur(4px);',
     ...overrides,
   };
 }

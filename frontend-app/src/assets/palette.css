@@ -1,23 +1,95 @@
-/* Primitivas HSL: bosque, papel neutro y acentos agrícolas. */
-:root {
-  --zp-h-forest: 156;
-  --zp-h-leaf: 83;
-  --zp-h-maize: 42;
-  --zp-h-sky: 207;
-  --zp-forest-950: hsl(var(--zp-h-forest) 24% 8%);
-  --zp-forest-900: hsl(var(--zp-h-forest) 23% 12%);
-  --zp-forest-800: hsl(var(--zp-h-forest) 20% 15%);
-  --zp-forest-700: hsl(var(--zp-h-forest) 20% 22%);
-  --zp-forest-600: hsl(var(--zp-h-forest) 52% 28%);
-  --zp-leaf-300: hsl(var(--zp-h-leaf) 48% 73%);
-  --zp-paper-50: hsl(90 20% 99%);
-  --zp-paper-100: hsl(90 18% 96%);
-  --zp-paper-200: hsl(100 20% 93%);
-  --zp-paper-300: hsl(110 21% 89%);
-  --zp-ink: hsl(var(--zp-h-forest) 28% 14%);
-  --zp-ink-muted: hsl(var(--zp-h-forest) 15% 31%);
-  --zp-light-text: hsl(100 25% 96%);
-  --zp-light-muted: hsl(130 16% 79%);
-  --zp-sky: hsl(var(--zp-h-sky) 74% 80%);
-  --zp-focus-light: hsl(var(--zp-h-sky) 74% 33%);
+/* ==========================================================================
+   ZEASYS V5 DEFINITIVE PALETTE — EXACTLY 6 BASE COLORS PER THEME
+   Dirección de arte: Calm Agricultural Premium
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   MODO CLARO (PREDETERMINADO) — 6 COLORES BASE
+   Blanco suave:   #FAF9F8  (Fondo predominante, tarjetas, lectura)
+   Gris cálido:    #E7E6E1  (Superficies secundarias, bandas suaves, contraste)
+   Verde petróleo: #345C50  (Acciones principales, navegación activa, datos)
+   Verde salvia:   #7C9084  (Series secundarias, iconografía complementaria)
+   Negro carbón:   #222523  (Títulos, cifras, texto principal)
+   Amarillo maíz:  #E9B949  (Acentos mínimos < 5%: detalles de marca, hitos)
+   -------------------------------------------------------------------------- */
+:root,
+[data-theme="light"],
+body.light-theme {
+  --zs-bg: #FAF9F8;
+  --zs-surface: #E7E6E1;
+  --zs-primary: #345C50;
+  --zs-secondary: #7C9084;
+  --zs-text: #222523;
+  --zs-accent: #E9B949;
+
+  /* Derivados calculados sin introducir HEX adicionales */
+  --zs-border: color-mix(in srgb, var(--zs-text) 14%, transparent);
+  --zs-border-strong: color-mix(in srgb, var(--zs-text) 24%, transparent);
+  --zs-text-muted: color-mix(in srgb, var(--zs-text) 76%, var(--zs-bg));
+  --zs-text-faint: color-mix(in srgb, var(--zs-text) 55%, var(--zs-bg));
+  --zs-action-hover: color-mix(in srgb, var(--zs-primary) 88%, var(--zs-text));
+  --zs-focus: var(--zs-primary);
+
+  /* Compatibilidad con tokens legacy --zp-* */
+  --zp-paper-50: #FAF9F8;
+  --zp-paper-100: #FAF9F8;
+  --zp-paper-200: #E7E6E1;
+  --zp-paper-300: color-mix(in srgb, #E7E6E1 82%, #222523 18%);
+  --zp-ink: #222523;
+  --zp-ink-muted: color-mix(in srgb, #222523 76%, #FAF9F8);
+  --zp-forest-600: #345C50;
+  --zp-forest-700: #345C50;
+  --zp-forest-800: #E7E6E1;
+  --zp-forest-900: #FAF9F8;
+  --zp-forest-950: #FAF9F8;
+  --zp-leaf-300: #7C9084;
+  --zp-light-text: #FAF9F8;
+  --zp-light-muted: #E7E6E1;
+  --zp-sky: #7C9084;
+  --zp-focus-light: #345C50;
+}
+
+/* --------------------------------------------------------------------------
+   MODO OSCURO (EQUIVALENTE FIEL) — 6 COLORES BASE
+   Carbón verdoso:          #181C1A  (Fondo principal y áreas extensas)
+   Superficie oscura:       #252D29  (Sidebar, tarjetas, formularios)
+   Verde petróleo adaptado: #4D766A  (Acciones primarias, selección)
+   Verde salvia adaptado:   #88A092  (Series secundarias, detalles vegetales)
+   Marfil cálido:           #F3F1EB  (Títulos, datos, texto principal)
+   Amarillo maíz:           #E9B949  (Acento mínimo < 5%)
+   -------------------------------------------------------------------------- */
+[data-theme="dark"],
+body:not(.light-theme) {
+  --zs-bg: #181C1A;
+  --zs-surface: #252D29;
+  --zs-primary: #4D766A;
+  --zs-secondary: #88A092;
+  --zs-text: #F3F1EB;
+  --zs-accent: #E9B949;
+
+  /* Derivados calculados sin introducir HEX adicionales */
+  --zs-border: color-mix(in srgb, var(--zs-text) 15%, transparent);
+  --zs-border-strong: color-mix(in srgb, var(--zs-text) 25%, transparent);
+  --zs-text-muted: color-mix(in srgb, var(--zs-text) 78%, var(--zs-bg));
+  --zs-text-faint: color-mix(in srgb, var(--zs-text) 55%, var(--zs-bg));
+  --zs-action-hover: color-mix(in srgb, var(--zs-primary) 87%, var(--zs-text));
+  --zs-focus: var(--zs-primary);
+
+  /* Compatibilidad con tokens legacy --zp-* */
+  --zp-forest-950: #181C1A;
+  --zp-forest-900: #252D29;
+  --zp-forest-800: #252D29;
+  --zp-forest-700: color-mix(in srgb, #252D29 80%, #4D766A 20%);
+  --zp-forest-600: #4D766A;
+  --zp-leaf-300: #88A092;
+  --zp-paper-50: #FAF9F8;
+  --zp-paper-100: #E7E6E1;
+  --zp-paper-200: #252D29;
+  --zp-paper-300: #181C1A;
+  --zp-ink: #F3F1EB;
+  --zp-ink-muted: color-mix(in srgb, #F3F1EB 78%, #181C1A);
+  --zp-light-text: #F3F1EB;
+  --zp-light-muted: #88A092;
+  --zp-sky: #88A092;
+  --zp-focus-light: #4D766A;
 }

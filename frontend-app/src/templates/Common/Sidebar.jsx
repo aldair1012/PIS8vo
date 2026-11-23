@@ -22,6 +22,17 @@ const NAV_GROUPS = [
   { label: 'Asistente', items: [{ id: 'asistente', name: 'Consultar al asistente', icon: MessagesSquare }] },
 ];
 
+function SidebarFurrows() {
+  return (
+    <svg className="sidebar-furrows" viewBox="0 0 240 70" preserveAspectRatio="none" aria-hidden="true">
+      <path d="M-20 65 C40 35, 120 40, 260 68" stroke="var(--zs-secondary, #7C9084)" strokeWidth="1.2" fill="none" opacity="0.18" />
+      <path d="M-10 52 C50 25, 150 30, 250 56" stroke="var(--zs-secondary, #7C9084)" strokeWidth="1.2" fill="none" opacity="0.14" />
+      <path d="M0 38 C70 15, 160 20, 240 44" stroke="var(--zs-secondary, #7C9084)" strokeWidth="1" fill="none" opacity="0.1" />
+      <path d="M10 26 C80 8, 170 12, 230 32" stroke="var(--zs-accent, #E9B949)" strokeWidth="0.8" fill="none" opacity="0.16" />
+    </svg>
+  );
+}
+
 export default function Sidebar({ vistaActual, setVistaActual, cerrarSesion, menuColapsado, setMenuColapsado }) {
   const [menuMovil, setMenuMovil] = useState(() => window.matchMedia('(max-width: 1080px)').matches);
 
@@ -99,6 +110,7 @@ export default function Sidebar({ vistaActual, setVistaActual, cerrarSesion, men
       </nav>
 
       <div className="sidebar-bottom">
+        <SidebarFurrows />
         <button type="button" className="sidebar-logout" aria-label="Cerrar sesión" title="Cerrar sesión" onClick={cerrarSesion}>
           <LogOut size={18} aria-hidden="true" />
           <span>Cerrar sesión</span>

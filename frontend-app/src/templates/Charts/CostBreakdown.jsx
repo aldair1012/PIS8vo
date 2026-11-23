@@ -3,7 +3,7 @@ import { financeNumber } from '../../utils/financeBudget';
 import { getChartTooltip, getDashboardChartColors } from '../../utils/chartConfig';
 import useTema from '../../hooks/useTema';
 
-const colorPalette = ['#d8a83f', '#9fc862', '#9ed1ff', '#70a984', '#d7c176', '#699887'];
+const colorPalette = ['#345C50', '#7C9084', '#4D766A', '#88A092', '#557B6E', '#E9B949'];
 
 export default function CostBreakdown({ items = [] }) {
   const theme = getDashboardChartColors(useTema());

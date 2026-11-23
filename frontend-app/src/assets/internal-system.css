@@ -21,25 +21,26 @@ html:has(.zeasys-workspace) { font-size: 100%; }
   --zi-radius-md: 20px;
   --zi-radius-lg: 26px;
 
-  /* Semantic theme tokens. */
-  --zs-page: var(--zp-forest-950);
-  --zs-sidebar: var(--zp-forest-900);
-  --zs-surface: var(--zp-forest-800);
-  --zs-inset-surface: var(--zp-forest-900);
-  --zs-raised: var(--zp-forest-700);
-  --zs-text: var(--zp-light-text);
-  --zs-muted: var(--zp-light-muted);
-  --zs-faint: #a8bcaa;
-  --zs-border: rgba(196, 228, 197, .23);
-  --zs-border-strong: rgba(196, 228, 197, .38);
-  --zs-accent: var(--zp-leaf-300);
-  --zs-accent-contrast: #102416;
-  --zs-success: #99d6a5;
-  --zs-warning: #f0c575;
-  --zs-danger: #f0a097;
-  --zs-info: #9ed1ff;
-  --zs-focus: var(--zi-sky-300);
-  --zs-shadow-raised: 0 6px 18px rgba(0, 0, 0, .16);
+  /* Semantic theme tokens (ZeaSys V5: Calm Agricultural Premium - 6 colors). */
+  --zs-page: var(--zs-bg, #181C1A);
+  --zs-sidebar: var(--zs-surface, #252D29);
+  --zs-surface: var(--zs-surface, #252D29);
+  --zs-inset-surface: color-mix(in srgb, var(--zs-surface, #252D29) 88%, var(--zs-bg, #181C1A) 12%);
+  --zs-raised: color-mix(in srgb, var(--zs-surface, #252D29) 80%, var(--zs-primary, #4D766A) 20%);
+  --zs-text: var(--zs-text, #F3F1EB);
+  --zs-muted: var(--zs-text-muted, color-mix(in srgb, var(--zs-text, #F3F1EB) 78%, var(--zs-bg, #181C1A)));
+  --zs-faint: var(--zs-text-faint, color-mix(in srgb, var(--zs-text, #F3F1EB) 55%, var(--zs-bg, #181C1A)));
+  --zs-border: var(--zs-border, color-mix(in srgb, var(--zs-text, #F3F1EB) 15%, transparent));
+  --zs-border-strong: var(--zs-border-strong, color-mix(in srgb, var(--zs-text, #F3F1EB) 25%, transparent));
+  --zs-accent: var(--zs-primary, #4D766A);
+  --zs-accent-contrast: #F3F1EB;
+  --zs-maize: var(--zs-accent, #E9B949);
+  --zs-success: var(--zs-secondary, #88A092);
+  --zs-warning: #E9B949;
+  --zs-danger: #e5a379;
+  --zs-info: var(--zs-secondary, #88A092);
+  --zs-focus: var(--zs-primary, #4D766A);
+  --zs-shadow-raised: 0 6px 18px rgba(0, 0, 0, .24);
   --zs-shadow-inset: none;
 
   /* Component aliases and legacy bridge. */
@@ -59,9 +60,9 @@ html:has(.zeasys-workspace) { font-size: 100%; }
   --text-subtle: var(--zs-faint);
   --text-unit: var(--zs-faint);
   --accent-primary: var(--zs-accent);
-  --accent-primary-hover: var(--zi-leaf-400);
-  --accent-secondary: var(--zs-info);
-  --accent-warning: var(--zs-warning);
+  --accent-primary-hover: var(--zs-action-hover);
+  --accent-secondary: var(--zs-secondary, #88A092);
+  --accent-warning: #E9B949;
   --border: var(--zs-border);
   --border-hover: var(--zs-border-strong);
   --border-focus: var(--zs-focus);
@@ -74,39 +75,35 @@ html:has(.zeasys-workspace) { font-size: 100%; }
   --primary: 82 65% 67%;
   --secondary: 207 100% 81%;
   --muted-foreground: 138 15% 77%;
-  --chart-grid: rgba(202, 229, 201, .09);
-  --chart-tick: #b8cdbb;
+  --chart-grid: rgba(243, 241, 235, .08);
+  --chart-tick: #88A092;
   color: var(--zs-text);
   background: var(--zs-page);
 }
 
 .light-theme .zeasys-workspace {
-  --zs-page: var(--zp-paper-100);
-  --zs-sidebar: #fcfdfb;
-  --zs-surface: var(--zp-paper-50);
-  --zs-inset-surface: var(--zp-paper-200);
-  --zs-raised: var(--zp-paper-300);
-  --zs-text: var(--zp-ink);
-  --zs-muted: var(--zp-ink-muted);
-  --zs-faint: #536b59;
-  --zs-border: rgba(30, 78, 47, .24);
-  --zs-border-strong: rgba(30, 78, 47, .4);
-  --zs-accent: var(--zp-forest-600);
-  --zs-accent-contrast: #fff;
-  --zs-success: #176441;
-  --zs-warning: #80540a;
+  --zs-page: #FAF9F8;
+  --zs-sidebar: #FAF9F8;
+  --zs-surface: #FAF9F8;
+  --zs-inset-surface: #E7E6E1;
+  --zs-raised: color-mix(in srgb, #E7E6E1 72%, #FAF9F8 28%);
+  --zs-text: #222523;
+  --zs-muted: color-mix(in srgb, #222523 76%, #FAF9F8);
+  --zs-faint: color-mix(in srgb, #222523 55%, #FAF9F8);
+  --zs-border: color-mix(in srgb, #222523 14%, transparent);
+  --zs-border-strong: color-mix(in srgb, #222523 24%, transparent);
+  --zs-accent: #345C50;
+  --zs-accent-contrast: #FAF9F8;
+  --zs-maize: #E9B949;
+  --zs-success: #345C50;
+  --zs-warning: #E9B949;
   --zs-danger: #a63b2e;
-  --zs-info: #165f9c;
-  --zs-focus: var(--zp-focus-light);
-  --zs-shadow-raised: 0 6px 18px rgba(27, 48, 36, .09);
+  --zs-info: #7C9084;
+  --zs-focus: #345C50;
+  --zs-shadow-raised: 0 4px 14px rgba(34, 37, 35, .06);
   --zs-shadow-inset: none;
-  --background: 110 31% 94%;
-  --foreground: 146 43% 16%;
-  --primary: 144 51% 31%;
-  --secondary: 203 73% 35%;
-  --muted-foreground: 141 19% 34%;
-  --chart-grid: rgba(30, 78, 47, .1);
-  --chart-tick: #435b4a;
+  --chart-grid: rgba(34, 37, 35, .08);
+  --chart-tick: #7C9084;
 }
 
 /* Keep the workspace on one three-level surface scale. These selectors bridge
@@ -211,9 +208,10 @@ body.light-theme .zeasys-workspace .zeasys-chat-chips button { background: var(-
   box-shadow: var(--zs-shadow-inset);
 }
 .zeasys-workspace .sidebar-item-btn.active svg { color: currentColor; }
-.zeasys-workspace .sidebar-bottom { padding: .9rem .7rem 1.1rem; border-top: 1px solid var(--zs-border); }
-.zeasys-workspace .sidebar-bottom-caption { display: block; padding: 0 .8rem .55rem; color: var(--zs-faint); font-size: .67rem; }
-.zeasys-workspace .sidebar-logout { color: var(--zs-faint); }
+.zeasys-workspace .sidebar-bottom { position: relative; overflow: hidden; padding: .9rem .7rem 1.1rem; border-top: 1px solid var(--zs-border); }
+.zeasys-workspace .sidebar-furrows { position: absolute; bottom: 0; left: 0; width: 100%; height: 60px; pointer-events: none; z-index: 0; }
+.zeasys-workspace .sidebar-bottom-caption { position: relative; z-index: 1; display: block; padding: 0 .8rem .55rem; color: var(--zs-faint); font-size: .67rem; }
+.zeasys-workspace .sidebar-logout { position: relative; z-index: 1; color: var(--zs-faint); }
 
 .zeasys-workspace .main-content { background: var(--zs-page); }
 .zeasys-workspace .navbar {
