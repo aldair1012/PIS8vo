@@ -33,8 +33,8 @@
 .zeasys-workspace .kpi-card .kpi-top-row { display: flex; align-items: center; justify-content: flex-start; gap: 9px; min-width: 0; }
 .zeasys-workspace .kpi-card .kpi-heading-title { flex: 1; min-width: 0; color: var(--zs-text); font-size: 13px; font-weight: 700; line-height: 1.3; overflow-wrap: anywhere; }
 .zeasys-workspace .kpi-card .kpi-heading-status { display: flex; align-items: flex-start; justify-content: flex-end; flex: 0 1 auto; min-width: 0; }
-.zeasys-workspace .kpi-card .kpi-severity { color: #E9B949; font-size: 11px; font-weight: 700; text-align: right; line-height: 1.3; }
-.zeasys-workspace .kpi-card .kpi-severity--danger { color: #e5a379; }
+.zeasys-workspace .kpi-card .kpi-severity { color: var(--zs-warning); font-size: 11px; font-weight: 700; text-align: right; line-height: 1.3; }
+.zeasys-workspace .kpi-card .kpi-severity--danger { color: var(--zs-danger); }
 .zeasys-workspace .kpi-card .kpi-carousel-wrapper { margin-top: 4px; }
 .zeasys-workspace .kpi-card .kpi-switcher { display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-top: auto; border-top: 1px solid var(--zs-border); color: var(--zs-muted); font-size: 11px; }
 .zeasys-workspace .kpi-card .kpi-carousel-dots { display: flex; align-items: center; }

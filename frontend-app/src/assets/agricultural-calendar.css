@@ -60,6 +60,6 @@
 
 .ag-calendar .ag-forecast-strip { display:grid; grid-template-columns:repeat(auto-fit,minmax(70px,1fr)); gap:.4rem; }
 .ag-calendar .ag-forecast-strip button { min-height:48px; padding:.4rem; display:grid; gap:.2rem; background:var(--zs-surface); color:inherit; border:1px solid currentColor; border-radius:.4rem; cursor:pointer; }
-.ag-calendar .ag-forecast-strip .has-rain { border-top:4px solid #497db3; }
-.ag-calendar .ag-forecast-strip .dry-day { border-top:4px solid #b97b31; }
+.ag-calendar .ag-forecast-strip .has-rain { border-top:4px solid var(--zs-info); }
+.ag-calendar .ag-forecast-strip .dry-day { border-top:4px solid var(--zs-warning); }
 .ag-calendar .ag-forecast-strip [aria-pressed=true] { outline:2px solid currentColor; outline-offset:1px; }

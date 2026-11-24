@@ -1,6 +1,6 @@
 # ZeaSys: guía del sistema
 
-Actualización: 23 de noviembre de 2026. Este es el documento central y exhaustivo del proyecto: describe qué es, para quién sirve, qué contiene cada pantalla, cómo está construido, qué tecnologías y métodos utiliza, cómo se opera y cuáles son sus límites. Debe actualizarse cuando cambie una función, una conexión, una dependencia, una fuente de datos o una limitación relevante.
+Actualización original: 23 de noviembre de 2026. Ampliación documental: 23 de noviembre de 2026 (diccionario SQL, trazabilidad y evidencias). Este es el documento central y exhaustivo del proyecto: describe qué es, para quién sirve, qué contiene cada pantalla, cómo está construido, qué tecnologías y métodos utiliza, cómo se opera y cuáles son sus límites. Debe actualizarse cuando cambie una función, una conexión, una dependencia, una fuente de datos o una limitación relevante.
 
 **Seguridad de este documento:** esta guía no contiene credenciales, claves de API, tokens, contraseñas, identificadores de cliente ni valores de configuración privados. Cuando una integración requiere configuración sensible, se menciona únicamente el **nombre de la variable de entorno** o el archivo de plantilla correspondiente, nunca su valor. Los valores reales pertenecen al entorno de ejecución y no deben versionarse ni distribuirse.
 
@@ -25,6 +25,14 @@ Actualización: 23 de noviembre de 2026. Este es el documento central y exhausti
 - [Límites y evidencia adicional](#límites-y-evidencia-adicional)
 - [Mantenimiento de esta guía](#mantenimiento-de-esta-guía)
 - [Documentación relacionada](#documentación-relacionada)
+- [Diccionario de datos del esquema SQL publicado](#diccionario-de-datos-del-esquema-sql-publicado)
+- [Correspondencia con los objetivos del PIS vigente](#correspondencia-con-los-objetivos-del-pis-vigente)
+- [Estado verificable de funcionalidades y componentes](#estado-verificable-de-funcionalidades-y-componentes)
+- [Metodología: investigación, software y ciencia de datos](#metodología-investigación-software-y-ciencia-de-datos)
+- [Evidencias de pruebas: registro reproducible mínimo](#evidencias-de-pruebas-registro-reproducible-mínimo)
+- [Criterios UX/UI definitivos: propuesta versus código vigente](#criterios-uxui-definitivos-propuesta-versus-código-vigente)
+- [Límites técnicos y prioridades de corrección](#límites-técnicos-y-prioridades-de-corrección)
+- [Control de versiones y proceso de actualización documental](#control-de-versiones-y-proceso-de-actualización-documental)
 - [Glosario](#glosario)
 
 ## Qué es y para quién sirve
@@ -308,6 +316,9 @@ La conversación se conserva por cuenta, parcela, año y ámbito. Los favoritos 
 | Paleta base | `src/assets/palette.css` | Ocho colores por tema (claro y oscuro) con derivados por `color-mix` y puente `--zp-*`. |
 | Portada | `src/assets/landing-system.css` | `.zeasys-home` / `Login.jsx`: rampas HSL, espaciado, radios, duraciones, `--home-max: 1760px`, `--home-pad`. |
 | Interior | `src/assets/internal-system.css` | `.zeasys-workspace`: tokens `--zi-*`, puente a la paleta, variante clara, sidebar de 246 px, colores de gráfico. |
+| Analítica | `src/assets/analytics-system.css` | Capa final que unifica paneles, encabezados, KPI, tablas, leyendas y estados vacíos de todas las pestañas internas. |
+
+Los canvas comparten `getChartBase()` en `src/utils/chartConfig.js` (rejilla discontinua, ejes sin línea, leyenda arriba, tipografía y animación coherentes); los tooltips usan `getChartTooltip()` con formato en español y los valores se formatean con `formatChartValue()`.
 
 La portada usa el hero fotográfico con dirección de arte oscura idéntica en ambos temas: el modo claro cambia las superficies alrededor, no la foto. El contenedor es fluido con tope amplio, de modo que navbar, hero, secciones y footer comparten el mismo eje y la lectura conserva medida. Los párrafos largos se limitan a ~72 caracteres. La aplicación interior usa semántica de color compartida y gráficos con paleta petróleo/salvia, ejes suaves, tooltips en español, leyendas claras y estados sin datos.
 
@@ -420,3 +431,288 @@ Cuando cambie el sistema, revisa esta lista antes de cerrar el trabajo:
 | ADR | Architecture Decision Record: registro de una decisión técnica con contexto y consecuencias. |
 | Contrato congelado | Formato de respuesta acordado y verificado automáticamente para evitar cambios involuntarios. |
 | Dominio | Agrupación de lógica de negocio con cuatro capas (Dominio, Aplicación, Infraestructura, Http). |
+
+---
+
+
+## Diccionario de datos del esquema SQL publicado
+
+**Fuente de esta sección:** [`database/schema-demo.sql`](https://github.com/aldair1012/PIS8vo/blob/main/database/schema-demo.sql), consultado el 23 de noviembre de 2026. Se documentan literalmente tipos, tamaños, nulabilidad, predeterminados y restricciones presentes en ese archivo. **No es una inspección directa de la instancia de MariaDB del equipo** ni certifica la ejecución de todas las migraciones. La descripción funcional aclara la finalidad aparente de cada atributo sin modificar su definición SQL. Se debe contrastar con `SHOW CREATE TABLE`/`information_schema` del entorno de entrega antes de presentar el diccionario como esquema físico definitivo.
+
+**Convenciones:** `PK` clave primaria, `FK` clave foránea, `AI` autoincremento, `UNIQUE` restricción de unicidad, `INDEX` índice, `—` ninguna declaración explícita, `NULL` valor por defecto implícito o declarado según la sentencia. `INT(11)` indica ancho de visualización heredado en MariaDB/MySQL, **no** capacidad de 11 dígitos. `LONGTEXT` y `MEDIUMBLOB` no especifican longitud personalizada en el DDL. La columna «Admite NULL» indica la nulabilidad SQL, no si un formulario obliga a introducir el dato.
+
+**Inventario:** 11 tablas: `usuarios`, `parcelas`, `simulaciones`, `conversaciones_favoritas`, `mediciones_rendimiento`, `cosechas_campana`, `observaciones_campana`, `consentimiento_asistente`, `alertas_lluvia`, `envios_alertas_lluvia` y `accesos_tecnicos`.
+
+### `usuarios` (9 campos)
+
+| Campo | Tipo y longitud | Admite NULL | Valor predeterminado | Clave / restricción | Descripción |
+|---|---|---|---|---|---|
+| `id` | `INT(11)` | No | `—` | PK, AI | Identificador del usuario |
+| `nombre` | `VARCHAR(100)` | No | `—` | — | Nombre mostrado |
+| `correo` | `VARCHAR(150)` | No | `—` | UNIQUE | Correo de la cuenta; índice adicional idx_correo |
+| `contrasena` | `VARCHAR(255)` | No | `—` | — | Hash bcrypt, no contraseña en claro |
+| `fecha_registro` | `DATETIME` | No | `CURRENT_TIMESTAMP` | — | Alta de cuenta |
+| `ultimo_acceso` | `DATETIME` | Sí | `NULL` | — | Último acceso |
+| `activo` | `TINYINT(1)` | No | `1` | — | Estado de la cuenta |
+| `foto_perfil` | `VARCHAR(500)` | Sí | `NULL` | — | Ruta o referencia de avatar |
+| `es_google` | `TINYINT(1)` | Sí | `0` | — | Indicador de acceso con Google |
+
+### `parcelas` (21 campos)
+
+| Campo | Tipo y longitud | Admite NULL | Valor predeterminado | Clave / restricción | Descripción |
+|---|---|---|---|---|---|
+| `id` | `INT(11)` | No | `—` | PK, AI | Identificador de la parcela |
+| `usuario_id` | `INT(11)` | No | `—` | FK | Titular; `usuarios.id`, ON DELETE CASCADE |
+| `nombre_parcela` | `VARCHAR(150)` | No | `—` | — | Nombre asignado |
+| `variedad_maiz` | `VARCHAR(100)` | No | `'Híbrido convencional'` | — | Variedad declarada |
+| `ubicacion` | `VARCHAR(255)` | Sí | `NULL` | — | Ubicación textual |
+| `area` | `DECIMAL(10,2)` | No | `—` | — | Superficie en hectáreas |
+| `latitud` | `DECIMAL(10,7)` | Sí | `NULL` | — | Coordenada latitud |
+| `longitud` | `DECIMAL(10,7)` | Sí | `NULL` | — | Coordenada longitud |
+| `fecha_siembra` | `DATE` | Sí | `NULL` | — | Fecha de siembra |
+| `tipo_fecha_siembra` | `VARCHAR(20)` | Sí | `NULL` | — | Carácter de la fecha de siembra |
+| `ciclo_dias` | `SMALLINT UNSIGNED` | Sí | `NULL` | — | Duración del ciclo en días |
+| `riego_tipo` | `VARCHAR(40)` | Sí | `NULL` | — | Tipo de riego |
+| `fecha_registro` | `DATETIME` | No | `CURRENT_TIMESTAMP` | — | Registro de parcela |
+| `activo` | `TINYINT(1)` | No | `1` | — | Indicador de actividad |
+| `geojson` | `LONGTEXT` | Sí | `NULL` | — | Geometría en formato textual |
+| `altitud` | `DECIMAL(6,1)` | Sí | `NULL` | — | Altitud |
+| `ph` | `DECIMAL(3,1)` | Sí | `NULL` | — | pH del suelo declarado |
+| `tipo_maiz` | `VARCHAR(100)` | No | `'Duro Amarillo'` | — | Tipo de maíz |
+| `fertilizacion_fecha` | `DATE` | Sí | `NULL` | — | Fecha de fertilización |
+| `fertilizacion_dosis` | `DECIMAL(8,2)` | Sí | `NULL` | — | Dosis registrada |
+| `fertilizacion_tipo` | `VARCHAR(150)` | Sí | `NULL` | — | Clase de fertilización |
+
+### `simulaciones` (20 campos)
+
+| Campo | Tipo y longitud | Admite NULL | Valor predeterminado | Clave / restricción | Descripción |
+|---|---|---|---|---|---|
+| `id` | `INT(11)` | No | `—` | PK, AI | Identificador |
+| `usuario_id` | `INT(11)` | No | `—` | FK | Autor; `usuarios.id`, ON DELETE CASCADE |
+| `parcela_id` | `INT(11)` | Sí | `NULL` | FK | Parcela asociada; `parcelas.id`, ON DELETE SET NULL |
+| `nombre` | `VARCHAR(200)` | No | `'Simulación sin nombre'` | — | Denominación |
+| `modelo_usado` | `ENUM('xgboost')` | No | `'xgboost'` | INDEX | Modelo admitido por el esquema |
+| `temperatura` | `DECIMAL(5,2)` | No | `—` | — | Temperatura (°C) |
+| `humedad` | `DECIMAL(5,2)` | No | `—` | — | Humedad (%) |
+| `precipitacion` | `DECIMAL(8,2)` | No | `—` | — | Precipitación heredada (mm/año) |
+| `fertilizante` | `DECIMAL(8,2)` | No | `—` | — | Fertilizante (kg/ha), significado sujeto al contrato |
+| `ph_suelo` | `DECIMAL(4,2)` | No | `—` | — | pH del suelo |
+| `tipo_suelo` | `ENUM('franco','arcilloso','arenoso','franco_equilibrado','arcillo_limoso')` | No | `'franco'` | — | Categorías permitidas |
+| `area_simulada` | `DECIMAL(10,2)` | No | `1.00` | — | Superficie (ha) |
+| `rendimiento_estimado` | `DECIMAL(8,4)` | Sí | `NULL` | — | Predicción (t/ha) |
+| `produccion_total` | `DECIMAL(10,2)` | Sí | `NULL` | — | Producción estimada (t) |
+| `confianza` | `DECIMAL(5,2)` | Sí | `NULL` | — | Indicador almacenado; no probabilidad de cosecha |
+| `shap_json` | `LONGTEXT` | Sí | `NULL` | CHECK JSON_VALID | Aportes SHAP; utf8mb4_bin |
+| `recomendaciones_json` | `LONGTEXT` | Sí | `NULL` | CHECK JSON_VALID | Texto estructurado de recomendaciones; utf8mb4_bin |
+| `fecha` | `DATETIME` | No | `CURRENT_TIMESTAMP` | — | Fecha de simulación |
+| `categoria_cosecha` | `VARCHAR(50)` | Sí | `NULL` | — | Categoría inferida |
+| `escenarios_json` | `LONGTEXT` | Sí | `NULL` | CHECK JSON_VALID | Escenarios calculados; utf8mb4_bin |
+
+### `conversaciones_favoritas` (12 campos)
+
+| Campo | Tipo y longitud | Admite NULL | Valor predeterminado | Clave / restricción | Descripción |
+|---|---|---|---|---|---|
+| `id` | `INT(11)` | No | `—` | PK, AI | Identificador |
+| `usuario_id` | `INT(11)` | No | `—` | FK | Propietario; `usuarios.id`, ON DELETE CASCADE |
+| `parcela_id` | `INT(11)` | Sí | `NULL` | FK | Parcela; `parcelas.id`, ON DELETE SET NULL |
+| `año` | `SMALLINT(5) UNSIGNED` | Sí | `NULL` | — | Año de referencia |
+| `ambito` | `VARCHAR(20)` | No | `'dashboard'` | — | Dashboard o simulación |
+| `vista` | `VARCHAR(50)` | Sí | `NULL` | — | Sección vinculada |
+| `conversacion_id` | `CHAR(64)` | No | `—` | UNIQUE compuesto | Identificador; única con usuario_id |
+| `titulo` | `VARCHAR(180)` | No | `'Conversación guardada'` | — | Título visible |
+| `mensajes_json` | `LONGTEXT` | No | `—` | — | Mensajes guardados |
+| `contexto_json` | `LONGTEXT` | Sí | `NULL` | — | Contexto mínimo guardado |
+| `creado_en` | `TIMESTAMP` | No | `CURRENT_TIMESTAMP` | — | Fecha de creación |
+| `actualizado_en` | `TIMESTAMP` | No | `CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP` | — | Fecha de actualización |
+
+### `mediciones_rendimiento` (3 campos)
+
+| Campo | Tipo y longitud | Admite NULL | Valor predeterminado | Clave / restricción | Descripción |
+|---|---|---|---|---|---|
+| `parcela_id` | `INT` | No | `—` | PK, FK | `parcelas.id`, ON DELETE CASCADE |
+| `datos_json` | `LONGTEXT` | No | `—` | — | Datos de mediciones declaradas |
+| `actualizado_en` | `DATETIME` | No | `CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP` | — | Última modificación |
+
+### `cosechas_campana` (10 campos)
+
+| Campo | Tipo y longitud | Admite NULL | Valor predeterminado | Clave / restricción | Descripción |
+|---|---|---|---|---|---|
+| `parcela_id` | `INT` | No | `—` | PK compuesto, FK | `parcelas.id`, ON DELETE CASCADE |
+| `fecha_siembra` | `DATE` | No | `—` | PK compuesto | Fecha que identifica campaña |
+| `fecha_cosecha` | `DATE` | No | `—` | UNIQUE compuesto | Única junto a parcela_id |
+| `produccion_seca_kg` | `DECIMAL(16,4)` | No | `—` | — | Cosecha seca declarada en kg |
+| `area_cosechada_ha` | `DECIMAL(14,6)` | No | `—` | — | Superficie cosechada ha |
+| `humedad_grano_pct` | `DECIMAL(5,2)` | No | `—` | — | Humedad del grano (%) |
+| `fuente` | `VARCHAR(255)` | No | `—` | — | Procedencia declarada |
+| `prediccion_json` | `LONGTEXT` | Sí | `NULL` | CHECK JSON_VALID si no NULL | Predicción archivada comparable |
+| `base_comparable` | `TINYINT(1)` | No | `—` | — | Marca de comparabilidad |
+| `registrado_en` | `TIMESTAMP` | No | `CURRENT_TIMESTAMP` | — | Registro |
+
+### `observaciones_campana` (11 campos)
+
+| Campo | Tipo y longitud | Admite NULL | Valor predeterminado | Clave / restricción | Descripción |
+|---|---|---|---|---|---|
+| `id` | `INT` | No | `—` | PK, AI | Identificador |
+| `parcela_id` | `INT` | No | `—` | FK, UNIQUE compuesto | `parcelas.id`, ON DELETE CASCADE |
+| `fecha_siembra` | `DATE` | No | `—` | UNIQUE compuesto | Campaña observada |
+| `fecha` | `DATE` | No | `—` | UNIQUE compuesto | Fecha de observación |
+| `fuente` | `VARCHAR(255)` | No | `—` | — | Fuente declarada |
+| `ndvi` | `DECIMAL(6,5)` | Sí | `NULL` | — | Índice NDVI opcional |
+| `nota` | `VARCHAR(500)` | Sí | `NULL` | — | Descripción |
+| `adjunto_tipo` | `VARCHAR(30)` | Sí | `NULL` | — | Tipo de adjunto |
+| `adjunto` | `MEDIUMBLOB` | Sí | `NULL` | — | Adjunto binario |
+| `huella` | `CHAR(64)` | No | `—` | UNIQUE compuesto | Huella; única con parcela_id, fecha_siembra, fecha |
+| `registrado_en` | `TIMESTAMP` | No | `CURRENT_TIMESTAMP` | — | Registro |
+
+### `consentimiento_asistente` (5 campos)
+
+| Campo | Tipo y longitud | Admite NULL | Valor predeterminado | Clave / restricción | Descripción |
+|---|---|---|---|---|---|
+| `id` | `BIGINT UNSIGNED` | No | `—` | PK, AI | Identificador del consentimiento |
+| `usuario_id` | `INT` | No | `—` | FK | `usuarios.id`, ON DELETE CASCADE |
+| `version_aviso` | `VARCHAR(32)` | No | `—` | — | Versión de texto aceptado |
+| `autorizado` | `TINYINT(1)` | No | `—` | — | Decisión de consentimiento |
+| `registrado_en` | `TIMESTAMP` | No | `CURRENT_TIMESTAMP` | — | Registro |
+
+### `alertas_lluvia` (8 campos)
+
+| Campo | Tipo y longitud | Admite NULL | Valor predeterminado | Clave / restricción | Descripción |
+|---|---|---|---|---|---|
+| `parcela_id` | `INT` | No | `—` | PK, FK | `parcelas.id`, ON DELETE CASCADE |
+| `usuario_id` | `INT` | No | `—` | FK | `usuarios.id`, ON DELETE CASCADE |
+| `umbral_mm` | `DECIMAL(5,1)` | No | `—` | — | Lluvia umbral mm |
+| `codigo_hash` | `CHAR(64)` | Sí | `NULL` | UNIQUE | Código verificación resumido |
+| `codigo_vence` | `DATETIME` | Sí | `NULL` | — | Vencimiento |
+| `telefono` | `VARCHAR(15)` | Sí | `NULL` | INDEX | Teléfono de destino |
+| `consentido_utc` | `DATETIME` | Sí | `NULL` | — | Consentimiento UTC |
+| `aviso_version` | `VARCHAR(20)` | No | `—` | — | Versión del aviso |
+
+### `envios_alertas_lluvia` (5 campos)
+
+| Campo | Tipo y longitud | Admite NULL | Valor predeterminado | Clave / restricción | Descripción |
+|---|---|---|---|---|---|
+| `parcela_id` | `INT` | No | `—` | PK compuesto, FK | `parcelas.id`, ON DELETE CASCADE |
+| `semana` | `DATE` | No | `—` | PK compuesto | Semana de envío |
+| `estado` | `VARCHAR(20)` | No | `—` | — | Estado del intento |
+| `intentos` | `INT` | No | `0` | — | Número de intentos |
+| `actualizado_utc` | `DATETIME` | No | `—` | — | Fecha de actualización UTC |
+
+### `accesos_tecnicos` (3 campos)
+
+| Campo | Tipo y longitud | Admite NULL | Valor predeterminado | Clave / restricción | Descripción |
+|---|---|---|---|---|---|
+| `parcela_id` | `INT` | No | `—` | PK compuesto, FK | `parcelas.id`, ON DELETE CASCADE |
+| `tecnico_id` | `INT` | No | `—` | PK compuesto, FK | `usuarios.id`, ON DELETE CASCADE |
+| `creado_en` | `TIMESTAMP` | No | `CURRENT_TIMESTAMP` | — | Creación del permiso |
+
+
+### Índices, claves y relaciones que requieren especial atención
+
+- `usuarios.correo`: `UNIQUE`, además de `idx_correo`.
+- `parcelas.usuario_id → usuarios.id`: `ON DELETE CASCADE`; índice `idx_usuario`.
+- `simulaciones.usuario_id → usuarios.id`: `CASCADE`; `simulaciones.parcela_id → parcelas.id`: `SET NULL`; índices `(usuario_id, fecha)`, `(usuario_id, parcela_id, fecha)`, `modelo_usado` y `parcela_id`.
+- `conversaciones_favoritas`: `UNIQUE(usuario_id, conversacion_id)`; claves externas con `CASCADE` para usuario y `SET NULL` para parcela; índices para usuario/parcela/año, parcela y actualización.
+- `mediciones_rendimiento`: clave primaria y foránea en `parcela_id`; borrado en cascada.
+- `cosechas_campana`: PK `(parcela_id, fecha_siembra)`; `UNIQUE (parcela_id, fecha_cosecha)`; foránea en cascada; comprobación JSON en `prediccion_json` solamente si no es `NULL`.
+- `observaciones_campana`: `UNIQUE(parcela_id, fecha_siembra, fecha, huella)` y FK en cascada.
+- `consentimiento_asistente`: índice `(usuario_id, id)` y FK en cascada.
+- `alertas_lluvia`: `codigo_hash` único y nullable, índice de `telefono`, FK de parcela y usuario con cascada.
+- `envios_alertas_lluvia`: PK `(parcela_id, semana)`, FK parcela en cascada.
+- `accesos_tecnicos`: PK `(parcela_id, tecnico_id)`, índice `(tecnico_id, parcela_id)`, dos FK en cascada.
+
+**Nota de interoperabilidad:** `modelo_usado` admite exclusivamente `xgboost` en el esquema consultado. Los JSON de simulaciones tienen `CHECK (json_valid(...))`; `mensajes_json` y `contexto_json` de favoritos no presentan `CHECK` JSON en esta definición. No confundir `confianza` con una probabilidad calibrada de cosecha. No convertir ni mezclar `precipitacion` (`mm/año`, campo heredado) y `precipitacion_ciclo_mm` (entrada del motor) sin una definición temporal expresa.
+
+**Validación aún requerida:** comparar el esquema público, las 11 migraciones anunciadas y el esquema real ejecutando `SHOW CREATE TABLE nombre_tabla;` para cada tabla; revisar `information_schema.COLUMNS`, `KEY_COLUMN_USAGE`, `STATISTICS` y `CHECK_CONSTRAINTS`; guardar la fecha, versión del servidor y hash del DDL exportado, eliminando cualquier dato personal. Si una migración altera un campo, esta tabla del diccionario deberá actualizarse a partir de la estructura efectiva, no por suposición.
+
+---
+
+
+## Correspondencia con los objetivos del PIS vigente
+
+La formulación siguiente se transcribe del documento grupal `GRUPO2_8SA_AVANCE2-20_11_2026.docx`; es **anterior** a esta guía. Si el docente aprobó una versión posterior, primero debe actualizarse la matriz. Los módulos son vínculos técnicos, no pruebas de cumplimiento.
+
+| Objetivo específico según Avance 2 | Evidencia del repositorio que se debe reunir | Actividades y validación pendientes de vincular |
+|---|---|---|
+| **1.** Identificar las variables agrícolas que influyen en el rendimiento de los cultivos de maíz mediante una revisión bibliográfica. | Referencias agronómicas y catálogos versionados; inventario de fuentes; `ml-engine` y contrato de entrada. | Matriz variable → fuente científica → unidad → procedencia → uso real en modelo o UI; coherencia APA 7. |
+| **2.** Diseñar un modelo de simulación predictiva basado en variables agrícolas para la estimación de la producción de maíz. | `ml-engine/`, artefactos de XGBoost, `metrics.json`, script de entrenamiento, validación `GroupKFold`. | Fecha/código del entrenamiento, procedencia del dataset, definición de métricas, separación de entrenamiento y validación externa. |
+| **3.** Implementar un sistema que incorpore la simulación predictiva y un asistente virtual para las consultas y recomendaciones agrícolas. | `frontend-app/`, `backend-api/`, rutas, Flask `/predict`, Flowise, Chat, RAG, control de consentimiento. | Pruebas end-to-end de contexto, permisos, coherencia de respuestas, datos ausentes y fallas externas. |
+| **4.** Evaluar el funcionamiento del sistema mediante pruebas y comparación de estimaciones con datos de referencia. | Suites PHP, Python y Playwright; resultados del modelo y evaluaciones en `documentacion/evaluaciones/`. | Tabla de ejecución fechada con caso, entorno, esperado, observado, éxito/fallo, evidencia, responsable. Comparar estimaciones solo con datos de referencia identificados y comparables. |
+
+**Distinción esencial:** una herramienta instalada o un archivo de prueba no equivale a una prueba ejecutada; un pronóstico de rendimiento no equivale a una medición de cosecha. Los objetivos se consideran cumplidos únicamente cuando los resultados y evidencias permiten demostrarlo.
+
+## Estado verificable de funcionalidades y componentes
+
+| Elemento | Evidencia documental o de código citada en la guía | Qué falta comprobar | Estado prudente para el PIS |
+|---|---|---|---|
+| Autenticación y permisos | Rutas de cuenta, middleware, Google OAuth, acceso por parcela. | E2E de ingreso, cierre, recuperación de sesión y autorización real. | Código/documentación presente; validación operativa por adjuntar. |
+| Parcelas y mapas | Módulos Lotes y mapa Leaflet/Geoman. | Creación/edición/geometría/persistencia/aislamiento. | Código/documentación presente. |
+| Siembra y clima | Vistas, fuentes y contratos descritos. | Fechas, unidades, disponibilidad, errores y datos incompletos. | Código/documentación presente. |
+| Simulación XGBoost | Flask, artefactos de modelo y pruebas. | Reproducción de métricas, validez externa y procedencia. | Predicción implementada según guía; validez agronómica externa pendiente. |
+| Rendimiento y finanzas | Dominios Analítica y APIs. | Reconciliar fórmulas, superficies, unidades y fuentes de precio. | Código/documentación presente. |
+| Asistente Flowise/Gemini/RAG | Chat, consentimientos, fuentes y evaluación del 15/11. | Exactitud con contexto, permisos, cuota, recuperación y latencia actual. | Integración documentada; validación integral por adjuntar. |
+| Alertas WhatsApp | Endpoint webhook, tablas de lluvias. | Consentimiento, entrega real, fallo y reintentos. | Implementación descrita; prueba externa por confirmar. |
+| PWA y uso sin conexión | Manifest, SW, página offline. | Navegación desconectada, cache de versión y ausencia de respuesta API. | Recursos definidos; experiencia offline limitada. |
+| Rediseño UX/UI de seis colores | Prompt de rediseño aprobado para el proyecto. | Comprobar que se aplicó al código, contrastar capturas y pruebas de acceso. | **Propuesta visual**, no dar por implementada hasta contrastar. |
+
+## Metodología: investigación, software y ciencia de datos
+
+No usar **CRISP-DM**, «Scrum» o «MDD» como etiqueta global automática. La guía evidencia ingeniería en varias capas y un motor XGBoost, pero no prueba por sí sola que se siguieran todas las ceremonias o fases de un método formal. Se recomienda documentar por separado:
+
+1. **Investigación académica:** búsqueda, selección, análisis y contraste de fuentes; identificación de variables agrícolas y justificación del problema. Registrar protocolo bibliográfico, criterios, fecha de consulta y correspondencia APA 7.
+2. **Desarrollo e integración del software:** levantamiento de requisitos, contratos, diseño de dominios, implementación, pruebas y ajustes. El grupo ha informado **revisiones quincenales durante aproximadamente cuatro meses**; ese es el calendario académico, no una certificación de Scrum. Vincular commits, PR, issues y actas de revisión a cada fase real.
+3. **Ciencia de datos:** contrastar las seis fases de CRISP-DM (comprensión del problema, comprensión de datos, preparación, modelado, evaluación, despliegue) con los scripts, conjuntos de datos y artefactos efectivamente disponibles. Si una fase no tiene evidencia, declararla pendiente o no documentada.
+4. **Validación:** distinguir pruebas funcionales, de integración, de seguridad, de usabilidad y de exactitud agronómica; informar resultados sólo cuando existan registros.
+
+### Matriz de coherencia metodológica para completar con evidencias
+
+| Objetivo | Fase real | Técnica/recurso | Producto documentable | Evidencia que falta adjuntar |
+|---|---|---|---|---|
+| 1 | Revisión agronómica | Literatura, fuentes oficiales | Matriz de variables y referencias | Bibliografía original, criterios de selección, DOI/URL |
+| 2 | Preparación/modelado/evaluación | Python, XGBoost, GroupKFold | Modelo y métricas reproducibles | Dataset acreditado, código de corrida y métricas firmadas |
+| 3 | Integración de software | React, PHP, Flask, Flowise | SPA, API y asistente integrados | Capturas reales, prueba de contrato, contexto y sesión |
+| 4 | Evaluación | Playwright, PHP suites, unittest, casos reales | Informe de pruebas | Acta de ejecución, resultados, incidencias y muestras comparables |
+
+## Evidencias de pruebas: registro reproducible mínimo
+
+La existencia de `19 specs`, `16 suites` o de una ruta `/health` no significa que se hayan ejecutado exitosamente en la entrega actual. Antes de exponer resultados, preparar una bitácora por corrida:
+
+| Fecha y hora | Commit/tag | Entorno | Prueba y comando | Resultado esperado | Resultado observado | Estado | Evidencia |
+|---|---|---|---|---|---|---|---|
+| *Por registrar* | *Hash* | *SO, PHP, Node, Python, DB* | *Comando específico* | *A definir* | *Salida real* | *Aprobada/fallida/no ejecutada* | *Log/captura enlazada* |
+
+Registrar también pruebas negativas (permisos, datos incompletos, caída de Flask o Flowise, límites de cuota, red móvil) y documentar qué se cambió para corregir cada incidencia. Para el modelo, reportar MAE, RMSE y R² con su conjunto de validación y sin extrapolar a cosechas reales no medidas.
+
+## Criterios UX/UI definitivos: propuesta versus código vigente
+
+La descripción actual de `src/assets/palette.css` registra **ocho colores por tema**, por lo que **no debe sustituirse por el diseño propuesto mientras el código no se actualice**. El diseño solicitado para futuras revisiones usa seis colores base por tema:
+
+| Rol | Claro | Oscuro |
+|---|---|---|
+| Fondo | `#FAF9F8` | `#181C1A` |
+| Superficie | `#E7E6E1` | `#252D29` |
+| Acción primaria | `#345C50` | `#4D766A` |
+| Apoyo | `#7C9084` | `#88A092` |
+| Texto | `#222523` | `#F3F1EB` |
+| Acento agrícola de uso mínimo | `#E9B949` | `#E9B949` |
+
+Los estados hover, divisores y texto auxiliar deberán derivarse de los mismos colores mediante mezclas/opacidades con contraste accesible. El amarillo de maíz se reserva a acentos puntuales; no crear botones amarillos en todas las pantallas. La pantalla pública utiliza un lenguaje editorial con fotografía y hojas discretas; cada módulo interno conserva **solo sus datos propios** y el sidebar compartido. Sin búsqueda global. El tema claro es el predeterminado **propuesto**; verificar el comportamiento efectivamente desplegado y respetar preferencias guardadas.
+
+Las ilustraciones y métricas usadas en maquetas no son resultados del sistema; no deben pasar a tablas de resultados ni a pantallas reales como datos medidos. La validación visual requiere capturas fechadas del sistema funcionando en móvil y escritorio, ambos modos, con datos de prueba identificados.
+
+## Límites técnicos y prioridades de corrección
+
+| Prioridad | Asunto | Acción verificable |
+|---|---|---|
+| Crítica | Procedencia del dataset de entrenamiento no acreditada completamente | Identificar origen, licencia, fecha, transformaciones y etiquetas; documentar límites antes de afirmar capacidad nacional. |
+| Alta | Seguridad documentada en ADR-007 | Verificar y corregir IDOR en `explain()`, cuotas/rate limit, generación aleatoria y accesos; repetir pruebas. |
+| Alta | Base de datos real frente a SQL publicado | Comparar migraciones y `SHOW CREATE TABLE`; actualizar diccionario antes de entregar. |
+| Alta | Datos observados frente a estimados | Distinguir clases y fuentes en API, gráficos, informes y asistente. |
+| Media | Arquitectura heredada desfasada | Actualizar `arquitectura.md`: seis dominios, rutas españolas y ECharts, preservando historia. |
+| Media | Diseño existente frente a propuesta | No afirmar que la V5 está aplicada hasta inspeccionar CSS, capturas y navegación real. |
+| Media | Validación reproducible | Añadir matriz de casos, logs, evidencia y fecha; no contar tests por existencia únicamente. |
+
+## Control de versiones y proceso de actualización documental
+
+En cada avance quincenal: (1) anotar commit/tag, fecha y responsables; (2) actualizar pantallas, rutas, campos SQL y dependencias que cambiaron; (3) registrar pruebas ejecutadas y pendientes; (4) vincular cambios al objetivo y apartado del PIS; (5) actualizar capturas/diagramas; (6) revisar las referencias utilizadas. Evitar cambios en el backend o la base para cumplir una maqueta sin decisión del equipo.
+
+No publicar secretos, tokens, datos personales, archivos `.env` reales ni respaldos productivos. El diccionario usa **solo la estructura SQL pública**.

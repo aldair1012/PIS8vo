@@ -204,60 +204,45 @@ export default function History({ recargarDatos }) {
               <p className="empty-state-subtitle">Ejecuta una simulación en los modelos DSS para guardar el registro agronómico y compararlo en esta sección.</p>
             </div>
           ) : (
-            <div className="table-responsive-container" role="region" aria-label="Historial de simulaciones, tabla desplazable" tabIndex={0} style={{ width: '100%', overflowX: 'auto', maxHeight: 'calc(100vh - 220px)', overflowY: 'auto' }}>
-              <table aria-label="Simulaciones guardadas" className="custom-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <thead style={{ position: 'sticky', top: 0, zIndex: 10, background: 'var(--surface-elevated)' }}>
-                  <tr style={{ background: 'var(--surface-elevated)', borderBottom: '1.5px solid var(--border-subtle)' }}>
-                    <th scope="col" style={{ padding: '0.75rem 1rem', textAlign: 'left', fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Simulación / Lote</th>
-                    <th scope="col" style={{ padding: '0.75rem 1rem', textAlign: 'center', fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Modelo</th>
-                    <th scope="col" style={{ padding: '0.75rem 1rem', textAlign: 'left', fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Variables agronómicas</th>
-                    <th scope="col" style={{ padding: '0.75rem 1rem', textAlign: 'left', fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Rendimiento</th>
-                    <th scope="col" style={{ padding: '0.75rem 1rem', textAlign: 'center', fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Fecha</th>
-                    <th scope="col" style={{ padding: '0.75rem 1rem', textAlign: 'center', fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Acción</th>
+            <div className="table-responsive-container history-table-scroll" role="region" aria-label="Historial de simulaciones, tabla desplazable" tabIndex={0}>
+              <table aria-label="Simulaciones guardadas" className="custom-table history-table">
+                <thead>
+                  <tr>
+                    <th scope="col">Simulación / Lote</th>
+                    <th scope="col" className="is-center">Modelo</th>
+                    <th scope="col">Variables agronómicas</th>
+                    <th scope="col">Rendimiento</th>
+                    <th scope="col" className="is-center">Fecha</th>
+                    <th scope="col" className="is-center">Acción</th>
                   </tr>
                 </thead>
                 <tbody>
                   {simulaciones.map(sim => (
-                    <tr key={sim.id} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
-                      <td style={{ padding: '0.7rem 1rem' }}>
-                        <span style={{ fontWeight: 700, fontSize: '0.88rem', color: 'var(--text-primary)' }}>{sim.nombre || '-'}</span>
-                        <div style={{ fontSize: '0.76rem', color: 'var(--text-subtle)', marginTop: '2px' }}>
-                          Lote: <strong style={{ color: 'var(--text-muted)' }}>{sim.nombre_parcela || 'Sin parcela indicada'}</strong> ({formatArea(sim.area_simulada)})
+                    <tr key={sim.id}>
+                      <td>
+                        <span className="history-sim-name">{sim.nombre || '-'}</span>
+                        <span className="history-sim-sub">Lote: <strong>{sim.nombre_parcela || 'Sin parcela indicada'}</strong> ({formatArea(sim.area_simulada)})</span>
+                      </td>
+                      <td className="is-center">
+                        <span className="history-model-badge">{sim.modelo_usado || 'dss'}</span>
+                      </td>
+                      <td>
+                        <div className="history-tags">
+                          <span>{formatCompact(sim.temperatura) ?? '-'}°C • {formatCompact(sim.humedad) ?? '-'}% Hum</span>
+                          <span>Lluvia: {formatCompact(sim.precipitacion) ?? '-'} {precipitationPeriod(sim)}</span>
+                          <span>{formatCompact(sim.fertilizante) ?? '-'} kg/ha Fert</span>
+                          <span>Suelo {sim.tipo_suelo || '-'} (pH {formatCompact(sim.ph_suelo) ?? '-'})</span>
                         </div>
                       </td>
-                      <td style={{ padding: '0.7rem 1rem', textAlign: 'center' }}>
-                        <span style={{ padding: '0.2rem 0.55rem', borderRadius: '6px', background: 'rgba(59, 130, 246, 0.12)', color: 'var(--zs-info)', fontWeight: 700, fontSize: '0.7rem', letterSpacing: '0.04em', textTransform: 'uppercase', border: '1px solid rgba(59, 130, 246, 0.25)', display: 'inline-block' }}>
-                          {sim.modelo_usado || 'dss'}
-                        </span>
+                      <td>
+                        <div className="history-yield">{formatDecimal(sim.rendimiento_estimado) === null ? 'Rendimiento no disponible' : `${formatDecimal(sim.rendimiento_estimado)} t/ha`}</div>
+                        <div className="history-sim-sub">Total: {formatCompact(sim.produccion_total) === null ? 'No disponible' : `${formatCompact(sim.produccion_total)} t`}</div>
                       </td>
-                      <td style={{ padding: '0.7rem 1rem' }}>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem 0.5rem', alignItems: 'center' }}>
-                          <span style={{ background: 'var(--surface-hover)', border: '1px solid var(--border-subtle)', padding: '0.15rem 0.45rem', borderRadius: '6px', color: 'var(--text-primary)', fontWeight: 600, fontSize: '0.74rem' }}>
-                            {formatCompact(sim.temperatura) ?? '-'}°C • {formatCompact(sim.humedad) ?? '-'}% Hum
-                          </span>
-                          <span style={{ background: 'var(--surface-hover)', border: '1px solid var(--border-subtle)', padding: '0.15rem 0.45rem', borderRadius: '6px', color: 'var(--text-primary)', fontWeight: 600, fontSize: '0.74rem' }}>
-                            Lluvia: {formatCompact(sim.precipitacion) ?? '-'} {precipitationPeriod(sim)}
-                          </span>
-                          <span style={{ background: 'var(--surface-hover)', border: '1px solid var(--border-subtle)', padding: '0.15rem 0.45rem', borderRadius: '6px', color: 'var(--text-primary)', fontWeight: 600, fontSize: '0.74rem' }}>
-                            {formatCompact(sim.fertilizante) ?? '-'} kg/ha Fert
-                          </span>
-                          <span style={{ background: 'var(--surface-hover)', border: '1px solid var(--border-subtle)', padding: '0.15rem 0.45rem', borderRadius: '6px', color: 'var(--text-subtle)', fontSize: '0.74rem' }}>
-                            Suelo {sim.tipo_suelo || '-'} (pH {formatCompact(sim.ph_suelo) ?? '-'})
-                          </span>
-                        </div>
-                      </td>
-                      <td style={{ padding: '0.7rem 1rem' }}>
-                        <div style={{ fontWeight: 800, color: 'var(--zs-success)', fontSize: '0.92rem' }}>{formatDecimal(sim.rendimiento_estimado) === null ? 'Rendimiento no disponible' : `${formatDecimal(sim.rendimiento_estimado)} t/ha`}</div>
-                        <div style={{ fontSize: '0.74rem', color: 'var(--text-subtle)' }}>Total: {formatCompact(sim.produccion_total) === null ? 'No disponible' : `${formatCompact(sim.produccion_total)} t`}</div>
-                      </td>
-                      <td style={{ padding: '0.7rem 1rem', textAlign: 'center', fontSize: '0.8rem', color: 'var(--text-subtle)', whiteSpace: 'nowrap' }}>
-                        {formatDate(sim.fecha)}
-                      </td>
-                      <td style={{ padding: '0.7rem 1rem', textAlign: 'center' }}>
-                        <button 
-                          className="btn btn-secondary text-danger" 
-                          onClick={() => handleDelete(sim.id)} 
-                          style={{ padding: '0.35rem', borderRadius: '8px', cursor: 'pointer' }}
+                      <td className="is-center history-date">{formatDate(sim.fecha)}</td>
+                      <td className="is-center">
+                        <button
+                          className="btn btn-secondary text-danger history-delete"
+                          onClick={() => handleDelete(sim.id)}
                           title="Eliminar simulación"
                           disabled={eliminando !== null}
                           aria-label={`Eliminar ${sim.nombre || 'simulación'}`}

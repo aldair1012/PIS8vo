@@ -8,6 +8,9 @@ import './assets/product-design.css';
 import './assets/kpi-design.css';
 import './assets/chart-panel.css';
 import './assets/campo-interior.css';
+// Capa final de analítica: fija un único criterio visual para gráficos,
+// indicadores y secciones de información del espacio interno.
+import './assets/analytics-system.css';
 
 class ErrorBoundary extends Component {
   constructor(props) {

@@ -1,5 +1,5 @@
 import EChart from '../../components/EChart';
-import { getDashboardChartColors, getChartTooltip } from '../../utils/chartConfig';
+import { getDashboardChartColors, getChartTooltip, getChartBase } from '../../utils/chartConfig';
 import useTema from '../../hooks/useTema';
 import { descriptivePercentiles, evidenceNumber } from '../../utils/agronomicEvidence';
 
@@ -17,8 +17,9 @@ export default function GaussChart({ p10, p50, p90, muestra }) {
 
   const labels = ['P10', 'P50 · Mediana', 'P90'];
   const colors = [theme.risk, theme.leaf, theme.sky];
-  const option = {
+  const option = getChartBase(theme, {
     grid: { left: 32, right: 32, top: 16, bottom: 56 },
+    legend: { show: false },
     tooltip: getChartTooltip(theme, {
       trigger: 'item', renderMode: 'richText',
       formatter: item => `${labels[item.dataIndex]} · ${formatYield(item.value[0])} t/ha`,
@@ -26,14 +27,15 @@ export default function GaussChart({ p10, p50, p90, muestra }) {
     xAxis: {
       type: 'value', min: summary.min, max: summary.max, splitNumber: 4,
       name: 'Rendimiento guardado (t/ha)', nameLocation: 'middle', nameGap: 30,
-      nameTextStyle: { color: theme.muted }, axisLabel: { color: theme.muted },
-      splitLine: { lineStyle: { color: theme.grid } },
+      nameTextStyle: { color: theme.muted, fontSize: 11 }, axisLabel: { color: theme.muted, fontSize: 11 },
+      splitLine: { show: true, lineStyle: { color: theme.grid, type: 'dashed' } },
+      axisLine: { show: false }, axisTick: { show: false },
     },
-    yAxis: { type: 'value', show: false, min: 0.5, max: 1.5 },
+    yAxis: { type: 'value', show: false, min: 0.5, max: 1.5, splitLine: { show: false } },
     series: [{ type: 'line', lineStyle: { color: theme.leaf, width: 3 }, symbol: 'circle', symbolSize: 15,
       data: summary.values.map((x, i) => ({ value: [x, 1], itemStyle: { color: colors[i] } })),
     }],
-  };
+  });
   return <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem', paddingTop: '0.3rem' }}>
     <div style={{ height: '245px', position: 'relative' }}>
       <EChart option={option} ariaLabel="Percentiles descriptivos P10, mediana y P90 de las simulaciones guardadas" />

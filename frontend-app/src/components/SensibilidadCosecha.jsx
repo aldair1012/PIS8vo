@@ -9,7 +9,7 @@ export default function SensibilidadCosecha({ filas }) {
     {filas.map(fila => <div key={fila.variable}><h4>{nombres[fila.variable] ?? fila.variable}</h4>
       {fila.cambios_t_ha.map((cambio, i) => <div className="sensitivity-row" key={i}>
         <span>{i ? '+20 %' : '−20 %'} · {fmt.format(fila.valores[i])} {fila.unidad}</span>
-        <span className="sensitivity-track" aria-hidden="true"><i style={{ left: cambio < 0 ? `${50 - 50 * Math.abs(cambio) / escala}%` : '50%', width: `${50 * Math.abs(cambio) / escala}%`, background: i ? '#c87e26' : '#427ba6' }} /></span>
+        <span className="sensitivity-track" aria-hidden="true"><i style={{ left: cambio < 0 ? `${50 - 50 * Math.abs(cambio) / escala}%` : '50%', width: `${50 * Math.abs(cambio) / escala}%`, background: i ? 'var(--zs-primary)' : 'var(--zs-danger)' }} /></span>
         <strong>{cambio > 0 ? '+' : ''}{fmt.format(cambio)} t/ha</strong>
       </div>)}</div>)}
   </section>;

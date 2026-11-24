@@ -20,7 +20,7 @@ export default function ReferenciaMensualEspac({ provincia, fechas }) {
       return <div key={i}><h4>{fecha} · Mediana {fmt(c.mediana)} t/ha</h4>
         <div className="yield-band-track" aria-hidden="true">{[...referencia.bandas].reverse().map(b => {
           const inicio = Math.max(0, c.mediana - b.margen);
-          return <i key={b.nivel} style={{left: inicio/maximo*100+'%', width: (c.mediana+b.margen-inicio)/maximo*100+'%', background: b.nivel === 0.9 ? '#a1bfd1' : '#376e93'}} />;
+          return <i key={b.nivel} style={{left: inicio/maximo*100+'%', width: (c.mediana+b.margen-inicio)/maximo*100+'%', background: b.nivel === 0.9 ? 'color-mix(in srgb, var(--zs-primary) 30%, transparent)' : 'color-mix(in srgb, var(--zs-primary) 70%, transparent)'}} />;
         })}<b style={{left:c.mediana/maximo*100+'%'}} /></div>
         <p>{referencia.bandas.map(b => `Banda ${100*b.nivel} % de ${fmt(Math.max(0,c.mediana-b.margen))} a ${fmt(c.mediana+b.margen)} t/ha`).join(' · ')}. Referencia de {c.parcelas} registros en {c.segmentos} segmentos.</p></div>;
     })}

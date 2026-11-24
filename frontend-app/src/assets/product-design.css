@@ -80,8 +80,8 @@ body.light-theme .zeasys-workspace .sidebar .platform-logo-img { filter: none !i
 .zeasys-workspace .ydp-page-header h1 { font-size: clamp(25px, 2.4vw, 34px); font-weight: 650; }
 .zeasys-workspace .ydp-eyebrow { font-size: 10px; letter-spacing: .12em; }
 .zeasys-workspace .ydp-metric { border: 1px solid var(--zs-border); border-radius: 20px; padding: 19px 18px 8px; min-height: 220px; box-shadow: var(--zs-shadow-raised); }
-.zeasys-workspace .ydp-metric--feature { background: #124e36; color: #f5faf4; border-color: #246849; --ydp-accent: #c3e795; --zs-muted: #c8ddcd; --zs-border: #ffffff26; --zs-border-strong: #ffffff40; }
-.zeasys-workspace .ydp-metric--feature :is(.ydp-metric-label, .ydp-metric-value, .ydp-metric-value small) { color: #f5faf4; }
+.zeasys-workspace .ydp-metric--feature { background: var(--zs-accent); color: var(--zs-accent-contrast); border-color: transparent; --ydp-accent: var(--zs-primary); --zs-muted: color-mix(in srgb, var(--zs-accent-contrast) 78%, transparent); --zs-border: color-mix(in srgb, var(--zs-accent-contrast) 22%, transparent); --zs-border-strong: color-mix(in srgb, var(--zs-accent-contrast) 38%, transparent); }
+.zeasys-workspace .ydp-metric--feature :is(.ydp-metric-label, .ydp-metric-value, .ydp-metric-value small) { color: var(--zs-accent-contrast); }
 .zeasys-workspace .ydp-metric-label { font-size: 12px; font-weight: 550; }
 .zeasys-workspace .ydp-metric-label svg { width: 30px; height: 30px; padding: 6px; background: color-mix(in srgb, var(--ydp-accent) 12%, transparent); border-radius: 9px; }
 .zeasys-workspace .ydp-metric-value { font-size: clamp(23px, 2.2vw, 32px); font-weight: 650; letter-spacing: -.045em; }
@@ -97,7 +97,7 @@ body.light-theme .zeasys-workspace .sidebar .platform-logo-img { filter: none !i
 .zeasys-workspace .ydp-run-track { height: 9px; }
 .zeasys-workspace .ydp-province-map { background: var(--zs-inset-surface); border: 0; border-radius: 16px; }
 .zeasys-workspace .zeasys-chat-panel { border-radius: 22px 0 0 22px; box-shadow: -12px 0 50px #00000020; }
-.zeasys-workspace .zeasys-chat-header { background: #124e36; padding: 20px; }
+.zeasys-workspace .zeasys-chat-header { background: var(--zs-accent); padding: 20px; }
 .zeasys-workspace .zeasys-chat-avatar { border-radius: 12px; background: var(--zs-inset-surface); }
 .zeasys-workspace .zeasys-chat-bubble { border-radius: 16px; line-height: 1.65; box-shadow: none; }
 .zeasys-workspace .zeasys-chat-chips button { border-radius: 12px; }

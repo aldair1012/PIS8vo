@@ -1,9 +1,10 @@
 import EChart from '../../components/EChart';
 import { financeNumber } from '../../utils/financeBudget';
-import { getChartTooltip, getDashboardChartColors } from '../../utils/chartConfig';
+import { chartPalette, getChartBase, getChartTooltip, getDashboardChartColors } from '../../utils/chartConfig';
 import useTema from '../../hooks/useTema';
 
-const colorPalette = ['#345C50', '#7C9084', '#4D766A', '#88A092', '#557B6E', '#E9B949'];
+// Misma paleta que el resto de gráficos: el maíz solo marca hitos puntuales.
+const colorPalette = chartPalette;
 
 export default function CostBreakdown({ items = [] }) {
   const theme = getDashboardChartColors(useTema());
@@ -11,13 +12,16 @@ export default function CostBreakdown({ items = [] }) {
   const totalExpenses = expenseItems.reduce((total, item) => total + Math.abs(item.amount), 0);
   const netMargin = financeNumber(items.find(item => item.label === 'Margen Neto')?.amount);
   if (!totalExpenses) return <div className="chart-empty-state">No hay costos registrados para mostrar su distribución.</div>;
-  const option = {
+  const option = getChartBase(theme, {
     color: colorPalette,
+    legend: { show: false },
     tooltip: getChartTooltip(theme, { trigger: 'item', renderMode: 'richText',
       formatter: item => `${item.name} · $${item.value.toLocaleString('es-EC')} (${item.percent} %)` }),
     series: [{ type: 'pie', radius: ['66%', '92%'], label: { show: false },
+      itemStyle: { borderColor: theme.tooltipBg, borderWidth: 2, borderRadius: 4 },
+      emphasis: { scaleSize: 6 },
       data: expenseItems.map(item => ({ name: item.label, value: Math.abs(item.amount) })) }],
-  };
+  });
   return (
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.25rem', alignItems: 'center', minHeight: '240px' }}>
       {/* Doughnut Chart Canvas with Center Text Overlay */}

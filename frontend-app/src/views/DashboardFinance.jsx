@@ -8,7 +8,6 @@ import InteractiveKPI from '../templates/Common/InteractiveKPI';
 import SimulationInfoCard from '../templates/Common/SimulationInfoCard';
 import { DashboardSectionHeading } from '../templates/Common/DashboardSectionHeading';
 import useExplicacionIA from '../hooks/usarExplicacionIA';
-import useTema from '../hooks/useTema';
 import { financeNumber as toFiniteNumber, financeInputNumber, financeInputText, financeBudgetPreview, financeSourceLabel } from '../utils/financeBudget';
 
 import { 
@@ -25,7 +24,6 @@ const formatCurrency = (value) => toFiniteNumber(value) === null
 const formatNumber = (value, digits = 2) => toFiniteNumber(value) === null ? 'No disponible' : Number(value).toLocaleString('es-EC', { maximumFractionDigits: digits });
 
 export default function DashboardFinance({ cultivoElegidoId, provinciaParcela, añoSeleccionado, onNavigate, onDashboardData }) {
-  const temaClaro = useTema();
   const [snapshot, setSnapshot] = useState(null);
   const selectionKey = JSON.stringify([cultivoElegidoId ?? null, añoSeleccionado ?? null]);
   const data = snapshot?.key === selectionKey ? snapshot.data : null;
@@ -266,36 +264,21 @@ export default function DashboardFinance({ cultivoElegidoId, provinciaParcela, a
   const riesgoFinanciero = String(kpis.riesgo_financiero?.nivel ?? kpis.riesgo_financiero ?? '').trim();
   const riesgoEstado = /alto|elevado|critico|crítico/i.test(riesgoFinanciero) ? 'riesgoso' : (/bajo/i.test(riesgoFinanciero) ? 'favorable' : 'regular');
 
+  // Estados semánticos con tokens: la misma lectura en claro y oscuro y sin
+  // degradados malformados que hacían perder el fondo en modo claro.
   const getSensibilidadCardStyle = (marginVal) => {
-    const isLight = temaClaro;
-    if (marginVal === null) return { background: 'var(--surface-elevated)', border: '1px solid var(--border-subtle)', color: 'var(--text-muted)', boxShadow: 'none' };
-    if (marginVal < 0) {
-      return {
-        background: isLight 
-          ? 'linear-gradient(135deg, var(--zs-surface) 0%, color-mix(in srgb, var(--zs-surface) 90%, var(--zs-text) 10%)' 
-          : 'linear-gradient(135deg, var(--zs-surface) 0%, rgba(239, 68, 68, 0.28))',
-        border: isLight ? '1.5px solid var(--zs-warning)' : '1.5px solid rgba(239, 68, 68, 0.55)',
-        color: isLight ? '#991b1b' : '#fca5a5',
-        boxShadow: isLight ? '0 2px 8px rgba(239, 68, 68, 0.12)' : '0 4px 12px rgba(239, 68, 68, 0.18)'
-      };
-    }
-    if (marginVal <= 250) {
-      return {
-        background: isLight 
-          ? 'linear-gradient(135deg, var(--zs-surface) 0%, color-mix(in srgb, var(--zs-surface) 90%, var(--zs-text) 10%)' 
-          : 'linear-gradient(135deg, var(--zs-surface) 0%, rgba(245, 158, 11, 0.28))',
-        border: isLight ? '1.5px solid #b78425' : '1.5px solid rgba(245, 158, 11, 0.55)',
-        color: isLight ? '#78350f' : '#fde047',
-        boxShadow: isLight ? '0 2px 8px rgba(245, 158, 11, 0.12)' : '0 4px 12px rgba(245, 158, 11, 0.18)'
-      };
-    }
+    if (marginVal === null) return {
+      background: 'var(--zs-inset-surface)',
+      border: '1px solid var(--zs-border)',
+      color: 'var(--zs-muted)',
+      boxShadow: 'none',
+    };
+    const tone = marginVal < 0 ? 'var(--zs-danger)' : marginVal <= 250 ? 'var(--zs-warning)' : 'var(--zs-success)';
     return {
-      background: isLight 
-        ? 'linear-gradient(135deg, var(--zs-surface) 0%, var(--zs-border))' 
-        : 'linear-gradient(135deg, var(--zs-surface) 0%, rgba(16, 185, 129, 0.28))',
-      border: isLight ? '1.5px solid #4ade80' : '1.5px solid rgba(16, 185, 129, 0.55)',
-      color: isLight ? '#14532d' : '#6ee7b7',
-      boxShadow: isLight ? '0 2px 8px rgba(16, 185, 129, 0.12)' : '0 4px 12px rgba(16, 185, 129, 0.18)'
+      background: `linear-gradient(135deg, var(--zs-surface) 0%, color-mix(in srgb, ${tone} 14%, var(--zs-surface)) 100%)`,
+      border: `1.5px solid color-mix(in srgb, ${tone} 55%, transparent)`,
+      color: tone,
+      boxShadow: `0 2px 8px color-mix(in srgb, ${tone} 14%, transparent)`,
     };
   };
 
@@ -1062,11 +1045,15 @@ export default function DashboardFinance({ cultivoElegidoId, provinciaParcela, a
               <div className="roi-strategy-list">
                 {(() => {
                   const colors = [
-                    { border: 'rgba(158, 209, 255, .22)', bg: 'rgba(158, 209, 255, .05)', active: '#9ed1ff' },
-                    { border: 'rgba(216, 168, 63, .22)', bg: 'rgba(216, 168, 63, .05)', active: '#d8a83f' },
-                    { border: 'rgba(159, 200, 98, .22)', bg: 'rgba(159, 200, 98, .05)', active: '#9fc862' },
-                    { border: 'rgba(112, 169, 132, .22)', bg: 'rgba(112, 169, 132, .05)', active: '#70a984' }
-                  ];
+                    'var(--zs-primary)',
+                    'var(--zs-secondary)',
+                    'var(--zs-warning)',
+                    'color-mix(in srgb, var(--zs-primary) 55%, var(--zs-secondary))',
+                  ].map(tone => ({
+                    border: `color-mix(in srgb, ${tone} 24%, transparent)`,
+                    bg: `color-mix(in srgb, ${tone} 6%, transparent)`,
+                    active: tone,
+                  }));
 
                   return roi_estrategias.map((est, i) => {
                     const theme = colors[i] || colors[0];
@@ -1089,8 +1076,9 @@ export default function DashboardFinance({ cultivoElegidoId, provinciaParcela, a
                           });
                         }}
                         style={{
-                          borderLeft: `3.5px solid ${theme.active}`,
                           borderColor: theme.border,
+                          borderLeftColor: theme.active,
+                          borderLeftWidth: '3.5px',
                           background: theme.bg,
                           padding: '0.6rem 0.85rem',
                           borderRadius: '10px',

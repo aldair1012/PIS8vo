@@ -5,7 +5,7 @@ import AvisosLluvia from '../components/AvisosLluvia';
 import { ThermalTimeline, WeeklyCropWater } from '../components/AgroclimaticReadings';
 import EChart from '../components/EChart';
 import useTema from '../hooks/useTema';
-import { getDashboardChartColors, getChartTooltip } from '../utils/chartConfig';
+import { getChartBase, getDashboardChartColors, getChartTooltip } from '../utils/chartConfig';
 import { climateDate, climateNumber, forecastDays, forecastSummary, historyDays, historyMonths, referenceWaterBalance, soilWaterPercent, validateClimateResponse } from '../utils/climateEvidence';
 import { dateKindLabel, irrigationLabel, sowingPlanning } from '../utils/sowingPlan';
 import '../assets/clm-panel.css';
@@ -34,13 +34,15 @@ function HistoryPlot({ variable, history, historyRange, colors, selected, ask })
   const unit = rain ? 'mm' : '°C';
   const values = history.map(row => rain ? row.precip_mm : row.temp_media_c);
   const validCount = values.filter(value => value !== null).length;
-  const option = {
-    animation: false, grid: { left: 52, right: 20, top: 28, bottom: 42 },
+  const option = getChartBase(colors, {
+    animation: false,
+    grid: { left: 52, right: 20, top: 28, bottom: 42 },
+    legend: { show: false },
     tooltip: getChartTooltip(colors, { renderMode: 'richText', valueFormatter: value => value === null ? 'Sin dato' : `${num(value)} ${unit}` }),
-    xAxis: { type: 'category', data: history.map(row => historyRange === '30d' ? dateLabel(row.fecha, { day: 'numeric', month: 'short' }) : dateLabel(`${row.fecha}-01`, { month: 'short', year: '2-digit' })), axisLabel: { color: colors.muted, fontSize: 12, hideOverlap: true }, axisLine: { lineStyle: { color: colors.border } }, axisTick: { show: false } },
-    yAxis: { type: 'value', name: unit, min: rain ? 0 : undefined, nameTextStyle: { color: colors.muted }, axisLabel: { color: colors.muted, fontSize: 12 }, splitLine: { lineStyle: { color: colors.grid } } },
-    series: [{ name: title, type: rain ? 'bar' : 'line', data: values, connectNulls: false, barMaxWidth: 32, symbolSize: 7, itemStyle: { color: rain ? colors.leaf : colors.primary, borderRadius: rain ? [4, 4, 0, 0] : undefined }, lineStyle: { width: 3 } }],
-  };
+    xAxis: { type: 'category', data: history.map(row => historyRange === '30d' ? dateLabel(row.fecha, { day: 'numeric', month: 'short' }) : dateLabel(`${row.fecha}-01`, { month: 'short', year: '2-digit' })), axisLabel: { color: colors.muted, fontSize: 11, hideOverlap: true }, axisLine: { show: false }, axisTick: { show: false }, splitLine: { show: false } },
+    yAxis: { type: 'value', name: unit, min: rain ? 0 : undefined, nameTextStyle: { color: colors.muted, fontSize: 11 }, axisLabel: { color: colors.muted, fontSize: 11 }, splitLine: { show: true, lineStyle: { color: colors.grid, type: 'dashed' } } },
+    series: [{ name: title, type: rain ? 'bar' : 'line', data: values, connectNulls: false, barMaxWidth: 32, symbolSize: 7, itemStyle: { color: rain ? colors.leaf : colors.primary, borderRadius: rain ? [4, 4, 0, 0] : undefined }, lineStyle: { width: 3, color: colors.primary } }],
+  });
   const explainHistory = item => ask(`Explícame ${title.toLowerCase()} ${item ? `del ${history[item.dataIndex]?.fecha}` : `de ${historyRange === '30d' ? 'los últimos 30 días' : 'los últimos 12 meses'}`} que muestra Clima y cultivo. Aclara su fuente, el período y qué conviene revisar en mi parcela, sin convertir datos ausentes en cero.`);
 
   return <article className="climate-plot" data-selected={selected}>
