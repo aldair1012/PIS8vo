@@ -45,6 +45,7 @@ export function financeSourceLabel(source) {
     precio_por_tonelada_ingresado_convertido_a_qq: 'Precio supuesto convertido de tonelada a quintal',
     supuesto_configurable_sin_cotizacion_mercado: 'Supuesto configurable; no es cotización de mercado',
     supuesto_configurable_sin_costo_observado: 'Supuesto configurable; no es gasto observado',
+    plan_fertilizacion_guardado: 'Suma de los costos por hectárea del plan de fertilización guardado',
     media_rendimientos_modelo_guardados: 'Media de las simulaciones guardadas del periodo',
     no_disponible: 'Sin dato de origen',
   })[source] ?? 'Origen no documentado';

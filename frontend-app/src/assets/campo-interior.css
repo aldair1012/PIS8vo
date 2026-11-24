@@ -1,6 +1,6 @@
 .zeasys-workspace {
   --campo-borde: var(--border, #839b92);
-  --campo-panel: var(--surface, var(--background));
+  --campo-panel: var(--zs-surface);
   --campo-radio: .8rem;
 }
 .zeasys-workspace .field-evidence { background:var(--campo-panel); border:1px solid var(--campo-borde); border-radius:var(--campo-radio); margin:1rem 0; padding:clamp(.8rem,2vw,1.35rem); overflow-wrap:anywhere; }
@@ -85,4 +85,12 @@
   .zeasys-workspace .parcela-save-row {
     position: sticky; inset-block-end: 0; z-index: 1; border-top: 1px solid var(--zs-border); background: var(--zs-surface);
   }
+}
+
+.zeasys-workspace .cultivos-periodo { display: grid; grid-template-columns: minmax(0, 1fr); gap: .35rem; }
+.zeasys-workspace .cultivos-periodo label { font-size: .875rem; font-weight: 650; }
+@media (min-width: 520px) {
+  .zeasys-workspace .cultivos-periodo { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: .65rem; }
+  .zeasys-workspace .cultivos-periodo label { grid-row: 1; }
+  .zeasys-workspace .cultivos-periodo p { grid-column: 1 / -1; }
 }

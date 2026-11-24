@@ -80,6 +80,19 @@ class ServicioAnaliticaFinancial
             $costos[$campo] = $parametros[$alias] ?? $default;
             $fuentes[$campo] = array_key_exists($alias, $parametros) ? 'supuesto_ingresado_usuario' : 'supuesto_configurable_sin_costo_observado';
         }
+        $planId = null;
+        if (!isset($parametros['costo_fert']) && !empty($cultivo['fecha_siembra']) && !empty($recientes)) {
+            $ultima = $recientes[0];
+            $escenario = json_decode($ultima['escenarios_json'] ?? '{}', true);
+            if (($escenario['_zeasys_modelo']['parcela_ejecucion']['fecha_siembra'] ?? null) === $cultivo['fecha_siembra']) {
+                $importe = $this->costoPlan($escenario['plan_fertilizacion'] ?? null);
+                if ($importe !== null) {
+                    $costos['costo_fert'] = $importe;
+                    $fuentes['costo_fert'] = 'plan_fertilizacion_guardado';
+                    $planId = (int) $ultima['id'];
+                }
+            }
+        }
         $costoTotal = array_sum($costos);
         if (!is_finite($costoTotal)) throw new ValidacionException('La suma de costos supera la capacidad numérica del cálculo.');
         $ingresoBruto = $rendimientoQq !== null ? $this->resultado($rendimientoQq * $precioQq, 2) : null;
@@ -159,10 +172,23 @@ class ServicioAnaliticaFinancial
                 'tipo' => 'escenario_financiero_hipotetico', 'fuentes' => $fuentes,
                 'area_fuente' => $area !== null ? 'registro_parcela_seleccionada' : 'no_disponible',
                 'conversion_qq_por_tonelada' => self::QQ_POR_TONELADA,
+                'simulacion_plan_fertilizacion' => $planId,
                 'unidad_costos' => 'USD/ha', 'unidad_precio' => 'USD/qq', 'unidad_rendimiento' => 'qq/ha',
                 'nota' => 'Los costos y precios son supuestos configurables, no facturas ni una cotización de mercado. Los kilogramos de nitrógeno no determinan dólares. Los cambios de estrategia no aseguran respuestas agronómicas. Un resultado null no puede calcularse con los datos disponibles o excede la representación numérica.',
             ],
         ];
+    }
+
+    private function costoPlan(mixed $plan): ?float
+    {
+        if (!is_array($plan) || !array_is_list($plan) || !$plan) return null;
+        $suma = 0.0;
+        foreach ($plan as $producto) {
+            $valor = $this->numero($producto['costo'] ?? null);
+            if ($valor === null || $valor < 0) return null;
+            $suma += $valor;
+        }
+        return is_finite($suma) ? $suma : null;
     }
 
     private function numero(mixed $valor): ?float

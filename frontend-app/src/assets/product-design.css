@@ -1,26 +1,25 @@
 /* Product layer: field notebook. Semantics live in internal-system.css. */
 .zeasys-workspace .sidebar {
-  --zi-nav-bg: linear-gradient(165deg, #176441 0%, #104a34 45%, #102d24 100%);
-  --zs-muted: #d1e8df; --zs-faint: #a4ccbd; --zs-text: #effaf3;
-  --zs-raised: #ffffff12; --zs-border: #ffffff20; --zs-border-strong: #ffffff35;
-  --sidebar-selected-bg: #e7f2de; --sidebar-selected-text: #174a33;
+  --zi-nav-bg: var(--zs-sidebar);
+  --sidebar-selected-bg: var(--zs-accent);
+  --sidebar-selected-text: var(--zs-accent-contrast);
   border-radius: 0;
 }
-.light-theme .zeasys-workspace .sidebar { --sidebar-selected-bg: #eef7e9; --sidebar-selected-text: #164b36; }
+
 .zeasys-workspace .sidebar .sidebar-logo { min-height: 90px; }
-.zeasys-workspace .sidebar .platform-logo-wordmark { color: #effaf3; }
+.zeasys-workspace .sidebar .platform-logo-wordmark { color: var(--zs-text); }
 /* Navegación: una sola superficie de selección, dentro de los límites del menú. */
 .zeasys-workspace .sidebar .sidebar-navigation { position: relative; padding: 8px 12px 16px; scrollbar-width: thin; }
 .zeasys-workspace .sidebar .sidebar-section { position: relative; }
 .zeasys-workspace .sidebar .sidebar-menu { gap: 4px; padding: 0; overflow: visible; }
-.zeasys-workspace .sidebar .sidebar-item-btn { position: relative; width: 100%; min-height: 48px; border: 1px solid transparent; border-radius: 0; padding: 10px 12px; font-weight: 600; }
+.zeasys-workspace .sidebar .sidebar-item-btn { position: relative; width: 100%; min-height: 48px; border: 1px solid transparent; border-radius: 10px; padding: 10px 12px; font-weight: 600; }
 .zeasys-workspace .sidebar .sidebar-item-btn:not(.active) { width: 100%; background: transparent; }
-.zeasys-workspace .sidebar .sidebar-item-btn:not(.active):hover { background: #ffffff16; }
+.zeasys-workspace .sidebar .sidebar-item-btn:not(.active):hover { background: var(--zs-inset-surface); }
 .zeasys-workspace .sidebar .sidebar-item-btn.active { width: 100%; background: var(--sidebar-selected-bg); color: var(--sidebar-selected-text); box-shadow: none; }
 body.light-theme .zeasys-workspace .sidebar .sidebar-item-btn.active { background: var(--sidebar-selected-bg) !important; color: var(--sidebar-selected-text) !important; border-color: transparent !important; box-shadow: none !important; }
 body.light-theme .zeasys-workspace .sidebar .sidebar-item-btn.active svg { color: currentColor !important; }
 body.light-theme .zeasys-workspace .sidebar .sidebar-item-btn:not(.active) { background: transparent !important; color: var(--zs-muted) !important; border-color: transparent !important; }
-body.light-theme .zeasys-workspace .sidebar .sidebar-item-btn:not(.active):hover { background: #ffffff16 !important; color: var(--zs-text) !important; }
+body.light-theme .zeasys-workspace .sidebar .sidebar-item-btn:not(.active):hover { background: var(--zs-inset-surface) !important; color: var(--zs-text) !important; }
 body.light-theme .zeasys-workspace .sidebar .sidebar-item-btn:not(.active) svg { color: currentColor !important; }
 body.light-theme .zeasys-workspace .sidebar .platform-logo-img { filter: none !important; }
 .zeasys-workspace .sidebar .sidebar-item-btn svg { flex-shrink: 0; }
@@ -38,13 +37,13 @@ body.light-theme .zeasys-workspace .sidebar .platform-logo-img { filter: none !i
   .zeasys-workspace .sidebar.collapsed .sidebar-item-btn:not(.active) { width: 100%; }
   .zeasys-workspace .sidebar.collapsed .sidebar-item-btn svg { width: 36px; height: 36px; padding: 8px; border-radius: 50%; background: #ffffff15; }
   .zeasys-workspace .sidebar.collapsed .sidebar-item-btn.active { justify-content: center; padding: 0; }
-  .zeasys-workspace .sidebar.collapsed .sidebar-item-btn.active svg { background: #f5faf4; color: #164b36; }
+  .zeasys-workspace .sidebar.collapsed .sidebar-item-btn.active svg { background: transparent; color: currentColor; }
   .zeasys-workspace .sidebar.collapsed .sidebar-bottom { padding: 10px; }
   .zeasys-workspace .sidebar.collapsed .sidebar-logout { justify-content: center; padding: 0; }
 }
 .zeasys-workspace { color-scheme: dark; --zi-kpi-bg: var(--zs-surface); font-variant-numeric: tabular-nums; }
 .light-theme .zeasys-workspace { color-scheme: light; }
-.zeasys-workspace .sidebar { border-right: 0; box-shadow: none; }
+.zeasys-workspace .sidebar { border-right: 1px solid var(--zs-border); box-shadow: none; }
 .zeasys-workspace .sidebar-logo { padding: 18px 20px; margin-bottom: 0; }
 .zeasys-workspace .sidebar-brand-caption { font-size: 11px; line-height: 1.6; }
 .zeasys-workspace .sidebar-navigation { padding: 8px 14px 18px; }
@@ -99,7 +98,7 @@ body.light-theme .zeasys-workspace .sidebar .platform-logo-img { filter: none !i
 .zeasys-workspace .ydp-province-map { background: var(--zs-inset-surface); border: 0; border-radius: 16px; }
 .zeasys-workspace .zeasys-chat-panel { border-radius: 22px 0 0 22px; box-shadow: -12px 0 50px #00000020; }
 .zeasys-workspace .zeasys-chat-header { background: #124e36; padding: 20px; }
-.zeasys-workspace .zeasys-chat-avatar { border-radius: 12px; background: #ffffff16; }
+.zeasys-workspace .zeasys-chat-avatar { border-radius: 12px; background: var(--zs-inset-surface); }
 .zeasys-workspace .zeasys-chat-bubble { border-radius: 16px; line-height: 1.65; box-shadow: none; }
 .zeasys-workspace .zeasys-chat-chips button { border-radius: 12px; }
 .zeasys-workspace .zeasys-chat-composer { padding: 16px; }
@@ -216,3 +215,35 @@ body.light-theme .zeasys-workspace .theme-selector-btn:hover { border-color: var
 @media (max-width: 640px) {
   .zeasys-workspace .simulacion-grid-2 { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* Superficies y controles comunes: la escala se mantiene en ambas apariencias. */
+.zeasys-workspace {
+  --zi-module-radius: 14px;
+  --zi-module-shadow: 0 3px 10px color-mix(in srgb,var(--zs-text) 6%,transparent);
+}
+.zeasys-workspace .content-body { background:var(--zs-page); }
+.zeasys-workspace .sidebar .sidebar-section + .sidebar-section { margin-top:10px; }
+.zeasys-workspace .sidebar-section-title { color:var(--zs-muted); letter-spacing:.055em; }
+.zeasys-workspace .sidebar .sidebar-item-btn { min-height:44px; }
+.zeasys-workspace .sidebar .sidebar-brand-caption { color:var(--zs-muted); }
+.zeasys-workspace .sidebar-furrows { height:72px; opacity:.95; }
+.zeasys-workspace :is(.climate-panel,.ydp-panel,.glass-panel,.sowing-disclosure,.field-evidence,.settings-card,.simulation-section,.registro-campo,.kpi-card) {
+  border-radius:var(--zi-module-radius);
+  box-shadow:var(--zi-module-shadow);
+}
+.zeasys-workspace .ydp-panel::before { content:none; }
+.zeasys-workspace .ydp-panel-heading > svg { border-radius:9px; background:var(--zs-inset-surface); border-color:var(--zs-border); color:var(--zs-accent); }
+.zeasys-workspace .ydp-run-track > span { background:var(--zs-accent); box-shadow:none; }
+.zeasys-workspace .custom-table thead th { letter-spacing:.025em; }
+.zeasys-workspace :is(.registro-campo,.settings-page,.simulation-workbench) :is(input:not([type=checkbox]):not([type=radio]),select,textarea) { accent-color:var(--zs-accent); }
+.zeasys-workspace .zeasys-chat-composer:focus-within { outline:2px solid var(--zs-focus); outline-offset:1px; }
+.zeasys-workspace :is(.climate-source,.map-source,.ydp-chart-note) { font-variant-numeric:tabular-nums; }
+.zeasys-workspace .history-page { width:100%; padding-bottom:2rem; }
+.zeasys-workspace .history-page h1 { margin:0; font-size:clamp(1.45rem,2.4vw,2.1rem); letter-spacing:-.035em; line-height:1.15; }
+.zeasys-workspace .settings-icon,.zeasys-workspace .map-plot-card-head > svg { background:var(--zs-inset-surface); color:var(--zs-info); }
+.zeasys-workspace .map-legend { box-shadow:var(--zi-module-shadow); border-radius:var(--zi-module-radius); }
+.zeasys-workspace .registro-campo fieldset { background:var(--zs-surface); padding:clamp(13px,2vw,21px); }
+.zeasys-workspace .registro-campo legend { color:var(--zs-text); padding-inline:7px; }
+.zeasys-workspace .simulation-tabs { width:fit-content; max-width:100%; border:1px solid var(--zs-border); border-radius:12px; padding:4px; gap:4px; background:var(--zs-inset-surface); }
+.zeasys-workspace .simulation-tabs button { border-radius:8px; border:0; }
+.zeasys-workspace .simulation-tabs button[aria-selected="true"] { background:var(--zs-surface); box-shadow:0 1px 4px var(--zs-border); color:var(--zs-text); }

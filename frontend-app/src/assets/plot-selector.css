@@ -2,7 +2,7 @@
 .zeasys-workspace .lote-selector-panel { bottom:auto;width:min(400px,calc(100vw - 24px));max-height:calc(100dvh - var(--plot-selector-top,65px) - 12px);background:var(--zs-surface);color:var(--zs-text);animation:none; }
 .zeasys-workspace :is(.lote-selector-panel-header,.lote-selector-search,.lote-selector-year-row,.lote-selector-footer) { flex:0 0 auto; }
 .zeasys-workspace .lote-selector-panel-title { font-size:1rem; }
-.zeasys-workspace .lote-selector-count { color:var(--zs-accent);background:var(--zs-inset-surface);font-size:.8125rem; }
+.zeasys-workspace .lote-selector-count { color:var(--zs-text);background:var(--zs-inset-surface);font-size:.8125rem; }
 .zeasys-workspace .lote-selector-close { min-width:44px;min-height:44px;color:var(--zs-muted); }
 .zeasys-workspace .lote-selector-search { padding:12px 16px; }
 .zeasys-workspace .lote-selector-search-input { min-height:46px;font-size:1rem;background:var(--zs-inset-surface); }

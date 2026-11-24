@@ -112,3 +112,26 @@ test('no interpreta una coma ambigua de miles como 3.5 mm', async ({ page }) => 
   await expect(rain).toHaveAttribute('aria-invalid', 'false');
   await expect(page.getByRole('alert')).toHaveCount(0);
 });
+
+test('el borrador usa la parcela activa y separa los períodos y el manejo de dos parcelas', async ({ page }) => {
+  await page.setViewportSize({width:1440,height:900});
+  const segunda = {...crop, id:92, fecha_siembra:'2027-06-01', ciclo_dias:40, riego_tipo:'goteo'};
+  await page.route('**/api/**',r=>r.fulfill({json:{}}));
+  await page.route('**/api/auth/yo',r=>r.fulfill({json:{autenticado:true,usuario:{id:987,nombre:'Prueba'}}}));
+  await page.route('**/api/parcelas',r=>r.fulfill({json:[{...crop, ciclo_dias:3, riego_tipo:'temporal_lluvia'},segunda]}));
+  await page.route('**/api/parcelas/valores-ubicacion*',r=>r.fulfill({json:location}));
+  await page.goto('/');await waitForWorkspace(page);
+  await page.getByRole('button',{name:'Simular cosecha',exact:true}).click();
+  await expect(page.locator('#simular-parcela')).toHaveValue('91');
+  await expect(page.locator('#campo-lamina_riego_mm')).toHaveValue('0');
+  await page.getByText('Completar datos del cultivo',{exact:false}).first().click();
+  await expect(page.locator('#campo-cosecha')).toHaveValue('2024-03-01');
+  await page.locator('#campo-cosecha').fill('2024-03-05');
+  await expect(page.locator('#campo-ciclo_dias')).toHaveValue('7');
+  await page.getByRole('button',{name:'Urea 46-0-0',exact:true}).click();
+  await page.locator('#simular-parcela').selectOption('92');
+  await expect(page.locator('#campo-ciclo_dias')).toHaveValue('40');
+  await expect(page.locator('#campo-cosecha')).toHaveValue('2027-07-10');
+  await expect(page.locator('#simular-nitrogeno')).toHaveValue('');
+  await expect(page.locator('#campo-lamina_riego_mm')).toHaveValue('');
+});

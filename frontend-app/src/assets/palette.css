@@ -1,32 +1,36 @@
 /* ==========================================================================
-   ZEASYS V5 DEFINITIVE PALETTE — EXACTLY 6 BASE COLORS PER THEME
+   ZEASYS V5 DEFINITIVE PALETTE — 8 COLORS PER THEME
    Dirección de arte: Calm Agricultural Premium
    ========================================================================== */
 
 /* --------------------------------------------------------------------------
-   MODO CLARO (PREDETERMINADO) — 6 COLORES BASE
-   Blanco suave:   #FAF9F8  (Fondo predominante, tarjetas, lectura)
-   Gris cálido:    #E7E6E1  (Superficies secundarias, bandas suaves, contraste)
-   Verde petróleo: #345C50  (Acciones principales, navegación activa, datos)
-   Verde salvia:   #7C9084  (Series secundarias, iconografía complementaria)
-   Negro carbón:   #222523  (Títulos, cifras, texto principal)
-   Amarillo maíz:  #E9B949  (Acentos mínimos < 5%: detalles de marca, hitos)
+   MODO CLARO (PREDETERMINADO) — 8 COLORES
+   Fondo general:    #E7E6E1  (Background general)
+   Tarjetas/paneles: #FAF9F8  (Cards, panels, elevated surfaces)
+   Verde salvia:     #7C9084  (Sage green - secondary series)
+   Verde petróleo:   #345C50  (Petroleum green - primary actions)
+   Gris piedra:      #D6D8D3  (Stone gray - subtle dividers)
+   Texto principal:  #222523  (Primary text - titles, numbers)
+   Texto secundario: #929993  (Secondary text - muted labels)
+   Acento maíz:      #E9B949  (Maize accent - <5%, milestones only)
    -------------------------------------------------------------------------- */
 :root,
 [data-theme="light"],
 body.light-theme {
-  --zs-bg: #FAF9F8;
-  --zs-surface: #E7E6E1;
+  --zs-bg: #E7E6E1;
+  --zs-surface: #FAF9F8;
   --zs-primary: #345C50;
   --zs-secondary: #7C9084;
   --zs-text: #222523;
   --zs-accent: #E9B949;
+  --zs-stone: #D6D8D3;
+  --zs-text-secondary: #929993;
 
-  /* Derivados calculados sin introducir HEX adicionales */
+  /* Derivados calculados desde los colores base */
   --zs-border: color-mix(in srgb, var(--zs-text) 14%, transparent);
   --zs-border-strong: color-mix(in srgb, var(--zs-text) 24%, transparent);
-  --zs-text-muted: color-mix(in srgb, var(--zs-text) 76%, var(--zs-bg));
-  --zs-text-faint: color-mix(in srgb, var(--zs-text) 55%, var(--zs-bg));
+  --zs-text-muted: var(--zs-text-secondary);
+  --zs-text-faint: color-mix(in srgb, var(--zs-text-secondary) 55%, var(--zs-surface));
   --zs-action-hover: color-mix(in srgb, var(--zs-primary) 88%, var(--zs-text));
   --zs-focus: var(--zs-primary);
 
@@ -50,12 +54,14 @@ body.light-theme {
 }
 
 /* --------------------------------------------------------------------------
-   MODO OSCURO (EQUIVALENTE FIEL) — 6 COLORES BASE
-   Carbón verdoso:          #181C1A  (Fondo principal y áreas extensas)
-   Superficie oscura:       #252D29  (Sidebar, tarjetas, formularios)
+   MODO OSCURO (EQUIVALENTE FIEL) — 8 COLORES
+   Fondo general:           #181C1A  (Background principal y áreas extensas)
+   Tarjetas/paneles:        #252D29  (Sidebar, tarjetas, formularios)
    Verde petróleo adaptado: #4D766A  (Acciones primarias, selección)
    Verde salvia adaptado:   #88A092  (Series secundarias, detalles vegetales)
+   Gris piedra adaptado:    #3A423E  (Divisores sutiles en modo oscuro)
    Marfil cálido:           #F3F1EB  (Títulos, datos, texto principal)
+   Texto secundario:        #A8B0AB  (Texto secundario adaptado)
    Amarillo maíz:           #E9B949  (Acento mínimo < 5%)
    -------------------------------------------------------------------------- */
 [data-theme="dark"],
@@ -66,12 +72,14 @@ body:not(.light-theme) {
   --zs-secondary: #88A092;
   --zs-text: #F3F1EB;
   --zs-accent: #E9B949;
+  --zs-stone: #3A423E;
+  --zs-text-secondary: #A8B0AB;
 
-  /* Derivados calculados sin introducir HEX adicionales */
+  /* Derivados calculados desde los colores base */
   --zs-border: color-mix(in srgb, var(--zs-text) 15%, transparent);
   --zs-border-strong: color-mix(in srgb, var(--zs-text) 25%, transparent);
-  --zs-text-muted: color-mix(in srgb, var(--zs-text) 78%, var(--zs-bg));
-  --zs-text-faint: color-mix(in srgb, var(--zs-text) 55%, var(--zs-bg));
+  --zs-text-muted: var(--zs-text-secondary);
+  --zs-text-faint: color-mix(in srgb, var(--zs-text-secondary) 55%, var(--zs-surface));
   --zs-action-hover: color-mix(in srgb, var(--zs-primary) 87%, var(--zs-text));
   --zs-focus: var(--zs-primary);
 

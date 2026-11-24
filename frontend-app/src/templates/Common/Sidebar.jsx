@@ -2,12 +2,13 @@ import { useEffect, useState } from 'react';
 import PlatformLogo from './PlatformLogo';
 import {
   Sprout, CloudRainWind, TrendingUp, DollarSign,
-  PlusCircle, ClipboardList, MessagesSquare, LogOut, MapPin,
+  PlusCircle, ClipboardList, MessagesSquare, LogOut, MapPin, Map, History, Settings,
 } from 'lucide-react';
 
 const NAV_GROUPS = [
   { label: 'Parcelas', items: [
     { id: 'cultivos', name: 'Mis parcelas', icon: MapPin },
+    { id: 'map', name: 'Mapas', icon: Map },
   ] },
   { label: 'Planificar', items: [
     { id: 'scenarios', name: 'Siembra', icon: Sprout },
@@ -17,9 +18,10 @@ const NAV_GROUPS = [
     { id: 'simular', name: 'Simular cosecha', icon: PlusCircle },
     { id: 'yield', name: 'Rendimiento', icon: TrendingUp },
     { id: 'finance', name: 'Finanzas', icon: DollarSign },
+    { id: 'history', name: 'Historial', icon: History },
   ] },
   { label: 'Campo', items: [{ id: 'campo', name: 'Abrir cuaderno de campo', icon: ClipboardList }] },
-  { label: 'Asistente', items: [{ id: 'asistente', name: 'Consultar al asistente', icon: MessagesSquare }] },
+  { label: 'Cuenta', items: [{ id: 'asistente', name: 'Consultar al asistente', icon: MessagesSquare }, { id: 'configuracion', name: 'Configuración', icon: Settings }] },
 ];
 
 function SidebarFurrows() {
@@ -77,7 +79,7 @@ export default function Sidebar({ vistaActual, setVistaActual, cerrarSesion, men
     <aside id="workspace-sidebar" className={`sidebar ${menuColapsado ? 'collapsed' : ''}`} aria-label="Navegación de ZeaSys" inert={menuMovil && menuColapsado ? true : undefined}>
       <div className="sidebar-logo">
         <PlatformLogo variant={menuColapsado ? 'mark' : 'wordmark'} size={34} />
-        <span className="sidebar-brand-caption">Centro de decisiones agrícolas</span>
+        <span className="sidebar-brand-caption">Gestión del cultivo de maíz</span>
       </div>
 
       <nav className="sidebar-navigation" aria-label="Secciones del sistema">
@@ -87,7 +89,7 @@ export default function Sidebar({ vistaActual, setVistaActual, cerrarSesion, men
             <ul className="sidebar-menu">
               {group.items.map((item) => {
                 const Icon = item.icon;
-                const active = (vistaActual === 'map' ? 'cultivos' : vistaActual === 'history' ? 'yield' : vistaActual) === item.id;
+                const active = vistaActual === item.id;
                 return (
                   <li key={item.id}>
                     <button

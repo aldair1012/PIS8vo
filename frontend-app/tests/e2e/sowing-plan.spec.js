@@ -67,3 +67,20 @@ for(const width of [390,944,1440])test(`la planificación y el análisis avanzad
   await expect(page.locator('.sowing-dashboard')).not.toContainText('Riesgo agronómico: No evaluado');
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
 });
+
+test('las fechas completan la duración, se corrigen y se conservan al reabrir el plan',async({page})=>{
+  const posted=await prepare(page);
+  await page.getByRole('button',{name:'Editar mi plan',exact:true}).click();
+  const form=page.getByRole('form',{name:'Editar planificación de la parcela'});
+  const end=form.getByLabel('Fecha prevista de cosecha', {exact:true});
+  const days=form.getByLabel('Duración del cultivo en días');
+  await end.fill('2027-03-31');
+  await expect(days).toHaveValue('31');
+  await days.fill('32');
+  await expect(end).toHaveValue('2027-04-01');
+  await form.getByRole('button',{name:'Guardar mi plan'}).click();
+  await expect(page.getByRole('status').filter({hasText:'Tu plan quedó guardado.'})).toBeVisible();
+  expect(posted[0]).toMatchObject({fecha_siembra:'2027-03-01',ciclo_dias:32});
+  await page.getByRole('button',{name:'Editar mi plan',exact:true}).click();
+  await expect(end).toHaveValue('2027-04-01');
+});

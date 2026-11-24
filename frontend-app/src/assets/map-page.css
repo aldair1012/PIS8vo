@@ -128,7 +128,7 @@
 }
 
 .map-page-shell .leaflet-control-attribution a {
-  color: #1f3b2c;
+  color: var(--zs-text, #102016);
   text-decoration: underline;
   text-underline-offset: 2px;
 }
@@ -191,7 +191,7 @@
   flex: 0 0 10px;
   border: 1px solid #fff;
   border-radius: 50% 50% 50% 0;
-  background: var(--swatch, #2c6e94);
+  background: var(--swatch, #345c50);
   transform: rotate(-45deg);
 }
 
@@ -200,16 +200,16 @@
   height: 10px;
   flex: 0 0 10px;
   border-radius: 50%;
-  background: var(--swatch, #2c6e94);
+  background: var(--swatch, #345c50);
 }
 
 .map-legend-swatch {
   width: 16px;
   height: 10px;
   flex: 0 0 16px;
-  border: 1px solid var(--swatch, #2c6e94);
+  border: 1px solid var(--swatch, #345c50);
   border-radius: 3px;
-  background: color-mix(in srgb, var(--swatch, #2c6e94) 22%, transparent);
+  background: color-mix(in srgb, var(--swatch, #345c50) 22%, transparent);
 }
 
 .map-legend-line {
@@ -217,7 +217,7 @@
   height: 2px;
   flex: 0 0 18px;
   border-radius: 2px;
-  background: var(--swatch, #9a4530);
+  background: var(--swatch, #a63b2e);
 }
 
 .map-legend-gradient {
@@ -225,7 +225,7 @@
   height: 11px;
   flex: 0 0 18px;
   border-radius: 3px;
-  background: linear-gradient(to bottom, #f4f1e8, #a8b5a0, #33453a);
+  background: linear-gradient(to bottom, #edede6, #88a092, #345c50);
 }
 
 /* Marcadores HTML de Leaflet */
@@ -237,7 +237,7 @@
   justify-content: center;
   border: 2px solid #fff;
   border-radius: 50% 50% 50% 0;
-  background: var(--marker-color, #2c6e94);
+  background: var(--marker-color, #345c50);
   box-shadow: 0 4px 12px rgba(6, 20, 12, 0.32);
   color: #fff;
   transform: rotate(-45deg);

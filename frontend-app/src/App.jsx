@@ -305,9 +305,6 @@ export default function App() {
     <div className="app-container zeasys-workspace">
       <a className="workspace-skip-link" href="#workspace-content">Ir al contenido</a>
       {/* Ambient background glow blobs for premium glassmorphism */}
-      <div className="ambient-glow-1"></div>
-      <div className="ambient-glow-2"></div>
-      <div className="ambient-glow-3"></div>
 
       {/* Sidebar Navigation */}
       <Sidebar

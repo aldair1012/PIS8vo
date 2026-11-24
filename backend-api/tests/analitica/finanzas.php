@@ -140,6 +140,20 @@ $pruebas['parcela ajena no consulta simulaciones'] = static function (): void {
     try { (new ServicioAnaliticaFinancial(new Cultivos(['usuario_id' => 8]), $repo))->construir(7, 1, null, peticion([])); throw new \RuntimeException('Debió negar acceso.'); }
     catch (AccesoDenegadoException) { comprobar($repo->consultas === [], 'Autorizar antesdeconsultar.'); }
 };
+$pruebas['fertilización usa el plan completo del mismo ciclo y conserva ceros y correcciones'] = static function (): void {
+    $lote = ['fecha_siembra' => '2026-02-10'];
+    $fila = static fn ($costos, $fecha) => ['id'=>8, 'rendimiento_estimado'=>3, 'escenarios_json'=>json_encode([
+        '_zeasys_modelo'=>['parcela_ejecucion'=>['fecha_siembra'=>$fecha]],
+        'plan_fertilizacion'=>array_map(static fn($n)=>['costo'=>$n], $costos),
+    ])];
+    $run = $fila([0, 12.5, 3.5], $lote['fecha_siembra']);
+    $r = fixture([$run], [], $lote);
+    comprobar($r['datos_base_sistema']['costo_fert'] === 16.0 && $r['supuestos']['simulacion_plan_fertilizacion'] === 8, 'Costo guardado en USD/ha.');
+    comprobar(fixture([$run], ['costo_fert'=>0], $lote)['datos_base_sistema']['costo_fert'] === 0.0, 'La corrección manual prevalece.');
+    foreach ([$fila([10,null], $lote['fecha_siembra']), $fila([10],'2025-02-10')] as $otra) {
+        comprobar(fixture([$otra], [], $lote)['supuestos']['simulacion_plan_fertilizacion'] === null, 'Una campaña distinta o incompleta no proporciona el presupuesto.');
+    }
+};
 $fallos = 0;
 foreach ($pruebas as $nombre => $prueba) {
     try { $prueba(); echo "[OK] {$nombre}\n"; }

@@ -50,6 +50,16 @@
   --zs-duration-slow: 520ms;
 
   /*
+   * Contenedor de la portada: ancho fluido con tope amplio. El contenido
+   * ocupa casi toda la pantalla en escritorio (1760px a 1920px de ancho)
+   * sin perder medida de lectura ni la alineación entre navbar, hero,
+   * secciones y footer. Un solo token evita que cada sección use su tope.
+   */
+  --home-max: 1760px;
+  --home-gutter: clamp(1.25rem, 4vw, 5rem);
+  --home-pad: max(var(--home-gutter), calc((100vw - var(--home-max)) / 2));
+
+  /*
    * Layer 2 - semantic tokens (dark, base). La dirección de arte del hero
    * es idéntica en ambos temas; el modo claro solo pinta las superficies
    * externas (ver el re-fijado de alias más abajo).
@@ -240,7 +250,7 @@
   max-width: none !important;
   height: 68px !important;
   margin: 0 !important;
-  padding: 0 max(1rem, calc((100vw - 1280px) / 2)) !important;
+  padding: 0 var(--home-pad) !important;
   color: var(--zs-text);
   border: 0 !important;
   border-bottom: 1px solid var(--zs-border) !important;
@@ -330,7 +340,7 @@
   width: 100%;
   max-width: none !important;
   margin: 0 !important;
-  padding: calc(var(--home-nav-height) + clamp(1.5rem, 4vh, 3rem)) max(1.25rem, calc((100vw - 1280px) / 2)) clamp(1.5rem, 4vh, 3rem) !important;
+  padding: calc(var(--home-nav-height) + clamp(1.5rem, 4vh, 3rem)) var(--home-pad) clamp(1.5rem, 4vh, 3rem) !important;
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(430px, .92fr);
   align-items: center;
@@ -352,7 +362,7 @@
 }
 
 .zeasys-home .zeasys-home-hero-copy {
-  max-width: 640px;
+  max-width: 700px;
   padding: 0;
 }
 
@@ -360,7 +370,7 @@
 .zeasys-home.zeasys-home--light .zeasys-home-hero h1,
 .zeasys-home .zeasys-home-hero h1 span,
 .zeasys-home.zeasys-home--light .zeasys-home-hero h1 span {
-  max-width: 640px;
+  max-width: 700px;
   margin: 0;
   color: #f7faf4 !important;
   -webkit-text-fill-color: #f7faf4 !important;
@@ -429,7 +439,7 @@
 /* The active face participates in flow, so neither the preview nor a longer
    access/registration form depends on a guessed fixed height. */
 .zeasys-home .zeasys-hero-flip {
-  width: min(100%, 640px) !important;
+  width: min(100%, 720px) !important;
   min-width: 0;
   min-height: 0 !important;
   margin: auto;
@@ -624,7 +634,7 @@
   max-width: none !important;
   min-height: 100svh !important;
   margin: 0 !important;
-  padding: clamp(5rem, 9vh, 7rem) max(1.25rem, calc((100vw - 1280px) / 2)) !important;
+  padding: clamp(5rem, 9vh, 7rem) var(--home-pad) !important;
   overflow: hidden;
   border: 0 !important;
   border-radius: 0 !important;
@@ -639,7 +649,7 @@
 .zeasys-home .zeasys-data-section > :not(.zeasys-agro-pattern) { position: relative; z-index: 1; }
 
 .zeasys-home .zeasys-section-heading {
-  width: min(100%, 1280px);
+  width: min(100%, var(--home-max));
   margin: 0 auto clamp(2rem, 5vh, 3.5rem);
   padding-bottom: var(--zs-space-5);
   border-bottom: 1px solid var(--zs-border);
@@ -662,8 +672,12 @@
 .zeasys-home .zeasys-section-heading p,
 .zeasys-home .zeasys-data-card-copy p { color: var(--zs-text-muted) !important; opacity: 1 !important; }
 
+/* Con el contenedor ampliado, el párrafo de introducción conserva una
+   medida de lectura legible en lugar de estirarse a todo el ancho. */
+.zeasys-home .zeasys-section-heading p { max-width: 72ch; }
+
 .zeasys-home .zeasys-capability-grid {
-  width: min(100%, 1280px);
+  width: min(100%, var(--home-max));
   margin: 0 auto;
   gap: clamp(1rem, 2vw, 1.5rem);
 }
@@ -774,7 +788,7 @@
 }
 
 .zeasys-home .zeasys-data-card--with-model {
-  width: min(100%, 1280px);
+  width: min(100%, var(--home-max));
   min-height: clamp(520px, 72vh, 760px);
   margin: 0 auto;
   padding: clamp(2rem, 5vw, 5rem);
@@ -811,10 +825,10 @@
 .zeasys-home .zeasys-home-footer .platform-logo-wordmark { color: #f1f7f0 !important; }
 .zeasys-home .zeasys-footer-main {
   width: 100%;
-  max-width: 1440px;
+  max-width: none;
   min-height: 0;
-  margin-inline: auto;
-  padding: clamp(3.5rem, 6vw, 5.25rem) clamp(1.5rem, 4vw, 4rem) clamp(3rem, 5vw, 4.5rem);
+  margin-inline: 0;
+  padding: clamp(3.5rem, 6vw, 5.25rem) var(--home-pad) clamp(3rem, 5vw, 4.5rem);
   grid-template-columns: minmax(320px, 1.45fr) repeat(3, minmax(150px, .7fr));
   column-gap: clamp(3rem, 6vw, 6.75rem);
   row-gap: 3rem;
@@ -823,10 +837,10 @@
 }
 .zeasys-home .zeasys-footer-bottom {
   width: 100%;
-  max-width: 1440px;
+  max-width: none;
   min-height: 56px;
-  margin-inline: auto;
-  padding: 1.15rem clamp(1.5rem, 4vw, 4rem);
+  margin-inline: 0;
+  padding: 1.15rem var(--home-pad);
   align-items: center;
   box-sizing: border-box;
 }

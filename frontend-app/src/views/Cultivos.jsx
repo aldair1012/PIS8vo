@@ -515,8 +515,8 @@ export default function Cultivos({ onCultivoChanged, onboardingStep, onNextOnboa
 
       {onboardingStep === 1 && (
         <div style={{
-          background: 'linear-gradient(135deg, rgba(37, 99, 235, 0.18) 0%, rgba(139, 92, 246, 0.15) 100%)',
-          border: '1.5px solid rgba(59, 130, 246, 0.4)',
+          background: 'linear-gradient(135deg, color-mix(in srgb, var(--zs-primary) 16%, transparent) 0%, color-mix(in srgb, var(--zs-secondary) 14%, transparent) 100%)',
+          border: '1.5px solid color-mix(in srgb, var(--zs-primary) 38%, transparent)',
           borderRadius: '10px',
           padding: '0.65rem 0.9rem',
           marginBottom: '0.75rem',
@@ -525,7 +525,7 @@ export default function Cultivos({ onCultivoChanged, onboardingStep, onNextOnboa
           gap: '0.75rem',
           flexShrink: 0
         }}>
-          <div style={{ background: '#3b82f6', color: '#fff', width: '28px', height: '28px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '0.85rem', flexShrink: 0 }}>1</div>
+          <div style={{ background: 'var(--zs-primary)', color: 'var(--zs-accent-contrast)', width: '28px', height: '28px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '0.85rem', flexShrink: 0 }}>1</div>
           <div style={{ flex: 1 }}>
             <h4 style={{ fontSize: '0.85rem', fontWeight: 800, margin: '0 0 0.15rem 0', color: 'var(--text-primary)' }}>
               ¡Bienvenido a ZeaSys! Paso 1 de 3: Registra tu Primera Parcela

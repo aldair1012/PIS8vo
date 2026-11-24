@@ -101,10 +101,10 @@ export default function History({ recargarDatos }) {
   const produccionTotal = toFiniteNumber(estadisticas.produccion_total);
 
   return (
-    <div style={{ width: '100%', paddingBottom: '2rem' }}>
+    <div className="history-page">
       <div className="dashboard-title-row" style={{ width: '100%', marginBottom: '1rem' }}>
         <div>
-          <h1 style={{ fontSize: '1.4rem', fontWeight: 800, margin: 0 }}>Historial de simulaciones</h1>
+          <h1>Historial de simulaciones</h1>
           <p className="dashboard-title-desc" style={{ marginTop: '4px', fontSize: '0.84rem' }}>Revisa y compara tus simulaciones anteriores para monitorear la evolución agronómica de tus lotes.</p>
         </div>
         
@@ -143,7 +143,7 @@ export default function History({ recargarDatos }) {
             isMissing={totalSimulaciones === null}
             trend={totalSimulaciones === null ? 'Sin dato' : 'Registradas'}
             progress={null}
-            progressColor="linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%)"
+            progressColor="linear-gradient(90deg, var(--zs-primary) 0%, var(--zs-secondary) 100%)"
             progressLabelLeft="Activas"
             delay={0}
           />
@@ -155,7 +155,7 @@ export default function History({ recargarDatos }) {
             isMissing={rendimientoPromedio === null}
             trend={rendimientoPromedio === null ? 'Sin dato' : 'Promedio'}
             progress={null}
-            progressColor="linear-gradient(90deg, #16a34a 0%, #34d399 100%)"
+            progressColor="linear-gradient(90deg, var(--zs-success) 0%, var(--zs-secondary) 100%)"
             progressLabelLeft="General"
             delay={1}
           />
@@ -167,7 +167,7 @@ export default function History({ recargarDatos }) {
             isMissing={rendimientoMaximo === null}
             trend={rendimientoMaximo === null ? 'Sin dato' : 'Récord'}
             progress={null}
-            progressColor="linear-gradient(90deg, #863bff 0%, #a855f7 100%)"
+            progressColor="linear-gradient(90deg, var(--zs-warning) 0%, var(--zs-accent) 100%)"
             progressLabelLeft="Límite"
             delay={2}
           />
@@ -179,7 +179,7 @@ export default function History({ recargarDatos }) {
             isMissing={produccionTotal === null}
             trend={produccionTotal === null ? 'Sin dato' : 'Acumulada'}
             progress={null}
-            progressColor="linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%)"
+            progressColor="linear-gradient(90deg, var(--zs-primary) 0%, var(--zs-secondary) 100%)"
             progressLabelLeft="Total de lotes"
             delay={3}
           />

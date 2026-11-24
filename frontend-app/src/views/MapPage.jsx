@@ -3,6 +3,7 @@ import { Sprout, Ruler } from 'lucide-react';
 import '../utils/mapRuntime';
 import '../assets/map-page.css';
 import { observarTamanoMapa } from '../utils/mapAccessibility';
+import { getDashboardChartColors } from '../utils/chartConfig';
 
 const DEFAULT_LAT = -1.8312;
 const DEFAULT_LNG = -78.1834;
@@ -15,13 +16,16 @@ const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (character
   "'": '&#039;'
 })[character]);
 
-// Paleta compartida con los gráficos del informe. Los colores no codifican
-// una predicción: solo identifican capas y rangos registrados.
+// Paleta compartida con los gráficos del informe (V5: petróleo, salvia,
+// maíz y riesgo). Los tiles de Leaflet son claros en ambos temas, por lo
+// que se usan los valores de tema claro. Los colores no codifican una
+// predicción: solo identifican capas y rangos registrados.
+const chartTheme = getDashboardChartColors(true);
 const MAP_COLORS = {
-  sky: '#2C6E94',
-  maize: '#8A6A1C',
-  forest: '#1F5C38',
-  clay: '#9A4530'
+  sky: chartTheme.primary,
+  maize: chartTheme.maize,
+  forest: chartTheme.leaf,
+  clay: chartTheme.risk
 };
 
 const svgIcon = (paths) => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths}</svg>`;

@@ -24,17 +24,13 @@ html:has(.zeasys-workspace) { font-size: 100%; }
   /* Semantic theme tokens (ZeaSys V5: Calm Agricultural Premium - 6 colors). */
   --zs-page: var(--zs-bg, #181C1A);
   --zs-sidebar: var(--zs-surface, #252D29);
-  --zs-surface: var(--zs-surface, #252D29);
   --zs-inset-surface: color-mix(in srgb, var(--zs-surface, #252D29) 88%, var(--zs-bg, #181C1A) 12%);
   --zs-raised: color-mix(in srgb, var(--zs-surface, #252D29) 80%, var(--zs-primary, #4D766A) 20%);
-  --zs-text: var(--zs-text, #F3F1EB);
   --zs-muted: var(--zs-text-muted, color-mix(in srgb, var(--zs-text, #F3F1EB) 78%, var(--zs-bg, #181C1A)));
   --zs-faint: var(--zs-text-faint, color-mix(in srgb, var(--zs-text, #F3F1EB) 55%, var(--zs-bg, #181C1A)));
-  --zs-border: var(--zs-border, color-mix(in srgb, var(--zs-text, #F3F1EB) 15%, transparent));
-  --zs-border-strong: var(--zs-border-strong, color-mix(in srgb, var(--zs-text, #F3F1EB) 25%, transparent));
   --zs-accent: var(--zs-primary, #4D766A);
   --zs-accent-contrast: #F3F1EB;
-  --zs-maize: var(--zs-accent, #E9B949);
+  --zs-maize: #E9B949;
   --zs-success: var(--zs-secondary, #88A092);
   --zs-warning: #E9B949;
   --zs-danger: #e5a379;
@@ -82,14 +78,14 @@ html:has(.zeasys-workspace) { font-size: 100%; }
 }
 
 .light-theme .zeasys-workspace {
-  --zs-page: #FAF9F8;
+  --zs-page: #E7E6E1;
   --zs-sidebar: #FAF9F8;
   --zs-surface: #FAF9F8;
   --zs-inset-surface: #E7E6E1;
   --zs-raised: color-mix(in srgb, #E7E6E1 72%, #FAF9F8 28%);
   --zs-text: #222523;
   --zs-muted: color-mix(in srgb, #222523 76%, #FAF9F8);
-  --zs-faint: color-mix(in srgb, #222523 55%, #FAF9F8);
+  --zs-faint: color-mix(in srgb, var(--zs-text) 70%, var(--zs-page));
   --zs-border: color-mix(in srgb, #222523 14%, transparent);
   --zs-border-strong: color-mix(in srgb, #222523 24%, transparent);
   --zs-accent: #345C50;
@@ -98,7 +94,7 @@ html:has(.zeasys-workspace) { font-size: 100%; }
   --zs-success: #345C50;
   --zs-warning: #E9B949;
   --zs-danger: #a63b2e;
-  --zs-info: #7C9084;
+  --zs-info: var(--zs-accent);
   --zs-focus: #345C50;
   --zs-shadow-raised: 0 4px 14px rgba(34, 37, 35, .06);
   --zs-shadow-inset: none;

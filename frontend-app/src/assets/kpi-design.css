@@ -3,7 +3,6 @@
 
 .zeasys-workspace .kpi-card,
 .zeasys-workspace .ydp-dashboard .ydp-metric {
-  --zs-text: var(--zs-text, #F3F1EB);
   --zs-accent: var(--zs-primary, #4D766A);
   --zs-muted: var(--zs-text-muted, rgba(243, 241, 235, .75));
   --zs-faint: var(--zs-text-faint, rgba(243, 241, 235, .5));

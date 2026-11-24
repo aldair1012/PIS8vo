@@ -51,7 +51,7 @@
 .zeasys-workspace #zeasys-chat-panel .zeasys-chat-answer pre { overflow:auto;white-space:pre-wrap;font-size:.875rem; }
 .zeasys-workspace #zeasys-chat-panel .zeasys-chat-research-badge { display:inline-flex;align-items:center;font-size:.75rem;color:var(--zs-info);padding:3px 7px;border:1px solid var(--zs-border);border-radius:6px; }
 .zeasys-workspace #zeasys-chat-panel .zeasys-chat-sources { margin-top:12px;border:1px solid var(--zs-border);border-radius:10px;background:var(--chat-surface);padding:0 12px;color:var(--zs-muted);font-size:.875rem; }
-.zeasys-workspace #zeasys-chat-panel .zeasys-chat-sources summary { cursor:pointer;min-height:44px;padding:12px 0;font-size:.875rem;font-weight:600; }
+.zeasys-workspace #zeasys-chat-panel .zeasys-chat-sources summary { color:var(--zs-text);cursor:pointer;min-height:44px;padding:12px 0;font-size:.875rem;font-weight:600; }
 .zeasys-workspace #zeasys-chat-panel .zeasys-chat-sources p { font-size:.875rem;line-height:1.6; }
 .zeasys-workspace #zeasys-chat-panel .zeasys-chat-sources ul { list-style:none;padding:0;margin:0; }
 .zeasys-workspace #zeasys-chat-panel .zeasys-chat-sources li { padding:10px 0;border-top:1px solid var(--zs-border);line-height:1.6;overflow-wrap:anywhere; }

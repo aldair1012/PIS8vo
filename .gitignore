@@ -39,6 +39,8 @@ Thumbs.db
 # Resultados locales de Playwright
 frontend-app/test-results/
 frontend-app/playwright-report/
+/test-results/
+/playwright-report/
 
 # Configuración local privada de la prueba Docker
 docker/.env

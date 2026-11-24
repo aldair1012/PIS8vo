@@ -89,12 +89,16 @@ test('un fallo al actualizar después de guardar no oculta el plan confirmado',a
 test('al cambiar de tema la ubicación y tamaño de los elementos permanecen estables',async({page})=>{
   await prepare(page);const elements=['.sowing-page-header','#sowing-main-plan','.sowing-dates','.sowing-campaign-summary'];const before=[];for(const selector of elements)before.push(await page.locator(selector).boundingBox());
   await page.getByRole('button',{name:'Activar modo oscuro',exact:true}).click();
+  for(let i=0;i<elements.length;i++){
+    const after=await page.locator(elements[i]).boundingBox();
+    console.log('MEASURE:', elements[i], 'BEFORE:', JSON.stringify(before[i]), 'AFTER:', JSON.stringify(after));
+  }
   for(let i=0;i<elements.length;i++){const after=await page.locator(elements[i]).boundingBox();for(const dimension of ['x','y','width','height'])expect(Math.abs(after[dimension]-before[i][dimension])).toBeLessThan(1);}
 });
 for(const theme of ['light','dark'])test(`el calendario y sus detalles usan el tema y mantienen controles accesibles: ${theme}`,async({page})=>{
   await prepare(page,{width:375,theme});await page.getByRole('button',{name:'Ver mis fechas en calendario',exact:true}).click();
   const previous=await page.getByRole('button',{name:'Mes anterior',exact:true}).boundingBox();expect(previous.height).toBeGreaterThanOrEqual(44);expect(previous.width).toBeGreaterThanOrEqual(44);
-  await page.getByRole('button',{name:'1 de enero de 2027: Siembra prevista',exact:true}).click();const detail=page.getByRole('status',{name:'Detalle del calendario de la parcela'});await expect(detail).toBeVisible();expect(await detail.evaluate(node=>getComputedStyle(node).backgroundColor)).not.toBe('rgba(0, 0, 0, 0)');
+  await page.getByRole('button',{name:'1 de enero de 2027: Siembra prevista',exact:true}).click();const detail=page.getByRole('status',{name:'Detalle del calendario de la parcela'});await expect(detail).toBeVisible();console.log('THEME:', theme, 'BG COLOR:', await detail.evaluate(node=>getComputedStyle(node).backgroundColor), 'COMPUTED BG:', await detail.evaluate(node=>getComputedStyle(node).background));expect(await detail.evaluate(node=>getComputedStyle(node).backgroundColor)).not.toBe('rgba(0, 0, 0, 0)');
   await page.keyboard.press('Escape');await expect(page.getByRole('button',{name:'1 de enero de 2027: Siembra prevista',exact:true})).toBeFocused();expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
 });
 

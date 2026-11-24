@@ -38,7 +38,7 @@ export default function InteractiveKPI({
   valueStyle = {},
   tooltip,
   progress,
-  progressColor = '#9fc862',
+  progressColor = 'var(--zs-primary)',
   onClick,
   onExplain,
   delay = 0,
@@ -60,7 +60,7 @@ export default function InteractiveKPI({
       value: value ?? "-",
       trend: trend ?? "",
       progress: progress ?? null,
-      progressColor: progressColor ?? '#9fc862',
+      progressColor: progressColor ?? 'var(--zs-primary)',
       progressLabelLeft: progressLabelLeft ?? "",
     progressLabelRight: progressLabelRight ?? "",
       sparklineData: sparklineData ?? null,
@@ -71,7 +71,7 @@ export default function InteractiveKPI({
     value: slide.value ?? "-",
     trend: slide.trend ?? "",
     progress: slide.progress ?? null,
-    progressColor: slide.progressColor ?? '#9fc862',
+    progressColor: slide.progressColor ?? 'var(--zs-primary)',
     progressLabelLeft: slide.progressLabelLeft ?? "",
     progressLabelRight: slide.progressLabelRight ?? "",
     sparklineData: slide.sparklineData ?? null,
@@ -103,7 +103,7 @@ export default function InteractiveKPI({
   // Los indicadores no cambian de significado sin intervención del usuario.
 
   // Helper to render versatile SVG Mini Charts (Line, Bar, Donut Ring)
-  const renderMiniChart = (chartConfig, defaultColor = '#9fc862') => {
+  const renderMiniChart = (chartConfig, defaultColor = 'var(--zs-primary)') => {
     if (!chartConfig) return null;
 
     // Normalize input: if chartConfig is an array, treat as sparkline data
@@ -112,14 +112,14 @@ export default function InteractiveKPI({
     const chartType = !isArray && chartConfig.type ? chartConfig.type : 'line';
     const color = !isArray && chartConfig.color ? chartConfig.color : defaultColor;
 
-    // Determine vivid stroke/fill color
+    // V5: los gradientes usan tokens del tema; se extrae el token para el trazo SVG.
     let strokeColor = color;
     if (typeof color === 'string' && color.includes('gradient')) {
-      if (color.includes('#863bff') || color.includes('#a855f7')) strokeColor = '#c084fc';
-      else if (color.includes('#10b981') || color.includes('#34d399')) strokeColor = '#34d399';
-      else if (color.includes('#ef4444') || color.includes('#f87171')) strokeColor = '#f87171';
-      else if (color.includes('#f59e0b') || color.includes('#fbbf24')) strokeColor = '#fbbf24';
-      else strokeColor = '#60a5fa';
+      if (color.includes('--zs-primary')) strokeColor = 'var(--zs-primary)';
+      else if (color.includes('--zs-secondary')) strokeColor = 'var(--zs-secondary)';
+      else if (color.includes('--zs-warning') || color.includes('--zs-maize')) strokeColor = 'var(--zs-warning)';
+      else if (color.includes('--zs-danger')) strokeColor = 'var(--zs-danger)';
+      else strokeColor = 'var(--zs-secondary)';
     }
 
     const gradId = `kpi-mini-grad-${componentId}-${String(strokeColor).replace(/[^a-zA-Z0-9]/g, '')}`;
@@ -136,25 +136,18 @@ export default function InteractiveKPI({
 
       return (
         <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ overflow: 'visible', flexShrink: 0 }}>
-          <defs>
-            <filter id={`ring-glow-${gradId}`}>
-              <feDropShadow dx="0" dy="1" stdDeviation="2" floodColor={strokeColor} floodOpacity="0.65" />
-            </filter>
-          </defs>
           <circle cx={center} cy={center} r={radius} fill="none" stroke="var(--zs-border-strong)" strokeWidth={strokeWidth} />
           <circle
             cx={center}
             cy={center}
             r={radius}
             fill="none"
-            stroke={strokeColor}
             strokeWidth={strokeWidth}
             strokeDasharray={circumference}
             strokeDashoffset={strokeDashoffset}
             strokeLinecap="round"
             transform={`rotate(-90 ${center} ${center})`}
-            filter={`url(#ring-glow-${gradId})`}
-            style={{ transition: 'stroke-dashoffset 0.8s cubic-bezier(0.16, 1, 0.3, 1)' }}
+            style={{ stroke: strokeColor, transition: 'stroke-dashoffset 0.8s cubic-bezier(0.16, 1, 0.3, 1)' }}
           />
           <text x="50%" y="54%" textAnchor="middle" dominantBaseline="middle" fill="currentColor" fontSize="9px" fontWeight="800">
             {Math.round(percent)}%
@@ -175,12 +168,9 @@ export default function InteractiveKPI({
         <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} style={{ overflow: 'visible', flexShrink: 0 }}>
           <defs>
             <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor={strokeColor} stopOpacity="0.95" />
-              <stop offset="100%" stopColor={strokeColor} stopOpacity="0.35" />
+              <stop offset="0%" style={{ stopColor: strokeColor }} stopOpacity="0.95" />
+              <stop offset="100%" style={{ stopColor: strokeColor }} stopOpacity="0.35" />
             </linearGradient>
-            <filter id={`bar-glow-${gradId}`}>
-              <feDropShadow dx="0" dy="1" stdDeviation="2" floodColor={strokeColor} floodOpacity="0.5" />
-            </filter>
           </defs>
           {data.map((val, idx) => {
             const barHeight = Math.max(4, (Math.abs(val) / max) * (height - 4));
@@ -195,7 +185,6 @@ export default function InteractiveKPI({
                 height={barHeight}
                 rx={2}
                 fill={`url(#${gradId})`}
-                filter={`url(#bar-glow-${gradId})`}
               />
             );
           })}
@@ -222,22 +211,18 @@ export default function InteractiveKPI({
       <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} style={{ overflow: 'visible', flexShrink: 0 }}>
         <defs>
           <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={strokeColor} stopOpacity="0.5" />
-            <stop offset="100%" stopColor={strokeColor} stopOpacity="0.02" />
+            <stop offset="0%" style={{ stopColor: strokeColor }} stopOpacity="0.5" />
+            <stop offset="100%" style={{ stopColor: strokeColor }} stopOpacity="0.02" />
           </linearGradient>
-          <filter id={`glow-${gradId}`} x="-20%" y="-20%" width="140%" height="140%">
-            <feDropShadow dx="0" dy="2" stdDeviation="3" floodColor={strokeColor} floodOpacity="0.65" />
-          </filter>
         </defs>
         <path d={areaD} fill={`url(#${gradId})`} />
         <path
           d={pathD}
           fill="none"
-          stroke={strokeColor}
           strokeWidth="2.5"
           strokeLinecap="round"
           strokeLinejoin="round"
-          filter={`url(#glow-${gradId})`}
+          style={{ stroke: strokeColor }}
         />
       </svg>
     );

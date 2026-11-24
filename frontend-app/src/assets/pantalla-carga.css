@@ -5,7 +5,7 @@
 .zs-carga {
   --carga-panel: var(--zs-surface, #103221);
   --carga-inset: var(--zs-inset-surface, #061a0f);
-  --carga-maiz: var(--zi-maize-400, #d8a83f);
+  --carga-maiz: var(--zs-maize, #E9B949);
   display: grid;
   justify-items: center;
   align-content: center;

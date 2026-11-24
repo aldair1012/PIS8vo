@@ -8,7 +8,7 @@ const fields={date:'sowing-plan-date',kind:'sowing-plan-kind',harvest:'sowing-pl
 const today = () => new Intl.DateTimeFormat('sv-SE',{timeZone:'America/Guayaquil',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
 
 export default function SowingPlanForm({ plot, suggestion, onSaved, onCancel }) {
-  const [period,setPeriod]=useState(() => periodoCultivo(plot.fecha_siembra, plot.ciclo_dias));
+  const [period,setPeriod]=useState(() => periodoCultivo(plot.fecha_siembra, plot.ciclo_dias ?? (plot.fecha_siembra && plot.fecha_siembra === suggestion?.start ? suggestion.cycle : null)));
   const { fecha: date, dias: cycle, cosecha: end } = period;
   const [kind,setKind]=useState(plot.tipo_fecha_siembra || '');
   const [irrigation,setIrrigation]=useState(plot.riego_tipo || '');
@@ -18,7 +18,9 @@ export default function SowingPlanForm({ plot, suggestion, onSaved, onCancel }) 
   const [usedSuggestion,setUsedSuggestion]=useState(false);
   const errorRef=useRef(null), submitting=useRef(false);
   const updatePeriod = (field, value) => {
-    setPeriod(previous => editarPeriodo(previous, field, value));
+    const next = editarPeriodo(period, field, value);
+    if (next.fecha && next.fecha !== date && next.calculado === 'fecha') setKind('prevista');
+    setPeriod(next);
     setErrors(previous => ({ ...previous, date: undefined, cycle: undefined, harvest: undefined }));
     setServerError('');
   };
@@ -46,7 +48,8 @@ export default function SowingPlanForm({ plot, suggestion, onSaved, onCancel }) 
   return <form className="sowing-plan-form" aria-label="Editar planificación de la parcela" noValidate onSubmit={submit}>
     <header><h3>Completa tu plan</h3><p>Guarda lo que ya sabes. Puedes dejar la duración y el riego pendientes si aún no los conoces.</p></header>
     {(Object.values(errors).some(Boolean)||serverError)&&<div ref={errorRef} className="sowing-form-errors" role="alert" tabIndex={-1}><strong>Revisa estos datos para continuar</strong>{serverError&&<p>{serverError}</p>}<ul>{Object.entries(errors).filter(([,message])=>message).map(([field,message])=><li key={field}><a href={`#${fields[field]}`} onClick={event=>{event.preventDefault();document.getElementById(fields[field])?.focus();}}>{message}</a></li>)}</ul></div>}
-    {suggestion && (suggestion.fromSimulation || suggestion.durationFromSimulation) && !usedSuggestion && <div className="sowing-suggestion"><Info size={20} aria-hidden="true"/><div><p>Hay una fecha o duración usada en una simulación. Puedes copiarla y revisarla antes de guardar.</p><button type="button" className="sowing-secondary" disabled={saving} onClick={()=>{if(!date&&suggestion.start)setKind('prevista');setPeriod(periodoCultivo(date || suggestion.start, cycle || ((date || suggestion.start) === suggestion.start ? suggestion.cycle : '')));setUsedSuggestion(true);setErrors({});}}>Usar los datos de esa simulación</button></div></div>}
+    {suggestion && suggestion.fromSimulation && !usedSuggestion && <div className="sowing-suggestion"><Info size={20} aria-hidden="true"/><div><p>Hay una fecha o duración usada en una simulación. Puedes copiarla y revisarla antes de guardar.</p><button type="button" className="sowing-secondary" disabled={saving} onClick={()=>{if(!date&&suggestion.start)setKind('prevista');setPeriod(periodoCultivo(date || suggestion.start, cycle || ((date || suggestion.start) === suggestion.start ? suggestion.cycle : '')));setUsedSuggestion(true);setErrors({});}}>Usar los datos de esa simulación</button></div></div>}
+    {plot.fecha_siembra && suggestion?.durationFromSimulation && <p>La duración propuesta procede de una simulación con esta misma fecha de siembra. Puedes ajustarla antes de guardar.</p>}
     <div className="sowing-plan-fields">
       <div><label htmlFor={fields.date}>Fecha de siembra</label><p id={`${fields.date}-hint`}>El día que planeas sembrar o el día que ya sembraste.</p><input id={fields.date} type="date" min="2000-01-01" max="2100-12-31" value={date} disabled={saving} {...a11y('date')} onChange={event=>{updatePeriod('fecha',event.target.value);}}/>{inlineError('date')}</div>
       <div><label htmlFor={fields.kind}>¿Ya sembraste en esa fecha?</label><p id={`${fields.kind}-hint`}>Esto distingue un plan de una siembra que ya realizaste.</p><select id={fields.kind} value={kind} disabled={saving||!date} {...a11y('kind')} onChange={event=>{setKind(event.target.value);clear('kind');clear('date');}}><option value="">Elige una opción</option><option value="prevista">Voy a sembrar (fecha prevista)</option><option value="real_declarada">Ya sembré (fecha realizada)</option></select>{inlineError('kind')}</div>

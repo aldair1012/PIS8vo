@@ -157,3 +157,32 @@ test('las tarjetas financieras conservan la explicación directa sin un botón a
   await expect(page.getByRole('dialog', { name: /Información de/ })).toBeVisible();
   expect(sent[0].nombre).toBe('Margen neto estimado');
 });
+
+test('Finanzas distingue el costo del plan, una corrección a cero y una campaña sin datos', async ({ page }) => {
+  await prepare(page, { view: 'Rendimiento' });
+  const consultas = [];
+  let hayPlan = true;
+  await page.route('**/api/financiero?*', route => {
+    const params = new URL(route.request().url()).searchParams;
+    consultas.push(params.get('costo_fert'));
+    return route.fulfill({ json: hayPlan ? {
+      datos_base_sistema: { costo_fert: Number(params.get('costo_fert') ?? 72) },
+      supuestos: { simulacion_plan_fertilizacion: params.has('costo_fert') ? null : 25 },
+    } : { sin_datos: true } });
+  });
+  await page.getByRole('button', { name: 'Finanzas', exact: true }).click();
+  const costo = page.locator('#finanzas-fertilizacion');
+  await expect(costo).toHaveValue('72');
+  await expect(page.getByText('Plan guardado en la simulación #25', { exact: false })).toBeVisible();
+  await costo.fill('0');
+  await page.getByRole('button', { name: 'Calcular', exact: true }).click();
+  await expect.poll(() => consultas.at(-1)).toBe('0');
+  await expect(costo).toHaveValue('0');
+  const restaurar = page.getByRole('button', { name: 'Usar valores del análisis' });
+  await restaurar.click();
+  await expect(costo).toHaveValue('72');
+  expect(consultas.at(-1)).toBeNull();
+  hayPlan = false;
+  await restaurar.click();
+  await expect(costo).toHaveValue('');
+});

@@ -31,6 +31,7 @@ export default function DashboardFinance({ cultivoElegidoId, provinciaParcela, a
   const data = snapshot?.key === selectionKey ? snapshot.data : null;
   const currentRequest = useRef(0);
   const inputVersion = useRef(0);
+  const camposEditados = useRef(new Set());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -51,7 +52,9 @@ export default function DashboardFinance({ cultivoElegidoId, provinciaParcela, a
   const [otrosVar, setOtrosVar] = useState('');
   const [costosFijos, setCostosFijos] = useState('');
 
-  const handleInput = (setter) => (e) => {
+  const handleInput = (e, setter) => {
+    if (e.target.value === '') { camposEditados.current.delete(setter); }
+    else { camposEditados.current.add(setter); }
     ++inputVersion.current;
     setActivePreset(null);
     let raw = e.target.value;
@@ -90,29 +93,29 @@ export default function DashboardFinance({ cultivoElegidoId, provinciaParcela, a
       const res = await dssService.getFinancieroData({
         parcelaId: cultivoElegidoId,
         año: añoSeleccionado,
-        precioMaizQq: financeInputNumber(pQq),
-        rendimientoQq: financeInputNumber(rQq),
-        costoSemilla: financeInputNumber(cSem),
-        costoFert: financeInputNumber(cFert),
-        costoRiego: financeInputNumber(cRiego),
-        costoProteccion: financeInputNumber(cProt),
-        otrosVar: financeInputNumber(cOtros),
-        costosFijos: financeInputNumber(cFijos)
+        precioMaizQq: camposEditados.current.has(setPrecioMaizQq) ? financeInputNumber(pQq) : null,
+        rendimientoQq: camposEditados.current.has(setRendimientoQq) ? financeInputNumber(rQq) : null,
+        costoSemilla: camposEditados.current.has(setCostoSemilla) ? financeInputNumber(cSem) : null,
+        costoFert: camposEditados.current.has(setCostoFert) ? financeInputNumber(cFert) : null,
+        costoRiego: camposEditados.current.has(setCostoRiego) ? financeInputNumber(cRiego) : null,
+        costoProteccion: camposEditados.current.has(setCostoProteccion) ? financeInputNumber(cProt) : null,
+        otrosVar: camposEditados.current.has(setOtrosVar) ? financeInputNumber(cOtros) : null,
+        costosFijos: camposEditados.current.has(setCostosFijos) ? financeInputNumber(cFijos) : null
       });
       if (request !== currentRequest.current) return;
       setSnapshot({ key: requestKey, data: res });
 
-      // Autorrellenar casillas automáticamente con los datos calculados del sistema si están vacías
-      if (res?.datos_base_sistema && inputVersion.current === editsAtRequest) {
-        const base = res.datos_base_sistema;
-        if (pQq === '' || pQq === null) setPrecioMaizQq(financeInputText(base.precio_maiz_qq));
-        if (rQq === '' || rQq === null) setRendimientoQq(financeInputText(base.rendimiento_qq));
-        if (cSem === '' || cSem === null) setCostoSemilla(financeInputText(base.costo_semilla));
-        if (cFert === '' || cFert === null) setCostoFert(financeInputText(base.costo_fert));
-        if (cRiego === '' || cRiego === null) setCostoRiego(financeInputText(base.costo_riego));
-        if (cProt === '' || cProt === null) setCostoProteccion(financeInputText(base.costo_proteccion));
-        if (cOtros === '' || cOtros === null) setOtrosVar(financeInputText(base.otros_var));
-        if (cFijos === '' || cFijos === null) setCostosFijos(financeInputText(base.costos_fijos));
+      if ((res?.datos_base_sistema || res?.sin_datos) && inputVersion.current === editsAtRequest) {
+        const base = res.datos_base_sistema ?? {};
+        const sugerencias = [
+          [setPrecioMaizQq, base.precio_maiz_qq], [setRendimientoQq, base.rendimiento_qq],
+          [setCostoSemilla, base.costo_semilla], [setCostoFert, base.costo_fert],
+          [setCostoRiego, base.costo_riego], [setCostoProteccion, base.costo_proteccion],
+          [setOtrosVar, base.otros_var], [setCostosFijos, base.costos_fijos],
+        ];
+        for (const [setValor, valor] of sugerencias) {
+          if (!camposEditados.current.has(setValor)) setValor(financeInputText(valor));
+        }
       }
     } catch {
       if (request === currentRequest.current) setError('Error al cargar análisis financiero.');
@@ -140,6 +143,7 @@ export default function DashboardFinance({ cultivoElegidoId, provinciaParcela, a
 
   useEffect(() => {
     ++currentRequest.current;
+    camposEditados.current.clear();
     const refresh = setTimeout(() => {
       setPrecioMaizQq('');
       setRendimientoQq('');
@@ -177,37 +181,8 @@ export default function DashboardFinance({ cultivoElegidoId, provinciaParcela, a
 
   const handleAutoFillAll = () => {
     setActivePreset(null);
-    if (data && data.datos_base_sistema) {
-      const base = data.datos_base_sistema;
-      const p = financeInputText(base.precio_maiz_qq);
-      const r = financeInputText(base.rendimiento_qq);
-      const s = financeInputText(base.costo_semilla);
-      const f = financeInputText(base.costo_fert);
-      const rg = financeInputText(base.costo_riego);
-      const pr = financeInputText(base.costo_proteccion);
-      const ot = financeInputText(base.otros_var);
-      const fj = financeInputText(base.costos_fijos);
-
-      setPrecioMaizQq(p);
-      setRendimientoQq(r);
-      setCostoSemilla(s);
-      setCostoFert(f);
-      setCostoRiego(rg);
-      setCostoProteccion(pr);
-      setOtrosVar(ot);
-      setCostosFijos(fj);
-
-      loadDataWithParams({
-        precioMaizQq: p,
-        rendimientoQq: r,
-        costoSemilla: s,
-        costoFert: f,
-        costoRiego: rg,
-        costoProteccion: pr,
-        otrosVar: ot,
-        costosFijos: fj
-      });
-    }
+    camposEditados.current.clear();
+    loadDataWithParams();
   };
 
   const preview = financeBudgetPreview({ precioMaizQq, rendimientoQq, costoSemilla, costoFert, costoRiego, costoProteccion, otrosVar, costosFijos }, data?.kpis?.area_parcela ?? data?.datos_base_sistema?.area_parcela);
@@ -232,6 +207,7 @@ export default function DashboardFinance({ cultivoElegidoId, provinciaParcela, a
       p = { rend: '130', semilla: '120', fert: '210', riego: '80', proteccion: '75', otros: '110', fijos: '150' };
     }
     if (!p) return;
+    for (const setter of [setRendimientoQq, setCostoSemilla, setCostoFert, setCostoRiego, setCostoProteccion, setOtrosVar, setCostosFijos]) camposEditados.current.add(setter);
     p.precio = financeInputText(precioMaizQq) || financeInputText(data?.datos_base_sistema?.precio_maiz_qq);
 
     setPrecioMaizQq(p.precio);
@@ -296,9 +272,9 @@ export default function DashboardFinance({ cultivoElegidoId, provinciaParcela, a
     if (marginVal < 0) {
       return {
         background: isLight 
-          ? 'linear-gradient(135deg, rgba(254, 226, 226, 0.95) 0%, rgba(254, 202, 202, 0.65) 100%)' 
-          : 'linear-gradient(135deg, rgba(239, 68, 68, 0.28) 0%, rgba(239, 68, 68, 0.12) 100%)',
-        border: isLight ? '1.5px solid #e5a379' : '1.5px solid rgba(239, 68, 68, 0.55)',
+          ? 'linear-gradient(135deg, var(--zs-surface) 0%, color-mix(in srgb, var(--zs-surface) 90%, var(--zs-text) 10%)' 
+          : 'linear-gradient(135deg, var(--zs-surface) 0%, rgba(239, 68, 68, 0.28))',
+        border: isLight ? '1.5px solid var(--zs-warning)' : '1.5px solid rgba(239, 68, 68, 0.55)',
         color: isLight ? '#991b1b' : '#fca5a5',
         boxShadow: isLight ? '0 2px 8px rgba(239, 68, 68, 0.12)' : '0 4px 12px rgba(239, 68, 68, 0.18)'
       };
@@ -306,8 +282,8 @@ export default function DashboardFinance({ cultivoElegidoId, provinciaParcela, a
     if (marginVal <= 250) {
       return {
         background: isLight 
-          ? 'linear-gradient(135deg, rgba(254, 243, 199, 0.95) 0%, rgba(253, 230, 138, 0.65) 100%)' 
-          : 'linear-gradient(135deg, rgba(245, 158, 11, 0.28) 0%, rgba(245, 158, 11, 0.12) 100%)',
+          ? 'linear-gradient(135deg, var(--zs-surface) 0%, color-mix(in srgb, var(--zs-surface) 90%, var(--zs-text) 10%)' 
+          : 'linear-gradient(135deg, var(--zs-surface) 0%, rgba(245, 158, 11, 0.28))',
         border: isLight ? '1.5px solid #b78425' : '1.5px solid rgba(245, 158, 11, 0.55)',
         color: isLight ? '#78350f' : '#fde047',
         boxShadow: isLight ? '0 2px 8px rgba(245, 158, 11, 0.12)' : '0 4px 12px rgba(245, 158, 11, 0.18)'
@@ -315,8 +291,8 @@ export default function DashboardFinance({ cultivoElegidoId, provinciaParcela, a
     }
     return {
       background: isLight 
-        ? 'linear-gradient(135deg, rgba(220, 252, 231, 0.95) 0%, rgba(187, 247, 208, 0.65) 100%)' 
-        : 'linear-gradient(135deg, rgba(16, 185, 129, 0.28) 0%, rgba(16, 185, 129, 0.12) 100%)',
+        ? 'linear-gradient(135deg, var(--zs-surface) 0%, var(--zs-border))' 
+        : 'linear-gradient(135deg, var(--zs-surface) 0%, rgba(16, 185, 129, 0.28))',
       border: isLight ? '1.5px solid #4ade80' : '1.5px solid rgba(16, 185, 129, 0.55)',
       color: isLight ? '#14532d' : '#6ee7b7',
       boxShadow: isLight ? '0 2px 8px rgba(16, 185, 129, 0.12)' : '0 4px 12px rgba(16, 185, 129, 0.18)'
@@ -330,7 +306,7 @@ export default function DashboardFinance({ cultivoElegidoId, provinciaParcela, a
       {!cultivoElegidoId && <p>Sin parcela seleccionada: puedes calcular por hectárea; los totales de parcela requieren una superficie registrada.</p>}
 
       {/* Form Container: Parámetros de Mercado, Producción y Costos */}
-      <PreciosProvincia key={cultivoElegidoId} provinciaParcela={provinciaParcela} preview={preview} aplicar={valor => { ++inputVersion.current; setActivePreset(null); setPrecioMaizQq(String(valor)); }} />
+      <PreciosProvincia key={cultivoElegidoId} provinciaParcela={provinciaParcela} preview={preview} aplicar={valor => { ++inputVersion.current; camposEditados.current.add(setPrecioMaizQq); setActivePreset(null); setPrecioMaizQq(String(valor)); }} />
       <div className="glass-panel" style={{ marginBottom: '1.25rem' }}>
         <div className="glass-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
           <h2 style={{ fontSize: '0.9rem', fontWeight: 700 }}>Parámetros de mercado, producción y costos</h2>
@@ -464,67 +440,68 @@ export default function DashboardFinance({ cultivoElegidoId, provinciaParcela, a
           {data?.supuestos && <details><summary>Origen de los valores del escenario</summary><p>{data.supuestos.nota}</p><ul>{Object.entries(data.supuestos.fuentes ?? {}).map(([field, source]) => <li key={field}>{({ precio_maiz_qq: 'Precio', rendimiento_qq: 'Rendimiento', costo_semilla: 'Semillas', costo_fert: 'Fertilización', costo_riego: 'Riego', costo_proteccion: 'Fitosanitarios', otros_var: 'Otros variables', costos_fijos: 'Costos fijos' })[field] ?? field}: {financeSourceLabel(source)}</li>)}</ul></details>}
           <form onSubmit={handleRecalculate} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: '0.75rem', alignItems: 'end' }}>
             <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label" style={{ fontSize: '0.67rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '3px' }}>
+              <label htmlFor="finanzas-precio" className="form-label" style={{ fontSize: '0.67rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '3px' }}>
                 PRECIO MAÍZ ($/qq)
                 <span title="Precio de venta estimado en finca por quintal (45.36 kg / 100 lb) de grano seco." style={{ cursor: 'help', color: 'var(--text-subtle)', fontWeight: 'bold' }}>ⓘ</span>
               </label>
-              <input type="text" inputMode="decimal" onKeyDown={preventNegativeKeys} className="form-input" style={{ padding: '0.45rem 0.6rem', fontSize: '0.82rem' }} value={precioMaizQq} onChange={handleInput(setPrecioMaizQq)} placeholder="Sin dato" />
+              <input id="finanzas-precio" type="text" inputMode="decimal" onKeyDown={preventNegativeKeys} className="form-input" style={{ padding: '0.45rem 0.6rem', fontSize: '0.82rem' }} value={precioMaizQq} onChange={e => handleInput(e, setPrecioMaizQq)} placeholder="Sin dato" />
             </div>
 
             <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label" style={{ fontSize: '0.67rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '3px' }}>
+              <label htmlFor="finanzas-rendimiento" className="form-label" style={{ fontSize: '0.67rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '3px' }}>
                 RENDIMIENTO (qq/ha)
                 <span title="Rendimiento supuesto por hectárea en quintales; puede provenir de simulaciones guardadas o de tu entrada manual." style={{ cursor: 'help', color: 'var(--text-subtle)', fontWeight: 'bold' }}>ⓘ</span>
               </label>
-              <input type="text" inputMode="decimal" onKeyDown={preventNegativeKeys} className="form-input" style={{ padding: '0.45rem 0.6rem', fontSize: '0.82rem' }} value={rendimientoQq} onChange={handleInput(setRendimientoQq)} placeholder="Sin dato" />
+              <input id="finanzas-rendimiento" type="text" inputMode="decimal" onKeyDown={preventNegativeKeys} className="form-input" style={{ padding: '0.45rem 0.6rem', fontSize: '0.82rem' }} value={rendimientoQq} onChange={e => handleInput(e, setRendimientoQq)} placeholder="Sin dato" />
             </div>
 
             <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label" style={{ fontSize: '0.67rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '3px' }}>
+              <label htmlFor="finanzas-semilla" className="form-label" style={{ fontSize: '0.67rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '3px' }}>
                 SEMILLAS ($/ha)
                 <span title="Costo de adquisición del híbrido de maíz seleccionado y curado de semilla por hectárea." style={{ cursor: 'help', color: 'var(--text-subtle)', fontWeight: 'bold' }}>ⓘ</span>
               </label>
-              <input type="text" inputMode="decimal" onKeyDown={preventNegativeKeys} className="form-input" style={{ padding: '0.45rem 0.6rem', fontSize: '0.82rem' }} value={costoSemilla} onChange={handleInput(setCostoSemilla)} placeholder="Sin dato" />
+              <input id="finanzas-semilla" type="text" inputMode="decimal" onKeyDown={preventNegativeKeys} className="form-input" style={{ padding: '0.45rem 0.6rem', fontSize: '0.82rem' }} value={costoSemilla} onChange={e => handleInput(e, setCostoSemilla)} placeholder="Sin dato" />
             </div>
 
             <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label" style={{ fontSize: '0.67rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '3px' }}>
+              <label htmlFor="finanzas-fertilizacion" className="form-label" style={{ fontSize: '0.67rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '3px' }}>
                 FERTILIZACIÓN ($/ha)
                 <span title="Inversión en fertilizantes edáficos y foliares (Urea, DAP, KCl, micronutrientes) por hectárea." style={{ cursor: 'help', color: 'var(--text-subtle)', fontWeight: 'bold' }}>ⓘ</span>
               </label>
-              <input type="text" inputMode="decimal" onKeyDown={preventNegativeKeys} className="form-input" style={{ padding: '0.45rem 0.6rem', fontSize: '0.82rem' }} value={costoFert} onChange={handleInput(setCostoFert)} placeholder="Sin dato" />
+              <input id="finanzas-fertilizacion" type="text" inputMode="decimal" onKeyDown={preventNegativeKeys} className="form-input" style={{ padding: '0.45rem 0.6rem', fontSize: '0.82rem' }} value={costoFert} onChange={e => handleInput(e, setCostoFert)} placeholder="Sin dato" />
+              {data?.supuestos?.simulacion_plan_fertilizacion && financeInputNumber(costoFert) === data.datos_base_sistema?.costo_fert && <small>Plan guardado en la simulación #{data.supuestos.simulacion_plan_fertilizacion} · USD/ha</small>}
             </div>
 
             <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label" style={{ fontSize: '0.67rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '3px' }}>
+              <label htmlFor="finanzas-riego" className="form-label" style={{ fontSize: '0.67rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '3px' }}>
                 RIEGO ($/ha)
                 <span title="Costo operativo del agua: energía de bombeo, mantenimiento de tuberías o canon de riego por hectárea." style={{ cursor: 'help', color: 'var(--text-subtle)', fontWeight: 'bold' }}>ⓘ</span>
               </label>
-              <input type="text" inputMode="decimal" onKeyDown={preventNegativeKeys} className="form-input" style={{ padding: '0.45rem 0.6rem', fontSize: '0.82rem' }} value={costoRiego} onChange={handleInput(setCostoRiego)} placeholder="Sin dato" />
+              <input id="finanzas-riego" type="text" inputMode="decimal" onKeyDown={preventNegativeKeys} className="form-input" style={{ padding: '0.45rem 0.6rem', fontSize: '0.82rem' }} value={costoRiego} onChange={e => handleInput(e, setCostoRiego)} placeholder="Sin dato" />
             </div>
 
             <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label" style={{ fontSize: '0.67rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '3px' }}>
+              <label htmlFor="finanzas-proteccion" className="form-label" style={{ fontSize: '0.67rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '3px' }}>
                 FITOSANITARIOS ($/ha)
                 <span title="Inversión en plaguicidas, herbicidas pre y post-emergentes, fungicidas e insecticidas por hectárea." style={{ cursor: 'help', color: 'var(--text-subtle)', fontWeight: 'bold' }}>ⓘ</span>
               </label>
-              <input type="text" inputMode="decimal" onKeyDown={preventNegativeKeys} className="form-input" style={{ padding: '0.45rem 0.6rem', fontSize: '0.82rem' }} value={costoProteccion} onChange={handleInput(setCostoProteccion)} placeholder="Sin dato" />
+              <input id="finanzas-proteccion" type="text" inputMode="decimal" onKeyDown={preventNegativeKeys} className="form-input" style={{ padding: '0.45rem 0.6rem', fontSize: '0.82rem' }} value={costoProteccion} onChange={e => handleInput(e, setCostoProteccion)} placeholder="Sin dato" />
             </div>
 
             <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label" style={{ fontSize: '0.67rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '3px' }}>
+              <label htmlFor="finanzas-otros" className="form-label" style={{ fontSize: '0.67rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '3px' }}>
                 OTROS C. VAR. ($/ha)
                 <span title="Costos variables operativos: mano de obra, alquiler de tractor o cosechadora combinada, flete del grano." style={{ cursor: 'help', color: 'var(--text-subtle)', fontWeight: 'bold' }}>ⓘ</span>
               </label>
-              <input type="text" inputMode="decimal" onKeyDown={preventNegativeKeys} className="form-input" style={{ padding: '0.45rem 0.6rem', fontSize: '0.82rem' }} value={otrosVar} onChange={handleInput(setOtrosVar)} placeholder="Sin dato" />
+              <input id="finanzas-otros" type="text" inputMode="decimal" onKeyDown={preventNegativeKeys} className="form-input" style={{ padding: '0.45rem 0.6rem', fontSize: '0.82rem' }} value={otrosVar} onChange={e => handleInput(e, setOtrosVar)} placeholder="Sin dato" />
             </div>
 
             <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label" style={{ fontSize: '0.67rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '3px' }}>
+              <label htmlFor="finanzas-fijos" className="form-label" style={{ fontSize: '0.67rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '3px' }}>
                 C. FIJOS ($/ha)
                 <span title="Gastos fijos obligatorios: arriendo de tierra, administración y supervisión del lote." style={{ cursor: 'help', color: 'var(--text-subtle)', fontWeight: 'bold' }}>ⓘ</span>
               </label>
-              <input type="text" inputMode="decimal" onKeyDown={preventNegativeKeys} className="form-input" style={{ padding: '0.45rem 0.6rem', fontSize: '0.82rem' }} value={costosFijos} onChange={handleInput(setCostosFijos)} placeholder="Sin dato" />
+              <input id="finanzas-fijos" type="text" inputMode="decimal" onKeyDown={preventNegativeKeys} className="form-input" style={{ padding: '0.45rem 0.6rem', fontSize: '0.82rem' }} value={costosFijos} onChange={e => handleInput(e, setCostosFijos)} placeholder="Sin dato" />
             </div>
 
             <button type="submit" className="btn btn-primary" style={{ padding: '0.48rem 0.75rem', fontSize: '0.82rem', fontWeight: 700 }}>Calcular</button>

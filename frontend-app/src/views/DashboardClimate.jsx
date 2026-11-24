@@ -28,6 +28,30 @@ function SectionTitle({ icon: Icon, id, title, children }) {
 }
 function Missing({ children }) { return <p className="climate-missing">{children}</p>; }
 
+function HistoryPlot({ variable, history, historyRange, colors, selected, ask }) {
+  const rain = variable === 'rain';
+  const title = rain ? 'Lluvia acumulada' : 'Temperatura media';
+  const unit = rain ? 'mm' : '°C';
+  const values = history.map(row => rain ? row.precip_mm : row.temp_media_c);
+  const validCount = values.filter(value => value !== null).length;
+  const option = {
+    animation: false, grid: { left: 52, right: 20, top: 28, bottom: 42 },
+    tooltip: getChartTooltip(colors, { renderMode: 'richText', valueFormatter: value => value === null ? 'Sin dato' : `${num(value)} ${unit}` }),
+    xAxis: { type: 'category', data: history.map(row => historyRange === '30d' ? dateLabel(row.fecha, { day: 'numeric', month: 'short' }) : dateLabel(`${row.fecha}-01`, { month: 'short', year: '2-digit' })), axisLabel: { color: colors.muted, fontSize: 12, hideOverlap: true }, axisLine: { lineStyle: { color: colors.border } }, axisTick: { show: false } },
+    yAxis: { type: 'value', name: unit, min: rain ? 0 : undefined, nameTextStyle: { color: colors.muted }, axisLabel: { color: colors.muted, fontSize: 12 }, splitLine: { lineStyle: { color: colors.grid } } },
+    series: [{ name: title, type: rain ? 'bar' : 'line', data: values, connectNulls: false, barMaxWidth: 32, symbolSize: 7, itemStyle: { color: rain ? colors.leaf : colors.primary, borderRadius: rain ? [4, 4, 0, 0] : undefined }, lineStyle: { width: 3 } }],
+  };
+  const explainHistory = item => ask(`Explícame ${title.toLowerCase()} ${item ? `del ${history[item.dataIndex]?.fecha}` : `de ${historyRange === '30d' ? 'los últimos 30 días' : 'los últimos 12 meses'}`} que muestra Clima y cultivo. Aclara su fuente, el período y qué conviene revisar en mi parcela, sin convertir datos ausentes en cero.`);
+
+  return <article className="climate-plot" data-selected={selected}>
+    <button className="climate-chart-title" onClick={() => explainHistory()} aria-label={`Consultar ${title.toLowerCase()} del historial`}>
+      {rain ? <CloudRain size={21} aria-hidden="true" /> : <Thermometer size={21} aria-hidden="true" />}
+      <strong>{title} ({unit})</strong><MessageCircle size={16} aria-hidden="true" />
+    </button>
+    {validCount ? <div className="climate-history-chart"><EChart option={option} onClick={explainHistory} ariaLabel={`${title} del historial. ${validCount} períodos disponibles. Los datos ausentes quedan vacíos.`} /></div> : <Missing>No hay datos disponibles para este período y variable.</Missing>}
+  </article>;
+}
+
 export default function DashboardClimate({ cultivoElegidoId, cultivoActivo, onNavigate, onDashboardData, onAbrirRegistroCampo, revisionMediciones = 0 }) {
   const [result, setResult] = useState(null);
   const [observations, setObservations] = useState(null);
@@ -105,30 +129,36 @@ export default function DashboardClimate({ cultivoElegidoId, cultivoActivo, onNa
   })();
   const title = rain ? 'Lluvia acumulada' : 'Temperatura media';
   const unit = rain ? 'mm' : '°C';
-  const option = {
-    animation: false, grid: { left: 52, right: 20, top: 28, bottom: 42 },
-    tooltip: getChartTooltip(colors, { renderMode: 'richText', valueFormatter: value => value === null ? 'Sin dato' : `${num(value)} ${unit}` }),
-    xAxis: { type: 'category', data: history.map(row => historyRange === '30d' ? dateLabel(row.fecha, { day: 'numeric', month: 'short' }) : dateLabel(`${row.fecha}-01`, { month: 'short', year: '2-digit' })), axisLabel: { color: colors.muted, fontSize: 12, hideOverlap: true }, axisLine: { lineStyle: { color: colors.border } }, axisTick: { show: false } },
-    yAxis: { type: 'value', name: unit, min: rain ? 0 : undefined, nameTextStyle: { color: colors.muted }, axisLabel: { color: colors.muted, fontSize: 12 }, splitLine: { lineStyle: { color: colors.grid } } },
-    series: [{ name: title, type: rain ? 'bar' : 'line', data: values, connectNulls: false, barMaxWidth: 32, symbolSize: 7, itemStyle: { color: rain ? colors.sky : colors.maize, borderRadius: rain ? [4, 4, 0, 0] : undefined }, lineStyle: { width: 3 } }],
-  };
-  const explainHistory = item => ask(`Explícame ${title.toLowerCase()} ${item ? `del ${history[item.dataIndex]?.fecha}` : `de ${historyRange === '30d' ? 'los últimos 30 días' : 'los últimos 12 meses'}`} que muestra Clima y cultivo. Aclara su fuente, el período y qué conviene revisar en mi parcela, sin convertir datos ausentes en cero.`);
-
   return <div className="dashboard-view climate-page">
-    <header className="climate-heading"><div><span className="climate-eyebrow">Seguimiento de tu parcela</span><h1>{cultivoActivo?.nombre_parcela || 'Clima y cultivo'}</h1><p><MapPin size={16} aria-hidden="true" />{cultivoActivo?.ubicacion || 'Ubicación de la parcela seleccionada'}</p></div><button type="button" className="climate-action climate-action--secondary" onClick={reload} disabled={pending}><RefreshCw size={18} aria-hidden="true" />{pending ? 'Consultando…' : 'Actualizar clima'}</button></header>
-    <p className="climate-intro">Mira el tiempo, prepara tus labores y registra lo que observas en el cultivo. Toca una tarjeta para consultar su significado con el asistente.</p>
+    <header className="climate-heading"><div><h1>{cultivoActivo?.nombre_parcela || 'Clima y cultivo'}</h1><p><MapPin size={16} aria-hidden="true" />{cultivoActivo?.ubicacion || 'Ubicación de la parcela seleccionada'}</p></div><button type="button" className="climate-action climate-action--secondary" onClick={reload} disabled={pending}><RefreshCw size={18} aria-hidden="true" />{pending ? 'Consultando…' : 'Actualizar clima'}</button></header>
+
     {data.clima_hoy?.estado === 'ultimo_conocido' && <p className="climate-notice" role="status">Open-Meteo no respondió. Último pronóstico guardado el {timeLabel(data.clima_hoy.consultado_en)}. Vuelve a actualizar en cinco minutos.</p>}
     {current.error && <div className="climate-notice" role="alert">{current.error} Se conserva la consulta anterior, con sus fechas originales.</div>}
 
     <section className="climate-panel climate-now" aria-labelledby="climate-now-title">
-      <div className="climate-now-main"><SectionTitle icon={CloudSun} id="climate-now-title" title="El tiempo en tu parcela">Último dato: {timeLabel(actual?.fecha_hora)} · hora de la ubicación</SectionTitle>
-        {actual ? <button className="climate-current-reading" onClick={() => ask('Explícame el último dato del tiempo de mi parcela, con su fecha y hora. ¿Qué conviene revisar antes de organizar las labores?')}><WeatherIcon code={actual.codigo_tiempo} size={44} /><span className="climate-temperature">{num(climateNumber(actual.temperatura_c, -90, 65))}<small> °C</small></span><span>{actual.descripcion || 'Condición no informada'}</span></button> : <Missing>El proveedor no entregó el tiempo actual. El historial y tus observaciones siguen disponibles abajo.</Missing>}
-      </div>
+      <SectionTitle icon={CloudSun} id="climate-now-title" title="El tiempo en tu parcela">Último dato: {timeLabel(actual?.fecha_hora)} · hora de la ubicación</SectionTitle>
       <div className="climate-now-details">
+        {actual ? <button className="climate-reading climate-current-reading" onClick={() => ask('Explícame el último dato del tiempo de mi parcela, con su fecha y hora. ¿Qué conviene revisar antes de organizar las labores?')}><WeatherIcon code={actual.codigo_tiempo} size={44} /><span>Temperatura<strong className="climate-temperature">{num(climateNumber(actual.temperatura_c, -90, 65))}<small> °C</small></strong><small>{actual.descripcion || 'Condición no informada'}</small></span></button> : <Missing>El proveedor no entregó el tiempo actual. El historial y tus observaciones siguen disponibles abajo.</Missing>}
         <button className="climate-reading" onClick={() => ask('¿Qué significa la humedad relativa del aire que muestra mi parcela? Diferénciala de la humedad del suelo.')}><Droplets size={22} aria-hidden="true" /><span>Humedad del aire<strong>{num(climateNumber(actual?.humedad_relativa_pct, 0, 100), 0)}<small> %</small></strong></span></button>
+        <button className="climate-reading" onClick={() => ask('Explícame la precipitación del último intervalo disponible en mi parcela y cómo se diferencia de la lluvia diaria acumulada.')}><CloudRain size={22} aria-hidden="true" /><span>Precipitación<strong>{num(climateNumber(actual?.precipitacion_mm, 0))}<small> mm</small></strong></span></button>
         <button className="climate-reading" onClick={() => ask('¿Qué significa el viento indicado en Clima y cultivo y qué debo revisar antes de trabajar en mi parcela?')}><Wind size={22} aria-hidden="true" /><span>Viento<strong>{num(climateNumber(actual?.viento_kmh, 0))}<small> km/h</small></strong></span></button>
       </div>
-      <button className={`climate-reading climate-reading--enso${ensoEstado === 'Anomalía cálida' || ensoEstado === 'Anomalía fría' ? ' climate-reading--enso-alerta' : ''}`} onClick={() => ask('Explícame el fenómeno de El Niño y La Niña que muestra Clima y cultivo. ¿Cómo se relaciona esta referencia del Pacífico con la fecha de siembra de mi parcela —actual o futura— y qué conviene revisar en el pronóstico de mi ubicación?')}>
+
+      <p className="climate-source">Fuente: Open-Meteo · estimaciones meteorológicas por ubicación; no son lecturas de una estación instalada en tu parcela.</p>
+    </section>
+
+    <section className="climate-panel" aria-labelledby="climate-history-title">
+      <SectionTitle icon={CloudRain} id="climate-history-title" title="Cómo ha cambiado el tiempo">Historia reciente de esta ubicación. Ayuda a entender lo que ha ocurrido; no anticipa el tiempo de los próximos meses.</SectionTitle>
+      <div className="climate-history-controls"><div role="group" aria-label="Período del historial">{[['30d', 'Últimos 30 días'], ['12m', 'Últimos 12 meses']].map(([value, label]) => <button key={value} aria-pressed={historyRange === value} onClick={() => setHistoryRange(value)}>{label}</button>)}</div><div role="group" aria-label="Dato del historial">{[['rain', 'Lluvia'], ['temperature', 'Temperatura']].map(([value, label]) => <button key={value} aria-pressed={historyVariable === value} onClick={() => setHistoryVariable(value)}>{label}</button>)}</div></div>
+      <div className="climate-plots">
+        {['temperature', 'rain'].map(variable => <HistoryPlot key={variable} variable={variable} history={history} historyRange={historyRange} colors={colors} selected={variable === historyVariable} ask={ask} />)}
+      </div>
+      <p className="climate-source">{periodLabel(historyRange === '30d' ? period : data.resumen_mensual_12m?.periodo)} · {validCount} de {history.length} {historyRange === '30d' ? 'días' : 'meses'} con datos de {rain ? 'lluvia' : 'temperatura'}.</p>
+      {validCount > 0 && <details className="climate-table-details"><summary>Ver datos del gráfico en una tabla</summary><div className="climate-table-scroll"><table><caption>{title} · {historyRange === '30d' ? '30 días' : '12 meses'}</caption><thead><tr><th scope="col">{historyRange === '30d' ? 'Fecha' : 'Mes'}</th><th scope="col">{title} ({unit})</th></tr></thead><tbody>{history.map((row, i) => <tr key={row.fecha}><th scope="row">{row.fecha}</th><td>{num(values[i])}</td></tr>)}</tbody></table></div></details>}
+      <p className="climate-source">Fuente: {historyRange === '12m' ? data.resumen_mensual_12m?.fuente || 'Open-Meteo Archive' : data.api_source || 'Open-Meteo Archive'}. Datos de modelos y reanálisis por ubicación. Los huecos indican información ausente, nunca lluvia cero.{historyRange === '12m' && !rain ? ' Las medias se calculan con los días que tienen temperatura disponible.' : ''}</p>
+    </section>
+
+    <button className={`climate-reading climate-reading--enso${ensoEstado === 'Anomalía cálida' || ensoEstado === 'Anomalía fría' ? ' climate-reading--enso-alerta' : ''}`} onClick={() => ask('Explícame el fenómeno de El Niño y La Niña que muestra Clima y cultivo. ¿Cómo se relaciona esta referencia del Pacífico con la fecha de siembra de mi parcela —actual o futura— y qué conviene revisar en el pronóstico de mi ubicación?')}>
         <Waves size={22} aria-hidden="true" />
         <span>
           <span className="climate-reading-body">
@@ -138,8 +168,6 @@ export default function DashboardClimate({ cultivoElegidoId, cultivoActivo, onNa
           <span className="climate-reading-title">El Niño y La Niña</span>
         </span>
       </button>
-      <p className="climate-source">Fuente: Open-Meteo · estimaciones meteorológicas por ubicación; no son lecturas de una estación instalada en tu parcela.</p>
-    </section>
 
     <section className="climate-panel" aria-labelledby="climate-week-title">
       <SectionTitle icon={CalendarDays} id="climate-week-title" title="Los próximos 7 días">Pronóstico para organizar tus labores. Puede cambiar al acercarse cada fecha.</SectionTitle>
@@ -158,15 +186,6 @@ export default function DashboardClimate({ cultivoElegidoId, cultivoActivo, onNa
       {field?.revision !== revisionMediciones && <p role="status" className="climate-source">Actualizando tus observaciones…</p>}
       {pest?.valor != null && <p className="climate-observation">En tu última observación: {num(pest.valor)} % de plantas afectadas · {dateLabel(pest.fecha)}. {pest.nota}</p>}
       <div className="climate-crop-footer"><p>El clima por sí solo no confirma enfermedades en tu cultivo. Si ves manchas, daño en hojas o plantas débiles, registra la fecha y consulta los síntomas.</p><button className="climate-text-action" onClick={() => onNavigate?.('scenarios')}>Ver mi plan de siembra <ArrowRight size={17} aria-hidden="true" /></button></div>
-    </section>
-
-    <section className="climate-panel" aria-labelledby="climate-history-title">
-      <SectionTitle icon={CloudRain} id="climate-history-title" title="Cómo ha cambiado el tiempo">Historia reciente de esta ubicación. Ayuda a entender lo que ha ocurrido; no anticipa el tiempo de los próximos meses.</SectionTitle>
-      <div className="climate-history-controls"><div role="group" aria-label="Período del historial">{[['30d', 'Últimos 30 días'], ['12m', 'Últimos 12 meses']].map(([value, label]) => <button key={value} aria-pressed={historyRange === value} onClick={() => setHistoryRange(value)}>{label}</button>)}</div><div role="group" aria-label="Dato del historial">{[['rain', 'Lluvia'], ['temperature', 'Temperatura']].map(([value, label]) => <button key={value} aria-pressed={historyVariable === value} onClick={() => setHistoryVariable(value)}>{label}</button>)}</div></div>
-      <button className="climate-chart-title" onClick={() => explainHistory()} aria-label={`Consultar ${title.toLowerCase()} del historial`}><strong>{title} ({unit})</strong><MessageCircle size={18} aria-hidden="true" /><span>Consultar este dato</span></button>
-      <p className="climate-source">{periodLabel(historyRange === '30d' ? period : data.resumen_mensual_12m?.periodo)} · {validCount} de {history.length} {historyRange === '30d' ? 'días' : 'meses'} con datos de {rain ? 'lluvia' : 'temperatura'}.</p>
-      {validCount ? <><div className="climate-history-chart"><EChart option={option} onClick={explainHistory} ariaLabel={`${title} del historial. ${validCount} períodos disponibles. Los datos ausentes quedan vacíos.`} /></div><details className="climate-table-details"><summary>Ver datos del gráfico en una tabla</summary><div className="climate-table-scroll"><table><caption>{title} · {historyRange === '30d' ? '30 días' : '12 meses'}</caption><thead><tr><th scope="col">{historyRange === '30d' ? 'Fecha' : 'Mes'}</th><th scope="col">{title} ({unit})</th></tr></thead><tbody>{history.map((row, i) => <tr key={row.fecha}><th scope="row">{row.fecha}</th><td>{num(values[i])}</td></tr>)}</tbody></table></div></details></> : <Missing>No hay datos disponibles para este período y variable. Prueba otra opción o vuelve a consultar.</Missing>}
-      <p className="climate-source">Fuente: {historyRange === '12m' ? data.resumen_mensual_12m?.fuente || 'Open-Meteo Archive' : data.api_source || 'Open-Meteo Archive'}. Datos de modelos y reanálisis por ubicación. Los huecos indican información ausente, nunca lluvia cero.{historyRange === '12m' && !rain ? ' Las medias se calculan con los días que tienen temperatura disponible.' : ''}</p>
     </section>
 
     <details className="climate-panel"><summary>Fuentes, resolución y última consulta de la parcela</summary>

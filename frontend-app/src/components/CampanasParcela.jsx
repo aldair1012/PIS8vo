@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { CalendarDays } from 'lucide-react';
 import { dssService } from '../services/api';
+import { diasCultivo } from '../utils/fieldInputs';
 import { campaignBands } from '../utils/campaignBands';
 import { seguimientoNdvi } from '../utils/seguimientoNdvi';
 import { DashboardPanel } from '../templates/Common/DashboardPrimitives';
@@ -42,6 +43,10 @@ function Registro({ observacion, parcela, simulaciones, simulacion, onSaved }) {
   const [message, setMessage] = useState(null);
   const [siembra, setSiembra] = useState((observacion ? parcela.fecha_siembra : simulacion?.parcela_ejecucion?.fecha_siembra ?? parcela.fecha_siembra)?.slice(0, 10) ?? '');
   const [fecha, setFecha] = useState('');
+  const [peso, setPeso] = useState('');
+  const [superficie, setSuperficie] = useState('');
+  const dias = diasCultivo(siembra, fecha);
+  const rendimiento = peso !== '' && Number(superficie) > 0 ? Number(peso) / 1000 / Number(superficie) : null;
   const elegibles = simulaciones.filter(s => s.version_modelo && s.parcela_ejecucion?.fecha_siembra === siembra && s.fecha?.slice(0, 10) < fecha);
   const save = async event => {
     event.preventDefault();
@@ -60,7 +65,7 @@ function Registro({ observacion, parcela, simulaciones, simulacion, onSaved }) {
         await dssService.registrarCosecha({ ...Object.fromEntries(datos), base_comparable: datos.has('base_comparable') });
       }
       form.reset();
-      setFecha('');
+      setFecha(''); setPeso(''); setSuperficie('');
       setMessage({ text: observacion ? 'Observación guardada.' : 'Cosecha guardada.' });
       onSaved();
     } catch (error) {
@@ -74,13 +79,16 @@ function Registro({ observacion, parcela, simulaciones, simulacion, onSaved }) {
     <form onSubmit={save}><fieldset disabled={saving}>
       <label>Siembra de la campaña<input type="date" name="fecha_siembra" value={siembra} onChange={e => setSiembra(e.target.value)} max={today()} required /></label>
       <label>{observacion ? 'Fecha de observación' : 'Fecha de cosecha'}<input type="date" name={observacion ? 'fecha' : 'fecha_cosecha'} value={fecha} onChange={e => setFecha(e.target.value)} min={siembra} max={today()} required /></label>
+      {dias !== null && <p>La {observacion ? 'observación' : 'cosecha'} corresponde al día {dias} desde la siembra.</p>}
       {observacion ? <>
         <label>Observación<textarea name="nota" maxLength={500} rows={2} /></label>
         <label>NDVI medido (opcional)<input type="number" min="-1" max="1" step="0.00001" name="ndvi" /></label>
         <label>Foto o audio (opcional, hasta 2 MiB)<input type="file" name="adjunto" accept="image/jpeg,image/png,audio/mpeg,audio/ogg,audio/wav,audio/x-wav,audio/mp4,audio/x-m4a" /></label>
       </> : <>
-        <label>Grano total pesado (kg)<input type="number" min="0" max="1000000000" step="0.0001" name="produccion_seca_kg" required /></label>
-        <label>Superficie cosechada (ha)<input type="number" min="0.000001" max="10000000" step="0.000001" name="area_cosechada_ha" required /></label>
+        <label>Grano total pesado (kg)<input type="number" min="0" max="1000000000" step="0.0001" name="produccion_seca_kg" value={peso} onChange={e => setPeso(e.target.value)} required /></label>
+        <label>Superficie cosechada (ha)<input type="number" min="0.000001" max="10000000" step="0.000001" name="area_cosechada_ha" value={superficie} onChange={e => setSuperficie(e.target.value)} required /></label>
+        {Number(parcela.area) > 0 && <button type="button" className="sowing-secondary" onClick={() => setSuperficie(String(parcela.area))}>Usar toda la parcela ({fmt(parcela.area)} ha)</button>}
+        {Number.isFinite(rendimiento) && rendimiento >= 0 && <p>Rendimiento según el pesaje: <strong>{fmt(rendimiento)} t/ha</strong>.</p>}
         <label>Humedad a la que se expresa el peso (%)<input type="number" min="0" max="99.99" step="0.01" name="humedad_grano_pct" required /></label>
         <label>Simulación previa<select name="simulacion_id" key={siembra + fecha} defaultValue={elegibles.find(s => s.id === simulacion?.id)?.id ?? ''}><option value="">Guardar sólo la cosecha</option>
           {elegibles.map(s => <option key={s.id} value={s.id}>#{s.id} · {s.fecha.slice(0, 10)} · {s.version_modelo} · {fmt(s.area_simulada_ha)} ha</option>)}</select></label>
@@ -112,7 +120,7 @@ export default function CampanasParcela({ parcela, simulaciones, simulacion }) {
     {!historial && !failed && <p role="status">Cargando campañas…</p>}
     {historial && <>
       {!campanas.length && <p>Todavía no hay cosechas ni observaciones de campaña registradas.</p>}
-      <Registro parcela={parcela} simulaciones={simulaciones} simulacion={simulacion} onSaved={reload} />
+      <Registro key={simulacion?.parcela_ejecucion?.fecha_siembra ?? parcela.fecha_siembra ?? 'sin-fecha'} parcela={parcela} simulaciones={simulaciones} simulacion={simulacion} onSaved={reload} />
       <Registro observacion parcela={parcela} simulaciones={simulaciones} simulacion={simulacion} onSaved={reload} />
       <h3>Predicción frente a cosecha</h3>
       <p>Se incluyen cosechas con fuente declarada, superficie y base de humedad confirmadas. El sesgo positivo indica sobreestimación.</p>
