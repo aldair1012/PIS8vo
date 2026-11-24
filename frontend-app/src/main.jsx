@@ -11,6 +11,8 @@ import './assets/campo-interior.css';
 // Capa final de analítica: fija un único criterio visual para gráficos,
 // indicadores y secciones de información del espacio interno.
 import './assets/analytics-system.css';
+// Panel de estado agrícola de Clima: se carga tras clm-panel.css.
+import './assets/climate-status.css';
 
 class ErrorBoundary extends Component {
   constructor(props) {

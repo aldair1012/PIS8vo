@@ -84,7 +84,7 @@ El inventario detallado de fuentes y de los lugares del código que las utilizan
 | Simular cosecha | Preparar un escenario de producción | Área, temperatura, humedad, lluvia del ciclo, nitrógeno como nutriente, pH, textura, fecha, duración, riego y datos opcionales. Decimales y unidades se validan antes de enviar al motor. |
 | Rendimiento | Entender una simulación y revisar pruebas anteriores | Rendimiento por hectárea, producción total para el área utilizada, rango orientativo, alternativas climáticas, aportes del modelo e historial de la parcela. |
 | Siembra | Organizar el cultivo antes de simular | Plan editable, fecha prevista o real declarada, duración, riego, fin aproximado y calendario propio. Calendario agrícola por zona/grupo de maíz con fuentes institucionales, suelo y antecedentes sanitarios. |
-| Clima y cultivo | Consultar el tiempo y relacionarlo con las observaciones del productor | Condiciones actuales, pronóstico, evolución reciente, referencias históricas y estimaciones del suelo. La información regional se distingue de la correspondiente a la parcela. |
+| Clima y cultivo | Consultar el tiempo y relacionarlo con las observaciones del productor | Panel de estado del clima y del cultivo (Pacífico/ENSO, probabilidad de lluvia, agua en suelo, lectura compuesta de riesgo y etapas fenológicas), condiciones actuales, pronóstico, evolución reciente, referencias históricas y estimaciones del suelo. La información regional se distingue de la correspondiente a la parcela. |
 | Finanzas | Explorar el resultado económico de un escenario | Precio referencial, costos declarados, producción estimada, ingresos, margen y sensibilidad. No equivale a una cotización de compra garantizada. |
 | Mapa de parcelas | Ubicar y consultar las parcelas guardadas | Localización y geometría de la cuenta (Leaflet + Geoman). Las capas públicas se identifican como referencias, no catastros certificados. |
 | Simulaciones guardadas | Recuperar y comparar cálculos anteriores | Historial con fechas, entradas y resultados conservados. No son registros de cosecha real. |
@@ -317,6 +317,7 @@ La conversación se conserva por cuenta, parcela, año y ámbito. Los favoritos 
 | Portada | `src/assets/landing-system.css` | `.zeasys-home` / `Login.jsx`: rampas HSL, espaciado, radios, duraciones, `--home-max: 1760px`, `--home-pad`. |
 | Interior | `src/assets/internal-system.css` | `.zeasys-workspace`: tokens `--zi-*`, puente a la paleta, variante clara, sidebar de 246 px, colores de gráfico. |
 | Analítica | `src/assets/analytics-system.css` | Capa final que unifica paneles, encabezados, KPI, tablas, leyendas y estados vacíos de todas las pestañas internas. |
+| Estado climático | `src/assets/climate-status.css` | Panel oscuro de Clima con contornos, tarjetas de señales y riel de etapas fenológicas; usa `src/components/ClimateStatusPanel.jsx`. |
 
 Los canvas comparten `getChartBase()` en `src/utils/chartConfig.js` (rejilla discontinua, ejes sin línea, leyenda arriba, tipografía y animación coherentes); los tooltips usan `getChartTooltip()` con formato en español y los valores se formatean con `formatChartValue()`.
 

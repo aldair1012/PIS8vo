@@ -1,0 +1,229 @@
+/*
+ * Panel de estado agrícola de Clima y cultivo.
+ * Misma dirección de arte oscura que el hero público, construida con tokens
+ * primitivos del sistema. Se carga después de clm-panel.css.
+ */
+
+.zeasys-workspace .climate-status-panel {
+  --cs-950: var(--zi-forest-950, #031109);
+  --cs-850: var(--zi-forest-850, #0b2417);
+  --cs-ink: var(--zi-paper-50, #f6f9f4);
+  --cs-muted: var(--zi-paper-200, #dfeade);
+  --cs-leaf: var(--zi-leaf-400, #9fc862);
+  --cs-line: rgba(243, 241, 235, .14);
+  /* Valor oscuro del token de riesgo: garantiza contraste sobre el panel. */
+  --zs-danger: #e5a379;
+
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  margin: 0 0 1.35rem;
+  padding: clamp(1.1rem, 2vw, 1.65rem);
+  border: 1px solid var(--cs-line);
+  border-radius: 18px;
+  background: linear-gradient(155deg, var(--cs-850), var(--cs-950));
+  box-shadow: var(--zs-shadow-raised);
+  color: var(--cs-ink);
+}
+
+/* Curvas de contorno muy tenues, sin imagen externa ni JS. */
+.zeasys-workspace .climate-status-panel::before {
+  content: "";
+  position: absolute;
+  inset: -40% -10% -30% -10%;
+  z-index: -1;
+  background:
+    repeating-radial-gradient(ellipse at 78% 18%, transparent 0 26px, rgba(159, 200, 98, .07) 27px 28px, transparent 29px 56px),
+    repeating-radial-gradient(ellipse at 8% 96%, transparent 0 34px, rgba(136, 160, 146, .06) 35px 36px, transparent 37px 72px);
+  transform: rotate(-6deg);
+  pointer-events: none;
+}
+
+/* Límite con styles.css: el tema claro fuerza texto oscuro en todos los párrafos. */
+body.light-theme .zeasys-workspace .climate-status-panel,
+body.light-theme .zeasys-workspace .climate-status-panel * { color: var(--cs-ink) !important; }
+body.light-theme .zeasys-workspace .climate-status-panel :is(
+  .climate-status-kicker, .climate-status-label, .climate-status-detail,
+  .climate-status-delta, .climate-stage-caption, .climate-status-source,
+  .climate-reading-title, .climate-stage-code, .climate-status-card-body > span
+) { color: var(--cs-muted) !important; }
+body.light-theme .zeasys-workspace .climate-status-panel :is(.climate-status-value--risk) { color: var(--zs-danger) !important; }
+body.light-theme .zeasys-workspace .climate-status-panel .climate-status-risk .climate-status-value { color: var(--cs-ink) !important; }
+body.light-theme .zeasys-workspace .climate-status-panel .climate-status-risk svg { color: var(--zs-warning) !important; }
+
+.zeasys-workspace .climate-status-kicker {
+  display: block;
+  color: var(--cs-muted);
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+
+.zeasys-workspace #climate-status-title {
+  margin: .35rem 0 1.1rem;
+  color: var(--cs-ink);
+  font-size: clamp(1.15rem, 1.8vw, 1.45rem);
+  font-weight: 650;
+  letter-spacing: -.03em;
+}
+
+.zeasys-workspace .climate-status-cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) minmax(220px, 1.15fr);
+  gap: 12px;
+}
+
+.zeasys-workspace .climate-status-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: .4rem;
+  min-width: 0;
+  min-height: 132px;
+  padding: 14px 16px;
+  border: 1px solid var(--cs-line);
+  border-radius: 12px;
+  background: linear-gradient(180deg, rgba(243, 241, 235, .065), rgba(243, 241, 235, .02));
+  color: var(--cs-ink);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color .2s ease, background .2s ease, transform .2s ease;
+}
+
+.zeasys-workspace .climate-status-card:hover {
+  border-color: color-mix(in srgb, var(--cs-leaf) 45%, transparent);
+  background: linear-gradient(180deg, rgba(243, 241, 235, .1), rgba(243, 241, 235, .03));
+  transform: translateY(-1px);
+}
+
+.zeasys-workspace .climate-status-card:focus-visible {
+  outline: 2px solid var(--cs-leaf);
+  outline-offset: 2px;
+}
+
+.zeasys-workspace .climate-status-card > svg { color: var(--cs-leaf); flex: none; }
+.zeasys-workspace .climate-status-card-body { display: flex; flex-direction: column; gap: .22rem; min-width: 0; }
+
+.zeasys-workspace .climate-status-value {
+  color: var(--cs-ink);
+  font-size: clamp(1.55rem, 2.2vw, 2.05rem);
+  font-weight: 750;
+  line-height: 1.05;
+  letter-spacing: -.04em;
+  font-variant-numeric: tabular-nums;
+}
+
+.zeasys-workspace .climate-status-value small { font-size: .55em; font-weight: 650; letter-spacing: 0; }
+.zeasys-workspace .climate-status-value--risk { color: var(--zs-danger); font-size: clamp(1.15rem, 1.6vw, 1.5rem); }
+.zeasys-workspace .climate-status-card--enso .climate-status-value--risk em { font-size: .62em; font-style: normal; font-weight: 650; }
+
+.zeasys-workspace .climate-status-label {
+  color: var(--cs-muted);
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+
+.zeasys-workspace .climate-status-detail,
+.zeasys-workspace .climate-status-delta {
+  color: var(--cs-muted);
+  font-size: 11.5px;
+  line-height: 1.45;
+}
+
+.zeasys-workspace .climate-status-delta { color: var(--cs-leaf); }
+.zeasys-workspace .climate-status-card .climate-reading-note {
+  display: block;
+  margin-top: .3rem;
+  color: var(--cs-muted);
+  font-size: 11px;
+  line-height: 1.4;
+}
+.zeasys-workspace .climate-status-card .climate-reading-title { margin-top: auto; color: var(--cs-muted); font-size: 10.5px; font-weight: 650; }
+
+.zeasys-workspace .climate-status-risk {
+  border-color: color-mix(in srgb, var(--zs-warning) 52%, transparent);
+  background: color-mix(in srgb, var(--zs-warning) 8%, transparent);
+}
+.zeasys-workspace .climate-status-risk > svg { color: var(--zs-warning); }
+
+.zeasys-workspace .climate-status-divider {
+  height: 1px;
+  margin: 1.15rem 0 1rem;
+  background: var(--cs-line);
+}
+
+/* Etapas fenológicas: la barra conserva .climate-crop-grid para los tests. */
+.zeasys-workspace .climate-stage-rail {
+  display: block;
+  color: var(--cs-ink);
+  border: 0;
+  background: none;
+  padding: 0;
+  box-shadow: none;
+}
+
+.zeasys-workspace .climate-stage-caption { margin: .35rem 0 .8rem; color: var(--cs-muted); font-size: 12px; line-height: 1.5; }
+.zeasys-workspace .climate-stage-caption strong { color: var(--cs-ink); font-weight: 700; }
+
+.zeasys-workspace .climate-stage-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(128px, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.zeasys-workspace .climate-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: .25rem;
+  min-width: 0;
+  min-height: 68px;
+  padding: 10px 12px;
+  border: 1px solid var(--cs-line);
+  border-radius: 10px;
+  background: rgba(243, 241, 235, .035);
+}
+
+.zeasys-workspace .climate-stage.is-reached { border-color: color-mix(in srgb, var(--cs-leaf) 25%, transparent); }
+.zeasys-workspace .climate-stage.is-current {
+  border-color: var(--cs-leaf);
+  background: color-mix(in srgb, var(--cs-leaf) 13%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--cs-leaf) 35%, transparent);
+}
+
+.zeasys-workspace .climate-stage-name { color: var(--cs-ink); font-size: 13px; font-weight: 650; }
+.zeasys-workspace .climate-stage-code { color: var(--cs-muted); font-size: 10px; letter-spacing: .06em; text-transform: uppercase; }
+.zeasys-workspace .climate-stage.is-current .climate-stage-code { color: var(--cs-leaf); font-weight: 750; }
+.zeasys-workspace .climate-stage-dot { width: 5px; height: 5px; margin-top: auto; border-radius: 50%; background: transparent; }
+.zeasys-workspace .climate-stage.is-reached .climate-stage-dot { background: color-mix(in srgb, var(--cs-leaf) 55%, transparent); }
+.zeasys-workspace .climate-stage.is-current .climate-stage-dot { background: var(--cs-leaf); }
+
+.zeasys-workspace .climate-status-source {
+  margin: 1rem 0 0;
+  padding-top: .85rem;
+  border-top: 1px solid var(--cs-line);
+  color: var(--cs-muted);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+@media (max-width: 1100px) {
+  .zeasys-workspace .climate-status-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 640px) {
+  .zeasys-workspace .climate-status-cards { grid-template-columns: minmax(0, 1fr); }
+  .zeasys-workspace .climate-status-card { min-height: 112px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .zeasys-workspace .climate-status-card { transition: none; }
+  .zeasys-workspace .climate-status-card:hover { transform: none; }
+}
